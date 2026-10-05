@@ -50,6 +50,13 @@ def test_orientation_debate_has_no_deposit_document():
     assert d.committee == "Commission de la Mobilité et des Travaux publics"
 
 
+def test_history_descriptions_skip_show_more_buttons():
+    d = chd.parse_dossier(read("dossier-8821-fr.html"), "8821")
+    text = " ".join(a.description for a in d.activities)
+    assert "Désignation d'un rapporteur" in text
+    assert "Bouton graphique" not in text and "Voir plus" not in text
+
+
 def test_rule_revision_is_other():
     d = chd.parse_dossier(read("dossier-8700-fr.html"), "8700")
     assert snapshot.item_type(d.type) == "other"

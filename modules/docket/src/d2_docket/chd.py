@@ -77,6 +77,14 @@ class Meeting:
     points: list[AgendaPoint]
 
 
+def _without_buttons(node: Tag | None) -> Tag | None:
+    """Drop the page's show-more buttons, whose screen-reader labels would read as text."""
+    if node is not None:
+        for button in node.select("button"):
+            button.decompose()
+    return node
+
+
 def _text(node: Tag | None) -> str:
     if node is None:
         return ""
@@ -171,7 +179,7 @@ def parse_dossier(html: str, number: str) -> Dossier:
                 Activity(
                     date=day,
                     kind=classes[0] if classes else "",
-                    description=_text(cells.get("Description")),
+                    description=_text(_without_buttons(cells.get("Description"))),
                     actors=actors,
                     documents=docs,
                 )
