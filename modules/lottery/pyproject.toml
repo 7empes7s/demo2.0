@@ -1,0 +1,22 @@
+[project]
+name = "d2-lottery"
+version = "0.1.0"
+description = "Lottery: verifiable sortition from a committed pool and a drand beacon (Democracy2.0)."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+dependencies = ["d2-charter", "py-ecc>=8,<9"]
+
+[project.scripts]
+d2-lottery = "d2_lottery.__main__:main"
+
+[tool.uv.sources]
+d2-charter = { workspace = true }
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/d2_lottery"]
