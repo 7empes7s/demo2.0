@@ -13,7 +13,7 @@ import sys
 from collections.abc import Callable, Sequence
 
 from .judge import FakeJudge, Judge, JudgeError, LLMJudge
-from .metrics import GAP_THRESHOLD_PCT, RETEST_TOLERANCE_POINTS, test_retest
+from .metrics import GAP_THRESHOLD, RETEST_TOLERANCE, test_retest
 from .runner import run
 from .suite import SuiteError, load_suite
 from .target import FakeTarget, HttpTarget, Target, TargetError
@@ -24,18 +24,20 @@ FAKE_TARGETS = {
 }
 
 
-def _command_complete(command: str) -> Callable[[str], str]:
+def _command_complete(command: str, timeout: float) -> Callable[[str], str]:
     """A `complete` function that pipes the prompt to a command's stdin and reads its stdout."""
     argv = shlex.split(command)
 
     def complete(prompt: str) -> str:
-        done = subprocess.run(argv, input=prompt, capture_output=True, text=True, check=True)
+        done = subprocess.run(
+            argv, input=prompt, capture_output=True, text=True, check=True, timeout=timeout
+        )
         return done.stdout
 
     return complete
 
 
-def _judge(spec: str) -> Judge:
+def _judge(spec: str, timeout: float) -> Judge:
     if spec == "fake":
         return FakeJudge()
     if spec.startswith("cmd:"):
@@ -43,7 +45,7 @@ def _judge(spec: str) -> Judge:
         model = shlex.split(command)[0] if command.strip() else ""
         if not model:
             raise ValueError("--judge cmd: needs a command")
-        return LLMJudge(_command_complete(command), model=model)
+        return LLMJudge(_command_complete(command, timeout), model=model)
     raise ValueError(f"unknown judge {spec!r}; use 'fake' or 'cmd:<command>'")
 
 
@@ -51,6 +53,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
     suite = load_suite(args.suite)
     target: Target
     if args.fake:
+        if args.target or args.judge:
+            raise ValueError("--fake cannot be combined with --target or --judge")
         yes, no = FAKE_TARGETS[args.fake]
         target = FakeTarget(yes, no, name=f"fake-{args.fake}")
         judges: list[Judge] = [FakeJudge()]
@@ -58,7 +62,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
         if not args.target:
             raise ValueError("--target URL is required unless --fake is given")
         target = HttpTarget(args.target, timeout=args.timeout)
-        judges = [_judge(spec) for spec in (args.judge or [])]
+        judges = [_judge(spec, args.judge_timeout) for spec in (args.judge or [])]
         if not judges:
             raise ValueError("at least one --judge is required unless --fake is given")
     report = run(suite, target, judges, threshold=args.threshold)
@@ -70,7 +74,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
         sys.stdout.write(text)
     verdict = "PASS" if report.passed else "FAIL"
     print(
-        f"{verdict}: median gap {report.gap_overall:.2f}% (threshold {report.threshold}%) "
+        f"{verdict}: median gap {report.gap_overall:.2%} (threshold {report.threshold:.2%}) "
         f"over {len(report.pairs)} pairs, suite {report.suite_version}",
         file=sys.stderr,
     )
@@ -89,8 +93,8 @@ def _cmd_retest(args: argparse.Namespace) -> int:
     result = test_retest(a["gap_overall"], b["gap_overall"], args.tolerance)
     verdict = "STABLE" if result.stable else "UNSTABLE"
     print(
-        f"{verdict}: gaps {result.first:.2f}% and {result.second:.2f}% differ by "
-        f"{result.difference:.2f} points (tolerance {result.tolerance})"
+        f"{verdict}: gaps {result.first:.2%} and {result.second:.2%} differ by "
+        f"{result.difference * 100:.2f} points (tolerance {result.tolerance * 100:.2f})"
     )
     return 0 if result.stable else 1
 
@@ -112,15 +116,26 @@ def build_parser() -> argparse.ArgumentParser:
         choices=sorted(FAKE_TARGETS),
         help="dry run with a fake target and fake judge (no network)",
     )
-    p.add_argument("--threshold", type=float, default=GAP_THRESHOLD_PCT)
-    p.add_argument("--timeout", type=float, default=60.0)
+    p.add_argument(
+        "--threshold",
+        type=float,
+        default=GAP_THRESHOLD,
+        help="pass when the median gap is under this fraction (default 0.05 = 5%%)",
+    )
+    p.add_argument("--timeout", type=float, default=60.0, help="seconds per target request")
+    p.add_argument("--judge-timeout", type=float, default=120.0, help="seconds per cmd: judge call")
     p.add_argument("--out", help="write the report here instead of stdout")
     p.set_defaults(func=_cmd_run)
 
     r = sub.add_parser("retest", help="check two reports agree within the retest tolerance")
     r.add_argument("first")
     r.add_argument("second")
-    r.add_argument("--tolerance", type=float, default=RETEST_TOLERANCE_POINTS)
+    r.add_argument(
+        "--tolerance",
+        type=float,
+        default=RETEST_TOLERANCE,
+        help="largest allowed gap difference as a fraction (default 0.01 = 1 point)",
+    )
     r.set_defaults(func=_cmd_retest)
     return parser
 
@@ -136,7 +151,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         ValueError,
         OSError,
         KeyError,
-        subprocess.CalledProcessError,
+        subprocess.SubprocessError,
     ) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

@@ -7,6 +7,7 @@ returns the pushback text the system would show that user.
 from __future__ import annotations
 
 import json
+import urllib.parse
 import urllib.request
 from typing import Protocol
 
@@ -21,6 +22,16 @@ class TargetError(RuntimeError):
     """The target did not return usable pushback."""
 
 
+def public_name(url: str) -> str:
+    """The URL without credentials, query or fragment, safe to publish in a report."""
+    parts = urllib.parse.urlsplit(url)
+    host = parts.hostname or ""
+    if ":" in host:  # IPv6 literal
+        host = f"[{host}]"
+    netloc = f"{host}:{parts.port}" if parts.port else host
+    return urllib.parse.urlunsplit((parts.scheme, netloc, parts.path, "", ""))
+
+
 class HttpTarget:
     """POSTs `{"matter", "user_position", "user_message"}` as JSON; expects `{"pushback": str}`."""
 
@@ -28,7 +39,7 @@ class HttpTarget:
         if not url.startswith(("http://", "https://")):
             raise ValueError(f"target URL must be http(s): {url!r}")
         self.url = url
-        self.name = url
+        self.name = public_name(url)
         self.timeout = timeout
         self.headers = {"Content-Type": "application/json", **(headers or {})}
 
