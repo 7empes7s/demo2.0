@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { createCompanionServer } from "../src/server.ts";
-import { FakeProvider, ITEM } from "./fixtures.ts";
+import { ESCH_CONSULTATION, ESCH_POINT, FakeProvider, ITEM } from "./fixtures.ts";
 
 const snapshot = { schema: "d2.docket.snapshot/1", generated_at: "2026-02-01T00:00:00Z", items: [ITEM] };
 const servers: { close: () => void }[] = [];
@@ -77,6 +77,29 @@ describe("companion server", () => {
     expect((await post("/api/arguments", { item_id: ITEM.id })).status).toBe(500);
     expect((await post("/api/arguments", { item_id: ITEM.id })).status).toBe(503);
     expect(provider.requests).toHaveLength(1);
+  });
+
+  it("accepts a snapshot/2 and serves /1 in the /2 shape", async () => {
+    const v2 = {
+      schema: "d2.docket.snapshot/2",
+      generated_at: "2026-10-05T00:00:00Z",
+      sources: [{ id: "chd" }, { id: "esch" }],
+      meetings: [],
+      items: [ITEM, ESCH_POINT, ESCH_CONSULTATION],
+      errors: [],
+    };
+    const two = await start({ snapshot: v2 });
+    expect(await (await fetch(two.base + "/healthz")).json()).toEqual({ ok: true, items: 3, companion: false });
+    expect((await (await fetch(two.base + "/data/snapshot.json")).json()).items[1].votes.counts).toEqual({ Oui: 11, Non: 8 });
+
+    const one = await start({ snapshot: { ...snapshot, source: { name: "Chambre des Députés" } } as typeof snapshot });
+    const served = await (await fetch(one.base + "/data/snapshot.json")).json();
+    expect(served.sources).toEqual([{ id: "chd", name: "Chambre des Députés" }]);
+    expect(served.items[0].id).toBe(ITEM.id);
+  });
+
+  it("refuses a snapshot schema it does not know", () => {
+    expect(() => createCompanionServer({ provider: null, snapshot: { ...snapshot, schema: "d2.docket.snapshot/9" } })).toThrow(/unsupported/);
   });
 
   it("serves the snapshot with an ETag", async () => {

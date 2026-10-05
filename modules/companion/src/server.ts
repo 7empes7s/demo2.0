@@ -21,6 +21,7 @@ import { extname, join, normalize, resolve, sep } from "node:path";
 
 import { challenge, checkClaim, explain, extractArguments } from "./companion.ts";
 import { AnthropicProvider, type Provider } from "./provider.ts";
+import { readSnapshot } from "./snapshot.ts";
 import { LANGS, type ChatMessage, type Depth, type DocketItem, type DocketSnapshot, type Lang, type Position } from "./types.ts";
 
 const MIME: Record<string, string> = {
@@ -104,14 +105,16 @@ function history(value: unknown): ChatMessage[] {
 }
 
 export function createCompanionServer(opts: ServerOptions) {
-  const items = new Map(opts.snapshot.items.map((i) => [i.id, i]));
+  // Accepts snapshot/1 and /2, and serves it in the /2 shape.
+  const snapshot = readSnapshot(opts.snapshot);
+  const items = new Map(snapshot.items.map((i) => [i.id, i]));
   const cache = new Map<string, Promise<unknown>>();
   const hits = new Map<string, number[]>();
   const limit = opts.ratePerMinute ?? 20;
   const staticRoot = opts.staticDir ? resolve(opts.staticDir) : undefined;
   const trustProxy = opts.trustProxy ?? 0;
   // The snapshot can be megabytes of document text: serialise it once, not per request.
-  const snapshotBody = Buffer.from(JSON.stringify(opts.snapshot));
+  const snapshotBody = Buffer.from(JSON.stringify(snapshot));
   const snapshotTag = `"${createHash("sha256").update(snapshotBody).digest("hex").slice(0, 32)}"`;
 
   const cached = <T>(key: string, make: () => Promise<T>): Promise<T> => {
@@ -249,7 +252,7 @@ export function createCompanionServer(opts: ServerOptions) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const snapshot = JSON.parse(await readFile(process.env.SNAPSHOT ?? "data/lu-chd.json", "utf8")) as DocketSnapshot;
+  const snapshot = readSnapshot(JSON.parse(await readFile(process.env.SNAPSHOT ?? "data/lu-chd.json", "utf8")));
   const key = process.env.ANTHROPIC_API_KEY;
   const provider = key ? new AnthropicProvider(key, process.env.COMPANION_MODEL || undefined) : null;
   if (!provider) console.warn("ANTHROPIC_API_KEY is not set: serving the app and data, Companion routes return 503");

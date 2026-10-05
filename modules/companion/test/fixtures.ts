@@ -51,3 +51,55 @@ export class FakeProvider implements Provider {
     return next;
   }
 }
+
+/** A synthetic Esch council agenda point in the snapshot/2 shape. Not a real decision. */
+export const ESCH_POINT: DocketItem = {
+  id: "lu.esch.9001",
+  source: "esch.lu",
+  jurisdiction_id: "lu-esch",
+  number: "3",
+  type: "agenda",
+  type_label: "Décision",
+  title: { fr: "Approbation d'un exemple de convention pour une piste cyclable" },
+  status: "Approuvé",
+  author: null,
+  committee: null,
+  deposited: null,
+  updated: null,
+  urls: { fr: "https://example.org/seance-2026-10-02" },
+  agenda: [{ meeting_id: "esch-1", date: "2026-10-02", time: "08:30", body: "Conseil communal d'Esch-sur-Alzette", steps: [] }],
+  activities: [],
+  documents: [{ label: "Délibération", url: "https://example.org/delib.pdf", kind: "document", sha256: null, fetched_at: null, text: "" }],
+  reference: "2026/123",
+  theme: "Mobilité",
+  votes: {
+    counts: { Oui: 11, Non: 8 },
+    by_party: { "Parti A": { Oui: 11 }, "Parti B": { Non: 8 } },
+    members: [{ name: "Example Councillor", party: "Parti A", vote: "Oui" }],
+  },
+};
+
+/** A synthetic Esch consultation in the snapshot/2 shape. */
+export const ESCH_CONSULTATION: DocketItem = {
+  id: "lu.esch.participation.survey.abc",
+  source: "esch.lu",
+  jurisdiction_id: "lu-esch",
+  number: null,
+  type: "other",
+  type_label: "Enquête",
+  title: { fr: "Enquête d'exemple sur les parcs" },
+  status: "Actif",
+  author: null,
+  committee: null,
+  deposited: null,
+  updated: null,
+  urls: { fr: "https://example.org/survey/abc" },
+  agenda: [],
+  activities: [],
+  documents: [],
+  summary: "Donnez votre avis sur les parcs.",
+  when: "Se termine le 30 octobre 2026",
+  opens: "2026-10-01",
+  closes: "2026-10-30",
+  phases: [],
+};

@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { DocketItem } from "@democracy2/companion";
 
-  import { matches, nextMeeting, sortItems, stageOf, statusOf, titleOf } from "../lib/data.ts";
+  import { kindOf, matches, nextMeeting, placeOf, routeOf, sortItems, stageOf, statusOf, titleOf, type Place } from "../lib/data.ts";
   import { date, t } from "../lib/ui.svelte.ts";
+  import FileMeta from "./FileMeta.svelte";
   import StageTrack from "./StageTrack.svelte";
 
   let {
@@ -13,11 +14,17 @@
   }: { items: DocketItem[]; today: string; selected: string | null; onopen: (n: string) => void } = $props();
 
   let filter = $state<"all" | "bill" | "other">("all");
+  let place = $state<"all" | Place>("all");
   let query = $state("");
 
+  /** The place filter only appears when the snapshot covers more than one body. */
+  const places = $derived(new Set(items.map(placeOf)).size > 1);
   const shown = $derived(
     sortItems(items, today).filter(
-      (i) => (filter === "all" || (filter === "bill" ? i.type === "bill" : i.type !== "bill")) && matches(i, query),
+      (i) =>
+        (filter === "all" || (filter === "bill" ? i.type === "bill" : i.type !== "bill")) &&
+        (place === "all" || placeOf(i) === place) &&
+        matches(i, query),
     ),
   );
 </script>
@@ -34,23 +41,21 @@
 <ol class="files">
   {#each shown as item (item.id)}
     {@const meeting = nextMeeting(item, today)}
+    {@const route = routeOf(item)}
     <li>
       <a
         class="file"
-        class:current={selected === item.number}
-        href={`#${item.number}`}
-        aria-current={selected === item.number ? "page" : undefined}
+        class:current={selected === route}
+        href={`#${route}`}
+        aria-current={selected === route ? "page" : undefined}
         onclick={(e) => {
           e.preventDefault();
-          onopen(item.number);
+          onopen(route);
         }}
       >
-        <span class="meta">
-          <span class="mono no">N° {item.number}</span>
-          {#if item.type_label}<span class="label" lang="fr">{item.type_label}</span>{:else}<span class="label">{t(item.type === "bill" ? "type_bill" : item.type === "debate" ? "type_debate" : "type_other")}</span>{/if}
-        </span>
-        <span class="title">{titleOf(item)}</span>
-        <StageTrack stage={stageOf(item)} compact />
+        <span class="meta"><FileMeta {item} /></span>
+        <span class="title" lang="fr">{titleOf(item)}</span>
+        {#if kindOf(item) === "chamber"}<StageTrack stage={stageOf(item)} compact />{/if}
         <span class="when">
           {#if meeting}
             <span class="dot" aria-hidden="true"></span>{t("next_label")}: {date(meeting.date)}
@@ -89,7 +94,6 @@
   .file:hover { border-color: var(--accent); }
   .file.current { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
   .meta { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
-  .no { color: var(--accent-fg); font-weight: 500; font-size: 0.9rem; }
   .title {
     font-weight: 600;
     line-height: 1.35;

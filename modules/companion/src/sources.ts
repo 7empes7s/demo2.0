@@ -2,13 +2,26 @@
 
 import type { CitedSentence, DocketItem, Lang, Source } from "./types.ts";
 
-/** Source 1 is always the dossier page itself, built only from fields Docket parsed from it. */
+/** Source 1 is always the item's own page, built only from fields Docket parsed from it. */
 export function dossierFacts(item: DocketItem): string {
+  const votes = item.votes
+    ? Object.entries(item.votes.counts)
+        .map(([vote, n]) => `${vote} ${n}`)
+        .join(", ")
+    : "";
   const lines = [
-    `Number: ${item.number}`,
+    item.number && `Number: ${item.number}`,
     `Title: ${item.title.fr ?? Object.values(item.title)[0] ?? ""}`,
     item.type_label && `Type: ${item.type_label}`,
     item.status && `Status: ${item.status}`,
+    item.reference && `Reference: ${item.reference}`,
+    item.theme && `Theme: ${item.theme}`,
+    item.summary && `Summary: ${item.summary}`,
+    item.opens && `Opens: ${item.opens}`,
+    item.closes && `Closes: ${item.closes}`,
+    item.when && `When: ${item.when}`,
+    ...(item.phases ?? []).map((p) => `Phase: ${p.title}${p.start ? ` from ${p.start}` : ""}${p.end ? ` to ${p.end}` : ""}`),
+    votes && `Council vote: ${votes}`,
     item.author && `Author: ${item.author}`,
     item.committee && `Committee: ${item.committee}`,
     item.deposited && `Deposited: ${item.deposited}`,
@@ -23,6 +36,16 @@ export function dossierFacts(item: DocketItem): string {
   return lines.filter(Boolean).join("\n");
 }
 
+/** What source 1 is called: whose page it is. */
+export function itemLabel(item: DocketItem): string {
+  if (item.jurisdiction_id === "lu-esch") {
+    return item.type === "agenda"
+      ? `Esch-sur-Alzette municipal council, agenda point ${item.number ?? ""}`.trim()
+      : `Esch-sur-Alzette participation, ${item.type_label ?? "consultation"}`;
+  }
+  return `Chamber of Deputies, dossier ${item.number ?? ""}`.trim();
+}
+
 /**
  * Numbered sources for one item, within a character budget so prompts stay cheap.
  * Order: dossier facts, bill as filed, then opinions, reports and amendments by date.
@@ -31,7 +54,7 @@ export function buildSources(item: DocketItem, lang: Lang, budget = 60_000): Sou
   const sources: Source[] = [
     {
       n: 1,
-      label: `Chamber of Deputies, dossier ${item.number}`,
+      label: itemLabel(item),
       url: item.urls[lang] ?? item.urls.fr ?? "",
       date: item.updated,
       text: dossierFacts(item),

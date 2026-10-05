@@ -1,5 +1,5 @@
 [Unit]
-Description=Refresh the Chamber snapshot every morning and evening
+Description=Refresh the Docket snapshot every morning and evening
 
 [Timer]
 OnCalendar=*-*-* 05:30,17:30 Europe/Luxembourg
