@@ -17,7 +17,7 @@
 import { createHash } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { readFile, stat } from "node:fs/promises";
-import { extname, join, normalize, resolve, sep } from "node:path";
+import { basename, extname, join, normalize, resolve, sep } from "node:path";
 
 import { challenge, checkClaim, explain, extractArguments } from "./companion.ts";
 import { AnthropicProvider, type Provider } from "./provider.ts";
@@ -33,6 +33,9 @@ const MIME: Record<string, string> = {
   ".png": "image/png",
   ".webmanifest": "application/manifest+json",
 };
+
+/** Static files served with Cache-Control: no-cache (besides every .html page). */
+const REVALIDATE = new Set(["sw.js", "manifest.webmanifest"]);
 
 export interface ServerOptions {
   provider: Provider | null;
@@ -222,7 +225,11 @@ export function createCompanionServer(opts: ServerOptions) {
     if (!info || info.isDirectory()) file = join(staticRoot, "index.html");
     const data = await readFile(file).catch(() => null);
     if (!data) throw new HttpError(404, "not found");
-    res.writeHead(200, { "content-type": MIME[extname(file)] ?? "application/octet-stream" });
+    const headers: Record<string, string> = { "content-type": MIME[extname(file)] ?? "application/octet-stream" };
+    // The page, the manifest and the service worker must be revalidated on every load, or an
+    // installed app keeps running an old version. Hashed assets can be cached as the browser likes.
+    if (REVALIDATE.has(basename(file)) || extname(file) === ".html") headers["cache-control"] = "no-cache";
+    res.writeHead(200, headers);
     res.end(data);
   }
 
