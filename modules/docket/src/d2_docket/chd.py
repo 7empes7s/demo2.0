@@ -139,7 +139,7 @@ def parse_dossier(html: str, number: str) -> Dossier:
 
     status = None
     badge = soup.select_one(".border.position-lg-sticky .badge")
-    if badge:
+    if badge and not _text(badge).startswith("CHD_"):  # CHD_* is an unfilled template label
         status = _text(badge)
 
     updated = None

@@ -46,6 +46,7 @@ def test_orientation_debate_has_no_deposit_document():
     assert d.type == "Débat d'orientation"
     assert d.deposit_document is None
     assert snapshot.item_type(d.type) == "debate"
+    assert d.status is None  # the page shows the placeholder "CHD_Introduction"
     assert d.committee == "Commission de la Mobilité et des Travaux publics"
 
 
