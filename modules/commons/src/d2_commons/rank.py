@@ -22,7 +22,13 @@ def main(argv: list[str]) -> int:
     if isinstance(data, list):
         data = {"ratings": data}
     params = RankerParams(**data.get("params", {}))
-    ratings = [Rating(x["argument_id"], x["rater_nym"], bool(x["strong"])) for x in data["ratings"]]
+    ratings = []
+    for n, x in enumerate(data["ratings"]):
+        strong = x.get("strong")
+        if not isinstance(strong, bool):
+            print(f"rating {n}: strong must be true or false, got {strong!r}", file=sys.stderr)
+            return 2
+        ratings.append(Rating(x["argument_id"], x["rater_nym"], strong))
     scored = rank(ratings, params=params, stances=data.get("stances"))
     result = {
         "ranker": asdict(ranker_version(params)),
