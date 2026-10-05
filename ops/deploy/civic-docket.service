@@ -1,0 +1,20 @@
+[Unit]
+Description=Refresh the Chamber of Deputies snapshot for the citizen app
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=civic
+Group=civic
+WorkingDirectory=/opt/civic/current
+# Write to a temp file, then swap it in, so the service never reads a half-written snapshot.
+Environment=UV_PROJECT_ENVIRONMENT=/opt/civic/shared/venv UV_CACHE_DIR=/opt/civic/shared/uv-cache
+ExecStart=/usr/bin/env bash -c 'uv run --frozen --no-dev --package d2-docket d2-docket snapshot --out /opt/civic/shared/lu-chd.json.new --max-items 40 && mv /opt/civic/shared/lu-chd.json.new /opt/civic/shared/lu-chd.json'
+# The server reads the snapshot at start-up.
+ExecStartPost=+/bin/systemctl try-restart civic-companion.service
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/opt/civic/shared
+PrivateTmp=true

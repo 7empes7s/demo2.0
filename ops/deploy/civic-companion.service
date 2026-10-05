@@ -1,0 +1,23 @@
+[Unit]
+Description=Civic Companion: citizen app, Docket snapshot and Companion API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=civic
+Group=civic
+WorkingDirectory=/opt/civic/current
+EnvironmentFile=/etc/civic/companion.env
+ExecStart=/usr/bin/env node --experimental-strip-types modules/companion/src/server.ts
+Restart=on-failure
+RestartSec=3
+# Hardening: read-only system, no new privileges, private /tmp.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadOnlyPaths=/opt/civic
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target
