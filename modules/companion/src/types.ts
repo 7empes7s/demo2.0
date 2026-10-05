@@ -79,7 +79,6 @@ export interface CitedSentence {
   text: string;
   sources: number[];
   quote?: string;
-  /** True when the quote was found word for word in the cited source. */
   /** The quote was found word for word in a cited source. It does not prove the sentence follows from it. */
   verified: boolean;
 }
