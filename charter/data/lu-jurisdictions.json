@@ -1,0 +1,25 @@
+{
+  "source": "STATEC, Luxembourg national statistics institute: resident population by canton and commune (statistiques.public.lu)",
+  "reference_date": "2024-01-01",
+  "verified_against_source": false,
+  "note": "Must be refreshed from STATEC before any binding use. The national total is STATEC's published figure for 1 January 2024. Canton and commune figures were entered without access to the STATEC table and are rounded to the nearest 100; they are close but not exact. Only the capital and Esch-sur-Alzette are listed as communes so far; add the rest from the same STATEC table. Cantons use the spec kind 'region'. Every entry is a spec/schemas/jurisdiction.schema.json object.",
+  "jurisdictions": [
+    { "id": "lu", "parent_id": null, "kind": "country", "name": { "lb": "Lëtzebuerg", "fr": "Luxembourg", "de": "Luxemburg", "en": "Luxembourg" }, "population": 672050 },
+
+    { "id": "lu-canton-capellen", "parent_id": "lu", "kind": "region", "name": { "fr": "Canton de Capellen", "en": "Capellen canton" }, "population": 51400 },
+    { "id": "lu-canton-clervaux", "parent_id": "lu", "kind": "region", "name": { "fr": "Canton de Clervaux", "en": "Clervaux canton" }, "population": 20600 },
+    { "id": "lu-canton-diekirch", "parent_id": "lu", "kind": "region", "name": { "fr": "Canton de Diekirch", "en": "Diekirch canton" }, "population": 37200 },
+    { "id": "lu-canton-echternach", "parent_id": "lu", "kind": "region", "name": { "fr": "Canton d'Echternach", "en": "Echternach canton" }, "population": 20600 },
+    { "id": "lu-canton-esch-sur-alzette", "parent_id": "lu", "kind": "region", "name": { "fr": "Canton d'Esch-sur-Alzette", "en": "Esch-sur-Alzette canton" }, "population": 196600 },
+    { "id": "lu-canton-grevenmacher", "parent_id": "lu", "kind": "region", "name": { "fr": "Canton de Grevenmacher", "en": "Grevenmacher canton" }, "population": 32300 },
+    { "id": "lu-canton-luxembourg", "parent_id": "lu", "kind": "region", "name": { "fr": "Canton de Luxembourg", "en": "Luxembourg canton" }, "population": 211600 },
+    { "id": "lu-canton-mersch", "parent_id": "lu", "kind": "region", "name": { "fr": "Canton de Mersch", "en": "Mersch canton" }, "population": 35600 },
+    { "id": "lu-canton-redange", "parent_id": "lu", "kind": "region", "name": { "fr": "Canton de Redange", "en": "Redange canton" }, "population": 20700 },
+    { "id": "lu-canton-remich", "parent_id": "lu", "kind": "region", "name": { "fr": "Canton de Remich", "en": "Remich canton" }, "population": 24300 },
+    { "id": "lu-canton-vianden", "parent_id": "lu", "kind": "region", "name": { "fr": "Canton de Vianden", "en": "Vianden canton" }, "population": 5800 },
+    { "id": "lu-canton-wiltz", "parent_id": "lu", "kind": "region", "name": { "fr": "Canton de Wiltz", "en": "Wiltz canton" }, "population": 19700 },
+
+    { "id": "lu-commune-luxembourg", "parent_id": "lu-canton-luxembourg", "kind": "commune", "name": { "lb": "Stad Lëtzebuerg", "fr": "Ville de Luxembourg", "de": "Stadt Luxemburg", "en": "Luxembourg City" }, "population": 134700 },
+    { "id": "lu-commune-esch-sur-alzette", "parent_id": "lu-canton-esch-sur-alzette", "kind": "commune", "name": { "lb": "Esch-Uelzecht", "fr": "Esch-sur-Alzette", "de": "Esch an der Alzette", "en": "Esch-sur-Alzette" }, "population": 37000 }
+  ]
+}

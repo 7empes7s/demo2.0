@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://democracy2.dev/spec/ranker-version.schema.json",
+  "title": "RankerVersion",
+  "description": "One published version of an argument ranking algorithm. Owned by Commons.",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "algorithm": { "type": "string", "minLength": 1 },
+    "params": { "type": "object" },
+    "code_hash": {
+      "description": "SHA-256 of the ranker's source, lowercase hex.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": ["id", "algorithm", "params", "code_hash"],
+  "additionalProperties": false
+}

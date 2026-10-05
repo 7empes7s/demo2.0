@@ -1,0 +1,31 @@
+name: Docket snapshot
+
+# Builds the Chamber of Deputies snapshot from chd.lu on main's code and keeps it as a workflow
+# artifact (14 days). The citizen app demo is refreshed from it; nothing is committed.
+on:
+  schedule:
+    - cron: "30 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Build snapshot
+        run: |
+          uv run --frozen --no-dev --package d2-docket d2-docket snapshot --out lu-chd.json --max-items 40
+          python3 -c "import json; d = json.load(open('lu-chd.json')); print(len(d['items']), 'files;', len(d['errors']), 'errors')"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lu-chd-snapshot
+          path: lu-chd.json
+          retention-days: 14

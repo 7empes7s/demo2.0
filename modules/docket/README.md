@@ -23,7 +23,7 @@ uv run d2-docket snapshot --out data/lu-chd.json --sources chd   # one source
 ## Rules
 
 - Pages are fetched politely (1 request per second, 1 per 3 seconds for Esch; identified user agent) and only paths `robots.txt` allows (chd.lu, esch.lu and administration.esch.lu allow all; workflow.esch.lu and participation.esch.lu have no robots.txt).
-- **Output:** one JSON snapshot (`d2.docket.snapshot/2`) with `sources`, `meetings`, `items` and `errors`. Every fetched document keeps its URL, fetch time and SHA-256, so any sentence built on it can cite it. Esch documents are listed by URL and not fetched yet.
+- **Output:** one JSON snapshot (`d2.docket.snapshot/2`) with `sources`, `meetings`, `items` and `errors`, a denormalized view built for the citizen app. It is not a list of `spec/` SourceItem records; those are derived from it when Docket gets its API. Every fetched document keeps its URL, fetch time and SHA-256, so any sentence built on it can cite it. Esch documents are listed by URL and not fetched yet.
 - One source failing does not stop the others; the failure is listed in `errors`.
 - **Parsers** are pure functions tested against recorded pages in `tests/fixtures/` (`esch-*` for Esch). When a site changes, record new fixtures and fix the parser in the same PR.
 

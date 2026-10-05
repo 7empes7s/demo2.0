@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh the Chamber snapshot every morning and evening
+
+[Timer]
+OnCalendar=*-*-* 05:30,17:30 Europe/Luxembourg
+RandomizedDelaySec=10m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

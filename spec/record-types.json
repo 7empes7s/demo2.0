@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "description": "Entry types that Record accepts. Signer roles per type are added when Record lands.",
+  "types": [
+    { "type": "charter.change", "description": "A new Charter version; needs a Booth tally proof." },
+    { "type": "issuer.key", "description": "A Door issuer key for an epoch." },
+    { "type": "enrolment.count", "description": "Door enrolment totals." },
+    { "type": "revocation.update", "description": "A new revocation accumulator value." },
+    { "type": "matter.created", "description": "A matter was created." },
+    { "type": "matter.tier", "description": "A matter's scope tier was set or changed." },
+    { "type": "draw.commit", "description": "A Lottery draw's commitment, before the draw." },
+    { "type": "draw.result", "description": "A Lottery draw's result." },
+    { "type": "briefing.published", "description": "A briefing version was published." },
+    { "type": "quiz.published", "description": "A quiz pool was published." },
+    { "type": "round.opened", "description": "A vote round opened." },
+    { "type": "round.tally", "description": "A vote round's tally and proof." },
+    { "type": "delegate.totals", "description": "Delegate follower totals for an epoch." },
+    { "type": "proposal.version", "description": "A new proposal version." },
+    { "type": "review.filed", "description": "A review of a proposal version." },
+    { "type": "proposal.ratified", "description": "A proposal was ratified." },
+    { "type": "kpi.agreed", "description": "A KPI was agreed." },
+    { "type": "kpi.result", "description": "A KPI result." },
+    { "type": "evidence.added", "description": "Delivery evidence was added." },
+    { "type": "verdict.final", "description": "A delivery verdict became final." },
+    { "type": "rating.final", "description": "A mandate rating became final." },
+    { "type": "wall.entry", "description": "An entry on the Wall." },
+    { "type": "tranche.released", "description": "A Treasury tranche was released." },
+    { "type": "spend", "description": "A Treasury spend." },
+    { "type": "flag.status", "description": "A Watchtower flag changed status." },
+    { "type": "release.binary", "description": "A released binary's hash." },
+    { "type": "release.escrow", "description": "A release's source escrow." },
+    {
+      "type": "companion.release",
+      "description": "A Companion release: prompt set, model version, ranker version and Symmetry report."
+    }
+  ]
+}

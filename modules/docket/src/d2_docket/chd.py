@@ -77,6 +77,14 @@ class Meeting:
     points: list[AgendaPoint]
 
 
+def _without_buttons(node: Tag | None) -> Tag | None:
+    """Drop the page's show-more buttons, whose screen-reader labels would read as text."""
+    if node is not None:
+        for button in node.select("button"):
+            button.decompose()
+    return node
+
+
 def _text(node: Tag | None) -> str:
     if node is None:
         return ""
@@ -91,7 +99,10 @@ def _iso(day: str | None) -> str | None:
     if not m:
         return None
     d, mo, y = (int(x) for x in m.groups())
-    return date(y, mo, d).isoformat()
+    try:
+        return date(y, mo, d).isoformat()
+    except ValueError:  # e.g. 31.02.2026 or a 00.00.0000 placeholder
+        return None
 
 
 def _doc_kind(label: str, url: str) -> str:
@@ -136,7 +147,7 @@ def parse_dossier(html: str, number: str) -> Dossier:
 
     status = None
     badge = soup.select_one(".border.position-lg-sticky .badge")
-    if badge:
+    if badge and not _text(badge).startswith("CHD_"):  # CHD_* is an unfilled template label
         status = _text(badge)
 
     updated = None
@@ -168,7 +179,7 @@ def parse_dossier(html: str, number: str) -> Dossier:
                 Activity(
                     date=day,
                     kind=classes[0] if classes else "",
-                    description=_text(cells.get("Description")),
+                    description=_text(_without_buttons(cells.get("Description"))),
                     actors=actors,
                     documents=docs,
                 )
@@ -177,6 +188,14 @@ def parse_dossier(html: str, number: str) -> Dossier:
         for act in activities:
             if any(d.url == deposit_doc.url for d in act.documents):
                 deposit_doc.date = act.date
+                break
+
+    # The info box has no committee row; the latest referral in the history names it.
+    committee = pick("Commission", "Kommission", "Committee", "Kommissioun")
+    if not committee:
+        for act in reversed(sorted(activities, key=lambda a: a.date or "")):
+            if act.kind in ("Commission", "Commission-pressentie") and act.actors:
+                committee = act.actors[0]
                 break
 
     return Dossier(
@@ -189,7 +208,7 @@ def parse_dossier(html: str, number: str) -> Dossier:
             pick("Date de dépôt", "Datum der Einreichung", "Date of submission", "Datum vum Depot")
         ),
         updated=updated,
-        committee=pick("Commission", "Kommission", "Committee", "Kommissioun"),
+        committee=committee,
         deposit_document=deposit_doc,
         activities=activities,
     )

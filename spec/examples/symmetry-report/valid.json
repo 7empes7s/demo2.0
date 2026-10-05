@@ -1,0 +1,15 @@
+{
+  "target": "example-companion-0.1.0",
+  "suite_version": "example-suite-1",
+  "gap_overall": 0.03,
+  "gap_by_topic": {
+    "example-topic": 0.04
+  },
+  "raters": {
+    "human_count": 3,
+    "judge_models": [
+      "example-judge-1"
+    ]
+  },
+  "record_seq": null
+}

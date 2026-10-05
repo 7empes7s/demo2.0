@@ -9,7 +9,7 @@
 - **Set up:** `tools/dev-setup.sh` (cloud sessions run it on start).
 - **Check before pushing:** `tools/check.sh`. CI runs the same script.
 - **Merging:** open a PR and add the `automerge` label. The merge gate merges it once CI is green, no review asks for changes, every review thread is resolved and, when `REQUIRE_REVIEW` is on, someone other than the author has reviewed it. Never call the merge API yourself.
-- **Deploying:** not deployed yet.
+- **Deploying:** `ops/deploy/` (one systemd service behind Caddy, brain's pull-based deployer with rollback). Not installed on Mulinux yet.
 
 <!-- brain:start -->
 ## Shared rules

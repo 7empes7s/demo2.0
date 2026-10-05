@@ -5,10 +5,12 @@ from __future__ import annotations
 import hashlib
 import io
 import time
+import urllib.error
 import urllib.request
 from dataclasses import dataclass
 
 USER_AGENT = "Democracy2-Docket/0.1 (+https://github.com/7empes7s/demo2.0)"
+MAX_BYTES = 40_000_000  # official PDFs can be large, but never this large
 
 
 @dataclass
@@ -27,6 +29,9 @@ class Fetcher:
         self.delay, self.retries, self.timeout = delay, retries, timeout
         self._last = 0.0
 
+    def _open(self, req: urllib.request.Request):  # seam for tests
+        return urllib.request.urlopen(req, timeout=self.timeout)
+
     def get(self, url: str) -> Fetched:
         error: Exception | None = None
         for attempt in range(self.retries):
@@ -35,10 +40,12 @@ class Fetcher:
                 time.sleep(wait)
             try:
                 req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                    body = resp.read()
+                with self._open(req) as resp:
+                    body = resp.read(MAX_BYTES + 1)
                     mime = resp.headers.get_content_type()
                 self._last = time.monotonic()
+                if len(body) > MAX_BYTES:
+                    raise RuntimeError(f"{url} is larger than {MAX_BYTES} bytes")
                 return Fetched(
                     url=url,
                     fetched_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -46,9 +53,17 @@ class Fetcher:
                     mime=mime,
                     body=body,
                 )
-            except Exception as exc:  # network errors are retried, then raised
-                error = exc
+            except urllib.error.HTTPError as exc:
                 self._last = time.monotonic()
+                error = exc
+                if exc.code != 429 and 400 <= exc.code < 500:
+                    break  # a missing page won't appear on retry
+            except RuntimeError:
+                raise
+            except Exception as exc:  # network errors are retried
+                self._last = time.monotonic()
+                error = exc
+            if attempt < self.retries - 1:
                 time.sleep(2**attempt)
         raise RuntimeError(f"could not fetch {url}: {error}")
 

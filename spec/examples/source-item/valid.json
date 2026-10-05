@@ -1,0 +1,17 @@
+{
+  "id": "example-item-1",
+  "source": "example-source",
+  "jurisdiction_id": "example-country",
+  "type": "bill",
+  "title": {
+    "en": "Example bill",
+    "fr": "Projet de loi exemple"
+  },
+  "status": "tabled",
+  "dates": {
+    "tabled": "2026-01-01"
+  },
+  "document_ids": [
+    "example-doc-1"
+  ]
+}

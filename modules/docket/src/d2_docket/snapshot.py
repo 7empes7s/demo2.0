@@ -22,8 +22,13 @@ ESCH_DELAY = 3.0  # minimum seconds between requests for the Esch source
 
 
 def item_type(type_label: str | None) -> str:
+    """bill, debate or other (the values spec/schemas/source-item allows for Chamber dossiers)."""
     low = (type_label or "").lower()
-    return "bill" if any(t in low for t in BILL_TYPES) else "other"
+    if any(t in low for t in BILL_TYPES):
+        return "bill"
+    if "débat" in low or "debatt" in low:
+        return "debate"
+    return "other"
 
 
 def _now() -> str:

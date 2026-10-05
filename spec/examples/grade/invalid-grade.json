@@ -1,0 +1,12 @@
+{
+  "claim_id": "example-claim-1",
+  "checker_id": "example-checker",
+  "grade": "true",
+  "evidence": [
+    {
+      "url": "https://example.org/x",
+      "excerpt": "Example excerpt."
+    }
+  ],
+  "model_version": "example-model-1"
+}
