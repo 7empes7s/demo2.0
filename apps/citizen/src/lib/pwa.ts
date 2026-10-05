@@ -16,7 +16,8 @@ export function canRegister(where: Where, nav: { serviceWorker?: unknown } | und
   return where.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(where.hostname);
 }
 
-export function registerServiceWorker(url = "sw.js"): void {
+/** `url` is absolute so a deep link (which the server answers with index.html) registers the same worker. */
+export function registerServiceWorker(url = `${import.meta.env.BASE_URL}sw.js`): void {
   if (!canRegister(location, navigator)) return;
   // The app works without it; offline is a bonus.
   const register = () => void navigator.serviceWorker.register(url).catch(() => {});

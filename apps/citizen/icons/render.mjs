@@ -10,7 +10,8 @@ const page = await browser.newPage();
 const jobs = [
   ["icon.svg", 192, "public/icon-192.png"],
   ["icon.svg", 512, "public/icon-512.png"],
-  ["icon.svg", 180, "public/apple-touch-icon.png"],
+  // iOS fills transparent corners with black and rounds the icon itself, so this one is full bleed.
+  ["icon-maskable.svg", 180, "public/apple-touch-icon.png"],
   ["icon-maskable.svg", 512, "public/icon-maskable-512.png"],
 ];
 for (const [svg, size, out] of jobs) {

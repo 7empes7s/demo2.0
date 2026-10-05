@@ -27,9 +27,10 @@ SNAPSHOT=path/to/lu-chd.json ANTHROPIC_API_KEY=… npm run serve -w @democracy2/
 The served build (`dist/`) can be installed to a phone's home screen and opens offline.
 
 - `public/manifest.webmanifest` names the app and lists the icons. The icons are drawn from `icons/*.svg`. To redraw them after changing an SVG, run `NODE_PATH=<dir with playwright> node icons/render.mjs`. The PNGs are committed, and the build does not draw them.
-- `sw.js` is the service worker. At build time `vite.config.ts` writes this build's file list and a cache version into it and emits `dist/sw.js`.
-  - The app's files are cached on install and served from the cache.
-  - Pages and `data/snapshot.json` go to the network first. When offline, the saved copy is used, so the list still opens.
+- `sw.js` is the service worker. At build time `vite.config.ts` writes this build's file list and a cache version into it and emits `dist/sw.js`. The version is a hash of the bytes of every cached file, `public/` included, so changing only an icon or the manifest still ships an update.
+  - The app's files are cached on install (bypassing the HTTP cache) and served from the cache. Other files under `/assets/` are cached the first time they are fetched.
+  - Pages and `data/snapshot.json` go to the network first. When offline, when the server answers 5xx, or when the network takes over 4 seconds and a saved copy exists, the saved copy is used, so the list still opens.
+  - Only the app page itself (`/` or `/index.html`, served as HTML) is saved as the offline app. Error and partial responses are never saved, and a failed cache write never fails the request.
   - `/api/*` requests and other sites are never cached.
   - A new build gets a new cache, and the old one is removed. The saved snapshot is kept.
 - `src/lib/pwa.ts` registers the worker only in this build, and only on https or on localhost. Dev and the single-file build never register one, and the single-file page links no manifest.
