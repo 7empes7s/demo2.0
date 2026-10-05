@@ -7,6 +7,7 @@ The contracts modules share. Nothing else is shared.
 | `schemas/<name>.schema.json` | JSON Schema (draft 2020-12), `$id` `https://democracy2.dev/spec/<name>.schema.json` |
 | `examples/<name>/` | One or more valid examples per schema, and invalid ones named `invalid-*.json` |
 | `record-types.json` | The entry types Record accepts |
+| `record/` | Record's log format (entries, tree, checkpoints, proofs) and the test vectors every implementation must pass |
 | `openapi/` | API contracts (when they land) |
 | `tests/` | Checks every schema and example; run by `tools/check.sh` |
 
