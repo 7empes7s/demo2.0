@@ -10,7 +10,8 @@ One service, `civic-companion`, serves three things from one Node process: the c
 | `companion.env.example` | `/etc/civic/companion.env` (mode 600), read by the service |
 | `civic-companion.service` | `/etc/systemd/system/` |
 | `civic-docket.service`, `civic-docket.timer` | `/etc/systemd/system/` (refreshes Chamber data daily) |
-| `Caddyfile` | merge into the host's Caddyfile |
+| `cloudflared.yml`, `publish-cloudflare.sh` | public URL `https://cracia.techinsiderbytes.com` through a Cloudflare Tunnel (no open port) |
+| `Caddyfile` | only if Caddy terminates TLS for this site instead of the tunnel |
 
 ## One-time install (as root on Mulinux)
 
@@ -28,6 +29,8 @@ install -m 600 ops/deploy/companion.env.example /etc/civic/companion.env # then 
 systemctl daemon-reload
 systemctl enable --now app-deploy@civic.timer civic-docket.timer
 systemctl start civic-docket.service   # first snapshot
+# Once the deployer has made the first release live (curl 127.0.0.1:8787/healthz):
+ops/deploy/publish-cloudflare.sh       # tunnel + DNS for cracia.techinsiderbytes.com
 ```
 
 The service starts even without `ANTHROPIC_API_KEY`. It then serves the app and the data, and the Companion routes answer 503. The app shows that the explainer is switched off.

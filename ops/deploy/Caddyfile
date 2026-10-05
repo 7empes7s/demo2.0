@@ -1,5 +1,6 @@
-# Merge into the host Caddyfile. Replace the host name once a domain is chosen.
-civic.example.lu {
+# Merge into the host Caddyfile when Caddy terminates TLS itself. With the Cloudflare tunnel
+# (cloudflared.yml) Caddy is not needed for this site.
+cracia.techinsiderbytes.com {
 	encode zstd gzip
 	reverse_proxy 127.0.0.1:8787
 	header {
