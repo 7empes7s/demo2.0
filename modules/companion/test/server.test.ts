@@ -56,6 +56,37 @@ describe("companion server", () => {
     expect(codes).toEqual([200, 200, 429]);
   });
 
+  it("ignores X-Forwarded-For unless told a proxy is in front", async () => {
+    const answer = JSON.stringify({ grade: "yellow", explanation: "e", evidence: [] });
+    const { base } = await start({ provider: new FakeProvider([answer, answer, answer]), ratePerMinute: 2 });
+    const codes = [];
+    for (let i = 0; i < 3; i++) {
+      const res = await fetch(base + "/api/claim", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-forwarded-for": `9.9.9.${i}` },
+        body: JSON.stringify({ item_id: ITEM.id, claim: `c${i}` }),
+      });
+      codes.push(res.status);
+    }
+    expect(codes).toEqual([200, 200, 429]);
+  });
+
+  it("does not retry a failed argument extraction in a loop", async () => {
+    const provider = new FakeProvider(["not json"]);
+    const { post } = await start({ provider });
+    expect((await post("/api/arguments", { item_id: ITEM.id })).status).toBe(500);
+    expect((await post("/api/arguments", { item_id: ITEM.id })).status).toBe(503);
+    expect(provider.requests).toHaveLength(1);
+  });
+
+  it("serves the snapshot with an ETag", async () => {
+    const { base } = await start();
+    const first = await fetch(base + "/data/snapshot.json");
+    const tag = first.headers.get("etag");
+    expect(tag).toBeTruthy();
+    expect((await fetch(base + "/data/snapshot.json", { headers: { "if-none-match": tag ?? "" } })).status).toBe(304);
+  });
+
   it("serves the app and never files outside it", async () => {
     const dir = await mkdtemp(join(tmpdir(), "d2-static-"));
     await writeFile(join(dir, "index.html"), "<p>app</p>");
@@ -64,5 +95,6 @@ describe("companion server", () => {
     expect(await (await fetch(base + "/bill/123")).text()).toBe("<p>app</p>");
     const escape = await fetch(base + "/%2e%2e/%2e%2e/etc/passwd");
     expect(await escape.text()).not.toContain("root:");
+    expect((await fetch(base + "/%E0%A4%A")).status).toBe(400);
   });
 });

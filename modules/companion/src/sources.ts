@@ -54,35 +54,91 @@ export function buildSources(item: DocketItem, lang: Lang, budget = 60_000): Sou
 
 export function renderSources(sources: Source[]): string {
   return sources
-    .map((s) => `<source n="${s.n}" label="${escapeAttr(s.label)}"${s.date ? ` date="${s.date}"` : ""}>\n${s.text}\n</source>`)
+    .map((s) => `<source n="${s.n}" label="${escapeAttr(s.label)}"${s.date ? ` date="${s.date}"` : ""}>\n${fence(s.text)}\n</source>`)
     .join("\n\n");
+}
+
+/** Source text can't close its own wrapper: a document saying "</source>" stays inside it. */
+export function fence(text: string): string {
+  return text.replace(/<(\/?\s*(?:sources?|claim|conversation)\b)/gi, "‹$1");
 }
 
 function escapeAttr(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
 
-/** Normalise text so a quote survives PDF line breaks, hyphenation, quote styles and case. */
+/** Normalise text for display comparisons: quote styles, PDF hyphenation, spacing and case. */
 export function normalise(text: string): string {
   return text
     .normalize("NFKC")
     .replace(/[‘’‛′`]/g, "'")
     .replace(/[“”„«»]/g, '"')
     .replace(/[‐-―]/g, "-")
-    .replace(/-\s*\n\s*/g, "")
+    .replace(/\s*-\s*\n\s*/g, "")
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
 }
 
-/** True when `quote` appears word for word (after normalising) in any of the cited sources. */
+/** Shortest quote that counts as evidence. Short phrases ("le projet de loi") match any bill. */
+export const MIN_QUOTE_WORDS = 5;
+export const MIN_QUOTE_CHARS = 20;
+
+const ALNUM = /[\p{L}\p{N}]/u;
+
+/**
+ * Letters and digits only, lower-cased, plus where each word starts. Comparing on letters alone
+ * survives PDF hyphenation ("opération -\nnalisation"), stray spaces and punctuation, while the
+ * word starts keep a match from beginning or ending in the middle of a word.
+ */
+function compact(text: string): { chars: string; starts: boolean[] } {
+  let chars = "";
+  const starts: boolean[] = [];
+  let inWord = false;
+  for (const ch of text.normalize("NFKC").toLowerCase()) {
+    if (ALNUM.test(ch)) {
+      chars += ch;
+      starts.push(!inWord);
+      inWord = true;
+    } else {
+      inWord = false;
+    }
+  }
+  starts.push(true);
+  return { chars, starts };
+}
+
+const compactCache = new Map<string, ReturnType<typeof compact>>();
+function compactSource(text: string) {
+  let hit = compactCache.get(text);
+  if (!hit) {
+    if (compactCache.size > 200) compactCache.clear();
+    hit = compact(text);
+    compactCache.set(text, hit);
+  }
+  return hit;
+}
+
+/**
+ * True when `quote` appears word for word in one of the cited sources. Punctuation, spacing,
+ * case and line-break hyphens are ignored; the match must start and end on word boundaries and
+ * the quote must be at least MIN_QUOTE_WORDS words long. "Found" means the words are there, not
+ * that they support the sentence they are attached to.
+ */
 export function quoteIsIn(quote: string | undefined, cited: number[], sources: Source[]): boolean {
   if (!quote) return false;
-  const q = normalise(quote);
-  if (q.length < 8) return false;
+  const words = quote.normalize("NFKC").match(/[\p{L}\p{N}]+/gu) ?? [];
+  if (words.length < MIN_QUOTE_WORDS) return false;
+  const q = compact(quote).chars;
+  if (q.length < MIN_QUOTE_CHARS) return false;
   return cited.some((n) => {
     const s = sources.find((x) => x.n === n);
-    return s ? normalise(s.text).includes(q) : false;
+    if (!s) return false;
+    const { chars, starts } = compactSource(s.text);
+    for (let i = chars.indexOf(q); i >= 0; i = chars.indexOf(q, i + 1)) {
+      if (starts[i] && starts[i + q.length]) return true;
+    }
+    return false;
   });
 }
 

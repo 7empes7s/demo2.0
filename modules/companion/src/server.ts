@@ -1,15 +1,19 @@
 /**
  * Companion server: serves the citizen app, the Docket snapshot and the Companion API.
  * One process, no framework. The browser never sends prompts: it names an item and the
- * server builds the prompt, so the API key can't be used as a general-purpose model proxy.
+ * server builds the prompt. What a resident types (a claim, the conversation so far) reaches
+ * the model only as quoted, size-capped data, and every model-backed route is rate limited.
  *
  *   ANTHROPIC_API_KEY  required for the API routes
  *   COMPANION_MODEL    default claude-sonnet-5-5
  *   SNAPSHOT           path to the Docket snapshot JSON (default data/lu-chd.json)
  *   STATIC_DIR         built app to serve (optional)
  *   PORT               default 8787
+ *   TRUST_PROXY        number of reverse proxies in front (default 0); only then is
+ *                      X-Forwarded-For used to tell clients apart
  */
 
+import { createHash } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { extname, join, normalize, resolve, sep } from "node:path";
@@ -34,7 +38,14 @@ export interface ServerOptions {
   staticDir?: string;
   /** Requests per client per minute on the model-backed routes. */
   ratePerMinute?: number;
+  /** Reverse proxies in front of the server. 0 (default) ignores X-Forwarded-For entirely. */
+  trustProxy?: number;
 }
+
+/** Most clients tracked by the rate limiter before old entries are dropped. */
+const MAX_CLIENTS = 10_000;
+/** How long a failed argument extraction stays cached, so failures can't be retried in a loop. */
+const FAILURE_TTL_MS = 60_000;
 
 class HttpError extends Error {
   readonly status: number;
@@ -72,14 +83,23 @@ function pick<T extends string>(value: unknown, allowed: readonly T[], fallback?
   throw new HttpError(400, `expected one of ${allowed.join(", ")}`);
 }
 
+/** The last few turns, trimmed to a fixed budget. They reach the model only as quoted data. */
 function history(value: unknown): ChatMessage[] {
   if (!Array.isArray(value)) return [];
-  return value.slice(-12).flatMap((m) => {
+  const turns = value.slice(-8).flatMap((m) => {
     const role = (m as ChatMessage)?.role;
     const content = (m as ChatMessage)?.content;
     if ((role !== "user" && role !== "assistant") || typeof content !== "string") return [];
-    return [{ role, content: content.slice(0, 2_000) }];
+    return [{ role, content: content.slice(0, 1_000) }];
   });
+  let budget = 6_000;
+  const kept: ChatMessage[] = [];
+  for (const turn of turns.reverse()) {
+    if (turn.content.length > budget) break;
+    budget -= turn.content.length;
+    kept.unshift(turn);
+  }
+  return kept;
 }
 
 export function createCompanionServer(opts: ServerOptions) {
@@ -88,6 +108,10 @@ export function createCompanionServer(opts: ServerOptions) {
   const hits = new Map<string, number[]>();
   const limit = opts.ratePerMinute ?? 20;
   const staticRoot = opts.staticDir ? resolve(opts.staticDir) : undefined;
+  const trustProxy = opts.trustProxy ?? 0;
+  // The snapshot can be megabytes of document text: serialise it once, not per request.
+  const snapshotBody = Buffer.from(JSON.stringify(opts.snapshot));
+  const snapshotTag = `"${createHash("sha256").update(snapshotBody).digest("hex").slice(0, 32)}"`;
 
   const cached = <T>(key: string, make: () => Promise<T>): Promise<T> => {
     if (!cache.has(key)) {
@@ -100,12 +124,27 @@ export function createCompanionServer(opts: ServerOptions) {
     return cache.get(key) as Promise<T>;
   };
 
+  /** The socket address, or the entry the nearest trusted proxy appended to X-Forwarded-For. */
+  const clientOf = (req: IncomingMessage): string => {
+    const socket = req.socket.remoteAddress ?? "?";
+    if (trustProxy <= 0) return socket;
+    const chain = String(req.headers["x-forwarded-for"] ?? "")
+      .split(",")
+      .map((x) => x.trim())
+      .filter(Boolean);
+    return chain[chain.length - trustProxy] ?? chain[0] ?? socket;
+  };
+
   const throttle = (req: IncomingMessage) => {
-    const who = String(req.headers["x-forwarded-for"] ?? req.socket.remoteAddress ?? "?").split(",")[0].trim();
+    const who = clientOf(req);
     const now = Date.now();
     const recent = (hits.get(who) ?? []).filter((t) => now - t < 60_000);
     if (recent.length >= limit) throw new HttpError(429, "too many requests, try again in a minute");
     recent.push(now);
+    if (!hits.has(who) && hits.size >= MAX_CLIENTS) {
+      for (const [key, times] of hits) if (times.every((t) => now - t >= 60_000)) hits.delete(key);
+      if (hits.size >= MAX_CLIENTS) hits.clear();
+    }
     hits.set(who, recent);
   };
 
@@ -115,10 +154,20 @@ export function createCompanionServer(opts: ServerOptions) {
     return found;
   };
 
-  const argumentsFor = (it: DocketItem) => {
+  const failures = new Map<string, { error: unknown; until: number }>();
+  const argumentsFor = (it: DocketItem, req: IncomingMessage) => {
     if (!opts.provider) throw new HttpError(503, "the Companion is not configured on this server");
     const provider = opts.provider;
-    return cached(`args:${it.id}`, () => extractArguments(provider, it));
+    const key = `args:${it.id}`;
+    const failed = failures.get(key);
+    if (failed && failed.until > Date.now()) throw new HttpError(503, "the Companion could not read this file, try again later");
+    return cached(key, () => {
+      throttle(req);
+      return extractArguments(provider, it).catch((error) => {
+        failures.set(key, { error, until: Date.now() + FAILURE_TTL_MS });
+        throw error;
+      });
+    });
   };
 
   async function api(path: string, body: Record<string, unknown>, req: IncomingMessage): Promise<unknown> {
@@ -135,12 +184,12 @@ export function createCompanionServer(opts: ServerOptions) {
         });
       }
       case "/api/arguments":
-        return argumentsFor(item(body));
+        return argumentsFor(item(body), req);
       case "/api/challenge": {
         const it = item(body);
         throttle(req);
         const position = pick<Position>(body.position, ["for", "against", "unsure"]);
-        const args = await argumentsFor(it);
+        const args = await argumentsFor(it, req);
         return challenge(provider, it, { lang, position, arguments: args.arguments, sources: args.sources, history: history(body.history) });
       }
       case "/api/claim": {
@@ -157,7 +206,13 @@ export function createCompanionServer(opts: ServerOptions) {
 
   async function serveStatic(path: string, res: ServerResponse) {
     if (!staticRoot) throw new HttpError(404, "not found");
-    let file = resolve(staticRoot, "." + normalize(decodeURIComponent(path)));
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(path);
+    } catch {
+      throw new HttpError(400, "bad path");
+    }
+    let file = resolve(staticRoot, "." + normalize(decoded));
     if (file !== staticRoot && !file.startsWith(staticRoot + sep)) throw new HttpError(404, "not found");
     const info = await stat(file).catch(() => null);
     if (!info || info.isDirectory()) file = join(staticRoot, "index.html");
@@ -171,7 +226,14 @@ export function createCompanionServer(opts: ServerOptions) {
     const url = new URL(req.url ?? "/", "http://localhost");
     try {
       if (url.pathname === "/healthz") return send(res, 200, { ok: true, items: items.size, companion: !!opts.provider });
-      if (url.pathname === "/data/snapshot.json") return send(res, 200, opts.snapshot);
+      if (url.pathname === "/data/snapshot.json") {
+        if (req.headers["if-none-match"] === snapshotTag) {
+          res.writeHead(304, { etag: snapshotTag });
+          return res.end();
+        }
+        res.writeHead(200, { "content-type": "application/json", etag: snapshotTag, "cache-control": "public, max-age=300" });
+        return res.end(snapshotBody);
+      }
       if (url.pathname.startsWith("/api/")) {
         if (req.method !== "POST") throw new HttpError(405, "use POST");
         return send(res, 200, await api(url.pathname, await readBody(req), req));
@@ -191,7 +253,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const provider = key ? new AnthropicProvider(key, process.env.COMPANION_MODEL || undefined) : null;
   if (!provider) console.warn("ANTHROPIC_API_KEY is not set: serving the app and data, Companion routes return 503");
   const port = Number(process.env.PORT ?? 8787);
-  createCompanionServer({ provider, snapshot, staticDir: process.env.STATIC_DIR }).listen(port, () =>
+  const trustProxy = Number(process.env.TRUST_PROXY ?? 0) || 0;
+  createCompanionServer({ provider, snapshot, staticDir: process.env.STATIC_DIR, trustProxy }).listen(port, () =>
     console.log(`companion listening on :${port}`),
   );
 }
