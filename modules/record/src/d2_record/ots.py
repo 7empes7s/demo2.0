@@ -181,7 +181,10 @@ class Timestamp:
 
 
 def pending_uri(payload: bytes) -> str:
-    uri = _read_varbytes(io.BytesIO(payload), 1000).decode("ascii", "strict")
+    try:
+        uri = _read_varbytes(io.BytesIO(payload), 1000).decode("ascii", "strict")
+    except UnicodeDecodeError as exc:
+        raise OtsError("calendar URI in pending attestation is not ASCII") from exc
     if not uri.startswith(("https://", "http://")) or any(c in uri for c in " \"'<>\\"):
         raise OtsError("bad calendar URI in pending attestation")
     return uri
@@ -275,7 +278,11 @@ def upgrade(
     for node, (tag, payload) in list(root.walk()):
         if tag != PENDING:
             continue
-        uri = pending_uri(payload).rstrip("/")
+        try:
+            uri = pending_uri(payload).rstrip("/")
+        except OtsError as exc:
+            errors.append(f"{exc}, skipped")
+            continue
         if uri not in allowed:
             errors.append(f"{uri}: not an allowed calendar, skipped")
             continue
@@ -296,6 +303,7 @@ def upgrade(
 @dataclass
 class AnchorReport:
     pending: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)  # malformed pending attestations, skipped
     bitcoin: list[dict] = field(default_factory=list)  # {height, merkle_root, ok, block_time}
 
     @property
@@ -316,7 +324,10 @@ def verify(
     report = AnchorReport()
     for node, (tag, payload) in root.walk():
         if tag == PENDING:
-            report.pending.append(pending_uri(payload))
+            try:
+                report.pending.append(pending_uri(payload))
+            except OtsError as exc:
+                report.errors.append(str(exc))
         elif tag == BITCOIN:
             height = bitcoin_height(payload)
             claimed = node.msg[::-1].hex() if len(node.msg) == 32 else ""
@@ -326,7 +337,12 @@ def verify(
                 block_hash = (_http(f"{base}/block-height/{height}") or b"").decode().strip()
                 if not re.fullmatch(r"[0-9a-f]{64}", block_hash):
                     raise OtsError(f"no block at height {height}")
-                block = json.loads(_http(f"{base}/block/{block_hash}") or b"{}")
+                try:
+                    block = json.loads(_http(f"{base}/block/{block_hash}") or b"{}")
+                except ValueError as exc:
+                    raise OtsError(f"block {block_hash}: reply is not JSON") from exc
+                if not isinstance(block, dict):
+                    raise OtsError(f"block {block_hash}: reply is not a JSON object")
                 item["ok"] = block.get("merkle_root") == claimed
                 item["block_time"] = block.get("timestamp")
             report.bitcoin.append(item)

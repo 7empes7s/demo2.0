@@ -84,3 +84,42 @@ def test_checkpoint_is_signed_stable_and_verifiable(tmp_path):
     log.append(entry(5))
     assert log.latest_checkpoint() == note
     assert Checkpoint.verify(log.checkpoint(LOG_KEY), LOG_KEY.verifier).size == 6
+
+
+def test_commits_are_durable_before_a_checkpoint_is_signed(tmp_path):
+    log = Log(tmp_path / "log.db", TYPES)
+    assert log.db.execute("PRAGMA synchronous").fetchone()[0] == 2  # FULL
+
+
+def test_a_second_writer_on_the_same_database_is_picked_up(tmp_path):
+    db = tmp_path / "log.db"
+    server, cli = Log(db, TYPES), Log(db, TYPES)
+    ref = MemoryTree()
+    for i in range(20):
+        writer = server if i % 3 else cli  # interleave the two connections
+        seq, leaf = writer.append(entry(i))
+        ref.append(leaf)
+        assert seq == i
+    assert cli.inclusion_proof(0, 20) == merkle.inclusion_proof(ref.subtree, 0, 20)
+    cli.refresh()
+    assert cli.size == 20 and cli.root() == merkle.root(ref.subtree, 20)
+    assert server.size == 20 and server.root() == merkle.root(ref.subtree, 20)
+    cli.append(entry(20))
+    ref.append(entry(20).leaf_hash())
+    note = server.checkpoint(LOG_KEY)  # signs the state on disk, not a stale one
+    assert Checkpoint.verify(note, LOG_KEY.verifier).root == merkle.root(ref.subtree, 21)
+
+
+def test_a_failed_batch_leaves_nothing_on_disk(tmp_path):
+    db = tmp_path / "log.db"
+    log = Log(db, TYPES)
+    log.append_many([entry(i) for i in range(3)])
+    root = log.root()
+    with pytest.raises(EntryError):
+        log.append_many([entry(3), entry(4, "not.a.type")])
+    log.close()
+    log = Log(db, TYPES)
+    assert (log.size, log.root()) == (3, root)
+    assert log.db.execute("SELECT COUNT(*) FROM entries").fetchone()[0] == 3
+    log.append(entry(3))
+    assert log.size == 4

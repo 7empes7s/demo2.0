@@ -30,6 +30,7 @@ class Fake:
         self.confirmed = False
         self.commitments: list[bytes] = []
         self.merkle_root_override: str | None = None
+        self.block_body_override: bytes | None = None
         fake = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -64,6 +65,8 @@ class Fake:
                     return self._send(200, body + _varbytes(height.getvalue()))
                 if self.path == f"/block-height/{HEIGHT}":
                     return self._send(200, b"ab" * 32, "text/plain")
+                if self.path == "/block/" + "ab" * 32 and fake.block_body_override is not None:
+                    return self._send(200, fake.block_body_override, "application/json")
                 if self.path == "/block/" + "ab" * 32:
                     root = fake.merkle_root_override or fake.block_merkle_root().hex()
                     body = json.dumps({"merkle_root": root, "timestamp": 1_790_000_000})
@@ -141,6 +144,35 @@ def test_upgrade_contacts_only_allowed_calendars(fakes):
     out, changed, errors = ots.upgrade(receipt, ["https://a.pool.opentimestamps.org"])
     assert (out, changed) == (receipt, False)
     assert "not an allowed calendar" in errors[0]
+
+
+def test_a_malformed_pending_attestation_is_skipped_not_fatal(fakes):
+    cal = fakes[0]
+    receipt, _ = ots.stamp(DIGEST, [cal.url])
+    cal.confirmed = True
+    upgraded, changed, _ = ots.upgrade(receipt, [cal.url])
+    assert changed
+    digest, root = ots.parse_ots(upgraded)
+    root.attestations.append((ots.PENDING, _varbytes(b"https://\xff\xfe")))
+    hostile = ots.serialize_ots(digest, root)
+
+    report = ots.verify(hostile, DIGEST, esplora=cal.url)
+    assert report.verified
+    assert report.pending == [] and "not ASCII" in report.errors[0]
+    out, changed, errors = ots.upgrade(hostile, [cal.url])
+    assert (out, changed) == (hostile, False)
+    assert "not ASCII" in errors[0]
+
+
+def test_a_non_object_block_reply_is_an_ots_error(fakes):
+    cal = fakes[0]
+    receipt, _ = ots.stamp(DIGEST, [cal.url])
+    cal.confirmed = True
+    upgraded, _, _ = ots.upgrade(receipt, [cal.url])
+    for body in (b"[]", b"not json"):
+        cal.block_body_override = body
+        with pytest.raises(ots.OtsError, match="reply is not"):
+            ots.verify(upgraded, DIGEST, esplora=cal.url)
 
 
 @pytest.mark.parametrize(

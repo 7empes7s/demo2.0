@@ -54,12 +54,13 @@ class Log:
         self.lock = threading.RLock()
         self.db = sqlite3.connect(str(path), check_same_thread=False, isolation_level=None)
         self.db.execute("PRAGMA journal_mode=WAL")
-        self.db.execute("PRAGMA synchronous=NORMAL")
+        # FULL: every commit is on disk before we return. With NORMAL a power loss can drop
+        # entries that a served checkpoint already signed, and the log would then sign a
+        # second, different root for the same size.
+        self.db.execute("PRAGMA synchronous=FULL")
         self.db.executescript(SCHEMA)
-        self.size = self.db.execute(
-            "SELECT COALESCE(MAX(idx) + 1, 0) FROM nodes WHERE level = 0"
-        ).fetchone()[0]
-        self.frontier = self._load_frontier()
+        self.size, self.frontier = 0, []
+        self.refresh()
 
     def close(self) -> None:
         self.db.close()
@@ -67,6 +68,16 @@ class Log:
     def _one(self, sql: str, params: tuple = ()) -> tuple | None:
         with self.lock:
             return self.db.execute(sql, params).fetchone()
+
+    def refresh(self) -> None:
+        """Reload size and frontier if another connection appended to the database."""
+        with self.lock:
+            size = self.db.execute(
+                "SELECT COALESCE(MAX(idx) + 1, 0) FROM nodes WHERE level = 0"
+            ).fetchone()[0]
+            if size != self.size:
+                self.size = size
+                self.frontier = self._load_frontier()
 
     # Tree -------------------------------------------------------------------------------
 
@@ -97,6 +108,8 @@ class Log:
             return merkle.root(self.subtree, size)
 
     def _check_size(self, size: int) -> None:
+        if size > self.size:
+            self.refresh()
         if not 0 <= size <= self.size:
             raise ValueError(f"size {size} is beyond the tree size {self.size}")
 
@@ -113,6 +126,7 @@ class Log:
             now = int(time.time())
             try:
                 self.db.execute("BEGIN IMMEDIATE")
+                self.refresh()  # the write lock is held: no one else can append now
                 for entry in entries:
                     if check:
                         entry.check(self.allowed_types)
@@ -176,6 +190,7 @@ class Log:
     def checkpoint(self, signer: Signer, now: int | None = None) -> str:
         """Sign a checkpoint for the current size (or return the one already signed)."""
         with self.lock:
+            self.refresh()
             existing = self.checkpoint_at(self.size)
             if existing is not None:
                 return existing

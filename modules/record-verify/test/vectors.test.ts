@@ -102,6 +102,22 @@ describe("Record vectors", () => {
     },
   );
 
+  it("has must-fail cases for proofs, notes, checkpoints and entry encodings", () => {
+    expect(D2.invalid.length).toBe(29);
+  });
+
+  it("rejects entries whose fields are not valid UTF-8 text", () => {
+    const e = D2.entries[0];
+    expect(() => checkEntry({ ...e, payload_uri: "https://example.org/\ud800" })).toThrow(/UTF-8/);
+    expect(() => checkEntry({ ...e, type: "matter.\udc00" })).toThrow(/UTF-8/);
+  });
+
+  it("parses verifier keys exactly as given", () => {
+    expect(parseVerifierKey(D2.vkey).encoded).toBe(D2.vkey);
+    expect(() => parseVerifierKey(` ${D2.vkey}`)).toThrow();
+    expect(() => parseVerifierKey(`${D2.vkey}\n`)).toThrow();
+  });
+
   it("rejects verifier keys whose id does not match", () => {
     expect(() => parseVerifierKey(D2.vkey.replace(/\+[0-9a-f]{8}\+/, "+00000000+"))).toThrow(/id/);
   });

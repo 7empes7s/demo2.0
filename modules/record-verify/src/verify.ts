@@ -115,10 +115,12 @@ export interface VerifierKey {
   name: string;
   id: Buffer;
   key: KeyObject;
+  /** The canonical encoding: <name>+<lowercase id>+<base64 key>. */
+  encoded: string;
 }
 
-export function parseVerifierKey(text: string): VerifierKey {
-  const s = text.trim();
+/** Parses a verifier key exactly as given; callers trim text read from files. */
+export function parseVerifierKey(s: string): VerifierKey {
   const a = s.indexOf("+");
   const b = s.indexOf("+", a + 1);
   if (a <= 0 || b < 0) fail("verifier key must be <name>+<id>+<key>");
@@ -130,7 +132,7 @@ export function parseVerifierKey(text: string): VerifierKey {
   const id = sha256(Buffer.from(name + "\n"), Buffer.of(0x01), pub).subarray(0, 4);
   if (id.toString("hex") !== s.slice(a + 1, b).toLowerCase()) fail("verifier key id does not match the key");
   const key = createPublicKey({ key: { kty: "OKP", crv: "Ed25519", x: pub.toString("base64url") }, format: "jwk" });
-  return { name, id, key };
+  return { name, id, key, encoded: `${name}+${id.toString("hex")}+${raw.toString("base64")}` };
 }
 
 const ed25519 = (key: KeyObject, message: Uint8Array, sig: Buffer): boolean =>
@@ -172,7 +174,11 @@ export function parseCheckpoint(body: string): Checkpoint {
   return { origin: lines[0], size: BigInt(lines[1]), root, timestamp: Number(stamps[0].slice(10)) };
 }
 
-export const verifyCheckpoint = (note: string, v: VerifierKey): Checkpoint => parseCheckpoint(openNote(note, v));
+export function verifyCheckpoint(note: string, v: VerifierKey): Checkpoint {
+  const cp = parseCheckpoint(openNote(note, v));
+  if (cp.origin !== v.name) fail(`checkpoint origin ${cp.origin} is not the key name ${v.name}`);
+  return cp;
+}
 
 // --- Entries (spec section 1) ---------------------------------------------------------------
 
@@ -193,10 +199,14 @@ export function checkEntry(value: unknown): Entry {
   if (keys.join() !== [...FIELDS].sort().join()) fail(`entry must have exactly ${FIELDS.join(", ")}`);
   for (const f of FIELDS) if (typeof obj[f] !== "string") fail(`entry ${f} must be a string`);
   const e = obj as unknown as Entry;
-  if (e.type === "" || e.type.includes("\n")) fail("bad entry type");
+  // Lone UTF-16 surrogates have no UTF-8 encoding; Buffer.from would silently replace them.
+  for (const f of FIELDS) if (/\p{Cs}/u.test(e[f])) fail(`entry ${f} is not valid UTF-8 text`);
+  // JavaScript's "$" (without the m flag) matches only at the very end, never before a final "\n".
+  if (!/^[^\x00-\x20\x7f]{1,128}$/u.test(e.type)) fail("bad entry type");
   if (!/^sha256:[0-9a-f]{64}$/.test(e.payload_hash)) fail("payload_hash must be sha256:<64 lowercase hex>");
   if (!/^[^\x00-\x20\x7f]{1,2048}$/u.test(e.payload_uri)) fail("bad payload_uri");
   const signer = parseVerifierKey(e.signer);
+  if (signer.encoded !== e.signer) fail("signer must be a verifier key in canonical form");
   const message = `d2.record.entry-signature/1\n${e.type}\n${e.payload_hash}\n${e.payload_uri}\n`;
   if (!ed25519(signer.key, Buffer.from(message, "utf8"), base64(e.signature, "entry signature"))) {
     fail("entry signature does not verify");

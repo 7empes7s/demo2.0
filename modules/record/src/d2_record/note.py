@@ -24,7 +24,7 @@ from cryptography.hazmat.primitives.serialization import (
 
 ALG_ED25519 = 0x01
 SIG_PREFIX = "— "  # em dash + space
-_NAME = re.compile(r"^[^\s+]+$")
+_NAME = re.compile(r"[^\s+]+")  # used with fullmatch
 
 
 def _raw_public(key: Ed25519PublicKey) -> bytes:
@@ -57,8 +57,9 @@ class Verifier:
 
     @classmethod
     def parse(cls, text: str) -> Verifier:
-        parts = text.strip().split("+", 2)  # base64 may itself contain "+"
-        if len(parts) != 3 or not _NAME.match(parts[0]):
+        """Parse a verifier key exactly as given (callers strip text read from files)."""
+        parts = text.split("+", 2)  # base64 may itself contain "+"
+        if len(parts) != 3 or not _NAME.fullmatch(parts[0]):
             raise ValueError("verifier key must be <name>+<id>+<key>")
         name, kid, blob = parts
         raw = base64.b64decode(blob, validate=True)
@@ -92,7 +93,7 @@ class Signer:
 
     @classmethod
     def generate(cls, name: str) -> Signer:
-        if not _NAME.match(name):
+        if not _NAME.fullmatch(name):
             raise ValueError("key name must be non-empty with no spaces or '+'")
         seed = Ed25519PrivateKey.generate().private_bytes(
             Encoding.Raw, PrivateFormat.Raw, NoEncryption()
@@ -130,7 +131,9 @@ def open_note(note: str, verifier: Verifier) -> str:
     for line in sigs[:-1].split("\n"):
         if not line.startswith(SIG_PREFIX):
             raise ValueError("malformed signature line")
-        name, _, blob = line[len(SIG_PREFIX) :].partition(" ")
+        name, space, blob = line[len(SIG_PREFIX) :].partition(" ")
+        if not space:
+            raise ValueError("malformed signature line")
         raw = base64.b64decode(blob, validate=True)
         if name != verifier.name or raw[:4] != verifier.id:
             continue
@@ -171,7 +174,12 @@ class Checkpoint:
 
     @classmethod
     def verify(cls, note: str, verifier: Verifier) -> Checkpoint:
-        return cls.parse_body(open_note(note, verifier))
+        cp = cls.parse_body(open_note(note, verifier))
+        if cp.origin != verifier.name:
+            raise ValueError(
+                f"checkpoint origin {cp.origin!r} is not the key name {verifier.name!r}"
+            )
+        return cp
 
 
 def checkpoint_hash(note: str) -> bytes:

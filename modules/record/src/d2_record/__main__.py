@@ -32,7 +32,7 @@ def _verifier(value: str) -> Verifier:
     """A verifier key string, or a file containing one."""
     if Path(value).is_file():
         value = Path(value).read_text(encoding="utf-8")
-    return Verifier.parse(value)
+    return Verifier.parse(value.strip())
 
 
 def _log(args) -> Log:
@@ -165,6 +165,8 @@ def cmd_verify_anchor(args) -> int:
     report = ots.verify(Path(args.ots).read_bytes(), checkpoint_hash(note), esplora)
     for uri in report.pending:
         print(f"pending: {uri}")
+    for err in report.errors:
+        print(f"warning: skipped a pending attestation: {err}", file=sys.stderr)
     for b in report.bitcoin:
         state = "verified" if b["ok"] else ("unchecked" if esplora is None else "MISMATCH")
         print(f"bitcoin block {b['height']}: {state} (merkle root {b['merkle_root']})")

@@ -16,10 +16,12 @@ from __future__ import annotations
 
 import base64
 import json
+import re
+import sqlite3
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
-from .entry import Entry, EntryError
+from .entry import Entry
 from .note import Signer
 from .store import Log
 
@@ -69,6 +71,7 @@ def make_server(log: Log, signer: Signer, host: str = "127.0.0.1", port: int = 8
             q = {k: v[-1] for k, v in parse_qs(url.query).items()}
             try:
                 if url.path == "/healthz":
+                    log.refresh()
                     return self._json(200, {"ok": True, "size": log.size})
                 if url.path == "/checkpoint":
                     note = log.checkpoint(signer)
@@ -90,19 +93,31 @@ def make_server(log: Log, signer: Signer, host: str = "127.0.0.1", port: int = 8
                 )
             except ValueError as exc:
                 return self._error(400, str(exc))
+            except sqlite3.Error as exc:
+                return self._error(503, f"storage error: {exc}")
             self._error(404, "not found")
 
         def do_POST(self):  # noqa: N802 - stdlib name
             if urlsplit(self.path).path != "/entries":
                 return self._error(404, "not found")
-            length = int(self.headers.get("Content-Length") or 0)
-            if length <= 0 or length > MAX_BODY:
-                return self._error(413 if length else 411, "body must be 1 byte to 16 KiB")
+            header = self.headers.get("Content-Length")
+            if header is None:
+                return self._error(411, "Content-Length is required")
+            if not re.fullmatch(r"[0-9]{1,18}", header.strip()) or int(header) == 0:
+                self.close_connection = True
+                return self._error(400, "Content-Length must be a positive integer")
+            length = int(header)
+            if length > MAX_BODY:
+                self.close_connection = True
+                return self._error(413, "body must be 1 byte to 16 KiB")
             try:
                 entry = Entry.from_dict(json.loads(self.rfile.read(length)))
                 seq, leaf = log.append(entry)
-            except (EntryError, json.JSONDecodeError, UnicodeDecodeError) as exc:
-                return self._error(400, str(exc))
+            except (ValueError, RecursionError) as exc:
+                # EntryError, JSON and Unicode errors are all ValueErrors.
+                return self._error(400, str(exc) or type(exc).__name__)
+            except sqlite3.Error as exc:
+                return self._error(503, f"storage error: {exc}")
             self._json(201, {"seq": seq, "leaf_hash": b64(leaf)})
 
     return ThreadingHTTPServer((host, port), Handler)

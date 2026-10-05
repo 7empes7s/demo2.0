@@ -19,8 +19,10 @@ from .merkle import leaf_hash
 from .note import Signer, Verifier
 
 FIELDS = ("type", "payload_hash", "payload_uri", "signer", "signature")
-_PAYLOAD_HASH = re.compile(r"^sha256:[0-9a-f]{64}$")
-_URI = re.compile(r"^[^\x00-\x20\x7f]{1,2048}$")
+# Always used with fullmatch: "$" would also match before a trailing newline.
+_PAYLOAD_HASH = re.compile(r"sha256:[0-9a-f]{64}")
+_TYPE = re.compile(r"[^\x00-\x20\x7f]{1,128}")
+_URI = re.compile(r"[^\x00-\x20\x7f]{1,2048}")
 
 
 class EntryError(ValueError):
@@ -54,21 +56,30 @@ class Entry:
             raise EntryError(f"entry must have exactly the fields {', '.join(FIELDS)}")
         if not all(isinstance(data[f], str) for f in FIELDS):
             raise EntryError("entry fields must be strings")
+        for f in FIELDS:
+            try:
+                data[f].encode("utf-8")
+            except UnicodeEncodeError as exc:
+                raise EntryError(f"entry {f} is not valid UTF-8 text") from exc
         return cls(**{f: data[f] for f in FIELDS})
 
     def check(self, allowed_types: frozenset[str] | None) -> None:
         """Raise EntryError unless the entry is well formed and its signature verifies."""
+        if not _TYPE.fullmatch(self.type):
+            raise EntryError("type must be 1-128 characters with no spaces or controls")
         if allowed_types is not None and self.type not in allowed_types:
             raise EntryError(f"unknown entry type {self.type!r}")
-        if not _PAYLOAD_HASH.match(self.payload_hash):
+        if not _PAYLOAD_HASH.fullmatch(self.payload_hash):
             raise EntryError("payload_hash must be sha256:<64 lowercase hex>")
-        if not _URI.match(self.payload_uri):
+        if not _URI.fullmatch(self.payload_uri):
             raise EntryError("payload_uri must be 1-2048 characters with no spaces or controls")
         try:
             verifier = Verifier.parse(self.signer)
             sig = base64.b64decode(self.signature, validate=True)
         except ValueError as exc:
             raise EntryError(f"bad signer or signature encoding: {exc}") from exc
+        if self.signer != verifier.encode():
+            raise EntryError("signer must be a verifier key in canonical form")
         if len(sig) != 64 or not verifier.verify(self.signed_message(), sig):
             raise EntryError("signature does not verify")
 

@@ -50,15 +50,40 @@ describe("record-verify CLI", () => {
     expect(cli("consistency", "--vkey", D2.vkey, "--old", f.new, "--new", f.old, "--proof", f.proof).code).toBe(1);
   });
 
-  it("takes one case or a batch as JSON", () => {
-    const one = { kind: "inclusion", vkey: D2.vkey, checkpoint: D2.checkpoints["11"], entry: D2.entries[4], proof };
-    const batch = { vkey: D2.vkey, cases: D2.invalid.slice(0, 1) };
-    const f = files({ one, batch, good: { vkey: D2.vkey, cases: [one, one] } });
-    expect(cli("--json", f.one).code).toBe(0);
-    expect(cli("--json", f.good).out).toContain("ok: all 2 cases hold");
-    const bad = cli("--json", f.batch);
+  it("takes one case or a batch as JSON, under the key from --vkey", () => {
+    const one = { kind: "inclusion", checkpoint: D2.checkpoints["11"], entry: D2.entries[4], proof };
+    const batch = { cases: D2.invalid.slice(0, 1) };
+    const f = files({ one, batch, good: { vkey: D2.vkey, cases: [one, { ...one, vkey: D2.vkey }] } });
+    expect(cli("--json", f.one, "--vkey", D2.vkey).code).toBe(0);
+    const good = cli("--json", f.good, "--vkey", D2.vkey);
+    expect(good.out).toContain("ok: all 2 cases hold under key example.org/d2-record-test (id ");
+    expect(good.code).toBe(0);
+    const bad = cli("--json", f.batch, "--vkey", D2.vkey);
     expect(bad.code).toBe(1);
     expect(bad.out).toContain("case 0:");
+  });
+
+  it("never trusts a key inside the JSON input", () => {
+    // A bundle that brings its own key: here a real key, but not the one the caller trusts.
+    const other = D2.entries[0].signer;
+    const one = { kind: "inclusion", vkey: D2.vkey, checkpoint: D2.checkpoints["11"], entry: D2.entries[4], proof };
+    const f = files({ one, batch: { vkey: D2.vkey, cases: [one] }, inner: { cases: [{ ...one, vkey: other }] } });
+    const noKey = cli("--json", f.one);
+    expect(noKey.code).toBe(1);
+    expect(noKey.out).toContain("missing --vkey");
+    expect(cli("--json", f.batch).code).toBe(1);
+    expect(cli("--json", f.one, "--vkey", other).out).toContain("different verifier key");
+    expect(cli("--json", f.batch, "--vkey", other).code).toBe(1);
+    expect(cli("--json", f.inner, "--vkey", D2.vkey).out).toContain("case 0: input names a different verifier key");
+  });
+
+  it("exits 1 for an empty or missing list of cases", () => {
+    const f = files({ empty: { vkey: D2.vkey, cases: [] }, notList: { cases: {} }, nothing: [] });
+    for (const path of [f.empty, f.notList, f.nothing]) {
+      const r = cli("--json", path, "--vkey", D2.vkey);
+      expect(r.code).toBe(1);
+      expect(r.out).toMatch(/^fail: /);
+    }
   });
 
   it("exits 1 on usage errors", () => {

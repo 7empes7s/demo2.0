@@ -102,12 +102,14 @@ def main() -> None:
     cli = ROOT / "modules" / "record-verify" / "src" / "cli.ts"
     node = ["node", "--experimental-strip-types", "--no-warnings", str(cli)]
     t0 = time.perf_counter()
-    out = subprocess.run([*node, "--json", str(batch_file)], capture_output=True, text=True)
+    out = subprocess.run(
+        [*node, "--json", str(batch_file), "--vkey", vkey.encode()], capture_output=True, text=True
+    )
     ts_s = time.perf_counter() - t0
     if out.returncode != 0:
         raise SystemExit(f"TypeScript verifier failed: {out.stdout}{out.stderr}")
     t0 = time.perf_counter()
-    subprocess.run([*node, "--json", "/dev/null"], capture_output=True)
+    subprocess.run([*node, "--json", "/dev/null", "--vkey", vkey.encode()], capture_output=True)
     startup = time.perf_counter() - t0
     results["ts_verify_ms_each"] = round((ts_s - startup) * 1000 / len(cases), 3)
     results["ts_cases"] = len(cases)

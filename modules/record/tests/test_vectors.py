@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 from d2_record import vectors
-from d2_record.entry import Entry
+from d2_record.entry import Entry, EntryError
 from d2_record.note import Checkpoint, Signer, Verifier, open_note, sign_note
 from d2_record.verify import VerifyError, check_consistency, check_inclusion
 
@@ -41,11 +41,66 @@ def test_every_consistency_proof_verifies():
 
 @pytest.mark.parametrize("case", V["invalid"], ids=lambda c: c["reason"])
 def test_invalid_cases_fail(case):
-    with pytest.raises((VerifyError, ValueError)):
+    with pytest.raises(VerifyError):
         if case["kind"] == "inclusion":
             check_inclusion(case["checkpoint"], VKEY, case["entry"], case["proof"])
         else:
             check_consistency(case["old"], case["new"], VKEY, case["proof"])
+
+
+def test_invalid_cases_cover_notes_checkpoints_and_entry_encodings():
+    assert len(V["invalid"]) == 29
+
+
+def _inclusion_case():
+    proof = next(p for p in V["inclusion"] if p["seq"] == 4 and p["size"] == 11)
+    return V["checkpoints"]["11"], V["entries"][4], json.loads(json.dumps(proof))
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"seq": True},
+        {"size": True},
+        {"seq": -1},
+        {"seq": "4"},
+        {"proof": "not a list"},
+        {"proof": [1, 2]},
+        {"proof": ["not base64!"]},
+        {"leaf_hash": 7},
+        {"leaf_hash": "not base64!"},
+    ],
+)
+def test_malformed_inclusion_proofs_raise_verify_error(change):
+    note, entry, proof = _inclusion_case()
+    check_inclusion(note, VKEY, entry, proof)
+    with pytest.raises(VerifyError):
+        check_inclusion(note, VKEY, entry, {**proof, **change})
+    with pytest.raises(VerifyError):
+        check_inclusion(note, VKEY, entry, [proof])
+    with pytest.raises(VerifyError):
+        check_inclusion(note, VKEY, "entry", proof)
+
+
+def test_malformed_consistency_proofs_raise_verify_error():
+    proof = next(p for p in V["consistency"] if p["from"] == 1 and p["to"] == 2)
+    old, new = V["checkpoints"]["1"], V["checkpoints"]["2"]
+    check_consistency(old, new, VKEY, proof)
+    for bad in (
+        {**proof, "from": True},
+        {**proof, "proof": None},
+        [proof],
+        {**proof, "proof": [0]},
+    ):
+        with pytest.raises(VerifyError):
+            check_consistency(old, new, VKEY, bad)
+
+
+def test_entries_must_be_valid_utf8_text():
+    e = V["entries"][0]
+    for field in ("type", "payload_uri"):
+        with pytest.raises(EntryError, match="UTF-8"):
+            Entry.from_dict({**e, field: e[field] + "\ud800"})
 
 
 def test_key_encodings_round_trip():
@@ -55,6 +110,9 @@ def test_key_encodings_round_trip():
     assert signer.encode().startswith("PRIVATE+KEY+example.org/x+")
     with pytest.raises(ValueError):
         Verifier.parse(V["vkey"].replace("+4f", "+00", 1))
+    for padded in (" " + V["vkey"], V["vkey"] + "\n"):  # parsed exactly as given
+        with pytest.raises(ValueError):
+            Verifier.parse(padded)
 
 
 def test_note_signatures():
@@ -68,5 +126,7 @@ def test_note_signatures():
         open_note(note, vectors.OTHER_KEY.verifier)
     with pytest.raises(ValueError):
         sign_note("a\n\nb\n", signer)
+    with pytest.raises(ValueError, match="malformed signature line"):
+        open_note("hello\n\n— nospace\n", signer.verifier)
     cp = Checkpoint.verify(V["checkpoints"]["13"], VKEY)
     assert cp.size == 13 and cp.timestamp == vectors.T0 + 13

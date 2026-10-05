@@ -15,9 +15,9 @@ import hashlib
 import json
 from pathlib import Path
 
-from .entry import sign_entry
+from .entry import Entry, sign_entry
 from .merkle import MemoryTree, consistency_proof, inclusion_proof, root
-from .note import Checkpoint, Signer
+from .note import SIG_PREFIX, Checkpoint, Signer, sign_note
 
 LOG_KEY = Signer("example.org/d2-record-test", hashlib.sha256(b"d2 test log key").digest())
 OTHER_KEY = Signer("example.org/d2-record-test", hashlib.sha256(b"d2 other key").digest())
@@ -140,6 +140,69 @@ def build() -> dict:
     c = con(7, 13)
     c["new"] = checkpoints["12"]
     bad("the new checkpoint does not match the proof", c)
+
+    # A fork: a properly signed checkpoint of the same size over a different tree, so the
+    # sizes match and only the RFC 9162 consistency check can catch it.
+    fork = MemoryTree()
+    for i, e in enumerate(entries):
+        fork.append(entries[0].leaf_hash() if i == 10 else e.leaf_hash())
+    c = con(6, 13)
+    c["new"] = Checkpoint(LOG_KEY.name, SIZE, root(fork.subtree, SIZE), T0 + SIZE).sign(LOG_KEY)
+    bad("the new checkpoint is a fork of the same size", c)
+
+    # Signed-note and checkpoint encoding. Each note is otherwise valid for inc(3, 8).
+    body8 = Checkpoint.verify(checkpoints["8"], LOG_KEY.verifier).body()
+    sig_line = checkpoints["8"][len(body8) + 1 :]
+    sig_name, sig_b64 = sig_line[len(SIG_PREFIX) : -1].split(" ")
+    short = _b64(base64.b64decode(sig_b64)[:-4])
+    for reason, note in (
+        ("the checkpoint is not signed", body8),
+        ("the checkpoint has an empty signature block", body8 + "\n"),
+        ("a signature line has the wrong prefix", body8 + "\n- " + sig_line[len(SIG_PREFIX) :]),
+        ("a signature line has no space", body8 + "\n" + SIG_PREFIX + sig_name + sig_b64 + "\n"),
+        ("the signature is truncated", body8 + "\n" + SIG_PREFIX + sig_name + " " + short + "\n"),
+        ("the tree size has a leading zero", sign_note(body8.replace("\n8\n", "\n08\n"), LOG_KEY)),
+        ("the checkpoint has no timestamp", sign_note(body8.rsplit("timestamp", 1)[0], LOG_KEY)),
+        ("the checkpoint origin is not the key name", sign_note("x" + body8, LOG_KEY)),
+    ):
+        c = inc(3, 8)
+        c["checkpoint"] = note
+        bad(reason, c)
+
+    # Entries that are signed and really in the tree, but not in canonical form. Each sits
+    # alone in a properly signed one-entry tree, so only the entry checks can reject it.
+    def alone(entry: Entry) -> dict:
+        note = Checkpoint(LOG_KEY.name, 1, entry.leaf_hash(), T0).sign(LOG_KEY)
+        proof = {"seq": 0, "size": 1, "leaf_hash": _b64(entry.leaf_hash()), "proof": []}
+        return {"kind": "inclusion", "checkpoint": note, "entry": entry.to_dict(), "proof": proof}
+
+    good = entries[0]
+    vkey = ENTRY_KEY.verifier.encode()
+    kid = ENTRY_KEY.verifier.id.hex()
+    for reason, entry in (
+        (
+            "the payload hash ends in a newline",
+            sign_entry(ENTRY_KEY, good.type, good.payload_hash + "\n", good.payload_uri),
+        ),
+        (
+            "the payload URI ends in a newline",
+            sign_entry(ENTRY_KEY, good.type, good.payload_hash, good.payload_uri + "\n"),
+        ),
+        ("the entry type is empty", sign_entry(ENTRY_KEY, "", good.payload_hash, good.payload_uri)),
+        (
+            "the entry type has a space",
+            sign_entry(ENTRY_KEY, "matter created", good.payload_hash, good.payload_uri),
+        ),
+        (
+            "the signer key has surrounding whitespace",
+            Entry(**{**good.to_dict(), "signer": " " + vkey + "\n"}),
+        ),
+        (
+            "the signer key id is upper case",
+            Entry(**{**good.to_dict(), "signer": vkey.replace(kid, kid.upper())}),
+        ),
+    ):
+        bad(reason, alone(entry))
 
     return {
         "description": (

@@ -25,7 +25,7 @@ uv run d2-record serve --db log.db --key log.key --port 8080
 
 | Request | Response |
 |---|---|
-| `POST /entries` `{type, payload_hash, payload_uri, signer, signature}` | `201 {seq, leaf_hash}`; `400` if the type is unknown, a field is malformed or the signature fails |
+| `POST /entries` `{type, payload_hash, payload_uri, signer, signature}` | `201 {seq, leaf_hash}`; `400` if the body or `Content-Length` is malformed, the type is unknown, a field is malformed or the signature fails; `411` without `Content-Length`; `413` over 16 KiB; `503` on a storage error |
 | `GET /entries/<seq>` | The entry |
 | `GET /checkpoint` | The latest signed checkpoint (`text/plain` signed note); signs a new one first if the tree has grown |
 | `GET /proof/inclusion?seq=&size=` | `{seq, size, leaf_hash, proof}` |
@@ -33,12 +33,12 @@ uv run d2-record serve --db log.db --key log.key --port 8080
 | `GET /anchor?size=` | The OpenTimestamps receipt for the checkpoint at that size |
 | `GET /healthz` | `{ok, size}` |
 
-Hashes are standard base64. The server is the Python standard library's threaded HTTP server; one lock serializes writes.
+Hashes are standard base64. The server is the Python standard library's threaded HTTP server; one lock serializes writes in the process. Other processes (for example `d2-record append --db` on the live file) may append too: SQLite's write lock serializes them, and each append, checkpoint and `/healthz` re-reads the tree size from the database first.
 
 ## How it works
 
 - **Tree:** RFC 9162 (RFC 6962) Merkle tree over SHA-256, leaf hash `SHA-256(0x00 || leaf)`, node hash `SHA-256(0x01 || left || right)`.
-- **Storage:** one SQLite file (WAL). `entries` holds the five entry fields; `nodes` holds every perfect, aligned subtree hash, keyed by (level, index), with the leaf hashes at level 0. `checkpoints` and `anchors` hold signed notes and `.ots` receipts.
+- **Storage:** one SQLite file (WAL, `synchronous=FULL`: an append is fsynced before it returns, so a power loss cannot undo entries that a signed checkpoint covers). `entries` holds the five entry fields; `nodes` holds every perfect, aligned subtree hash, keyed by (level, index), with the leaf hashes at level 0. `checkpoints` and `anchors` hold signed notes and `.ots` receipts.
 - **Appends are O(log n):** an append writes the leaf plus one node per trailing 1-bit of its index (2 rows on average, at most log2 n + 1) and reads nothing: the right edge of the tree (one subtree per set bit of the size) is kept in memory. Batches are one transaction, all or nothing.
 - **Proofs** read O(log n) stored subtree hashes for any tree size up to the current one, so old checkpoints stay provable.
 - **Checkpoints** are C2SP signed notes with Ed25519 (`cryptography`): origin, tree size, base64 root, and a `timestamp <unix seconds>` extension line. Keys use the signed-note encodings (`PRIVATE+KEY+...` and `<name>+<id>+<key>`).
@@ -64,7 +64,7 @@ Run once on 2026-10-05 in a cloud session (4 vCPU sandbox, Python 3.11, Node 22.
 | Step | Result |
 |---|---|
 | Sign 1,000,000 entries (client side, Ed25519) | 107.7 s |
-| Append 1,000,000 entries, signature checked on each, batches of 10,000 | 132.7 s (7,539 appends/s) |
+| Append 1,000,000 entries, signature checked on each, batches of 10,000 | 132.7 s (7,539 appends/s; measured with `synchronous=NORMAL`, FULL adds one fsync per batch) |
 | Wall time per 100,000 entries, first to last tenth | 24.6, 23.2, 23.7, 23.1, 23.8, 25.0, 24.4, 24.6, 23.6, 24.2 s (flat: no slowdown as the tree grows) |
 | Database size | 406.5 MB |
 | Build a proof (1,000 inclusion + 1,000 consistency, size 1,000,000) | 0.11 ms each; inclusion proofs average 20 hashes |

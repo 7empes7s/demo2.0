@@ -1,4 +1,5 @@
 import hashlib
+import http.client
 import json
 import threading
 import urllib.error
@@ -38,6 +39,8 @@ def api(tmp_path):
         except urllib.error.HTTPError as exc:
             return exc.code, json.loads(exc.read())
 
+    call.port = server.server_address[1]
+    call.log = log
     yield call
     server.shutdown()
     server.server_close()
@@ -71,6 +74,65 @@ def test_http_api_rejects_bad_requests(api):
     assert api("/proof/inclusion")[0] == 400
     assert api("/anchor?size=0")[0] == 404
     assert api("/nope")[0] == 404
+
+
+def _raw_post(port: int, body: bytes, length: str | None) -> tuple[int, dict]:
+    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+    conn.putrequest("POST", "/entries")
+    if length is not None:
+        conn.putheader("Content-Length", length)
+    conn.endheaders()
+    conn.send(body)
+    resp = conn.getresponse()
+    out = resp.status, json.loads(resp.read())
+    conn.close()
+    return out
+
+
+@pytest.mark.parametrize(
+    ("body", "length", "status"),
+    [
+        (b"{}", "abc", 400),
+        (b"{}", "-1", 400),
+        (b"{}", "0", 400),
+        (b"{}", "1e3", 400),
+        (b"", None, 411),
+        (b"{}", str(64 * 1024), 413),
+        (b"[" * 8000 + b"]" * 8000, None, 400),  # nested too deep for the JSON parser
+        (b"\xff\xfe", None, 400),
+    ],
+    ids=[
+        "not-a-number",
+        "negative",
+        "zero",
+        "float",
+        "missing",
+        "too-big",
+        "deep-json",
+        "not-utf8",
+    ],
+)
+def test_malformed_posts_get_an_error_response(api, body, length, status):
+    if length is None and body:
+        length = str(len(body))
+    code, reply = _raw_post(api.port, body, length)
+    assert code == status and reply["error"]
+    assert api("/healthz") == (200, {"ok": True, "size": 0})  # the server is still up
+
+
+def test_a_lone_surrogate_is_rejected_with_400(api):
+    bad = {**entry(0), "payload_uri": "https://example.org/\ud800"}
+    body = json.dumps(bad).encode()  # ASCII JSON with a \ud800 escape
+    code, reply = _raw_post(api.port, body, str(len(body)))
+    assert code == 400 and "UTF-8" in reply["error"]
+    assert api("/entries", entry(0))[:1] == (201,)
+    assert api("/healthz") == (200, {"ok": True, "size": 1})
+
+
+def test_storage_errors_get_503(api):
+    api.log.db.execute("DROP TABLE nodes")
+    assert api("/entries", entry(0))[0] == 503
+    assert api("/healthz")[0] == 503
 
 
 def test_cli_end_to_end(tmp_path, capsys):

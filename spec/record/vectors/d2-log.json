@@ -2105,6 +2105,306 @@
      "LeDpaJAYoj+WAAmpqkubD2IVNEjk/ZNj57hAdyDoZa4="
     ]
    }
+  },
+  {
+   "reason": "the new checkpoint is a fork of the same size",
+   "kind": "consistency",
+   "old": "example.org/d2-record-test\n6\niedh2qSxoIDUFNr14Ay+FtvE7kElgX6fA2d+gBqiXSo=\ntimestamp 1790000006\n\n— example.org/d2-record-test TxUS2kvx4HKzSzUreFzRvJMabxU46qCaGNB5kTvgT29L7cmFRwpZ85KgoF9InmL3O72Wkq9kdLHoIvDuVd0M7vkjxAg=\n",
+   "new": "example.org/d2-record-test\n13\nYkZmlgOsb0k+AuvC4O+PtgPMlBDHihV6BW/Y1hKC7vA=\ntimestamp 1790000013\n\n— example.org/d2-record-test TxUS2uUem/w5dO1zc1zkxy/i5/nPOdA6SNnj+/bwayNFzp9XCFnPuVvhJXWqST0R8j3Iu9HZeWJv1sNY4uwDTOzwjgk=\n",
+   "proof": {
+    "from": 6,
+    "to": 13,
+    "proof": [
+     "CYdNBDa4W+IIjQ4lD1E65jas9XUMN2aLGMb9PYpGJo0=",
+     "4Zeqd3OldIsd5pYRZe2WZMuKWOOVyB/TLIap1AaIfzs=",
+     "4axqoRucz2q54w1ajclcuAJCdiWkV8Y2FNwcmt+YIFw=",
+     "LeDpaJAYoj+WAAmpqkubD2IVNEjk/ZNj57hAdyDoZa4="
+    ]
+   }
+  },
+  {
+   "reason": "the checkpoint is not signed",
+   "kind": "inclusion",
+   "checkpoint": "example.org/d2-record-test\n8\nu4bpIyXzEXsd6DMYOGZN5QgoXcxwyYHsmEDu+R9Gnrg=\ntimestamp 1790000008\n",
+   "entry": {
+    "type": "spend",
+    "payload_hash": "sha256:922afccc43235b3d35309f0365f49accf6a2fa3286c264b527258db6009a2925",
+    "payload_uri": "https://example.org/payloads/3",
+    "signer": "example.org/d2-test-signer+629f4a12+AYmOs9ck+kpRYZMKGEoPa12XAleAA9WPf6NVBX6KAVYG",
+    "signature": "us6SKeF6WzBwNfF1t/YOTnTQEDwbUFdBwphrZlt1mELgwG0HYlH84YVSQiR9ED8IgB/wadvvJxXK4TUTty8wBw=="
+   },
+   "proof": {
+    "seq": 3,
+    "size": 8,
+    "leaf_hash": "2Jck3IC57HUczzD45LnvulnauySsLXy5vajaUYGDmT0=",
+    "proof": [
+     "+SmUUcbl1gRpqyP1arnu2Q9h+XGpITi+ln4HmNsANqQ=",
+     "+H/Wun5XSM86JiY4+gXpkfecFSM/jKZ8OrdDjRNysTk=",
+     "Db7zVjAarWb8OSWvnSH2lzrA5mZQ6tqr4FD0njnJDCs="
+    ]
+   }
+  },
+  {
+   "reason": "the checkpoint has an empty signature block",
+   "kind": "inclusion",
+   "checkpoint": "example.org/d2-record-test\n8\nu4bpIyXzEXsd6DMYOGZN5QgoXcxwyYHsmEDu+R9Gnrg=\ntimestamp 1790000008\n\n",
+   "entry": {
+    "type": "spend",
+    "payload_hash": "sha256:922afccc43235b3d35309f0365f49accf6a2fa3286c264b527258db6009a2925",
+    "payload_uri": "https://example.org/payloads/3",
+    "signer": "example.org/d2-test-signer+629f4a12+AYmOs9ck+kpRYZMKGEoPa12XAleAA9WPf6NVBX6KAVYG",
+    "signature": "us6SKeF6WzBwNfF1t/YOTnTQEDwbUFdBwphrZlt1mELgwG0HYlH84YVSQiR9ED8IgB/wadvvJxXK4TUTty8wBw=="
+   },
+   "proof": {
+    "seq": 3,
+    "size": 8,
+    "leaf_hash": "2Jck3IC57HUczzD45LnvulnauySsLXy5vajaUYGDmT0=",
+    "proof": [
+     "+SmUUcbl1gRpqyP1arnu2Q9h+XGpITi+ln4HmNsANqQ=",
+     "+H/Wun5XSM86JiY4+gXpkfecFSM/jKZ8OrdDjRNysTk=",
+     "Db7zVjAarWb8OSWvnSH2lzrA5mZQ6tqr4FD0njnJDCs="
+    ]
+   }
+  },
+  {
+   "reason": "a signature line has the wrong prefix",
+   "kind": "inclusion",
+   "checkpoint": "example.org/d2-record-test\n8\nu4bpIyXzEXsd6DMYOGZN5QgoXcxwyYHsmEDu+R9Gnrg=\ntimestamp 1790000008\n\n- example.org/d2-record-test TxUS2rnAF2Nv8Zo12+qtBP2JwIbpY31JyMuu5jlWWcfqyKPTI7awFtyV+fDzzSon/Y65snp29SfAos8eZx7UKKkCkgY=\n",
+   "entry": {
+    "type": "spend",
+    "payload_hash": "sha256:922afccc43235b3d35309f0365f49accf6a2fa3286c264b527258db6009a2925",
+    "payload_uri": "https://example.org/payloads/3",
+    "signer": "example.org/d2-test-signer+629f4a12+AYmOs9ck+kpRYZMKGEoPa12XAleAA9WPf6NVBX6KAVYG",
+    "signature": "us6SKeF6WzBwNfF1t/YOTnTQEDwbUFdBwphrZlt1mELgwG0HYlH84YVSQiR9ED8IgB/wadvvJxXK4TUTty8wBw=="
+   },
+   "proof": {
+    "seq": 3,
+    "size": 8,
+    "leaf_hash": "2Jck3IC57HUczzD45LnvulnauySsLXy5vajaUYGDmT0=",
+    "proof": [
+     "+SmUUcbl1gRpqyP1arnu2Q9h+XGpITi+ln4HmNsANqQ=",
+     "+H/Wun5XSM86JiY4+gXpkfecFSM/jKZ8OrdDjRNysTk=",
+     "Db7zVjAarWb8OSWvnSH2lzrA5mZQ6tqr4FD0njnJDCs="
+    ]
+   }
+  },
+  {
+   "reason": "a signature line has no space",
+   "kind": "inclusion",
+   "checkpoint": "example.org/d2-record-test\n8\nu4bpIyXzEXsd6DMYOGZN5QgoXcxwyYHsmEDu+R9Gnrg=\ntimestamp 1790000008\n\n— example.org/d2-record-testTxUS2rnAF2Nv8Zo12+qtBP2JwIbpY31JyMuu5jlWWcfqyKPTI7awFtyV+fDzzSon/Y65snp29SfAos8eZx7UKKkCkgY=\n",
+   "entry": {
+    "type": "spend",
+    "payload_hash": "sha256:922afccc43235b3d35309f0365f49accf6a2fa3286c264b527258db6009a2925",
+    "payload_uri": "https://example.org/payloads/3",
+    "signer": "example.org/d2-test-signer+629f4a12+AYmOs9ck+kpRYZMKGEoPa12XAleAA9WPf6NVBX6KAVYG",
+    "signature": "us6SKeF6WzBwNfF1t/YOTnTQEDwbUFdBwphrZlt1mELgwG0HYlH84YVSQiR9ED8IgB/wadvvJxXK4TUTty8wBw=="
+   },
+   "proof": {
+    "seq": 3,
+    "size": 8,
+    "leaf_hash": "2Jck3IC57HUczzD45LnvulnauySsLXy5vajaUYGDmT0=",
+    "proof": [
+     "+SmUUcbl1gRpqyP1arnu2Q9h+XGpITi+ln4HmNsANqQ=",
+     "+H/Wun5XSM86JiY4+gXpkfecFSM/jKZ8OrdDjRNysTk=",
+     "Db7zVjAarWb8OSWvnSH2lzrA5mZQ6tqr4FD0njnJDCs="
+    ]
+   }
+  },
+  {
+   "reason": "the signature is truncated",
+   "kind": "inclusion",
+   "checkpoint": "example.org/d2-record-test\n8\nu4bpIyXzEXsd6DMYOGZN5QgoXcxwyYHsmEDu+R9Gnrg=\ntimestamp 1790000008\n\n— example.org/d2-record-test TxUS2rnAF2Nv8Zo12+qtBP2JwIbpY31JyMuu5jlWWcfqyKPTI7awFtyV+fDzzSon/Y65snp29SfAos8eZx7UKA==\n",
+   "entry": {
+    "type": "spend",
+    "payload_hash": "sha256:922afccc43235b3d35309f0365f49accf6a2fa3286c264b527258db6009a2925",
+    "payload_uri": "https://example.org/payloads/3",
+    "signer": "example.org/d2-test-signer+629f4a12+AYmOs9ck+kpRYZMKGEoPa12XAleAA9WPf6NVBX6KAVYG",
+    "signature": "us6SKeF6WzBwNfF1t/YOTnTQEDwbUFdBwphrZlt1mELgwG0HYlH84YVSQiR9ED8IgB/wadvvJxXK4TUTty8wBw=="
+   },
+   "proof": {
+    "seq": 3,
+    "size": 8,
+    "leaf_hash": "2Jck3IC57HUczzD45LnvulnauySsLXy5vajaUYGDmT0=",
+    "proof": [
+     "+SmUUcbl1gRpqyP1arnu2Q9h+XGpITi+ln4HmNsANqQ=",
+     "+H/Wun5XSM86JiY4+gXpkfecFSM/jKZ8OrdDjRNysTk=",
+     "Db7zVjAarWb8OSWvnSH2lzrA5mZQ6tqr4FD0njnJDCs="
+    ]
+   }
+  },
+  {
+   "reason": "the tree size has a leading zero",
+   "kind": "inclusion",
+   "checkpoint": "example.org/d2-record-test\n08\nu4bpIyXzEXsd6DMYOGZN5QgoXcxwyYHsmEDu+R9Gnrg=\ntimestamp 1790000008\n\n— example.org/d2-record-test TxUS2tUQnbr5xvXLdlj//G4iU2raMfjT65rbUvZNKIj9r8so9yygIg4PaHQlOkPdu90CqOhjKpu0YVfFg6qTET3bNQg=\n",
+   "entry": {
+    "type": "spend",
+    "payload_hash": "sha256:922afccc43235b3d35309f0365f49accf6a2fa3286c264b527258db6009a2925",
+    "payload_uri": "https://example.org/payloads/3",
+    "signer": "example.org/d2-test-signer+629f4a12+AYmOs9ck+kpRYZMKGEoPa12XAleAA9WPf6NVBX6KAVYG",
+    "signature": "us6SKeF6WzBwNfF1t/YOTnTQEDwbUFdBwphrZlt1mELgwG0HYlH84YVSQiR9ED8IgB/wadvvJxXK4TUTty8wBw=="
+   },
+   "proof": {
+    "seq": 3,
+    "size": 8,
+    "leaf_hash": "2Jck3IC57HUczzD45LnvulnauySsLXy5vajaUYGDmT0=",
+    "proof": [
+     "+SmUUcbl1gRpqyP1arnu2Q9h+XGpITi+ln4HmNsANqQ=",
+     "+H/Wun5XSM86JiY4+gXpkfecFSM/jKZ8OrdDjRNysTk=",
+     "Db7zVjAarWb8OSWvnSH2lzrA5mZQ6tqr4FD0njnJDCs="
+    ]
+   }
+  },
+  {
+   "reason": "the checkpoint has no timestamp",
+   "kind": "inclusion",
+   "checkpoint": "example.org/d2-record-test\n8\nu4bpIyXzEXsd6DMYOGZN5QgoXcxwyYHsmEDu+R9Gnrg=\n\n— example.org/d2-record-test TxUS2mIYm7okZwMlZokqAyvEtf1p0XfSAcHwrcb+KBoKXeuAGOxGVSJm7Cul86i7jN0iLWvTphR6xjA7vUX/hFGfmQY=\n",
+   "entry": {
+    "type": "spend",
+    "payload_hash": "sha256:922afccc43235b3d35309f0365f49accf6a2fa3286c264b527258db6009a2925",
+    "payload_uri": "https://example.org/payloads/3",
+    "signer": "example.org/d2-test-signer+629f4a12+AYmOs9ck+kpRYZMKGEoPa12XAleAA9WPf6NVBX6KAVYG",
+    "signature": "us6SKeF6WzBwNfF1t/YOTnTQEDwbUFdBwphrZlt1mELgwG0HYlH84YVSQiR9ED8IgB/wadvvJxXK4TUTty8wBw=="
+   },
+   "proof": {
+    "seq": 3,
+    "size": 8,
+    "leaf_hash": "2Jck3IC57HUczzD45LnvulnauySsLXy5vajaUYGDmT0=",
+    "proof": [
+     "+SmUUcbl1gRpqyP1arnu2Q9h+XGpITi+ln4HmNsANqQ=",
+     "+H/Wun5XSM86JiY4+gXpkfecFSM/jKZ8OrdDjRNysTk=",
+     "Db7zVjAarWb8OSWvnSH2lzrA5mZQ6tqr4FD0njnJDCs="
+    ]
+   }
+  },
+  {
+   "reason": "the checkpoint origin is not the key name",
+   "kind": "inclusion",
+   "checkpoint": "xexample.org/d2-record-test\n8\nu4bpIyXzEXsd6DMYOGZN5QgoXcxwyYHsmEDu+R9Gnrg=\ntimestamp 1790000008\n\n— example.org/d2-record-test TxUS2hQn6SVDtmEsvmng3tRcsryV9gg6IUu5dvO73DX9ZyqwAwUorvFkd2VEJ2ICKvLr/Cp/3QARtHKuSCnOf/kliw4=\n",
+   "entry": {
+    "type": "spend",
+    "payload_hash": "sha256:922afccc43235b3d35309f0365f49accf6a2fa3286c264b527258db6009a2925",
+    "payload_uri": "https://example.org/payloads/3",
+    "signer": "example.org/d2-test-signer+629f4a12+AYmOs9ck+kpRYZMKGEoPa12XAleAA9WPf6NVBX6KAVYG",
+    "signature": "us6SKeF6WzBwNfF1t/YOTnTQEDwbUFdBwphrZlt1mELgwG0HYlH84YVSQiR9ED8IgB/wadvvJxXK4TUTty8wBw=="
+   },
+   "proof": {
+    "seq": 3,
+    "size": 8,
+    "leaf_hash": "2Jck3IC57HUczzD45LnvulnauySsLXy5vajaUYGDmT0=",
+    "proof": [
+     "+SmUUcbl1gRpqyP1arnu2Q9h+XGpITi+ln4HmNsANqQ=",
+     "+H/Wun5XSM86JiY4+gXpkfecFSM/jKZ8OrdDjRNysTk=",
+     "Db7zVjAarWb8OSWvnSH2lzrA5mZQ6tqr4FD0njnJDCs="
+    ]
+   }
+  },
+  {
+   "reason": "the payload hash ends in a newline",
+   "kind": "inclusion",
+   "checkpoint": "example.org/d2-record-test\n1\nIAOTF711zEd0wv2ctG4cSnYORJ9sp1QLwxTb8UPlYMw=\ntimestamp 1790000000\n\n— example.org/d2-record-test TxUS2ttd8caxV7iiAiw7kmNZGPdWGIKIK9DwHzMBmLzkCne2WzgVJSFahBBco3cNFok09f5JqDB3qBRr9xFCLku+1A0=\n",
+   "entry": {
+    "type": "matter.created",
+    "payload_hash": "sha256:8ffe1547f3be501b824e01f8fbac293997fbd00b6b4c905c3ca6c1e698fe11a6\n",
+    "payload_uri": "https://example.org/payloads/0",
+    "signer": "example.org/d2-test-signer+629f4a12+AYmOs9ck+kpRYZMKGEoPa12XAleAA9WPf6NVBX6KAVYG",
+    "signature": "cvHmSbgnhKL/9HAXaUiCWDqc7YgwHiFkKAvPUX/BOaK99ZaA8wKNmK8aHJNZQh/JQVZQMIB5St1VzqlB6AWQDQ=="
+   },
+   "proof": {
+    "seq": 0,
+    "size": 1,
+    "leaf_hash": "IAOTF711zEd0wv2ctG4cSnYORJ9sp1QLwxTb8UPlYMw=",
+    "proof": []
+   }
+  },
+  {
+   "reason": "the payload URI ends in a newline",
+   "kind": "inclusion",
+   "checkpoint": "example.org/d2-record-test\n1\nx7k1YljDAlbk62Buim4SE6pFPH2j9cilFVYGf0UAlUY=\ntimestamp 1790000000\n\n— example.org/d2-record-test TxUS2iEIlNMAa36wZ/6UQt0sBaYF9/udAg2joEZ+3HTxa0Mfo/vDj3slPWI1Nye2WePT8mttZf8jAT83ABS/TG8cEAw=\n",
+   "entry": {
+    "type": "matter.created",
+    "payload_hash": "sha256:8ffe1547f3be501b824e01f8fbac293997fbd00b6b4c905c3ca6c1e698fe11a6",
+    "payload_uri": "https://example.org/payloads/0\n",
+    "signer": "example.org/d2-test-signer+629f4a12+AYmOs9ck+kpRYZMKGEoPa12XAleAA9WPf6NVBX6KAVYG",
+    "signature": "lrPzTYFcvHKqEzUr8sCofHTKLUueF7Us3BmqURxPpYzVKjGd2eJ7fbaRJzrmWEKr3mNQZ3Cc7MscjKqZVBo/DQ=="
+   },
+   "proof": {
+    "seq": 0,
+    "size": 1,
+    "leaf_hash": "x7k1YljDAlbk62Buim4SE6pFPH2j9cilFVYGf0UAlUY=",
+    "proof": []
+   }
+  },
+  {
+   "reason": "the entry type is empty",
+   "kind": "inclusion",
+   "checkpoint": "example.org/d2-record-test\n1\nwoKOwb0BNEM5RkHvrGJnNQE8Zn3v5a/IBrtprt23a8M=\ntimestamp 1790000000\n\n— example.org/d2-record-test TxUS2mHsHCOwbonDm4qirfmVfYNcxipgCwQIOlBgWzvn3BtmgJtuB/WVsKgx226FJXs3IoawNrTWSoxNGYBiIRPxcg8=\n",
+   "entry": {
+    "type": "",
+    "payload_hash": "sha256:8ffe1547f3be501b824e01f8fbac293997fbd00b6b4c905c3ca6c1e698fe11a6",
+    "payload_uri": "https://example.org/payloads/0",
+    "signer": "example.org/d2-test-signer+629f4a12+AYmOs9ck+kpRYZMKGEoPa12XAleAA9WPf6NVBX6KAVYG",
+    "signature": "hkNjJ3f3bKaIZWEQCb5z91p+l8j4jc0rI7C9rDAu9NCNJa4g+9s9JHoVsgaheY9dcqIzvVYOuINzjr4XQYFEBA=="
+   },
+   "proof": {
+    "seq": 0,
+    "size": 1,
+    "leaf_hash": "woKOwb0BNEM5RkHvrGJnNQE8Zn3v5a/IBrtprt23a8M=",
+    "proof": []
+   }
+  },
+  {
+   "reason": "the entry type has a space",
+   "kind": "inclusion",
+   "checkpoint": "example.org/d2-record-test\n1\n2ST/T6MUuzc2P2SA/CVG4hzWwS3OZLBlfmCNU6Keh6s=\ntimestamp 1790000000\n\n— example.org/d2-record-test TxUS2pmLRVqgWStKJDkvWlU31o2owJYRKoPrYoj85LbhMt2rQFqmJREpfR2d+FVjK+uRhGplcVR4rKpv+oo0uuQ5wQY=\n",
+   "entry": {
+    "type": "matter created",
+    "payload_hash": "sha256:8ffe1547f3be501b824e01f8fbac293997fbd00b6b4c905c3ca6c1e698fe11a6",
+    "payload_uri": "https://example.org/payloads/0",
+    "signer": "example.org/d2-test-signer+629f4a12+AYmOs9ck+kpRYZMKGEoPa12XAleAA9WPf6NVBX6KAVYG",
+    "signature": "/PAwtaOKFNf0TxHKqDWUEsiJEdGer4vZMMZPPbpJREABGW+LbvgNjOlGvk7hi0HzD0mgxJmmF4KZImlgNS0SBw=="
+   },
+   "proof": {
+    "seq": 0,
+    "size": 1,
+    "leaf_hash": "2ST/T6MUuzc2P2SA/CVG4hzWwS3OZLBlfmCNU6Keh6s=",
+    "proof": []
+   }
+  },
+  {
+   "reason": "the signer key has surrounding whitespace",
+   "kind": "inclusion",
+   "checkpoint": "example.org/d2-record-test\n1\nEU71c+A72QLms73yXMuVaHO05DcnpyGXv92VElXOTAg=\ntimestamp 1790000000\n\n— example.org/d2-record-test TxUS2vkA1hgHHDjIdtQJSdMXJnM9GjoFzOJ+rAQOoLGBtyc3tuFCSgif+mmgENOpTjbwBGv5AOnT2YmSqnX2QJVo7QU=\n",
+   "entry": {
+    "type": "matter.created",
+    "payload_hash": "sha256:8ffe1547f3be501b824e01f8fbac293997fbd00b6b4c905c3ca6c1e698fe11a6",
+    "payload_uri": "https://example.org/payloads/0",
+    "signer": " example.org/d2-test-signer+629f4a12+AYmOs9ck+kpRYZMKGEoPa12XAleAA9WPf6NVBX6KAVYG\n",
+    "signature": "97Qk12A8VMrT/wzvlscphurV2DOWE0F/x3Buvfkb2CxoFpDJu9uzRDszGu1AEl3Km2t8LOhMRhn6Ij1JLSC3Aw=="
+   },
+   "proof": {
+    "seq": 0,
+    "size": 1,
+    "leaf_hash": "EU71c+A72QLms73yXMuVaHO05DcnpyGXv92VElXOTAg=",
+    "proof": []
+   }
+  },
+  {
+   "reason": "the signer key id is upper case",
+   "kind": "inclusion",
+   "checkpoint": "example.org/d2-record-test\n1\n0vDC9z5WdBbtMf1QsydNpnQhBfPPbw6/oR2/ZC28ehM=\ntimestamp 1790000000\n\n— example.org/d2-record-test TxUS2q6DvSLgEWX/bjLM9/EwjGPe61GrexKpZkS4uul0NFx6IcyuleRHpBrTuEtlxYLHKICgCtX66vTE7FmNedU9aAE=\n",
+   "entry": {
+    "type": "matter.created",
+    "payload_hash": "sha256:8ffe1547f3be501b824e01f8fbac293997fbd00b6b4c905c3ca6c1e698fe11a6",
+    "payload_uri": "https://example.org/payloads/0",
+    "signer": "example.org/d2-test-signer+629F4A12+AYmOs9ck+kpRYZMKGEoPa12XAleAA9WPf6NVBX6KAVYG",
+    "signature": "97Qk12A8VMrT/wzvlscphurV2DOWE0F/x3Buvfkb2CxoFpDJu9uzRDszGu1AEl3Km2t8LOhMRhn6Ij1JLSC3Aw=="
+   },
+   "proof": {
+    "seq": 0,
+    "size": 1,
+    "leaf_hash": "0vDC9z5WdBbtMf1QsydNpnQhBfPPbw6/oR2/ZC28ehM=",
+    "proof": []
+   }
   }
  ]
 }
