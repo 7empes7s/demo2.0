@@ -18,6 +18,7 @@ TEXT_KINDS = ("depot", "avis", "rapport", "amendement")  # procès-verbaux are s
 CHARS = {"depot": 40_000, "avis": 15_000, "rapport": 20_000, "amendement": 10_000}
 BILL_TYPES = ("projet de loi", "proposition de loi", "gesetzprojet")
 ESCH_COUNCIL = "Conseil communal d'Esch-sur-Alzette"
+ESCH_DELAY = 3.0  # minimum seconds between requests for the Esch source
 
 
 def item_type(type_label: str | None) -> str:
@@ -322,7 +323,16 @@ def build(
             if source == "chd":
                 parts.append(build_chd(fetcher, max_items=max_items))
             elif source == "esch":
-                parts.append(build_esch(fetcher, today=today, past_sessions=esch_past_sessions))
+                # workflow.esch.lu refused connections after ~30 requests at 1 per second and
+                # answered all of them at 1 per 3 seconds, so Esch is fetched more slowly
+                delay = getattr(fetcher, "delay", None)
+                if delay is not None:
+                    fetcher.delay = max(delay, ESCH_DELAY)
+                try:
+                    parts.append(build_esch(fetcher, today=today, past_sessions=esch_past_sessions))
+                finally:
+                    if delay is not None:
+                        fetcher.delay = delay
             else:
                 raise ValueError(f"unknown source {source!r}; known: {', '.join(SOURCES)}")
         except ValueError:

@@ -207,3 +207,17 @@ def test_one_unreachable_source_does_not_sink_the_other():
     assert [s["id"] for s in snap["sources"]] == ["chd", "esch"]
     assert any(e["source"] == "chd" for e in snap["errors"])
     assert any(i["id"].startswith("lu.esch.") for i in snap["items"])
+
+
+def test_esch_is_fetched_at_most_one_request_per_three_seconds():
+    class Timed(FakeFetcher):
+        delay = 1.0
+
+        def get(self, url):
+            self.delays = [*getattr(self, "delays", []), self.delay]
+            return super().get(url)
+
+    fetcher = Timed(RECORDED)
+    snapshot.build(fetcher, sources=("esch",), today=date(2026, 10, 5))
+    assert set(fetcher.delays) == {snapshot.ESCH_DELAY}
+    assert fetcher.delay == 1.0  # restored for the other sources
