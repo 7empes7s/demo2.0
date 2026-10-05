@@ -60,7 +60,9 @@ check_pr() {
   return 0
 }
 
-for n in $(gh api "repos/$repo/issues?labels=automerge&state=open&per_page=100" -q '.[] | select(.pull_request) | .number'); do
+# Assign first so a failed listing stops the run (set -e) instead of looping over the error text.
+labelled=$(gh api "repos/$repo/issues?labels=automerge&state=open&per_page=100" -q '.[] | select(.pull_request) | .number')
+for n in $labelled; do
   if check_pr "$n"; then
     if [ -n "${DRY_RUN:-}" ]; then echo "#$n: ready (dry run)"; continue; fi
     echo "#$n: merging"
