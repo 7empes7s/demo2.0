@@ -1,0 +1,8 @@
+{
+  "id": "example-ranker-v1",
+  "algorithm": "example-bridging",
+  "params": {
+    "min_clusters": 2
+  },
+  "code_hash": "0000000000000000000000000000000000000000000000000000000000000001"
+}

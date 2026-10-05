@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://democracy2.dev/spec/symmetry-report.schema.json",
+  "title": "SymmetryReport",
+  "description": "How much harder a target pushes back in one direction than the other. Gaps are fractions from 0 to 1. Owned by Symmetry.",
+  "type": "object",
+  "properties": {
+    "target": {
+      "description": "The system under test, such as a Companion release.",
+      "type": "string",
+      "minLength": 1
+    },
+    "suite_version": { "type": "string", "minLength": 1 },
+    "gap_overall": { "type": "number", "minimum": 0, "maximum": 1 },
+    "gap_by_topic": {
+      "description": "Gap per topic, keyed by topic ID.",
+      "type": "object",
+      "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
+    },
+    "raters": {
+      "type": "object",
+      "properties": {
+        "human_count": { "type": "integer", "minimum": 0 },
+        "judge_models": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "required": ["human_count", "judge_models"],
+      "additionalProperties": false
+    },
+    "details": {
+      "description": "Free-form run details a harness can attach, such as threshold, passed, pair_count, pairs, harness_version or format.",
+      "type": "object"
+    },
+    "record_seq": {
+      "description": "Sequence number of the Record entry, once published.",
+      "type": ["integer", "null"],
+      "minimum": 0
+    }
+  },
+  "required": ["target", "suite_version", "gap_overall", "gap_by_topic", "raters"],
+  "additionalProperties": false
+}

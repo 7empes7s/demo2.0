@@ -1,0 +1,10 @@
+{
+  "id": "example-item-1",
+  "source": "example-source",
+  "jurisdiction_id": "example-country",
+  "type": "decree",
+  "title": {
+    "en": "Example decree"
+  },
+  "document_ids": []
+}

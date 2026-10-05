@@ -1,0 +1,5 @@
+{
+  "id": "example-ranker-v1",
+  "algorithm": "example",
+  "params": {}
+}

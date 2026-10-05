@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://democracy2.dev/spec/topic.schema.json",
+  "title": "Topic",
+  "description": "A policy area in a tree of topics. Owned by Charter.",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "parent_id": { "type": ["string", "null"], "minLength": 1 },
+    "name": { "$ref": "localized-text.schema.json" }
+  },
+  "required": ["id", "name"],
+  "additionalProperties": false
+}

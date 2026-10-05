@@ -1,0 +1,12 @@
+{
+  "claim_id": "example-claim-1",
+  "checker_id": "example-checker",
+  "grade": "green",
+  "evidence": [
+    {
+      "url": "https://example.org/example bill.pdf",
+      "excerpt": "Example excerpt."
+    }
+  ],
+  "model_version": "example-model-1"
+}

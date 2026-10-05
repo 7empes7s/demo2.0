@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://democracy2.dev/spec/argument.schema.json",
+  "title": "Argument",
+  "description": "An argument for one option of a matter. Owned by Commons.",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "matter_id": { "type": "string", "minLength": 1 },
+    "stance_option_id": { "type": "string", "minLength": 1 },
+    "text": { "type": "string", "minLength": 1 },
+    "source_refs": {
+      "description": "IDs of the source items or source documents the argument cites.",
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "author_nym": {
+      "description": "The author's pseudonym inside Commons, never a person.",
+      "type": "string",
+      "minLength": 1
+    },
+    "cluster_id": { "type": ["string", "null"], "minLength": 1 }
+  },
+  "required": ["id", "matter_id", "stance_option_id", "text", "source_refs", "author_nym"],
+  "additionalProperties": false
+}

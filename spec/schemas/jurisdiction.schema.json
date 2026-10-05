@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://democracy2.dev/spec/jurisdiction.schema.json",
+  "title": "Jurisdiction",
+  "description": "A place that makes its own decisions: a country, region, commune or district. Owned by Charter.",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "parent_id": { "type": ["string", "null"], "minLength": 1 },
+    "kind": { "enum": ["country", "region", "commune", "district"] },
+    "name": { "$ref": "localized-text.schema.json" },
+    "population": { "type": "integer", "minimum": 0 },
+    "geometry": {
+      "description": "GeoJSON geometry object (RFC 7946).",
+      "type": "object",
+      "properties": { "type": { "type": "string", "minLength": 1 } },
+      "required": ["type"]
+    }
+  },
+  "required": ["id", "kind", "name"],
+  "additionalProperties": false
+}
