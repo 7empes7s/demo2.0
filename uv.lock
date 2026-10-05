@@ -10,6 +10,7 @@ resolution-markers = [
 members = [
     "d2-commons",
     "d2-docket",
+    "d2-symmetry",
     "democracy2-workspace",
 ]
 
@@ -70,6 +71,11 @@ requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.12" },
     { name = "pypdf", specifier = ">=5" },
 ]
+
+[[package]]
+name = "d2-symmetry"
+version = "0.1.0"
+source = { editable = "modules/symmetry" }
 
 [[package]]
 name = "democracy2-workspace"
