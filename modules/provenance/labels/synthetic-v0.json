@@ -1,0 +1,186 @@
+{
+ "docket": "../tests/fixtures/docket-synthetic.json",
+ "about": "Claims about the synthetic example bills 0001 and 0002 (document text included). Labels say what those records show.",
+ "claims": [
+  {
+   "text": "Le projet de loi oblige chaque commune de plus de 5.000 habitants à créer un réseau cyclable continu d'ici 2030",
+   "label": "green"
+  },
+  {
+   "text": "Le projet de loi oblige chaque commune de plus de 10.000 habitants à créer un réseau cyclable continu d'ici 2030",
+   "label": "red"
+  },
+  {
+   "text": "Le projet de loi oblige chaque commune de plus de 5 000 habitants à créer un réseau cyclable continu d'ici 2035",
+   "label": "red"
+  },
+  {
+   "text": "L'État prend en charge 40 % du coût des travaux",
+   "label": "green"
+  },
+  {
+   "text": "L'État prend en charge 50 % du coût des travaux",
+   "label": "red"
+  },
+  {
+   "text": "L'État prend en charge 60 % du coût des travaux",
+   "label": "red"
+  },
+  {
+   "text": "La Chambre d'exemple propose de porter la participation de l'État à 60 % du coût des travaux",
+   "label": "green"
+  },
+  {
+   "text": "Le coût total est estimé à 12 millions d'euros",
+   "label": "green"
+  },
+  {
+   "text": "Le coût total est estimé à 20 millions d'euros",
+   "label": "red"
+  },
+  {
+   "text": "The total cost is estimated at 12 million euros",
+   "label": "green"
+  },
+  {
+   "text": "Le coût de 12 millions d'euros est trop élevé pour les communes rurales",
+   "label": "yellow"
+  },
+  {
+   "text": "Les communes de moins de 5.000 habitants sont concernées par l'obligation",
+   "label": "red"
+  },
+  {
+   "text": "Les communes de moins de 5.000 habitants ne sont pas concernées par l'obligation",
+   "label": "green"
+  },
+  {
+   "text": "Le ministre présente un rapport à la Chambre tous les deux ans",
+   "label": "green"
+  },
+  {
+   "text": "Le ministre présente un rapport à la Chambre chaque année",
+   "label": "red"
+  },
+  {
+   "text": "Le projet de loi 0001 a été déposé le 15 janvier 2026",
+   "label": "green"
+  },
+  {
+   "text": "Le projet de loi 0001 a été déposé le 15/02/2026",
+   "label": "red"
+  },
+  {
+   "text": "Le projet de loi 0001 est une bonne idée",
+   "label": "yellow"
+  },
+  {
+   "text": "Le fonds dispose d'une dotation initiale de 250 millions d'euros",
+   "label": "green"
+  },
+  {
+   "text": "Le fonds dispose d'une dotation initiale de 300 millions d'euros",
+   "label": "red"
+  },
+  {
+   "text": "Le fonds finance la construction de 1.200 logements abordables par an",
+   "label": "green"
+  },
+  {
+   "text": "Le fonds finance la construction de 1 200 logements abordables par an",
+   "label": "green"
+  },
+  {
+   "text": "Le fonds finance la construction de 2.000 logements abordables par an",
+   "label": "red"
+  },
+  {
+   "text": "Les logements sont loués à un loyer plafonné à 10 euros par mètre carré",
+   "label": "green"
+  },
+  {
+   "text": "Les logements sont loués à un loyer plafonné à 12 euros par mètre carré",
+   "label": "red"
+  },
+  {
+   "text": "Le fonds pour le logement abordable sera géré par les communes",
+   "label": "yellow"
+  },
+  {
+   "text": "Le loyer plafonné réduit la pauvreté",
+   "label": "yellow"
+  },
+  {
+   "text": "La Lune est faite de fromage",
+   "label": "none"
+  },
+  {
+   "text": "Les communes de plus de 5.000 habitants ne sont pas concernées par l'obligation",
+   "label": "red"
+  },
+  {
+   "text": "Le présent projet de loi a pour objet d'obliger chaque commune de moins de 5.000 habitants à créer un réseau cyclable continu d'ici 2030",
+   "label": "red"
+  },
+  {
+   "text": "Le présent projet de loi a pour objet d'interdire à chaque commune de plus de 5.000 habitants de créer un réseau cyclable continu d'ici 2030",
+   "label": "red"
+  },
+  {
+   "text": "Le présent projet de loi a pour objet d'obliger chaque région de plus de 5.000 habitants à créer un réseau cyclable continu d'ici 2030",
+   "label": "yellow"
+  },
+  {
+   "text": "Le présent projet de loi a pour objet d'obliger chaque commune de plus de 5.000 habitants à créer un réseau routier continu d'ici 2030",
+   "label": "yellow"
+  },
+  {
+   "text": "Le présent projet de loi a pour objet d'obliger chaque commune de plus de 5.000 habitants à créer un réseau cyclable discontinu d'ici 2030",
+   "label": "red"
+  },
+  {
+   "text": "L'État ne prend pas en charge 40 % du coût des travaux",
+   "label": "red"
+  },
+  {
+   "text": "L'État prend en charge 40 % du coût des travaux et 60 % du coût des travaux",
+   "label": "yellow"
+  },
+  {
+   "text": "Le coût total est estimé à 12 millions d'euros sur cinq ans, et 2 millions d'euros",
+   "label": "yellow"
+  },
+  {
+   "text": "Le coût total est estimé à 12 millions d'euros, dont 3 millions d'euros",
+   "label": "yellow"
+  },
+  {
+   "text": "Le coût total est estimé à 12 millions d'euros, soit 2,4 millions d'euros par an",
+   "label": "green"
+  },
+  {
+   "text": "Le coût total est estimé à ١٢ millions d'euros",
+   "label": "green"
+  },
+  {
+   "text": "Le coût total est estimé à 1​2 millions d'euros",
+   "label": "green"
+  },
+  {
+   "text": "Le cоût total est estimé à 20 millions d'euros",
+   "label": "red"
+  },
+  {
+   "text": "Le projet de loi 0001 a été déposé et adopté le 15 janvier 2026",
+   "label": "red"
+  },
+  {
+   "text": "Le projet de loi 0001 sur le logement abordable a été déposé le 15 janvier 2026",
+   "label": "red"
+  },
+  {
+   "text": "Le projet de loi 0001 a été déposé le 15 janvier 2026 par le ministre de la Santé",
+   "label": "yellow"
+  }
+ ]
+}

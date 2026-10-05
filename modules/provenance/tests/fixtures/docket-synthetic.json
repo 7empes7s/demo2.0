@@ -1,0 +1,103 @@
+{
+ "schema": "d2.docket.snapshot/2",
+ "generated_at": "2026-10-05T00:00:00Z",
+ "note": "Synthetic items in the Docket snapshot shape. Not real bills; example.org links.",
+ "sources": [],
+ "meetings": [],
+ "items": [
+  {
+   "id": "lu.chd.0001",
+   "source": "chd.lu",
+   "jurisdiction_id": "lu",
+   "number": "0001",
+   "type": "bill",
+   "type_label": "Projet de loi",
+   "title": {
+    "fr": "Projet de loi d'exemple relatif aux pistes cyclables communales"
+   },
+   "status": "En commission",
+   "author": "Example Minister",
+   "committee": "Commission de la Mobilité",
+   "deposited": "2026-01-15",
+   "updated": "2026-02-01",
+   "urls": {
+    "fr": "https://example.org/fr/dossier/0001"
+   },
+   "agenda": [],
+   "activities": [
+    {
+     "date": "2026-01-15",
+     "kind": "Creation",
+     "description": "Déposé",
+     "actors": [
+      "Example Minister"
+     ],
+     "documents": []
+    },
+    {
+     "date": "2026-02-01",
+     "kind": "Commission",
+     "description": "Renvoyé en commission(s) : Commission de la Mobilité",
+     "actors": [],
+     "documents": []
+    }
+   ],
+   "documents": [
+    {
+     "label": "Document de dépôt",
+     "url": "https://example.org/depot.pdf",
+     "date": "2026-01-15",
+     "kind": "depot",
+     "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+     "fetched_at": "2026-10-05T00:00:00Z",
+     "truncated": false,
+     "text": "Le présent projet de loi a pour objet d'obliger chaque commune de plus de 5.000 habitants à créer un réseau cyclable continu d'ici 2030. L'État prend en charge 40 % du coût des travaux. Le coût total est estimé à 12 millions d'euros sur cinq ans.\n\nLes communes de moins de 5.000 habitants ne sont pas concernées par l'obligation. Le ministre présente un rapport à la Chambre tous les deux ans."
+    },
+    {
+     "label": "Avis de la Chambre d'exemple",
+     "url": "https://example.org/avis.pdf",
+     "date": "2026-01-30",
+     "kind": "avis",
+     "sha256": null,
+     "fetched_at": null,
+     "truncated": false,
+     "text": "La Chambre d'exemple estime que le coût de 12 millions d'euros est trop élevé pour les com-\nmunes rurales et demande un financement de l'État. Elle propose de porter la participation de l'État à 60 % du coût des travaux."
+    }
+   ]
+  },
+  {
+   "id": "lu.chd.0002",
+   "source": "chd.lu",
+   "jurisdiction_id": "lu",
+   "number": "0002",
+   "type": "bill",
+   "type_label": "Projet de loi",
+   "title": {
+    "fr": "Projet de loi d'exemple portant création d'un fonds pour le logement abordable"
+   },
+   "status": "Déposé(e)",
+   "author": "Example Minister",
+   "committee": null,
+   "deposited": "2026-03-02",
+   "updated": null,
+   "urls": {
+    "fr": "https://example.org/fr/dossier/0002"
+   },
+   "agenda": [],
+   "activities": [],
+   "documents": [
+    {
+     "label": "Document de dépôt",
+     "url": "https://example.org/depot-0002.pdf",
+     "date": "2026-03-02",
+     "kind": "depot",
+     "sha256": null,
+     "fetched_at": null,
+     "truncated": false,
+     "text": "Le fonds dispose d'une dotation initiale de 250 millions d'euros. Il finance la construction de 1.200 logements abordables par an. Les logements sont loués à un loyer plafonné à 10 euros par mètre carré."
+    }
+   ]
+  }
+ ],
+ "errors": []
+}
