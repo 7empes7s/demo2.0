@@ -163,7 +163,6 @@ def test_build_esch_from_recorded_pages():
     assert pap["number"] == "6.1" and pap["type"] == "agenda"
     assert pap["urls"] == {"fr": oct2["url"]}
     assert pap["agenda"][0]["meeting_id"] == "esch-1522"
-    assert pap["votes"]["counts"] == {"Oui": 11, "Non": 8}
     assert items["lu.esch.42146"]["votes"] is None  # no vote chart, so no vote was asked for
     # same item shape as the Chamber's: every key a Chamber item has, an Esch item has too
     dossier = chd.parse_dossier(read("dossier-8752-fr.html"), "8752")
@@ -182,6 +181,17 @@ def test_build_esch_from_recorded_pages():
     asked_votes = [u for u in fetcher.asked if "/Votes/" in u]
     assert esch.votes_api_url(42146) not in asked_votes
     assert all(e["source"] in ("esch.lu", "participation.esch.lu") for e in snap["errors"])
+    # after the first failed votes request (42065 is not recorded), no more are made
+    assert asked_votes == [esch.votes_api_url(42065)]
+    skipped = next(e for e in snap["errors"] if "points" in e)
+    assert 42063 in skipped["points"] and pap["votes"] is None
+
+
+def test_votes_are_read_when_the_api_answers():
+    pages = {**RECORDED, esch.votes_api_url(42065): "esch-api-votes-42063.json"}
+    snap = snapshot.build(FakeFetcher(pages), sources=("esch",), today=date(2026, 10, 5))
+    items = {i["id"]: i for i in snap["items"]}
+    assert items["lu.esch.42065"]["votes"]["counts"] == {"Oui": 11, "Non": 8}
 
 
 def test_unknown_source_is_rejected():

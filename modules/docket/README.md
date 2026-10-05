@@ -16,7 +16,7 @@ uv run d2-docket snapshot --out data/lu-chd.json --sources chd   # one source
 | | workflow.esch.lu | The council workflow's read-only JSON API, which the session pages are built from: sessions of a year, agenda points of a session, each councillor's vote on a point | `lu.esch.<agenda point>` |
 | | participation.esch.lu | Home page (active and past projects and surveys) and each survey or project page (dates, phases, attachments) | `lu.esch.participation.<project\|survey>.<id>` |
 
-- **Esch sessions:** every session from today on, plus the most recent one before today (`--esch-past-sessions N` for more). An upcoming session's points appear when the city publishes its agenda, about a week before. Votes are asked for only for points whose session page shows a vote chart.
+- **Esch sessions:** every session from today on, plus the most recent one before today (`--esch-past-sessions N` for more). An upcoming session's points appear when the city publishes its agenda, about a week before. Votes are asked for only for points whose session page shows a vote chart. workflow.esch.lu has refused connections after about 30 vote requests in a row at 1 request per second; after the first failed votes request the run stops asking, leaves `votes` null and lists the skipped points in `errors`.
 - **participation.esch.lu** runs on Hoplr. Its public pages are server-rendered HTML, so no API is needed. News posts, events and the project submission forms are not read.
 - Esch items have the same shape as Chamber items, plus `reference`, `theme` and `votes` (council points) or `summary`, `when`, `opens`, `closes` and `phases` (participation). A field the source does not give stays `null`; nothing is guessed.
 

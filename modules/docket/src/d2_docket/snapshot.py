@@ -240,6 +240,7 @@ def build_esch(fetcher: Fetcher, today: date | None = None, past_sessions: int =
     by_date = {link.date: link for link in links if link.date}
 
     meetings, items = [], []
+    votes_failed, skipped = False, []
     for session in pick_sessions(sessions, today, past_sessions):
         link = by_date.get(session.date)
         page, points = None, []
@@ -258,12 +259,25 @@ def build_esch(fetcher: Fetcher, today: date | None = None, past_sessions: int =
             if point.closed:
                 continue
             votes = None
-            if point.id in voted:
+            if point.id in voted and votes_failed:
+                skipped.append(point.id)
+            elif point.id in voted:
                 try:
                     votes = esch.parse_votes_api(_text(fetcher, esch.votes_api_url(point.id)))
                 except Exception as exc:
+                    # the workflow API starts refusing connections after a few dozen requests;
+                    # stop asking rather than spend minutes on retries
+                    votes_failed = True
                     errors.append({"source": "esch.lu", "point": point.id, "error": str(exc)[:300]})
             items.append(esch_point_item(meeting, point, votes))
+    if skipped:
+        errors.append(
+            {
+                "source": "esch.lu",
+                "points": skipped,
+                "error": "votes not fetched after an earlier votes request failed",
+            }
+        )
 
     try:
         home = esch.parse_participation_home(_text(fetcher, esch.PARTICIPATION + "/"))
