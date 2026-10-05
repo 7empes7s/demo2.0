@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://democracy2.dev/spec/localized-text.schema.json",
+  "title": "LocalizedText",
+  "description": "The same text in one or more languages, keyed by language code.",
+  "type": "object",
+  "properties": {
+    "lb": { "type": "string", "minLength": 1 },
+    "fr": { "type": "string", "minLength": 1 },
+    "de": { "type": "string", "minLength": 1 },
+    "en": { "type": "string", "minLength": 1 },
+    "pt": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false,
+  "minProperties": 1
+}

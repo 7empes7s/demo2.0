@@ -1,0 +1,7 @@
+{
+  "claim_id": "example-claim-1",
+  "checker_id": "example-checker",
+  "grade": "red",
+  "evidence": [],
+  "model_version": "example-model-1"
+}

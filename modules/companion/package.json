@@ -1,0 +1,22 @@
+{
+  "name": "@democracy2/companion",
+  "version": "0.1.0",
+  "description": "Companion core: explains official texts with a source for every sentence, argues the other side, checks claims.",
+  "license": "SEE LICENSE IN LICENSE",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run",
+    "serve": "node --experimental-strip-types src/server.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

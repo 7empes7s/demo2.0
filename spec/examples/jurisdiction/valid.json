@@ -1,0 +1,10 @@
+{
+  "id": "example-commune",
+  "parent_id": "example-country",
+  "kind": "commune",
+  "name": {
+    "en": "Example commune",
+    "fr": "Commune exemple"
+  },
+  "population": 1000
+}

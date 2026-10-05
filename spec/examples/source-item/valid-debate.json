@@ -1,0 +1,10 @@
+{
+  "id": "example-item-2",
+  "source": "example-source",
+  "jurisdiction_id": "example-country",
+  "type": "debate",
+  "title": {
+    "en": "Example orientation debate"
+  },
+  "document_ids": []
+}
