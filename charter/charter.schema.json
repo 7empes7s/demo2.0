@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://democracy2.dev/charter/charter.schema.json",
+  "title": "Charter",
+  "description": "Every tunable rule of Democracy2.0 as versioned data. See charter/README.md.",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+    "scope": {
+      "type": "object",
+      "properties": {
+        "population_source": { "type": "string", "minLength": 1 },
+        "thresholds": {
+          "description": "Ordered from the highest tier to the lowest; the last one starts at 0.",
+          "type": "array",
+          "prefixItems": [
+            { "$ref": "#/$defs/threshold", "properties": { "tier": { "const": "national" } } },
+            { "$ref": "#/$defs/threshold", "properties": { "tier": { "const": "regional" } } },
+            { "$ref": "#/$defs/threshold", "properties": { "tier": { "const": "local" } } },
+            {
+              "$ref": "#/$defs/threshold",
+              "properties": { "tier": { "const": "minor" }, "min_population": { "const": 0 } }
+            }
+          ],
+          "items": false,
+          "minItems": 4
+        }
+      },
+      "required": ["population_source", "thresholds"],
+      "additionalProperties": false
+    },
+    "tiers": {
+      "type": "object",
+      "properties": {
+        "national": { "$ref": "#/$defs/tier" },
+        "regional": { "$ref": "#/$defs/tier" },
+        "local": { "$ref": "#/$defs/tier" },
+        "minor": { "$ref": "#/$defs/tier" }
+      },
+      "required": ["national", "regional", "local", "minor"],
+      "additionalProperties": false
+    },
+    "silent_ratification": {
+      "type": "object",
+      "properties": {
+        "objection_window_days": { "$ref": "#/$defs/positive_int" },
+        "objection_share_to_force_vote": { "$ref": "#/$defs/share" }
+      },
+      "required": ["objection_window_days", "objection_share_to_force_vote"],
+      "additionalProperties": false
+    },
+    "delegation": {
+      "type": "object",
+      "properties": {
+        "cap_share_of_electorate": { "$ref": "#/$defs/share" },
+        "max_depth": { "$ref": "#/$defs/positive_int" },
+        "ttl_months": { "$ref": "#/$defs/positive_int" }
+      },
+      "required": ["cap_share_of_electorate", "max_depth", "ttl_months"],
+      "additionalProperties": false
+    },
+    "vote_budget": {
+      "type": "object",
+      "properties": { "matters_per_week": { "$ref": "#/$defs/positive_int" } },
+      "required": ["matters_per_week"],
+      "additionalProperties": false
+    },
+    "bans": {
+      "type": "object",
+      "properties": {
+        "bar_years_by_rating": {
+          "type": "object",
+          "properties": {
+            "good": { "const": 0 },
+            "mixed": { "$ref": "#/$defs/non_negative_int" },
+            "poor": { "$ref": "#/$defs/non_negative_int" },
+            "failed": { "$ref": "#/$defs/non_negative_int" }
+          },
+          "required": ["good", "mixed", "poor", "failed"],
+          "additionalProperties": false
+        },
+        "good_rating_reward": { "enum": ["none", "auto_shortlist"] }
+      },
+      "required": ["bar_years_by_rating", "good_rating_reward"],
+      "additionalProperties": false
+    },
+    "reopen_windows": {
+      "type": "object",
+      "properties": { "delivery_verdict_days": { "$ref": "#/$defs/positive_int" } },
+      "required": ["delivery_verdict_days"],
+      "additionalProperties": false
+    },
+    "door": {
+      "type": "object",
+      "properties": {
+        "epoch_months": { "$ref": "#/$defs/positive_int" },
+        "revoked_id_credential": { "enum": ["survives_until_epoch_end", "revoked_immediately"] }
+      },
+      "required": ["epoch_months", "revoked_id_credential"],
+      "additionalProperties": false
+    },
+    "eligibility": {
+      "type": "object",
+      "properties": { "outsiders": { "enum": ["advise", "vote", "none"] } },
+      "required": ["outsiders"],
+      "additionalProperties": false
+    },
+    "compensation": {
+      "type": "object",
+      "properties": {
+        "panel": { "enum": ["none", "stipend_multi_week", "stipend"] },
+        "review": { "enum": ["none", "stipend"] }
+      },
+      "required": ["panel", "review"],
+      "additionalProperties": false
+    },
+    "agora": {
+      "type": "object",
+      "properties": { "upvote_hidden_hours": { "$ref": "#/$defs/non_negative_int" } },
+      "required": ["upvote_hidden_hours"],
+      "additionalProperties": false
+    },
+    "arena": {
+      "type": "object",
+      "properties": { "max_pass_rate_gap": { "$ref": "#/$defs/share" } },
+      "required": ["max_pass_rate_gap"],
+      "additionalProperties": false
+    },
+    "watchtower": {
+      "type": "object",
+      "properties": { "max_false_flag_rate": { "$ref": "#/$defs/share" } },
+      "required": ["max_false_flag_rate"],
+      "additionalProperties": false
+    },
+    "treasury": {
+      "type": "object",
+      "properties": { "max_tranche_share": { "$ref": "#/$defs/share" } },
+      "required": ["max_tranche_share"],
+      "additionalProperties": false
+    },
+    "charter_change": {
+      "type": "object",
+      "properties": {
+        "majority": {
+          "type": "object",
+          "properties": {
+            "numerator": { "$ref": "#/$defs/positive_int" },
+            "denominator": { "$ref": "#/$defs/positive_int" }
+          },
+          "required": ["numerator", "denominator"],
+          "additionalProperties": false
+        },
+        "quorum_share_of_electorate": { "$ref": "#/$defs/share" }
+      },
+      "required": ["majority", "quorum_share_of_electorate"],
+      "additionalProperties": false
+    },
+    "protected_rights": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "topics": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/topic_id" } }
+        },
+        "required": ["id", "topics"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "version",
+    "scope",
+    "tiers",
+    "silent_ratification",
+    "delegation",
+    "vote_budget",
+    "bans",
+    "reopen_windows",
+    "door",
+    "eligibility",
+    "compensation",
+    "agora",
+    "arena",
+    "watchtower",
+    "treasury",
+    "charter_change",
+    "protected_rights"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "positive_int": { "type": "integer", "minimum": 1 },
+    "non_negative_int": { "type": "integer", "minimum": 0 },
+    "share": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+    "topic_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$" },
+    "threshold": {
+      "type": "object",
+      "properties": {
+        "tier": { "enum": ["national", "regional", "local", "minor"] },
+        "min_population": { "$ref": "#/$defs/non_negative_int" }
+      },
+      "required": ["tier", "min_population"],
+      "additionalProperties": false
+    },
+    "tier": {
+      "type": "object",
+      "properties": {
+        "queue_priority": { "$ref": "#/$defs/positive_int" },
+        "details_drafted_by": { "enum": ["citizens_vote", "operator"] },
+        "review_panel": {
+          "type": "object",
+          "properties": {
+            "min": { "$ref": "#/$defs/positive_int" },
+            "max": { "$ref": "#/$defs/positive_int" }
+          },
+          "required": ["min", "max"],
+          "additionalProperties": false
+        },
+        "review_rounds": { "$ref": "#/$defs/positive_int" },
+        "delivery_verified_by": {
+          "enum": ["expert_panel_by_lottery", "expert_panel", "local_crowd_photo_proof"]
+        },
+        "ratification": { "enum": ["full_vote", "local_vote", "silent_ratification"] }
+      },
+      "required": [
+        "queue_priority",
+        "details_drafted_by",
+        "review_panel",
+        "review_rounds",
+        "delivery_verified_by",
+        "ratification"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

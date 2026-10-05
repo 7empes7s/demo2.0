@@ -1,6 +1,6 @@
 {
   "name": "democracy2",
   "private": true,
-  "workspaces": ["modules/companion", "modules/record-verify", "apps/*"],
+  "workspaces": ["charter/ts", "modules/companion", "modules/record-verify", "apps/*"],
   "engines": { "node": ">=22" }
 }

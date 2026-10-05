@@ -7,6 +7,11 @@ Handoff file for long-running work. Newest first.
 - Done: `modules/record` (log, checkpoints, proofs, HTTP API, CLI, OpenTimestamps), `modules/record-verify` (independent TypeScript verifier), `spec/record/` (format and vectors), 1M-entry benchmark.
 - Next: first real anchor from Mulinux and its Bitcoin verification (Phase 0 acceptance), tiles, witnesses, signer roles in `spec/record-types.json`.
 
+## 2026-10-05: Charter v0 and Scope
+
+- Done: `charter/charter.yaml` 0.1.0 with schema, Luxembourg reference data, `d2_charter` (Python) and `@democracy2/charter` (TypeScript) passing shared vectors.
+- Next: Rust binding; refresh populations from STATEC; decide the placeholders listed in the PR.
+
 ## 2026-10-05: overnight build, Phase 1 (Companion standalone)
 
 - Done: repo pipeline (CI, merge gate, dev-setup, check, module boundary lint).

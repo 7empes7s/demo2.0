@@ -1,0 +1,143 @@
+{
+  "description": "param(key, version?): a dotted key into the Charter; list items are not addressable by index. Charter 0.1.0.",
+  "charter_version": "0.1.0",
+  "cases": [
+    {
+      "key": "version",
+      "expect": "0.1.0"
+    },
+    {
+      "key": "tiers.national.review_panel",
+      "expect": {
+        "min": 50,
+        "max": 100
+      }
+    },
+    {
+      "key": "tiers.national.review_rounds",
+      "expect": 2
+    },
+    {
+      "key": "tiers.minor.ratification",
+      "expect": "silent_ratification"
+    },
+    {
+      "key": "tiers.local.details_drafted_by",
+      "expect": "operator"
+    },
+    {
+      "key": "tiers.national.delivery_verified_by",
+      "expect": "expert_panel_by_lottery"
+    },
+    {
+      "key": "tiers.regional.queue_priority",
+      "version": "0.1.0",
+      "expect": 2
+    },
+    {
+      "key": "delegation.cap_share_of_electorate",
+      "expect": 0.01
+    },
+    {
+      "key": "delegation.max_depth",
+      "expect": 1
+    },
+    {
+      "key": "delegation.ttl_months",
+      "expect": 12
+    },
+    {
+      "key": "door.epoch_months",
+      "expect": 12
+    },
+    {
+      "key": "eligibility.outsiders",
+      "expect": "advise"
+    },
+    {
+      "key": "arena.max_pass_rate_gap",
+      "expect": 0.1
+    },
+    {
+      "key": "compensation.review",
+      "expect": "none"
+    },
+    {
+      "key": "charter_change.majority",
+      "expect": {
+        "numerator": 2,
+        "denominator": 3
+      }
+    },
+    {
+      "key": "silent_ratification.objection_window_days",
+      "expect": 14
+    },
+    {
+      "key": "vote_budget.matters_per_week",
+      "expect": 5
+    },
+    {
+      "key": "bans.bar_years_by_rating.failed",
+      "expect": 4
+    },
+    {
+      "key": "reopen_windows.delivery_verdict_days",
+      "expect": 90
+    },
+    {
+      "key": "scope.thresholds",
+      "expect": [
+        {
+          "tier": "national",
+          "min_population": 300000
+        },
+        {
+          "tier": "regional",
+          "min_population": 50000
+        },
+        {
+          "tier": "local",
+          "min_population": 1000
+        },
+        {
+          "tier": "minor",
+          "min_population": 0
+        }
+      ]
+    },
+    {
+      "key": "scope.thresholds.0",
+      "expect_error": "unknown_key"
+    },
+    {
+      "key": "tiers.national.nope",
+      "expect_error": "unknown_key"
+    },
+    {
+      "key": "",
+      "expect_error": "unknown_key"
+    },
+    {
+      "key": "tiers..national",
+      "expect_error": "unknown_key"
+    },
+    {
+      "key": "door.epoch_months.x",
+      "expect_error": "unknown_key"
+    },
+    {
+      "key": "constructor",
+      "expect_error": "unknown_key"
+    },
+    {
+      "key": "__proto__",
+      "expect_error": "unknown_key"
+    },
+    {
+      "key": "door.epoch_months",
+      "version": "0.0.9",
+      "expect_error": "unknown_version"
+    }
+  ]
+}
