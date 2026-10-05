@@ -45,7 +45,7 @@ export interface DocketItem {
   source: string;
   jurisdiction_id: string;
   number: string;
-  type: "bill" | "other";
+  type: "bill" | "debate" | "other";
   type_label: string | null;
   title: Partial<Record<Lang, string>>;
   status: string | null;
@@ -59,9 +59,19 @@ export interface DocketItem {
   documents: DocketDocument[];
 }
 
+export interface DocketMeeting {
+  id: string;
+  date: string | null;
+  time: string | null;
+  body: string;
+  location?: string | null;
+  points: { text: string; dossier: string | null; steps: string[] }[];
+}
+
 export interface DocketSnapshot {
   schema: string;
   generated_at: string;
+  meetings?: DocketMeeting[];
   items: DocketItem[];
 }
 
