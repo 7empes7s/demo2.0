@@ -41,7 +41,7 @@ wheels = [
 
 [[package]]
 name = "d2-docket"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "modules/docket" }
 dependencies = [
     { name = "beautifulsoup4" },
