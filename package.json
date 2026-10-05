@@ -1,6 +1,6 @@
 {
   "name": "democracy2",
   "private": true,
-  "workspaces": ["modules/companion", "apps/*"],
+  "workspaces": ["charter/ts", "modules/companion", "apps/*"],
   "engines": { "node": ">=22" }
 }

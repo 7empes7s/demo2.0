@@ -1,0 +1,144 @@
+# Democracy2.0 Charter: every tunable rule of the game, as data.
+#
+# Read it only through the Scope library (d2_charter in Python, @democracy2/charter in TypeScript).
+# Validated against charter.schema.json. Every module logs the version it acted under.
+# A change is a new version and needs a constitution-class Booth tally proof (see charter_change).
+#
+# Values marked "# placeholder: decision needed" are conservative defaults chosen because the
+# architecture docs give no number. They need a human decision before any binding use.
+# Every other value is the default named in docs/architecture/.
+
+version: "0.1.0"
+
+# Scope: a matter's tier comes from its affected population, never from a proposer's label.
+# A matter takes the first tier, from the top, whose min_population it reaches.
+scope:
+  population_source: data/lu-jurisdictions.json
+  thresholds:
+    - tier: national
+      min_population: 300000 # placeholder: decision needed
+    - tier: regional
+      min_population: 50000 # placeholder: decision needed
+    - tier: local
+      min_population: 1000 # placeholder: decision needed
+    - tier: minor
+      min_population: 0
+
+# The dial (docs/architecture/01-modules.md, section 2).
+tiers:
+  national:
+    queue_priority: 1
+    details_drafted_by: citizens_vote
+    review_panel: { min: 50, max: 100 }
+    review_rounds: 2
+    delivery_verified_by: expert_panel_by_lottery
+    ratification: full_vote
+  regional:
+    queue_priority: 2
+    details_drafted_by: citizens_vote
+    review_panel: { min: 15, max: 30 }
+    review_rounds: 1 # placeholder: decision needed
+    delivery_verified_by: expert_panel
+    ratification: full_vote
+  local:
+    queue_priority: 3
+    details_drafted_by: operator
+    review_panel: { min: 5, max: 9 }
+    review_rounds: 1 # placeholder: decision needed
+    delivery_verified_by: local_crowd_photo_proof
+    ratification: local_vote
+  minor:
+    queue_priority: 4
+    details_drafted_by: operator
+    review_panel: { min: 3, max: 3 }
+    review_rounds: 1 # placeholder: decision needed
+    delivery_verified_by: local_crowd_photo_proof
+    ratification: silent_ratification
+
+# Silent ratification (minor tier): the draft passes unless enough people object in time.
+silent_ratification:
+  objection_window_days: 14 # placeholder: decision needed
+  # Share of the affected electorate whose objections turn it into a local vote.
+  objection_share_to_force_vote: 0.01 # placeholder: decision needed
+
+# Booth liquid delegation (docs/architecture/02-protocols.md, section 3).
+delegation:
+  cap_share_of_electorate: 0.01
+  max_depth: 1
+  ttl_months: 12
+
+# Pulse: how many matters a citizen votes on directly each week; the rest go to their delegates.
+vote_budget:
+  matters_per_week: 5 # placeholder: decision needed
+
+# Delivered: end-of-mandate rating consequences for operators.
+bans:
+  bar_years_by_rating:
+    good: 0
+    mixed: 0
+    poor: 2 # placeholder: decision needed
+    failed: 4 # placeholder: decision needed
+  good_rating_reward: auto_shortlist
+
+# How long a final outcome stays open to new evidence.
+reopen_windows:
+  delivery_verdict_days: 90 # placeholder: decision needed
+
+# Door credentials.
+door:
+  epoch_months: 12
+  revoked_id_credential: survives_until_epoch_end
+
+# Who votes on a matter outside its area: advise means arguments and briefings, not ballots.
+eligibility:
+  outsiders: advise
+
+# Pay for Lottery panels and certified reviewers. Defaults from the docs; Marouane's call is open.
+compensation:
+  panel: stipend_multi_week # placeholder: decision needed
+  review: none # placeholder: decision needed
+
+# Agora: upvote counts stay hidden for the first hours so early votes don't snowball.
+agora:
+  upvote_hidden_hours: 24
+
+# Arena: a pass-rate gap above this between age bands, languages or regions opens a redesign task.
+arena:
+  max_pass_rate_gap: 0.10 # placeholder: decision needed
+
+# Watchtower: acceptable false-flag rate on anomaly detection.
+watchtower:
+  max_false_flag_rate: 0.05 # placeholder: decision needed
+
+# Treasury: no single tranche may release more than this share of a ratified budget.
+treasury:
+  max_tranche_share: 0.5 # placeholder: decision needed
+
+# Changing this file: a constitution-class Booth round with a two-thirds majority of votes cast.
+charter_change:
+  majority: { numerator: 2, denominator: 3 }
+  quorum_share_of_electorate: 0.2 # placeholder: decision needed
+
+# Protected rights: matters no vote may decide. A matter is protected when any of its topics is
+# one of these topics or sits under one (topic ids are dotted paths, e.g. rights.expression.press).
+# The list as a whole is a placeholder: decision needed. It follows the Luxembourg Constitution
+# and the ECHR conservatively.
+protected_rights:
+  - id: life_and_bodily_integrity
+    topics: [rights.life, rights.bodily_integrity]
+  - id: equality_and_non_discrimination
+    topics: [rights.equality]
+  - id: freedom_of_expression_and_press
+    topics: [rights.expression]
+  - id: freedom_of_assembly_and_association
+    topics: [rights.assembly, rights.association]
+  - id: freedom_of_conscience_and_religion
+    topics: [rights.conscience]
+  - id: privacy_and_data_protection
+    topics: [rights.privacy]
+  - id: fair_trial_and_due_process
+    topics: [rights.fair_trial]
+  - id: right_to_vote_and_secret_ballot
+    topics: [rights.vote, democracy.ballot_secrecy]
+  - id: anonymity_of_participation
+    topics: [democracy.participant_anonymity]
