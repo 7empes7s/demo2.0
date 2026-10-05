@@ -16,9 +16,13 @@ One service, `civic-companion`, serves three things from one Node process: the c
 ## One-time install (as root on Mulinux)
 
 ```sh
-# Node 22, uv and git must be present; nothing heavy is built here (the app build takes about 1 s).
+# Node 22 and uv must be on /usr/local/bin or /usr/bin (systemd units do not see ~/.local/bin),
+# plus git, curl and jq. Nothing heavy is built here (the app build takes about 1 s).
 useradd --system --home /opt/civic --shell /usr/sbin/nologin civic
-mkdir -p /opt/civic/shared /etc/civic && chown -R civic: /opt/civic
+mkdir -p /opt/civic/shared /etc/civic
+# An empty snapshot so the first release can start before Docket has run.
+echo '{"schema":"d2.docket.snapshot/1","generated_at":"1970-01-01T00:00:00Z","items":[],"meetings":[],"errors":[]}' > /opt/civic/shared/lu-chd.json
+chown -R civic: /opt/civic
 # Brain's deployer
 cp brain/templates/deploy/deploy.sh /usr/local/bin/app-deploy
 cp brain/templates/deploy/app-deploy@.* /etc/systemd/system/
@@ -27,8 +31,10 @@ cp ops/deploy/civic-*.service ops/deploy/civic-docket.timer /etc/systemd/system/
 install -m 600 ops/deploy/deploy.env.example /etc/civic/deploy.env       # then fill GH_TOKEN
 install -m 600 ops/deploy/companion.env.example /etc/civic/companion.env # then fill ANTHROPIC_API_KEY
 systemctl daemon-reload
+systemctl start app-deploy@civic.service       # first release; wait until it logs "live"
+curl -s 127.0.0.1:8787/healthz                 # {"ok":true,"items":0,...}
+systemctl start civic-docket.service           # first real snapshot (needs /opt/civic/current)
 systemctl enable --now app-deploy@civic.timer civic-docket.timer
-systemctl start civic-docket.service   # first snapshot
 # Once the deployer has made the first release live (curl 127.0.0.1:8787/healthz):
 ops/deploy/publish-cloudflare.sh       # tunnel + DNS for cracia.techinsiderbytes.com
 ```
