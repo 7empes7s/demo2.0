@@ -103,6 +103,7 @@ const en = {
   phases: "Phases",
   vote_none: "No vote recorded",
   fact_when: "When",
+  offline: "You're offline. This is the list saved on this device. The Companion needs a connection.",
 };
 
 export type Key = keyof typeof en;
@@ -209,6 +210,7 @@ const fr: Dict = {
   phases: "Étapes",
   vote_none: "Aucun vote enregistré",
   fact_when: "Calendrier",
+  offline: "Vous êtes hors ligne. Voici la liste enregistrée sur cet appareil. Le Compagnon a besoin d'une connexion.",
 };
 
 const de: Dict = {
@@ -312,6 +314,7 @@ const de: Dict = {
   phases: "Phasen",
   vote_none: "Keine Stimme erfasst",
   fact_when: "Zeitraum",
+  offline: "Sie sind offline. Das ist die auf diesem Gerät gespeicherte Liste. Der Begleiter braucht eine Verbindung.",
 };
 
 const lb: Dict = {
@@ -415,6 +418,7 @@ const lb: Dict = {
   phases: "Etappen",
   vote_none: "Keng Stëmm erfaasst",
   fact_when: "Zäitraum",
+  offline: "Dir sidd offline. Dat ass d'Lëscht, déi op dësem Apparat gespäichert ass. De Begleeder brauch eng Verbindung.",
 };
 
 const pt: Dict = {
@@ -518,6 +522,7 @@ const pt: Dict = {
   phases: "Fases",
   vote_none: "Nenhum voto registado",
   fact_when: "Calendário",
+  offline: "Está sem ligação. Esta é a lista guardada neste aparelho. O Companheiro precisa de ligação.",
 };
 
 export const DICTS: Record<Lang, Dict> = { en, fr, de, lb, pt };

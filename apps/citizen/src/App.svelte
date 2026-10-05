@@ -17,6 +17,7 @@
   let client = $state<CompanionClient | null | undefined>(undefined);
   let route = $state(readRoute());
   let theme = $state<"light" | "dark" | null>(prefs.theme());
+  let online = $state(navigator.onLine);
   const today = luxembourgToday();
 
   const selected = $derived<DocketItem | null>(
@@ -63,6 +64,9 @@
     const onHash = () => (route = readRoute());
     window.addEventListener("hashchange", onHash);
     window.addEventListener("popstate", onHash);
+    const onNetwork = () => (online = navigator.onLine);
+    window.addEventListener("online", onNetwork);
+    window.addEventListener("offline", onNetwork);
 
     loadSnapshot()
       .then((s) => (snapshot = s))
@@ -85,6 +89,8 @@
     return () => {
       window.removeEventListener("hashchange", onHash);
       window.removeEventListener("popstate", onHash);
+      window.removeEventListener("online", onNetwork);
+      window.removeEventListener("offline", onNetwork);
     };
   });
 </script>
@@ -109,6 +115,10 @@
       </button>
     </div>
   </header>
+
+  {#if !online}
+    <p class="offline" role="status">{t("offline")}</p>
+  {/if}
 
   {#if loadError}
     <p class="card notice">{t("error")}</p>
@@ -156,6 +166,14 @@
     padding-block: 12px;
     background: var(--bg);
     border-bottom: 1px solid var(--line);
+  }
+  .offline {
+    margin: 12px 0 0;
+    padding: 0.5rem 0.8rem;
+    border-radius: var(--radius);
+    background: var(--yellow-bg);
+    color: var(--yellow);
+    font-size: 0.9rem;
   }
   .brand {
     min-width: 0;

@@ -120,4 +120,25 @@ describe("companion server", () => {
     expect(await escape.text()).not.toContain("root:");
     expect((await fetch(base + "/%E0%A4%A")).status).toBe(400);
   });
+
+  it("serves the manifest and service worker with their types, and never lets them go stale", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "d2-static-"));
+    await writeFile(join(dir, "index.html"), "<p>app</p>");
+    await writeFile(join(dir, "sw.js"), "self.addEventListener('fetch', () => {});");
+    await writeFile(join(dir, "manifest.webmanifest"), '{"name":"Civic Companion"}');
+    await writeFile(join(dir, "icon-192.png"), "png");
+    const { base } = await start({ staticDir: dir });
+
+    const sw = await fetch(base + "/sw.js");
+    expect(sw.headers.get("content-type")).toBe("text/javascript");
+    expect(sw.headers.get("cache-control")).toBe("no-cache");
+    const manifest = await fetch(base + "/manifest.webmanifest");
+    expect(manifest.headers.get("content-type")).toBe("application/manifest+json");
+    expect(manifest.headers.get("cache-control")).toBe("no-cache");
+    expect((await manifest.json()).name).toBe("Civic Companion");
+    expect((await fetch(base + "/")).headers.get("cache-control")).toBe("no-cache");
+    const icon = await fetch(base + "/icon-192.png");
+    expect(icon.headers.get("content-type")).toBe("image/png");
+    expect(icon.headers.get("cache-control")).toBeNull();
+  });
 });
