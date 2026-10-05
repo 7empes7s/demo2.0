@@ -9,6 +9,7 @@
  *   SNAPSHOT           path to the Docket snapshot JSON (default data/lu-chd.json)
  *   STATIC_DIR         built app to serve (optional)
  *   PORT               default 8787
+ *   HOST               interface to listen on (default 127.0.0.1)
  *   TRUST_PROXY        number of reverse proxies in front (default 0); only then is
  *                      X-Forwarded-For used to tell clients apart
  */
@@ -254,7 +255,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   if (!provider) console.warn("ANTHROPIC_API_KEY is not set: serving the app and data, Companion routes return 503");
   const port = Number(process.env.PORT ?? 8787);
   const trustProxy = Number(process.env.TRUST_PROXY ?? 0) || 0;
-  createCompanionServer({ provider, snapshot, staticDir: process.env.STATIC_DIR, trustProxy }).listen(port, () =>
-    console.log(`companion listening on :${port}`),
+  const host = process.env.HOST || "127.0.0.1";
+  createCompanionServer({ provider, snapshot, staticDir: process.env.STATIC_DIR, trustProxy }).listen(port, host, () =>
+    console.log(`companion listening on ${host}:${port}`),
   );
 }
