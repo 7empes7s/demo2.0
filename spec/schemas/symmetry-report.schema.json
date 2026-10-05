@@ -29,6 +29,10 @@
       "required": ["human_count", "judge_models"],
       "additionalProperties": false
     },
+    "details": {
+      "description": "Free-form run details a harness can attach, such as threshold, passed, pair_count, pairs, harness_version or format.",
+      "type": "object"
+    },
     "record_seq": {
       "description": "Sequence number of the Record entry, once published.",
       "type": ["integer", "null"],

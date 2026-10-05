@@ -28,6 +28,13 @@ def test_schemas_found():
     assert SCHEMAS
 
 
+def test_formats_are_enforced():
+    # Without rfc3339-validator and rfc3986-validator, jsonschema silently skips these formats.
+    checkers = FormatChecker().checkers
+    assert "date-time" in checkers
+    assert "uri" in checkers
+
+
 @pytest.mark.parametrize("name", sorted(SCHEMAS))
 def test_schema_is_valid_2020_12(name):
     schema = SCHEMAS[name]
