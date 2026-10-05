@@ -2,7 +2,7 @@
   import type { DocketItem } from "@democracy2/companion";
 
   import type { CompanionClient } from "../lib/client.ts";
-  import { historyOf, nextMeeting, stageOf, statusOf, titleOf } from "../lib/data.ts";
+  import { historyOf, nextMeeting, safeUrl, stageOf, statusOf, titleOf } from "../lib/data.ts";
   import { date, t, ui } from "../lib/ui.svelte.ts";
   import Challenge from "./Challenge.svelte";
   import ClaimCheck from "./ClaimCheck.svelte";
@@ -14,11 +14,11 @@
     client,
     today,
     onback,
-  }: { item: DocketItem; client: CompanionClient | null; today: string; onback: () => void } = $props();
+  }: { item: DocketItem; client: CompanionClient | null | undefined; today: string; onback: () => void } = $props();
 
   const meeting = $derived(nextMeeting(item, today));
-  const official = $derived(item.urls[ui.lang] ?? item.urls.fr ?? "");
-  const docs = $derived(item.documents.filter((d) => d.url));
+  const official = $derived(safeUrl(item.urls[ui.lang] ?? item.urls.fr));
+  const docs = $derived(item.documents.filter((d) => safeUrl(d.url)));
   const history = $derived(historyOf(item));
 </script>
 
@@ -28,9 +28,9 @@
   <header class="head">
     <p class="meta">
       <span class="mono no">N° {item.number}</span>
-      <span class="label">{item.type_label ?? t(item.type === "bill" ? "type_bill" : "type_other")}</span>
+      {#if item.type_label}<span class="label" lang="fr">{item.type_label}</span>{:else}<span class="label">{t(item.type === "bill" ? "type_bill" : item.type === "debate" ? "type_debate" : "type_other")}</span>{/if}
     </p>
-    <h2 class="serif title" lang="fr">{titleOf(item)}</h2>
+    <h2 class="serif title" lang="fr" id="file-title" tabindex="-1">{titleOf(item)}</h2>
     <dl class="facts">
       {#if item.author}<div><dt class="label">{t("fact_author")}</dt><dd>{item.author}</dd></div>{/if}
       {#if item.committee}<div><dt class="label">{t("fact_committee")}</dt><dd lang="fr">{item.committee}</dd></div>{/if}
@@ -46,10 +46,14 @@
   <section class="card next" aria-labelledby="next-h">
     <h3 id="next-h" class="label">{t("next_label")}</h3>
     {#if meeting}
-      <p class="when">{t("next_meeting", { body: meeting.body, date: date(meeting.date), time: meeting.time ?? "" })}</p>
+      <p class="when">
+        {meeting.time
+          ? t("next_meeting", { body: meeting.body, date: date(meeting.date), time: meeting.time })
+          : t("next_meeting_no_time", { body: meeting.body, date: date(meeting.date) })}
+      </p>
       {#if meeting.steps.length}
         <ul class="steps" lang="fr">
-          {#each meeting.steps as step (step)}<li>{step}</li>{/each}
+          {#each meeting.steps as step, i (i)}<li>{step}</li>{/each}
         </ul>
       {/if}
     {:else}
@@ -59,7 +63,9 @@
 
   <p class="never">{t("never_recommend")}</p>
 
-  {#if client}
+  {#if client === undefined}
+    <p class="card muted pulse">{t("connecting")}</p>
+  {:else if client}
     {#key item.id}
       <Explain {item} {client} />
       <Challenge {item} {client} />
@@ -74,10 +80,10 @@
     <p class="muted small">{t("orig_language")}</p>
     {#if docs.length}
       <ul class="docs">
-        {#each docs as doc (doc.url)}
+        {#each docs as doc, i (i)}
           <li>
-            <a href={doc.url} target="_blank" rel="noopener" lang="fr">{doc.label}</a>
-            {#if doc.date}<span class="muted mono small">{doc.date}</span>{/if}
+            <a href={safeUrl(doc.url)} target="_blank" rel="noopener" lang="fr">{doc.label}</a>
+            {#if doc.date}<span class="muted small">{date(doc.date)}</span>{/if}
           </li>
         {/each}
       </ul>
@@ -92,7 +98,7 @@
       <ol class="history" lang="fr">
         {#each history as a, i (i)}
           <li>
-            <span class="mono small muted">{a.date ?? "—"}</span>
+            <span class="small muted">{a.date ? date(a.date) : "—"}</span>
             <span>{a.description}{#if a.actors.length}<span class="muted"> · {a.actors.join(", ")}</span>{/if}</span>
           </li>
         {/each}
@@ -115,6 +121,7 @@
   .head { display: grid; gap: 14px; }
   .meta { display: flex; gap: 12px; align-items: baseline; margin: 0; }
   .no { color: var(--accent-fg); font-weight: 500; }
+  .title:focus { outline: none; }
   .title { font-size: clamp(1.6rem, 4.2vw, 2.3rem); line-height: 1.15; }
   .facts { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 0; font-size: 0.92rem; }
   .facts div { display: flex; gap: 6px; align-items: baseline; }
@@ -136,7 +143,7 @@
   .small { font-size: 0.82rem; }
   .docs, .history { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
   .docs li { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
-  .history li { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 12px; font-size: 0.92rem; }
+  .history li { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: 12px; font-size: 0.92rem; }
   @media (min-width: 960px) {
     .back { display: none; }
   }

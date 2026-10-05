@@ -1,6 +1,6 @@
 <script lang="ts">
   import { LANGS, type DocketItem, type DocketSnapshot, type Lang } from "@democracy2/companion";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
 
   import FileList from "./components/FileList.svelte";
   import FileView from "./components/FileView.svelte";
@@ -13,7 +13,8 @@
 
   let snapshot = $state<DocketSnapshot | null>(null);
   let loadError = $state(false);
-  let client = $state<CompanionClient | null>(null);
+  /** undefined while we look for a model, null when there is none. */
+  let client = $state<CompanionClient | null | undefined>(undefined);
   let route = $state(readRoute());
   let theme = $state<"light" | "dark" | null>(prefs.theme());
   const today = luxembourgToday();
@@ -23,7 +24,12 @@
   );
 
   function readRoute(): string {
-    return decodeURIComponent(location.hash.replace(/^#/, ""));
+    const raw = location.hash.replace(/^#/, "");
+    try {
+      return decodeURIComponent(raw);
+    } catch {
+      return raw;
+    }
   }
 
   function applyTheme(value: "light" | "dark" | null) {
@@ -38,11 +44,14 @@
     applyTheme(theme);
   }
 
-  function open(number: string | null) {
+  async function open(number: string | null) {
     if (number) location.hash = number;
     else history.pushState(null, "", location.pathname + location.search);
     route = number ?? "";
     window.scrollTo({ top: 0 });
+    // Move focus to what just appeared, so keyboard and screen-reader users land on it.
+    await tick();
+    document.getElementById(number ? "file-title" : "list-title")?.focus({ preventScroll: true });
   }
 
   onMount(() => {
@@ -64,7 +73,7 @@
       }
       try {
         const health = (await (await fetch("healthz")).json()) as { companion?: boolean };
-        if (health.companion) client = new RemoteClient();
+        client = health.companion ? new RemoteClient() : null;
       } catch {
         client = null;
       }
@@ -106,7 +115,7 @@
     <div class="layout">
       <aside class="list-pane">
         <div class="intro">
-          <h1 class="serif">{t("agenda_title")}</h1>
+          <h1 class="serif" id="list-title" tabindex="-1">{t("agenda_title")}</h1>
           <p class="muted">{t("tagline")}</p>
         </div>
         <FileList items={snapshot.items} {today} selected={selected?.number ?? null} onopen={open} />
@@ -146,6 +155,8 @@
     border-bottom: 1px solid var(--line);
   }
   .brand {
+    min-width: 0;
+    flex: 1 1 auto;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -155,6 +166,7 @@
     cursor: pointer;
   }
   .mark {
+    flex: none;
     display: grid;
     place-items: center;
     width: 32px;
@@ -164,12 +176,12 @@
     color: var(--accent-ink);
     font: 700 1.1rem/1 var(--serif);
   }
-  .name { font-size: 1.45rem; white-space: nowrap; }
+  .name { font-size: 1.45rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   @media (max-width: 420px) {
     .name { font-size: 1.2rem; }
-    select { max-width: 8.5rem; }
+    select { max-width: 7.5rem; }
   }
-  .tools { display: flex; gap: 8px; align-items: center; }
+  .tools { flex: none; display: flex; gap: 8px; align-items: center; }
   select, .icon {
     background: var(--surface);
     border: 1px solid var(--line);
@@ -185,6 +197,7 @@
     padding-top: 20px;
   }
   .intro { display: grid; gap: 4px; margin-bottom: 16px; }
+  .intro h1:focus { outline: none; }
   .intro h1 { font-size: clamp(1.9rem, 5vw, 2.4rem); line-height: 1.1; }
   .intro p { margin: 0; }
   .source-note { font-size: 0.82rem; margin-top: 16px; }

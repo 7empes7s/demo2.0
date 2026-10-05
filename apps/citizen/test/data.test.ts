@@ -1,7 +1,8 @@
 import type { DocketItem } from "@democracy2/companion";
 import { describe, expect, it } from "vitest";
 
-import { historyOf, matches, nextMeeting, sortItems, stageOf, statusOf } from "../src/lib/data.ts";
+import { historyOf, matches, nextMeeting, safeUrl, sortItems, stageOf, statusOf } from "../src/lib/data.ts";
+import { CompanionFailure, errorKey } from "../src/lib/errors.ts";
 import { DICTS, formatDate, guessLang, translate } from "../src/lib/i18n.ts";
 import { SampleProvider } from "../src/lib/sample-provider.ts";
 
@@ -85,7 +86,7 @@ describe("languages", () => {
   });
 
   it("fills variables and formats dates for Luxembourg", () => {
-    expect(translate("fr", "file_no", { n: 8739 })).toContain("8739");
+    expect(translate("fr", "next_meeting", { body: "Commission", date: "7 octobre", time: "10:00" })).toBe("Commission, 7 octobre à 10:00");
     expect(formatDate("de", "2026-10-05")).toMatch(/5\. Oktober 2026/);
     expect(guessLang(["pt-PT", "en"])).toBe("pt");
     expect(guessLang(["it"])).toBe("fr");
@@ -114,5 +115,24 @@ describe("sample provider", () => {
     const turns = seen[0] as { role: string; content: string }[];
     expect(turns[0].content.startsWith("<instructions>\nBe neutral.")).toBe(true);
     expect(turns.map((t) => t.role)).toEqual(["user", "assistant"]);
+  });
+});
+
+describe("failures", () => {
+  it("tells a declined or busy model apart from a cut answer and other errors", async () => {
+    const fail = (error: unknown) => new SampleProvider(async () => Promise.reject(error));
+    const req = { system: "s", messages: [{ role: "user" as const, content: "x" }] };
+    await expect(fail({ code: "not_granted" }).complete(req)).rejects.toMatchObject({ kind: "unavailable" });
+    await expect(fail({ code: "rate_limited" }).complete(req)).rejects.toMatchObject({ kind: "busy" });
+    const cut = new SampleProvider(async () => ({ text: '{"a":', truncated: true }));
+    await expect(cut.complete(req)).rejects.toMatchObject({ kind: "too_long" });
+    expect(errorKey(new CompanionFailure("unavailable"))).toBe("error_unavailable");
+    expect(errorKey(new Error("x"))).toBe("error");
+  });
+
+  it("only links web URLs", () => {
+    expect(safeUrl("https://www.chd.lu/fr/dossier/8739")).toBe("https://www.chd.lu/fr/dossier/8739");
+    expect(safeUrl("javascript:alert(1)")).toBeUndefined();
+    expect(safeUrl("")).toBeUndefined();
   });
 });

@@ -24,7 +24,7 @@
 
 <div class="controls">
   <input type="search" bind:value={query} placeholder={t("search")} aria-label={t("search")} />
-  <div class="chips" role="group">
+  <div class="chips" role="group" aria-label={t("group_filter")}>
     {#each [["all", "filter_all"], ["bill", "filter_bill"], ["other", "filter_other"]] as const as [value, key] (value)}
       <button class="btn chip" aria-pressed={filter === value} onclick={() => (filter = value)}>{t(key)}</button>
     {/each}
@@ -47,7 +47,7 @@
       >
         <span class="meta">
           <span class="mono no">N° {item.number}</span>
-          <span class="label">{item.type_label ?? t(item.type === "bill" ? "type_bill" : "type_other")}</span>
+          {#if item.type_label}<span class="label" lang="fr">{item.type_label}</span>{:else}<span class="label">{t(item.type === "bill" ? "type_bill" : item.type === "debate" ? "type_debate" : "type_other")}</span>{/if}
         </span>
         <span class="title">{titleOf(item)}</span>
         <StageTrack stage={stageOf(item)} compact />

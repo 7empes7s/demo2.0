@@ -5,6 +5,8 @@
 
 import type { CompletionRequest, Provider } from "@democracy2/companion";
 
+import { CompanionFailure } from "./errors.ts";
+
 type Turn = { role: "user" | "assistant"; content: string };
 export type SampleFn = (
   input: Turn[],
@@ -25,10 +27,21 @@ export class SampleProvider implements Provider {
       { role: "user", content: `<instructions>\n${req.system}\n</instructions>\n\n${first?.content ?? ""}` },
       ...rest,
     ];
-    const out = await this.sample(turns, {
-      signal: req.signal,
-      onText: req.onText ? ({ text }) => req.onText?.(text) : undefined,
-    });
+    let out: { text: string; truncated?: boolean };
+    try {
+      out = await this.sample(turns, {
+        signal: req.signal,
+        // The app keeps its own results; replaying a cached answer would only repeat a failure.
+        cache: false,
+        onText: req.onText ? ({ text }) => req.onText?.(text) : undefined,
+      });
+    } catch (error) {
+      const code = (error as { code?: string } | null)?.code;
+      if (code === "not_granted") throw new CompanionFailure("unavailable");
+      if (code === "rate_limited") throw new CompanionFailure("busy");
+      throw error;
+    }
+    if (out.truncated) throw new CompanionFailure("too_long");
     return out.text;
   }
 }

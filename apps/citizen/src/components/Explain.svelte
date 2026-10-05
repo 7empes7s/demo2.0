@@ -2,6 +2,9 @@
   import type { Depth, DocketItem, Explanation } from "@democracy2/companion";
 
   import type { CompanionClient } from "../lib/client.ts";
+  import { safeUrl } from "../lib/data.ts";
+  import { errorKey } from "../lib/errors.ts";
+  import type { Key } from "../lib/i18n.ts";
   import { t, ui } from "../lib/ui.svelte.ts";
   import SourceList from "./SourceList.svelte";
 
@@ -10,17 +13,17 @@
   let depth = $state<Depth>("short");
   let result = $state<Explanation | null>(null);
   let busy = $state(false);
-  let failed = $state(false);
+  let failure = $state<Key | null>(null);
   let open = $state<string | null>(null);
 
   async function run() {
     busy = true;
-    failed = false;
+    failure = null;
     open = null;
     try {
       result = await client.explain(item, ui.lang, depth);
-    } catch {
-      failed = true;
+    } catch (e) {
+      failure = errorKey(e);
     } finally {
       busy = false;
     }
@@ -32,7 +35,7 @@
 <section class="card explain" aria-labelledby="explain-h">
   <h3 id="explain-h" class="serif sub">{t("explain_title")}</h3>
   <div class="row">
-    <div class="depths" role="group">
+    <div class="depths" role="group" aria-label={t("group_depth")}>
       {#each [["short", "depth_short"], ["standard", "depth_standard"], ["deep", "depth_deep"]] as const as [value, key] (value)}
         <button class="btn small" aria-pressed={depth === value} onclick={() => (depth = value)}>{t(key)}</button>
       {/each}
@@ -40,12 +43,13 @@
     <button class="btn primary" onclick={run} disabled={busy}>{t("explain_go")}</button>
   </div>
 
-  {#if busy}
-    <p class="muted pulse">{t("explain_busy")}</p>
-  {:else if failed}
-    <p class="error">{t("error")}</p>
-  {:else if result}
-    <div class="answer" aria-live="polite">
+  <div class="status" aria-live="polite">
+    {#if busy}<p class="muted pulse">{t("explain_busy")}</p>{/if}
+    {#if failure && !busy}<p class="error">{t(failure)}</p>{/if}
+    {#if result && !busy && !failure && result.headline}<p class="sr-only">{result.headline}</p>{/if}
+  </div>
+  {#if result && !busy && !failure}
+    <div class="answer">
       {#if result.headline}<p class="headline">{result.headline}</p>{/if}
       {#each result.sections as section, si (si)}
         <div class="section">
@@ -68,7 +72,7 @@
                   <span class="muted small">
                     {sentence.verified ? `✓ ${t("quote_found")}` : t("unverified")}
                     {#each sentence.sources as n (n)}
-                      · <a href={label(n)?.url} target="_blank" rel="noopener">{t("view_source", { n })}: {label(n)?.label}</a>
+                      · <a href={safeUrl(label(n)?.url)} target="_blank" rel="noopener">{t("view_source", { n })}: {label(n)?.label}</a>
                     {/each}
                   </span>
                 </span>
@@ -100,15 +104,15 @@
   .cite {
     display: inline-grid;
     place-items: center;
-    min-width: 1.35rem;
-    height: 1.35rem;
+    min-width: 1.6rem;
+    height: 1.6rem;
     margin-left: 2px;
     padding: 0 4px;
     border-radius: 6px;
     border: 1px solid var(--line);
     background: var(--surface-2);
     color: var(--accent-fg);
-    font-size: 0.72rem;
+    font-size: 0.78rem;
     vertical-align: text-top;
     cursor: pointer;
   }

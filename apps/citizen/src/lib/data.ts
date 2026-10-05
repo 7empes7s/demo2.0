@@ -47,6 +47,11 @@ export function sortItems(items: DocketItem[], today: string): DocketItem[] {
   return [...items].sort((a, b) => key(a).localeCompare(key(b)) || (b.updated ?? "").localeCompare(a.updated ?? ""));
 }
 
+/** Only web links from the snapshot become clickable. */
+export function safeUrl(url: string | null | undefined): string | undefined {
+  return url && /^https?:\/\//i.test(url) ? url : undefined;
+}
+
 export function titleOf(item: DocketItem): string {
   return item.title.fr ?? Object.values(item.title)[0] ?? item.number;
 }

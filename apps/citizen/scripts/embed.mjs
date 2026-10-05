@@ -26,7 +26,8 @@ if (flag === "--fragment") {
   const scripts = head.match(/<script[\s\S]*?<\/script>/g) ?? [];
   out = [title, ...styles, ...fonts, tag, body.trim(), ...scripts].join("\n");
 } else {
-  out = html.replace("</head>", `${tag}\n</head>`);
+  // A function replacement: `$` sequences in document text must stay literal.
+  out = html.replace("</head>", () => `${tag}\n</head>`);
 }
 writeFileSync(outPath, out);
 console.log(`${outPath}: ${(out.length / 1024).toFixed(0)} KB, ${snapshot.items.length} files`);

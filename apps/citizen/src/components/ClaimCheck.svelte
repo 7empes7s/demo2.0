@@ -2,6 +2,9 @@
   import type { ClaimCheck, DocketItem } from "@democracy2/companion";
 
   import type { CompanionClient } from "../lib/client.ts";
+  import { safeUrl } from "../lib/data.ts";
+  import { errorKey } from "../lib/errors.ts";
+  import type { Key } from "../lib/i18n.ts";
   import { t, ui } from "../lib/ui.svelte.ts";
 
   let { item, client }: { item: DocketItem; client: CompanionClient } = $props();
@@ -9,17 +12,17 @@
   let claim = $state("");
   let result = $state<ClaimCheck | null>(null);
   let busy = $state(false);
-  let failed = $state(false);
+  let failure = $state<Key | null>(null);
 
   async function check(e: SubmitEvent) {
     e.preventDefault();
     if (!claim.trim() || busy) return;
     busy = true;
-    failed = false;
+    failure = null;
     try {
       result = await client.claim(item, ui.lang, claim.trim());
-    } catch {
-      failed = true;
+    } catch (e) {
+      failure = errorKey(e);
     } finally {
       busy = false;
     }
@@ -32,10 +35,13 @@
     <textarea bind:value={claim} rows="2" maxlength="500" placeholder={t("check_placeholder")} aria-label={t("check_title")}></textarea>
     <button class="btn primary" disabled={busy || !claim.trim()}>{t("check_go")}</button>
   </form>
-  {#if busy}<p class="muted pulse small">{t("check_busy")}</p>{/if}
-  {#if failed}<p class="error small">{t("error")}</p>{/if}
+  <div aria-live="polite">
+    {#if busy}<p class="muted pulse small">{t("check_busy")}</p>{/if}
+    {#if failure}<p class="error small">{t(failure)}</p>{/if}
+    {#if result && !busy}<p class="sr-only">{t(`grade_${result.grade}`)}. {result.explanation}</p>{/if}
+  </div>
   {#if result && !busy}
-    <div class="verdict {result.grade}" aria-live="polite">
+    <div class="verdict {result.grade}">
       <p class="grade">
         <span class="swatch" aria-hidden="true"></span>{t(`grade_${result.grade}`)}
       </p>
@@ -47,7 +53,7 @@
           {#each result.evidence as ev, i (i)}
             <li>
               <q lang="fr">{ev.quote}</q>
-              {#if ev.url}<a class="small" href={ev.url} target="_blank" rel="noopener">{t("view_source", { n: ev.source })} ↗</a>{/if}
+              {#if safeUrl(ev.url)}<a class="small" href={safeUrl(ev.url)} target="_blank" rel="noopener">{t("view_source", { n: ev.source })} ↗</a>{/if}
             </li>
           {/each}
         </ul>
