@@ -2,6 +2,11 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-05: Provenance v1
+
+- Done: `modules/provenance` (`d2_provenance`, AGPL): deterministic `match/1` checker over a Docket snapshot (deposit dates, council vote tallies, numbers and dates in record text), HTTP API `POST /claims/grade` + `GET /checkers`, CLI, two seed labelled sets (60 claims, red precision 100%).
+- Next: grow the labelled set to 500 claims on a live snapshot; a second checker (language model, quote-verified) publishing through the same schema; live link check for evidence URLs; wire Companion and Commons to the API.
+
 ## 2026-10-05: Docket Esch-sur-Alzette source
 
 - Done: Docket snapshot/2 with Chamber and Esch sources (council points with votes, consultations); companion and citizen app read /1 and /2 and show Esch files.

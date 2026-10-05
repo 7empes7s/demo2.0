@@ -1,0 +1,144 @@
+{
+ "docket": "../tests/fixtures/docket-recorded.json",
+ "about": "Claims about real Docket records (chd.lu dossiers 8752, 8821, 8700; Esch-sur-Alzette council of 2 October 2026). Labels say what the records show: green confirmed, red flatly contradicted, yellow unclear or opinion, none no record.",
+ "claims": [
+  {
+   "text": "Le projet de loi 8752 a été déposé le 15 mai 2026",
+   "label": "green"
+  },
+  {
+   "text": "Bill 8752 was filed on 21 July 2026",
+   "label": "red"
+  },
+  {
+   "text": "Das Gesetzesprojet 8752 wurde am 15. Mai 2026 eingereicht",
+   "label": "green"
+  },
+  {
+   "text": "O projeto de lei 8752 foi apresentado em 15 de maio de 2026",
+   "label": "green"
+  },
+  {
+   "text": "Le débat d'orientation 8821 a été déposé le 11 août 2026",
+   "label": "green"
+  },
+  {
+   "text": "Le débat d'orientation 8821 a été déposé le 11 septembre 2026",
+   "label": "red"
+  },
+  {
+   "text": "Le projet de loi 8752 n'a pas été déposé le 15 mai 2026",
+   "label": "red"
+  },
+  {
+   "text": "Le projet de loi 8752 a été renvoyé à la Commission des Finances le 4 juin 2026",
+   "label": "green"
+  },
+  {
+   "text": "Le projet de loi 8752 a déjà été voté par la Chambre",
+   "label": "red"
+  },
+  {
+   "text": "Le projet de loi 8752 modifie la loi du 23 décembre 2016 relative aux abus de marché",
+   "label": "green"
+  },
+  {
+   "text": "Le projet de loi 8752 modifie la loi du 23 décembre 2018 relative aux abus de marché",
+   "label": "red"
+  },
+  {
+   "text": "Le projet de loi 8752 prévoit la mise en œuvre du règlement (UE) 2024/2809",
+   "label": "green"
+  },
+  {
+   "text": "Le projet de loi 8752 met en œuvre le règlement (UE) 2024/2810",
+   "label": "yellow"
+  },
+  {
+   "text": "Le projet de loi 8752 est une mauvaise idée pour les petites et moyennes entreprises",
+   "label": "yellow"
+  },
+  {
+   "text": "La Chambre de Commerce a rendu un avis sur le projet de loi 8752",
+   "label": "green"
+  },
+  {
+   "text": "Le conseil communal a approuvé le PAP Quai Neiduerf par 11 voix contre 8",
+   "context": "lu.esch.42063",
+   "label": "green"
+  },
+  {
+   "text": "Le point a recueilli 11 voix pour et 8 voix contre",
+   "context": "lu.esch.42063",
+   "label": "green"
+  },
+  {
+   "text": "The council approved the Quai Neiduerf plan by 11 votes to 8",
+   "context": "lu.esch.42063",
+   "label": "green"
+  },
+  {
+   "text": "De Gemengerot huet de PAP Quai Neiduerf mat 11 Stëmme fir an 8 Stëmme dogéint ugeholl",
+   "context": "lu.esch.42063",
+   "label": "green"
+  },
+  {
+   "text": "Le PAP Quai Neiduerf a été voté à l'unanimité",
+   "context": "lu.esch.42063",
+   "label": "red"
+  },
+  {
+   "text": "The council approved the Quai Neiduerf plan by 12 votes to 7",
+   "context": "lu.esch.42063",
+   "label": "red"
+  },
+  {
+   "text": "Der PAP Quai Neiduerf wurde einstimmig angenommen",
+   "context": "lu.esch.42063",
+   "label": "red"
+  },
+  {
+   "text": "Le vote sur le PAP Quai Neiduerf, 11 voix contre 8, est un scandale",
+   "context": "lu.esch.42063",
+   "label": "yellow"
+  },
+  {
+   "text": "La contribution financière au GECT Alzette Belval concerne l'année 2027",
+   "label": "green"
+  },
+  {
+   "text": "La contribution financière au GECT Alzette Belval porte sur l'année 2028",
+   "label": "red"
+  },
+  {
+   "text": "Le conseil a voté la contribution au GECT Alzette Belval à l'unanimité",
+   "context": "lu.esch.42071",
+   "label": "yellow"
+  },
+  {
+   "text": "La convention de recherche avec l'Université du Luxembourg porte sur l'Assemblée citoyenne",
+   "label": "green"
+  },
+  {
+   "text": "La convention avec l'Université du Luxembourg sur l'Assemblée citoyenne est une mauvaise idée",
+   "label": "yellow"
+  },
+  {
+   "text": "Le relevé et rôle supplétif de l'impôt foncier a été délibéré",
+   "context": "lu.esch.42060",
+   "label": "green"
+  },
+  {
+   "text": "La réfection des rues Brill et Spoo (phase 1) est financée par un crédit spécial extraordinaire",
+   "label": "green"
+  },
+  {
+   "text": "Le Luxembourg a gagné la Coupe du monde de football",
+   "label": "none"
+  },
+  {
+   "text": "Mars has two moons",
+   "label": "none"
+  }
+ ]
+}

@@ -21,7 +21,7 @@ package = false
 
 [tool.uv.workspace]
 # Python modules only (TypeScript and Rust modules have no pyproject). Add one line per Python module.
-members = ["charter/python", "modules/commons", "modules/docket", "modules/record", "modules/symmetry"]
+members = ["charter/python", "modules/commons", "modules/docket", "modules/provenance", "modules/record", "modules/symmetry"]
 
 [tool.pytest.ini_options]
 # Tests are discovered by glob, never listed by hand.

@@ -11,6 +11,7 @@ members = [
     "d2-charter",
     "d2-commons",
     "d2-docket",
+    "d2-provenance",
     "d2-record",
     "d2-symmetry",
     "democracy2-workspace",
@@ -251,6 +252,11 @@ requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.12" },
     { name = "pypdf", specifier = ">=5" },
 ]
+
+[[package]]
+name = "d2-provenance"
+version = "0.1.0"
+source = { editable = "modules/provenance" }
 
 [[package]]
 name = "d2-record"
