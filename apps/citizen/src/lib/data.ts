@@ -1,6 +1,6 @@
 /** Where the app gets the Docket snapshot, and the derived facts the screens show. */
 
-import type { DocketItem, DocketSnapshot } from "@democracy2/companion";
+import { readSnapshot, type DocketItem, type DocketSnapshot } from "@democracy2/companion";
 
 /**
  * The single-file demo carries its snapshot inside the page; the served app fetches it.
@@ -8,10 +8,78 @@ import type { DocketItem, DocketSnapshot } from "@democracy2/companion";
  */
 export async function loadSnapshot(doc: Document = document, fetcher: typeof fetch = fetch): Promise<DocketSnapshot> {
   const embedded = doc.getElementById("snapshot");
-  if (embedded?.textContent?.trim()) return JSON.parse(embedded.textContent) as DocketSnapshot;
+  if (embedded?.textContent?.trim()) return readSnapshot(JSON.parse(embedded.textContent));
   const res = await fetcher("data/snapshot.json");
   if (!res.ok) throw new Error(`snapshot: ${res.status}`);
-  return (await res.json()) as DocketSnapshot;
+  return readSnapshot(await res.json());
+}
+
+/** Which body a file belongs to. Snapshot/1 only has the Chamber. */
+export type Place = "chamber" | "esch";
+export const placeOf = (item: DocketItem): Place => (item.jurisdiction_id === "lu-esch" ? "esch" : "chamber");
+/** The order places are listed in: the Chamber first, so one council session's ~70 points don't bury it. */
+export const PLACES: Place[] = ["chamber", "esch"];
+
+/** The places present in the list, in display order. The place filter shows only for 2 or more. */
+export function placesOf(items: DocketItem[]): Place[] {
+  const present = new Set(items.map(placeOf));
+  return PLACES.filter((p) => present.has(p));
+}
+
+export type TypeFilter = "all" | "bill" | "other";
+
+/**
+ * The list as shown: filtered by type, place and search, sorted, then grouped by place in
+ * PLACES order. With one place (or one picked) there is one group.
+ */
+export function groupFiles(
+  items: DocketItem[],
+  today: string,
+  opts: { filter: TypeFilter; place: "all" | Place; query: string },
+): { place: Place; items: DocketItem[] }[] {
+  const shown = sortItems(items, today).filter(
+    (i) =>
+      (opts.filter === "all" || (opts.filter === "bill" ? i.type === "bill" : i.type !== "bill")) &&
+      (opts.place === "all" || placeOf(i) === opts.place) &&
+      matches(i, opts.query),
+  );
+  return PLACES.map((place) => ({ place, items: shown.filter((i) => placeOf(i) === place) })).filter((g) => g.items.length);
+}
+
+/** A Chamber file, a point on the Esch council's agenda, or an Esch consultation. */
+export type Kind = "chamber" | "council" | "consultation";
+export function kindOf(item: DocketItem): Kind {
+  if (placeOf(item) === "chamber") return "chamber";
+  return item.type === "agenda" ? "council" : "consultation";
+}
+
+/**
+ * The address of a file in the page (`#8739`). Chamber files keep their dossier number, so old
+ * links still work; Esch point numbers repeat from one session to the next, so Esch files use
+ * their Docket id without the country prefix.
+ */
+export function routeOf(item: DocketItem): string {
+  return kindOf(item) === "chamber" && item.number ? item.number : item.id.replace(/^lu\./, "");
+}
+
+/** The sites the snapshot was read from, for the data note. */
+export function sitesOf(snapshot: DocketSnapshot): string {
+  const site: Record<string, string> = { chd: "chd.lu", esch: "esch.lu" };
+  const names = (snapshot.sources ?? []).map((s) => site[s.id] ?? s.url ?? s.id).filter(Boolean);
+  return names.length ? names.join(", ") : "chd.lu";
+}
+
+/**
+ * Council vote values are published in French; the known ones are translated. A missing vote
+ * (null, or the "" / "null" key it is counted under) is "no vote recorded", never the text "null".
+ */
+export function voteKey(value: string | null): "vote_yes" | "vote_no" | "vote_abstain" | "vote_none" | null {
+  const v = (value ?? "").trim().toLowerCase();
+  if (v === "" || v === "null") return "vote_none";
+  if (v === "oui") return "vote_yes";
+  if (v === "non") return "vote_no";
+  if (v.startsWith("abst")) return "vote_abstain";
+  return null;
 }
 
 export type Stage = "filed" | "committee" | "opinions" | "vote";
@@ -41,10 +109,18 @@ export function luxembourgToday(now = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Luxembourg" }).format(now);
 }
 
-/** Files with a meeting coming up first (soonest first), then the most recently updated. */
+/** The latest agenda entry before `today`, for files whose meeting has passed. */
+export function lastMeeting(item: DocketItem, today: string) {
+  return item.agenda
+    .filter((m) => m.date && m.date < today)
+    .sort((a, b) => `${b.date}${b.time}`.localeCompare(`${a.date}${a.time}`))[0];
+}
+
+/** Files with a meeting coming up first (soonest first), then the most recently updated or discussed. */
 export function sortItems(items: DocketItem[], today: string): DocketItem[] {
   const key = (i: DocketItem) => nextMeeting(i, today)?.date ?? "9999";
-  return [...items].sort((a, b) => key(a).localeCompare(key(b)) || (b.updated ?? "").localeCompare(a.updated ?? ""));
+  const recent = (i: DocketItem) => i.updated ?? lastMeeting(i, today)?.date ?? "";
+  return [...items].sort((a, b) => key(a).localeCompare(key(b)) || recent(b).localeCompare(recent(a)));
 }
 
 /** Only web links from the snapshot become clickable. */
@@ -53,7 +129,7 @@ export function safeUrl(url: string | null | undefined): string | undefined {
 }
 
 export function titleOf(item: DocketItem): string {
-  return item.title.fr ?? Object.values(item.title)[0] ?? item.number;
+  return item.title.fr ?? Object.values(item.title)[0] ?? item.number ?? "";
 }
 
 /** Status values the site leaves as internal placeholders are not shown. */
@@ -64,7 +140,8 @@ export function statusOf(item: DocketItem): string | null {
 export function matches(item: DocketItem, query: string): boolean {
   const q = fold(query.trim());
   if (!q) return true;
-  return fold(`${item.number} ${titleOf(item)} ${item.author ?? ""} ${item.committee ?? ""}`).includes(q);
+  const words = [item.number, titleOf(item), item.author, item.committee, item.reference, item.theme, item.summary];
+  return fold(words.filter(Boolean).join(" ")).includes(q);
 }
 
 function fold(text: string): string {

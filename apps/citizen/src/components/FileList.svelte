@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { DocketItem } from "@democracy2/companion";
 
-  import { matches, nextMeeting, sortItems, stageOf, statusOf, titleOf } from "../lib/data.ts";
+  import { groupFiles, kindOf, nextMeeting, placesOf, routeOf, stageOf, statusOf, titleOf, type Place, type TypeFilter } from "../lib/data.ts";
   import { date, t } from "../lib/ui.svelte.ts";
+  import FileMeta from "./FileMeta.svelte";
   import StageTrack from "./StageTrack.svelte";
 
   let {
@@ -12,14 +13,14 @@
     onopen,
   }: { items: DocketItem[]; today: string; selected: string | null; onopen: (n: string) => void } = $props();
 
-  let filter = $state<"all" | "bill" | "other">("all");
+  let filter = $state<TypeFilter>("all");
+  let place = $state<"all" | Place>("all");
   let query = $state("");
 
-  const shown = $derived(
-    sortItems(items, today).filter(
-      (i) => (filter === "all" || (filter === "bill" ? i.type === "bill" : i.type !== "bill")) && matches(i, query),
-    ),
-  );
+  /** The place filter only appears when the snapshot covers more than one body. */
+  const places = $derived(placesOf(items));
+  const groups = $derived(groupFiles(items, today, { filter, place, query }));
+  const PLACE_KEY = { chamber: "place_chamber", esch: "place_esch" } as const;
 </script>
 
 <div class="controls">
@@ -29,39 +30,52 @@
       <button class="btn chip" aria-pressed={filter === value} onclick={() => (filter = value)}>{t(key)}</button>
     {/each}
   </div>
+  {#if places.length > 1}
+    <div class="segmented" role="group" aria-label={t("group_place")}>
+      <button class="seg" aria-pressed={place === "all"} onclick={() => (place = "all")}>{t("filter_all")}</button>
+      {#each places as p (p)}
+        <button class="seg" aria-pressed={place === p} onclick={() => (place = p)}>{t(PLACE_KEY[p])}</button>
+      {/each}
+    </div>
+  {/if}
 </div>
 
-<ol class="files">
-  {#each shown as item (item.id)}
-    {@const meeting = nextMeeting(item, today)}
-    <li>
-      <a
-        class="file"
-        class:current={selected === item.number}
-        href={`#${item.number}`}
-        aria-current={selected === item.number ? "page" : undefined}
-        onclick={(e) => {
-          e.preventDefault();
-          onopen(item.number);
-        }}
-      >
-        <span class="meta">
-          <span class="mono no">N° {item.number}</span>
-          {#if item.type_label}<span class="label" lang="fr">{item.type_label}</span>{:else}<span class="label">{t(item.type === "bill" ? "type_bill" : item.type === "debate" ? "type_debate" : "type_other")}</span>{/if}
-        </span>
-        <span class="title">{titleOf(item)}</span>
-        <StageTrack stage={stageOf(item)} compact />
-        <span class="when">
-          {#if meeting}
-            <span class="dot" aria-hidden="true"></span>{t("next_label")}: {date(meeting.date)}
-          {:else}
-            <span class="muted">{statusOf(item) ?? t("status_unknown")}</span>
-          {/if}
-        </span>
-      </a>
-    </li>
-  {/each}
-</ol>
+{#each groups as group (group.place)}
+  <section class="group">
+    {#if groups.length > 1}
+      <h2 class="label place">{t(PLACE_KEY[group.place])} <span class="count">{group.items.length}</span></h2>
+    {/if}
+    <ol class="files">
+      {#each group.items as item (item.id)}
+        {@const meeting = nextMeeting(item, today)}
+        {@const route = routeOf(item)}
+        <li>
+          <a
+            class="file"
+            class:current={selected === route}
+            href={`#${route}`}
+            aria-current={selected === route ? "page" : undefined}
+            onclick={(e) => {
+              e.preventDefault();
+              onopen(route);
+            }}
+          >
+            <span class="meta"><FileMeta {item} /></span>
+            <span class="title" lang="fr">{titleOf(item)}</span>
+            {#if kindOf(item) === "chamber"}<StageTrack stage={stageOf(item)} compact />{/if}
+            <span class="when">
+              {#if meeting}
+                <span class="dot" aria-hidden="true"></span>{t("next_label")}: {date(meeting.date)}
+              {:else}
+                <span class="muted">{statusOf(item) ?? t("status_unknown")}</span>
+              {/if}
+            </span>
+          </a>
+        </li>
+      {/each}
+    </ol>
+  </section>
+{/each}
 
 <style>
   .controls { display: grid; gap: 10px; margin-bottom: 12px; }
@@ -74,6 +88,35 @@
   }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip { padding: 0.3rem 0.8rem; font-size: 0.85rem; }
+  .segmented {
+    display: flex;
+    max-width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    padding: 3px;
+    gap: 2px;
+  }
+  .seg {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--fg);
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.6rem;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .seg[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .group { display: grid; gap: 8px; }
+  .group + .group { margin-top: 20px; }
+  .place { margin: 0; display: flex; gap: 8px; align-items: baseline; }
+  .count { color: var(--muted); font-weight: 400; }
   .files { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
   .file {
     display: grid;
@@ -89,7 +132,6 @@
   .file:hover { border-color: var(--accent); }
   .file.current { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
   .meta { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
-  .no { color: var(--accent-fg); font-weight: 500; font-size: 0.9rem; }
   .title {
     font-weight: 600;
     line-height: 1.35;

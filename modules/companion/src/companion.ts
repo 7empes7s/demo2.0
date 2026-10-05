@@ -48,7 +48,7 @@ export async function explain(
 ): Promise<Explanation> {
   const sources = buildSources(item, opts.lang);
   const answer = await provider.complete({
-    system: explainSystem(opts.lang, opts.depth),
+    system: explainSystem(opts.lang, opts.depth, item),
     messages: [sourceMessage(sources, "Explain this file.")],
     maxTokens: opts.depth === "deep" ? 4000 : 2500,
     onText: opts.onText,
@@ -97,7 +97,7 @@ export async function extractArguments(
 ): Promise<{ arguments: Argument[]; sources: Source[]; dropped: number; provenance: Provenance }> {
   const sources = buildSources(item, "fr");
   const answer = await provider.complete({
-    system: argumentsSystem(),
+    system: argumentsSystem(item),
     messages: [sourceMessage(sources, "List the arguments.")],
     maxTokens: 3000,
     signal: opts.signal,

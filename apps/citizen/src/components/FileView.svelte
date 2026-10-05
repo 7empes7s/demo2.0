@@ -2,11 +2,12 @@
   import type { DocketItem } from "@democracy2/companion";
 
   import type { CompanionClient } from "../lib/client.ts";
-  import { historyOf, nextMeeting, safeUrl, stageOf, statusOf, titleOf } from "../lib/data.ts";
+  import { historyOf, kindOf, lastMeeting, nextMeeting, safeUrl, stageOf, statusOf, titleOf, voteKey } from "../lib/data.ts";
   import { date, t, ui } from "../lib/ui.svelte.ts";
   import Challenge from "./Challenge.svelte";
   import ClaimCheck from "./ClaimCheck.svelte";
   import Explain from "./Explain.svelte";
+  import FileMeta from "./FileMeta.svelte";
   import StageTrack from "./StageTrack.svelte";
 
   let {
@@ -16,7 +17,27 @@
     onback,
   }: { item: DocketItem; client: CompanionClient | null | undefined; today: string; onback: () => void } = $props();
 
+  const kind = $derived(kindOf(item));
   const meeting = $derived(nextMeeting(item, today));
+  const last = $derived(meeting ? undefined : lastMeeting(item, today));
+  const votes = $derived(item.votes && Object.keys(item.votes.counts).length ? item.votes : null);
+  const phases = $derived(item.phases ?? []);
+  /** "Oui" becomes "Yes" in English; a missing vote reads "No vote recorded"; a value the app does not know stays in French. */
+  const voteName = (value: string | null) => {
+    const key = voteKey(value);
+    return key ? t(key) : (value ?? t("vote_none"));
+  };
+  /** Yes, then no, then abstained, then anything else the council publishes. */
+  const ORDER = ["vote_yes", "vote_no", "vote_abstain"];
+  const rank = (value: string) => {
+    const i = ORDER.indexOf(voteKey(value) ?? "");
+    return i < 0 ? ORDER.length : i;
+  };
+  const tally = (counts: Record<string, number>) =>
+    Object.entries(counts)
+      .sort(([a], [b]) => rank(a) - rank(b))
+      .map(([v, n]) => `${voteName(v)} ${n}`)
+      .join(" · ");
   const official = $derived(safeUrl(item.urls[ui.lang] ?? item.urls.fr));
   const docs = $derived(item.documents.filter((d) => safeUrl(d.url)));
   const history = $derived(historyOf(item));
@@ -26,40 +47,82 @@
   <button class="back" onclick={onback}>← {t("back")}</button>
 
   <header class="head">
-    <p class="meta">
-      <span class="mono no">N° {item.number}</span>
-      {#if item.type_label}<span class="label" lang="fr">{item.type_label}</span>{:else}<span class="label">{t(item.type === "bill" ? "type_bill" : item.type === "debate" ? "type_debate" : "type_other")}</span>{/if}
-    </p>
+    <p class="meta"><FileMeta {item} /></p>
     <h2 class="serif title" lang="fr" id="file-title" tabindex="-1">{titleOf(item)}</h2>
+    {#if item.summary}<p class="summary" lang="fr">{item.summary}</p>{/if}
     <dl class="facts">
       {#if item.author}<div><dt class="label">{t("fact_author")}</dt><dd>{item.author}</dd></div>{/if}
       {#if item.committee}<div><dt class="label">{t("fact_committee")}</dt><dd lang="fr">{item.committee}</dd></div>{/if}
       {#if item.deposited}<div><dt class="label">{t("fact_filed")}</dt><dd>{date(item.deposited)}</dd></div>{/if}
+      {#if item.reference}<div><dt class="label">{t("fact_reference")}</dt><dd class="mono">{item.reference}</dd></div>{/if}
+      {#if item.theme}<div><dt class="label">{t("fact_theme")}</dt><dd lang="fr">{item.theme}</dd></div>{/if}
+      {#if item.opens}<div><dt class="label">{t("fact_opens")}</dt><dd>{date(item.opens)}</dd></div>{/if}
+      {#if item.closes}<div><dt class="label">{t("fact_closes")}</dt><dd>{date(item.closes)}</dd></div>{/if}
+      {#if item.when}<div><dt class="label">{t("fact_when")}</dt><dd lang="fr">{item.when}</dd></div>{/if}
       <div><dt class="label">{t("fact_status")}</dt><dd lang="fr">{statusOf(item) ?? t("status_unknown")}</dd></div>
     </dl>
-    <StageTrack stage={stageOf(item)} />
+    {#if kind === "chamber"}<StageTrack stage={stageOf(item)} />{/if}
     {#if official}
       <p class="links"><a href={official} target="_blank" rel="noopener">{t("official_page")} ↗</a></p>
     {/if}
   </header>
 
-  <section class="card next" aria-labelledby="next-h">
-    <h3 id="next-h" class="label">{t("next_label")}</h3>
-    {#if meeting}
-      <p class="when">
-        {meeting.time
-          ? t("next_meeting", { body: meeting.body, date: date(meeting.date), time: meeting.time })
-          : t("next_meeting_no_time", { body: meeting.body, date: date(meeting.date) })}
-      </p>
-      {#if meeting.steps.length}
-        <ul class="steps" lang="fr">
-          {#each meeting.steps as step, i (i)}<li>{step}</li>{/each}
-        </ul>
+  {#if kind !== "consultation"}
+    <section class="card next" aria-labelledby="next-h">
+      <h3 id="next-h" class="label">{t(meeting || !last ? "next_label" : "last_label")}</h3>
+      {#if meeting ?? last}
+        {@const m = (meeting ?? last)!}
+        <p class="when">
+          {m.time
+            ? t("next_meeting", { body: m.body, date: date(m.date), time: m.time })
+            : t("next_meeting_no_time", { body: m.body, date: date(m.date) })}
+        </p>
+        {#if m.steps.length}
+          <ul class="steps" lang="fr">
+            {#each m.steps as step, i (i)}<li>{step}</li>{/each}
+          </ul>
+        {/if}
+      {:else}
+        <p class="muted">{t("no_meeting")}</p>
       {/if}
-    {:else}
-      <p class="muted">{t("no_meeting")}</p>
-    {/if}
-  </section>
+    </section>
+  {/if}
+
+  {#if votes}
+    <section class="card votes" aria-labelledby="votes-h">
+      <h3 id="votes-h" class="label">{t("votes_title")}</h3>
+      <p class="when">{tally(votes.counts)}</p>
+      <ul class="parties">
+        {#each Object.entries(votes.by_party) as [party, counts] (party)}
+          <li><span>{party === "null" || !party ? "—" : party}</span><span class="muted">{tally(counts)}</span></li>
+        {/each}
+      </ul>
+      {#if votes.members.length}
+        <details>
+          <summary>{t("votes_members")}</summary>
+          <ul class="parties">
+            {#each votes.members as m, i (i)}
+              <li><span>{m.name ?? "—"}{#if m.party && m.party !== "null"}<span class="muted">{" · "}{m.party}</span>{/if}</span><span>{voteName(m.vote)}</span></li>
+            {/each}
+          </ul>
+        </details>
+      {/if}
+    </section>
+  {/if}
+
+  {#if phases.length}
+    <section aria-labelledby="phases-h">
+      <h3 id="phases-h" class="serif sub">{t("phases")}</h3>
+      <ol class="history" lang="fr">
+        {#each phases as p, i (i)}
+          <li>
+            <span class="small muted">{p.start ? date(p.start) : "—"}{#if p.end}{" – "}{date(p.end)}{/if}</span>
+            <span>{p.title}</span>
+          </li>
+        {/each}
+      </ol>
+    </section>
+  {/if}
 
   <p class="never">{t("never_recommend")}</p>
 
@@ -119,8 +182,8 @@
     cursor: pointer;
   }
   .head { display: grid; gap: 14px; }
-  .meta { display: flex; gap: 12px; align-items: baseline; margin: 0; }
-  .no { color: var(--accent-fg); font-weight: 500; }
+  .meta { display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; margin: 0; }
+  .summary { margin: 0; font-size: 1.02rem; }
   .title:focus { outline: none; }
   .title { font-size: clamp(1.6rem, 4.2vw, 2.3rem); line-height: 1.15; }
   .facts { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 0; font-size: 0.92rem; }
@@ -131,6 +194,12 @@
   .next p { margin: 0; }
   .when { font-weight: 600; }
   .steps { margin: 4px 0 0; padding-left: 1.2rem; color: var(--muted); }
+  .votes { display: grid; gap: 8px; }
+  .votes p { margin: 0; }
+  .parties { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 0.92rem; }
+  .parties li { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  details summary { cursor: pointer; color: var(--accent-fg); font-weight: 600; font-size: 0.92rem; }
+  details[open] summary { margin-bottom: 6px; }
   .never {
     margin: 0;
     font-size: 0.88rem;

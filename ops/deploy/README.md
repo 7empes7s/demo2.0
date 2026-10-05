@@ -9,7 +9,7 @@ One service, `civic-companion`, serves three things from one Node process: the c
 | `deploy.env.example` | `/etc/civic/deploy.env` (mode 600), read by `app-deploy@civic` |
 | `companion.env.example` | `/etc/civic/companion.env` (mode 600), read by the service |
 | `civic-companion.service` | `/etc/systemd/system/` |
-| `civic-docket.service`, `civic-docket.timer` | `/etc/systemd/system/` (refreshes Chamber data daily) |
+| `civic-docket.service`, `civic-docket.timer` | `/etc/systemd/system/` (refreshes Chamber and Esch-sur-Alzette data twice a day; the Esch part reads at 1 request per 3 seconds, so a run takes several minutes) |
 | `cloudflared.yml`, `publish-cloudflare.sh` | public URL `https://cracia.techinsiderbytes.com` through a Cloudflare Tunnel (no open port) |
 | `Caddyfile` | only if Caddy terminates TLS for this site instead of the tunnel |
 
@@ -21,7 +21,7 @@ One service, `civic-companion`, serves three things from one Node process: the c
 useradd --system --home /opt/civic --shell /usr/sbin/nologin civic
 mkdir -p /opt/civic/shared /etc/civic
 # An empty snapshot so the first release can start before Docket has run.
-echo '{"schema":"d2.docket.snapshot/1","generated_at":"1970-01-01T00:00:00Z","items":[],"meetings":[],"errors":[]}' > /opt/civic/shared/lu-chd.json
+echo '{"schema":"d2.docket.snapshot/2","generated_at":"1970-01-01T00:00:00Z","sources":[],"items":[],"meetings":[],"errors":[]}' > /opt/civic/shared/lu-chd.json
 chown -R civic: /opt/civic
 # Brain's deployer
 cp brain/templates/deploy/deploy.sh /usr/local/bin/app-deploy

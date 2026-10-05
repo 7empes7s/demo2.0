@@ -1,5 +1,5 @@
 [Unit]
-Description=Refresh the Chamber of Deputies snapshot for the citizen app
+Description=Refresh the Docket snapshot (Chamber of Deputies and Esch-sur-Alzette) for the citizen app
 After=network-online.target
 Wants=network-online.target
 

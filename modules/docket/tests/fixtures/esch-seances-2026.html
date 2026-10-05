@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="fr-FR" class="no-js">
+
+<head>
+    <meta charset="utf-8"><link rel="preload" href="https://administration.esch.lu/wp-content/cache/fvm/min/1785831748-css9e50d4a6dece781d6dfe8085d7964075f2df2aaa0d466a5cfc83910a9ff82.css" as="style" media="all" />
+<link rel="preload" href="https://administration.esch.lu/wp-content/cache/fvm/min/1785831748-css28bc0a4aca645b7fce65b60be24360ec6e1837ab2b768c72d01b6676dadae.css" as="style" media="all" />
+<link rel="preload" href="https://administration.esch.lu/wp-content/cache/fvm/min/1785831748-css586cfe338b7ea2badc4422fb08d91b5e2e8576b2753da232c1b095e88fd6c.css" as="style" media="all" />
+<link rel="preload" href="https://administration.esch.lu/wp-content/cache/fvm/min/1785831748-css673918dc9d10c2abb4ee2fa516854a3836479ff2ffdca213d646a92157733.css" as="style" media="all" />
+<link rel="preload" href="https://administration.esch.lu/wp-content/cache/fvm/min/1785831748-cssa8e2d5aa0912159688d1d4c6ccc17592acc1dc0ee0c3a8c2553310a1f6cd0.css" as="style" media="all" /><script data-cfasync="false">if(navigator.userAgent.match(/MSIE|Internet Explorer/i)||navigator.userAgent.match(/Trident\/7\..*?rv:11/i)){var href=document.location.href;if(!href.match(/[?&]iebrowser/)){if(href.indexOf("?")==-1){if(href.indexOf("#")==-1){document.location.href=href+"?iebrowser=1"}else{document.location.href=href.replace("#","?iebrowser=1#")}}else{if(href.indexOf("#")==-1){document.location.href=href+"&iebrowser=1"}else{document.location.href=href.replace("#","&iebrowser=1#")}}}}</script>
+<script data-cfasync="false">class FVMLoader{constructor(e){this.triggerEvents=e,this.eventOptions={passive:!0},this.userEventListener=this.triggerListener.bind(this),this.delayedScripts={normal:[],async:[],defer:[]},this.allJQueries=[]}_addUserInteractionListener(e){this.triggerEvents.forEach(t=>window.addEventListener(t,e.userEventListener,e.eventOptions))}_removeUserInteractionListener(e){this.triggerEvents.forEach(t=>window.removeEventListener(t,e.userEventListener,e.eventOptions))}triggerListener(){this._removeUserInteractionListener(this),"loading"===document.readyState?document.addEventListener("DOMContentLoaded",this._loadEverythingNow.bind(this)):this._loadEverythingNow()}async _loadEverythingNow(){this._runAllDelayedCSS(),this._delayEventListeners(),this._delayJQueryReady(this),this._handleDocumentWrite(),this._registerAllDelayedScripts(),await this._loadScriptsFromList(this.delayedScripts.normal),await this._loadScriptsFromList(this.delayedScripts.defer),await this._loadScriptsFromList(this.delayedScripts.async),await this._triggerDOMContentLoaded(),await this._triggerWindowLoad(),window.dispatchEvent(new Event("wpr-allScriptsLoaded"))}_registerAllDelayedScripts(){document.querySelectorAll("script[type=fvmdelay]").forEach(e=>{e.hasAttribute("src")?e.hasAttribute("async")&&!1!==e.async?this.delayedScripts.async.push(e):e.hasAttribute("defer")&&!1!==e.defer||"module"===e.getAttribute("data-type")?this.delayedScripts.defer.push(e):this.delayedScripts.normal.push(e):this.delayedScripts.normal.push(e)})}_runAllDelayedCSS(){document.querySelectorAll("link[rel=fvmdelay]").forEach(e=>{e.setAttribute("rel","stylesheet")})}async _transformScript(e){return await this._requestAnimFrame(),new Promise(t=>{const n=document.createElement("script");let r;[...e.attributes].forEach(e=>{let t=e.nodeName;"type"!==t&&("data-type"===t&&(t="type",r=e.nodeValue),n.setAttribute(t,e.nodeValue))}),e.hasAttribute("src")?(n.addEventListener("load",t),n.addEventListener("error",t)):(n.text=e.text,t()),e.parentNode.replaceChild(n,e)})}async _loadScriptsFromList(e){const t=e.shift();return t?(await this._transformScript(t),this._loadScriptsFromList(e)):Promise.resolve()}_delayEventListeners(){let e={};function t(t,n){!function(t){function n(n){return e[t].eventsToRewrite.indexOf(n)>=0?"wpr-"+n:n}e[t]||(e[t]={originalFunctions:{add:t.addEventListener,remove:t.removeEventListener},eventsToRewrite:[]},t.addEventListener=function(){arguments[0]=n(arguments[0]),e[t].originalFunctions.add.apply(t,arguments)},t.removeEventListener=function(){arguments[0]=n(arguments[0]),e[t].originalFunctions.remove.apply(t,arguments)})}(t),e[t].eventsToRewrite.push(n)}function n(e,t){let n=e[t];Object.defineProperty(e,t,{get:()=>n||function(){},set(r){e["wpr"+t]=n=r}})}t(document,"DOMContentLoaded"),t(window,"DOMContentLoaded"),t(window,"load"),t(window,"pageshow"),t(document,"readystatechange"),n(document,"onreadystatechange"),n(window,"onload"),n(window,"onpageshow")}_delayJQueryReady(e){let t=window.jQuery;Object.defineProperty(window,"jQuery",{get:()=>t,set(n){if(n&&n.fn&&!e.allJQueries.includes(n)){n.fn.ready=n.fn.init.prototype.ready=function(t){e.domReadyFired?t.bind(document)(n):document.addEventListener("DOMContentLoaded2",()=>t.bind(document)(n))};const t=n.fn.on;n.fn.on=n.fn.init.prototype.on=function(){if(this[0]===window){function e(e){return e.split(" ").map(e=>"load"===e||0===e.indexOf("load.")?"wpr-jquery-load":e).join(" ")}"string"==typeof arguments[0]||arguments[0]instanceof String?arguments[0]=e(arguments[0]):"object"==typeof arguments[0]&&Object.keys(arguments[0]).forEach(t=>{delete Object.assign(arguments[0],{[e(t)]:arguments[0][t]})[t]})}return t.apply(this,arguments),this},e.allJQueries.push(n)}t=n}})}async _triggerDOMContentLoaded(){this.domReadyFired=!0,await this._requestAnimFrame(),document.dispatchEvent(new Event("DOMContentLoaded2")),await this._requestAnimFrame(),window.dispatchEvent(new Event("DOMContentLoaded2")),await this._requestAnimFrame(),document.dispatchEvent(new Event("wpr-readystatechange")),await this._requestAnimFrame(),document.wpronreadystatechange&&document.wpronreadystatechange()}async _triggerWindowLoad(){await this._requestAnimFrame(),window.dispatchEvent(new Event("wpr-load")),await this._requestAnimFrame(),window.wpronload&&window.wpronload(),await this._requestAnimFrame(),this.allJQueries.forEach(e=>e(window).trigger("wpr-jquery-load")),window.dispatchEvent(new Event("wpr-pageshow")),await this._requestAnimFrame(),window.wpronpageshow&&window.wpronpageshow()}_handleDocumentWrite(){const e=new Map;document.write=document.writeln=function(t){const n=document.currentScript,r=document.createRange(),i=n.parentElement;let a=e.get(n);void 0===a&&(a=n.nextSibling,e.set(n,a));const s=document.createDocumentFragment();r.setStart(s,0),s.appendChild(r.createContextualFragment(t)),i.insertBefore(s,a)}}async _requestAnimFrame(){return new Promise(e=>requestAnimationFrame(e))}static run(){const e=new FVMLoader(["keydown","mousemove","touchmove","touchstart","touchend","wheel"]);e._addUserInteractionListener(e)}}FVMLoader.run();</script><meta http-equiv="X-UA-Compatible" content="IE=edge"><title>Séances publiques du Conseil Communal - Esch Administration</title><meta name="HandheldFriendly" content="True"><meta name="MobileOptimized" content="320"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name='robots' content='max-image-preview:large, noindex,nofollow' /><link rel="canonical" href="https://administration.esch.lu/seances-publiques-conseil-communal/" /><meta property="og:locale" content="fr_FR" /><meta property="og:type" content="article" /><meta property="og:title" content="Séances publiques du Conseil Communal - Esch Administration" /><meta property="og:url" content="https://administration.esch.lu/seances-publiques-conseil-communal/" /><meta property="og:site_name" content="Esch Administration" /><meta property="article:modified_time" content="2018-12-14T11:36:22+00:00" /><meta property="og:image" content="https://administration.esch.lu/wp-content/uploads/sites/2/2017/10/hoteldeville.png" /><meta property="og:image:width" content="562" /><meta property="og:image:height" content="1069" /><meta property="og:image:type" content="image/png" /><meta name="twitter:card" content="summary_large_image" /><script type="application/ld+json" class="yoast-schema-graph">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"https://administration.esch.lu/seances-publiques-conseil-communal/","url":"https://administration.esch.lu/seances-publiques-conseil-communal/","name":"Séances publiques du Conseil Communal - Esch Administration","isPartOf":{"@id":"https://administration.esch.lu/#website"},"datePublished":"2017-09-29T14:59:24+00:00","dateModified":"2018-12-14T11:36:22+00:00","breadcrumb":{"@id":"https://administration.esch.lu/seances-publiques-conseil-communal/#breadcrumb"},"inLanguage":"fr-FR","potentialAction":[{"@type":"ReadAction","target":["https://administration.esch.lu/seances-publiques-conseil-communal/"]}]},{"@type":"BreadcrumbList","@id":"https://administration.esch.lu/seances-publiques-conseil-communal/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Accueil","item":"https://administration.esch.lu/"},{"@type":"ListItem","position":2,"name":"Séances publiques du Conseil Communal"}]},{"@type":"WebSite","@id":"https://administration.esch.lu/#website","url":"https://administration.esch.lu/","name":"Esch Administration","description":"Entrez en contact avec les services de la commune, retrouvez des informations sur les procédures administratives , ...","potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://administration.esch.lu/?s={search_term_string}"},"query-input":"required name=search_term_string"}],"inLanguage":"fr-FR"}]}</script><meta name="robots" content="noindex">
+    
+    
+    
+    
+    
+    
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+
+
+<style id='wp-img-auto-sizes-contain-inline-css' type='text/css' media="all">img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}</style>
+<style id='wp-block-library-inline-css' type='text/css' media="all">:root{--wp-block-synced-color:#7a00df;--wp-block-synced-color--rgb:122,0,223;--wp-bound-block-color:var(--wp-block-synced-color);--wp-editor-canvas-background:#ddd;--wp-admin-theme-color:#007cba;--wp-admin-theme-color--rgb:0,124,186;--wp-admin-theme-color-darker-10:#006ba1;--wp-admin-theme-color-darker-10--rgb:0,107,160.5;--wp-admin-theme-color-darker-20:#005a87;--wp-admin-theme-color-darker-20--rgb:0,90,135;--wp-admin-border-width-focus:2px}@media (min-resolution:192dpi){:root{--wp-admin-border-width-focus:1.5px}}.wp-element-button{cursor:pointer}:root .has-very-light-gray-background-color{background-color:#eee}:root .has-very-dark-gray-background-color{background-color:#313131}:root .has-very-light-gray-color{color:#eee}:root .has-very-dark-gray-color{color:#313131}:root .has-vivid-green-cyan-to-vivid-cyan-blue-gradient-background{background:linear-gradient(135deg,#00d084,#0693e3)}:root .has-purple-crush-gradient-background{background:linear-gradient(135deg,#34e2e4,#4721fb 50%,#ab1dfe)}:root .has-hazy-dawn-gradient-background{background:linear-gradient(135deg,#faaca8,#dad0ec)}:root .has-subdued-olive-gradient-background{background:linear-gradient(135deg,#fafae1,#67a671)}:root .has-atomic-cream-gradient-background{background:linear-gradient(135deg,#fdd79a,#004a59)}:root .has-nightshade-gradient-background{background:linear-gradient(135deg,#330968,#31cdcf)}:root .has-midnight-gradient-background{background:linear-gradient(135deg,#020381,#2874fc)}:root{--wp--preset--font-size--normal:16px;--wp--preset--font-size--huge:42px}.has-regular-font-size{font-size:1em}.has-larger-font-size{font-size:2.625em}.has-normal-font-size{font-size:var(--wp--preset--font-size--normal)}.has-huge-font-size{font-size:var(--wp--preset--font-size--huge)}.has-text-align-center{text-align:center}.has-text-align-left{text-align:left}.has-text-align-right{text-align:right}.has-fit-text{white-space:nowrap!important}#end-resizable-editor-section{display:none}.aligncenter{clear:both}.items-justified-left{justify-content:flex-start}.items-justified-center{justify-content:center}.items-justified-right{justify-content:flex-end}.items-justified-space-between{justify-content:space-between}.screen-reader-text{border:0;clip-path:inset(50%);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px;word-wrap:normal!important}.screen-reader-text:focus{background-color:#ddd;clip-path:none;color:#444;display:block;font-size:1em;height:auto;left:5px;line-height:normal;padding:15px 23px 14px;text-decoration:none;top:5px;width:auto;z-index:100000}html :where(.has-border-color){border-style:solid}html :where([style*=border-top-color]){border-top-style:solid}html :where([style*=border-right-color]){border-right-style:solid}html :where([style*=border-bottom-color]){border-bottom-style:solid}html :where([style*=border-left-color]){border-left-style:solid}html :where([style*=border-width]){border-style:solid}html :where([style*=border-top-width]){border-top-style:solid}html :where([style*=border-right-width]){border-right-style:solid}html :where([style*=border-bottom-width]){border-bottom-style:solid}html :where([style*=border-left-width]){border-left-style:solid}html :where(img[class*=wp-image-]){height:auto;max-width:100%}:where(figure){margin:0 0 1em}html :where(.is-position-sticky){--wp-admin--admin-bar--position-offset:var(--wp-admin--admin-bar--height,0px)}@media screen and (max-width:600px){html :where(.is-position-sticky){--wp-admin--admin-bar--position-offset:0px}}</style>
+<style id='classic-theme-styles-inline-css' type='text/css' media="all">/*! This file is auto-generated */
+.wp-block-button__link{color:#fff;background-color:#32373c;border-radius:9999px;box-shadow:none;text-decoration:none;padding:calc(.667em + 2px) calc(1.333em + 2px);font-size:1.125em}.wp-block-file__button{background:#32373c;color:#fff;text-decoration:none}</style>
+<style id='global-styles-inline-css' type='text/css' media="all">:root{--wp--preset--aspect-ratio--square:1;--wp--preset--aspect-ratio--4-3:4/3;--wp--preset--aspect-ratio--3-4:3/4;--wp--preset--aspect-ratio--3-2:3/2;--wp--preset--aspect-ratio--2-3:2/3;--wp--preset--aspect-ratio--16-9:16/9;--wp--preset--aspect-ratio--9-16:9/16;--wp--preset--color--black:#000000;--wp--preset--color--cyan-bluish-gray:#abb8c3;--wp--preset--color--white:#ffffff;--wp--preset--color--pale-pink:#f78da7;--wp--preset--color--vivid-red:#cf2e2e;--wp--preset--color--luminous-vivid-orange:#ff6900;--wp--preset--color--luminous-vivid-amber:#fcb900;--wp--preset--color--light-green-cyan:#7bdcb5;--wp--preset--color--vivid-green-cyan:#00d084;--wp--preset--color--pale-cyan-blue:#8ed1fc;--wp--preset--color--vivid-cyan-blue:#0693e3;--wp--preset--color--vivid-purple:#9b51e0;--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple:linear-gradient(135deg,rgb(6,147,227) 0%,rgb(155,81,224) 100%);--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan:linear-gradient(135deg,rgb(122,220,180) 0%,rgb(0,208,130) 100%);--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange:linear-gradient(135deg,rgb(252,185,0) 0%,rgb(255,105,0) 100%);--wp--preset--gradient--luminous-vivid-orange-to-vivid-red:linear-gradient(135deg,rgb(255,105,0) 0%,rgb(207,46,46) 100%);--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray:linear-gradient(135deg,rgb(238,238,238) 0%,rgb(169,184,195) 100%);--wp--preset--gradient--cool-to-warm-spectrum:linear-gradient(135deg,rgb(74,234,220) 0%,rgb(151,120,209) 20%,rgb(207,42,186) 40%,rgb(238,44,130) 60%,rgb(251,105,98) 80%,rgb(254,248,76) 100%);--wp--preset--gradient--blush-light-purple:linear-gradient(135deg,rgb(255,206,236) 0%,rgb(152,150,240) 100%);--wp--preset--gradient--blush-bordeaux:linear-gradient(135deg,rgb(254,205,165) 0%,rgb(254,45,45) 50%,rgb(107,0,62) 100%);--wp--preset--gradient--luminous-dusk:linear-gradient(135deg,rgb(255,203,112) 0%,rgb(199,81,192) 50%,rgb(65,88,208) 100%);--wp--preset--gradient--pale-ocean:linear-gradient(135deg,rgb(255,245,203) 0%,rgb(182,227,212) 50%,rgb(51,167,181) 100%);--wp--preset--gradient--electric-grass:linear-gradient(135deg,rgb(202,248,128) 0%,rgb(113,206,126) 100%);--wp--preset--gradient--midnight:linear-gradient(135deg,rgb(2,3,129) 0%,rgb(40,116,252) 100%);--wp--preset--font-size--small:13px;--wp--preset--font-size--medium:20px;--wp--preset--font-size--large:36px;--wp--preset--font-size--x-large:42px;--wp--preset--spacing--20:0.44rem;--wp--preset--spacing--30:0.67rem;--wp--preset--spacing--40:1rem;--wp--preset--spacing--50:1.5rem;--wp--preset--spacing--60:2.25rem;--wp--preset--spacing--70:3.38rem;--wp--preset--spacing--80:5.06rem;--wp--preset--shadow--natural:6px 6px 9px rgba(0, 0, 0, 0.2);--wp--preset--shadow--deep:12px 12px 50px rgba(0, 0, 0, 0.4);--wp--preset--shadow--sharp:6px 6px 0px rgba(0, 0, 0, 0.2);--wp--preset--shadow--outlined:6px 6px 0px -3px rgb(255, 255, 255), 6px 6px rgb(0, 0, 0);--wp--preset--shadow--crisp:6px 6px 0px rgb(0, 0, 0)}:where(.is-layout-flex){gap:.5em}:where(.is-layout-grid){gap:.5em}body .is-layout-flex{display:flex}.is-layout-flex{flex-wrap:wrap;align-items:center}.is-layout-flex>:is(*,div){margin:0}body .is-layout-grid{display:grid}.is-layout-grid>:is(*,div){margin:0}:where(.wp-block-columns.is-layout-flex){gap:2em}:where(.wp-block-columns.is-layout-grid){gap:2em}:where(.wp-block-post-template.is-layout-flex){gap:1.25em}:where(.wp-block-post-template.is-layout-grid){gap:1.25em}.has-black-color{color:var(--wp--preset--color--black)!important}.has-cyan-bluish-gray-color{color:var(--wp--preset--color--cyan-bluish-gray)!important}.has-white-color{color:var(--wp--preset--color--white)!important}.has-pale-pink-color{color:var(--wp--preset--color--pale-pink)!important}.has-vivid-red-color{color:var(--wp--preset--color--vivid-red)!important}.has-luminous-vivid-orange-color{color:var(--wp--preset--color--luminous-vivid-orange)!important}.has-luminous-vivid-amber-color{color:var(--wp--preset--color--luminous-vivid-amber)!important}.has-light-green-cyan-color{color:var(--wp--preset--color--light-green-cyan)!important}.has-vivid-green-cyan-color{color:var(--wp--preset--color--vivid-green-cyan)!important}.has-pale-cyan-blue-color{color:var(--wp--preset--color--pale-cyan-blue)!important}.has-vivid-cyan-blue-color{color:var(--wp--preset--color--vivid-cyan-blue)!important}.has-vivid-purple-color{color:var(--wp--preset--color--vivid-purple)!important}.has-black-background-color{background-color:var(--wp--preset--color--black)!important}.has-cyan-bluish-gray-background-color{background-color:var(--wp--preset--color--cyan-bluish-gray)!important}.has-white-background-color{background-color:var(--wp--preset--color--white)!important}.has-pale-pink-background-color{background-color:var(--wp--preset--color--pale-pink)!important}.has-vivid-red-background-color{background-color:var(--wp--preset--color--vivid-red)!important}.has-luminous-vivid-orange-background-color{background-color:var(--wp--preset--color--luminous-vivid-orange)!important}.has-luminous-vivid-amber-background-color{background-color:var(--wp--preset--color--luminous-vivid-amber)!important}.has-light-green-cyan-background-color{background-color:var(--wp--preset--color--light-green-cyan)!important}.has-vivid-green-cyan-background-color{background-color:var(--wp--preset--color--vivid-green-cyan)!important}.has-pale-cyan-blue-background-color{background-color:var(--wp--preset--color--pale-cyan-blue)!important}.has-vivid-cyan-blue-background-color{background-color:var(--wp--preset--color--vivid-cyan-blue)!important}.has-vivid-purple-background-color{background-color:var(--wp--preset--color--vivid-purple)!important}.has-black-border-color{border-color:var(--wp--preset--color--black)!important}.has-cyan-bluish-gray-border-color{border-color:var(--wp--preset--color--cyan-bluish-gray)!important}.has-white-border-color{border-color:var(--wp--preset--color--white)!important}.has-pale-pink-border-color{border-color:var(--wp--preset--color--pale-pink)!important}.has-vivid-red-border-color{border-color:var(--wp--preset--color--vivid-red)!important}.has-luminous-vivid-orange-border-color{border-color:var(--wp--preset--color--luminous-vivid-orange)!important}.has-luminous-vivid-amber-border-color{border-color:var(--wp--preset--color--luminous-vivid-amber)!important}.has-light-green-cyan-border-color{border-color:var(--wp--preset--color--light-green-cyan)!important}.has-vivid-green-cyan-border-color{border-color:var(--wp--preset--color--vivid-green-cyan)!important}.has-pale-cyan-blue-border-color{border-color:var(--wp--preset--color--pale-cyan-blue)!important}.has-vivid-cyan-blue-border-color{border-color:var(--wp--preset--color--vivid-cyan-blue)!important}.has-vivid-purple-border-color{border-color:var(--wp--preset--color--vivid-purple)!important}.has-vivid-cyan-blue-to-vivid-purple-gradient-background{background:var(--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple)!important}.has-light-green-cyan-to-vivid-green-cyan-gradient-background{background:var(--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan)!important}.has-luminous-vivid-amber-to-luminous-vivid-orange-gradient-background{background:var(--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange)!important}.has-luminous-vivid-orange-to-vivid-red-gradient-background{background:var(--wp--preset--gradient--luminous-vivid-orange-to-vivid-red)!important}.has-very-light-gray-to-cyan-bluish-gray-gradient-background{background:var(--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray)!important}.has-cool-to-warm-spectrum-gradient-background{background:var(--wp--preset--gradient--cool-to-warm-spectrum)!important}.has-blush-light-purple-gradient-background{background:var(--wp--preset--gradient--blush-light-purple)!important}.has-blush-bordeaux-gradient-background{background:var(--wp--preset--gradient--blush-bordeaux)!important}.has-luminous-dusk-gradient-background{background:var(--wp--preset--gradient--luminous-dusk)!important}.has-pale-ocean-gradient-background{background:var(--wp--preset--gradient--pale-ocean)!important}.has-electric-grass-gradient-background{background:var(--wp--preset--gradient--electric-grass)!important}.has-midnight-gradient-background{background:var(--wp--preset--gradient--midnight)!important}.has-small-font-size{font-size:var(--wp--preset--font-size--small)!important}.has-medium-font-size{font-size:var(--wp--preset--font-size--medium)!important}.has-large-font-size{font-size:var(--wp--preset--font-size--large)!important}.has-x-large-font-size{font-size:var(--wp--preset--font-size--x-large)!important}</style>
+
+<link rel='stylesheet' id='lightbulb-a11y-css' href='https://administration.esch.lu/wp-content/cache/fvm/min/1785831748-css9e50d4a6dece781d6dfe8085d7964075f2df2aaa0d466a5cfc83910a9ff82.css' type='text/css' media='all' />
+<link rel='stylesheet' id='cookie-notice-css' href='https://administration.esch.lu/wp-content/cache/fvm/min/1785831748-css28bc0a4aca645b7fce65b60be24360ec6e1837ab2b768c72d01b6676dadae.css' type='text/css' media='all' />
+<link rel='stylesheet' id='energysaver-stylesheet-css' href='https://administration.esch.lu/wp-content/cache/fvm/min/1785831748-css586cfe338b7ea2badc4422fb08d91b5e2e8576b2753da232c1b095e88fd6c.css' type='text/css' media='all' />
+<link rel='stylesheet' id='player-style-css-css' href='https://administration.esch.lu/wp-content/cache/fvm/min/1785831748-css673918dc9d10c2abb4ee2fa516854a3836479ff2ffdca213d646a92157733.css' type='text/css' media='all' />
+<link rel='stylesheet' id='icons-css-css' href='https://administration.esch.lu/wp-content/cache/fvm/min/1785831748-cssa8e2d5aa0912159688d1d4c6ccc17592acc1dc0ee0c3a8c2553310a1f6cd0.css' type='text/css' media='all' />
+<script type="text/javascript" src="https://administration.esch.lu/wp-includes/js/jquery/jquery.min.js?ver=16" id="jquery-core-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-includes/js/jquery/jquery-migrate.min.js?ver=16" id="jquery-migrate-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/../esch-tv/js/libs/hls.js?ver=16" id="hls-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/plugins/lightbulb-esch-tv/assets/libs/rangeslider.min.js?ver=16" id="script-tv-rangeslider-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/plugins/lightbulb-esch-tv/assets/libs/hls.min.js?ver=16" id="script-tv-hls-js"></script>
+
+        <noscript>
+            <style>
+                #cookie-notice {
+                    display: block;
+                }
+            </style>
+        </noscript>
+        
+<link rel="icon" href="https://administration.esch.lu/wp-content/uploads/sites/2/2022/11/cropped-ESCH_LOGO_POSITIF_RGB_en_taille_petit-192x192.png" sizes="192x192" />
+
+
+<script>NS_CSM_td=274753471;NS_CSM_pd=275116667;NS_CSM_u="/clm10";NS_CSM_col="AAAAAAVQlRrB4D9uIJghIQTiz3wUYHtoG5utlm1FshTPe5u92TyBuTKCJCJoKdpYermoETg=";</script><script type="text/javascript">function sendTimingInfoInit(){setTimeout(sendTimingInfo,0)}function sendTimingInfo(){var wp=window.performance;if(wp){var c1,c2,t;c1=wp.timing;if(c1){var cm={};cm.ns=c1.navigationStart;if((t=c1.unloadEventStart)>0)cm.us=t;if((t=c1.unloadEventEnd)>0)cm.ue=t;if((t=c1.redirectStart)>0)cm.rs=t;if((t=c1.redirectEnd)>0)cm.re=t;cm.fs=c1.fetchStart;cm.dls=c1.domainLookupStart;cm.dle=c1.domainLookupEnd;cm.cs=c1.connectStart;cm.ce=c1.connectEnd;if((t=c1.secureConnectionStart)>0)cm.scs=t;cm.rqs=c1.requestStart;cm.rss=c1.responseStart;cm.rse=c1.responseEnd;cm.dl=c1.domLoading;cm.di=c1.domInteractive;cm.dcls=c1.domContentLoadedEventStart;cm.dcle=c1.domContentLoadedEventEnd;cm.dc=c1.domComplete;if((t=c1.loadEventStart)>0)cm.ls=t;if((t=c1.loadEventEnd)>0)cm.le=t;cm.tid=NS_CSM_td;cm.pid=NS_CSM_pd;cm.ac=NS_CSM_col;var xhttp=new XMLHttpRequest();if(xhttp){var JSON=JSON||{};JSON.stringify=JSON.stringify||function(ob){var t=typeof(ob);if(t!="object"||ob===null){if(t=="string")ob='"'+ob+'"';return String(ob);}else{var n,v,json=[],arr=(ob&&ob.constructor==Array);for(n in ob){v=ob[n];t=typeof(v);if(t=="string")v='"'+v+'"';else if(t=="object"&&v!==null)v=JSON.stringify(v);json.push((arr?"":'"'+n+'":')+String(v));}return(arr?"[":"{")+String(json)+(arr?"]":"}");}};xhttp.open("POST",NS_CSM_u,true);xhttp.send(JSON.stringify(cm));}}}}if(window.addEventListener)window.addEventListener("load",sendTimingInfoInit,false);else if(window.attachEvent)window.attachEvent("onload",sendTimingInfoInit);else window.onload=sendTimingInfoInit;</script></head>
+
+<body class="wp-singular page-template page-template-page-council-sessions page-template-page-council-sessions-php page page-id-3904 wp-theme-esch-administration has-navbar">
+
+<div id="container">
+
+    <header class="header">
+
+        <div id="inner-header" class="clearfix">
+
+            <div class="accessibility-executive">
+                <a tabindex="1" href="#content" class="accessibility-element">
+                    Passer directement au contenu principal                </a>
+                <a tabindex="1" href="#menu-menu-principal" class="accessibility-element">
+                    Passer directement à la navigation principale                </a>
+                <a tabindex="1" href="#utilities-panel" class="accessibility-element">
+                    Passer directement à la navigation secondaire                </a>
+            </div>
+
+            <a id="logo" aria-label="Logo administration.esch.lu" href="https://administration.esch.lu" rel="nofollow"><h1><span>Esch Administration</span></h1><span class="title">Administration</span></a>
+
+            
+            <nav>
+                <ul id="menu-menu-principal" class="nav top-nav clearfix"><li id="menu-item-4374" class="menu-item menu-item-type-post_type menu-item-object-page current-menu-ancestor current_page_ancestor menu-item-has-children menu-item-4374"><a href="https://administration.esch.lu/ma-ville/">Ma Ville</a><div class="menu-wrapper">
+<ul class="sub-menu">
+	<li id="menu-item-4462" class="column col3 menu-item menu-item-type-custom menu-item-object-custom current-menu-ancestor menu-item-has-children menu-item-4462"><a href="#"> </a>
+	<ul class="sub-menu">
+		<li id="menu-item-7471" class="menu-item menu-item-type-custom menu-item-object-custom current-menu-ancestor current-menu-parent menu-item-has-children menu-item-7471"><a href="#">Vie politique</a>
+		<ul class="sub-menu">
+			<li id="menu-item-4407" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4407"><a href="https://administration.esch.lu/bourgmestre-college/">Collège des bourgmestre et échevins</a></li>
+			<li id="menu-item-4409" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4409"><a href="https://administration.esch.lu/conseil-communal/">Conseil communal</a></li>
+			<li id="menu-item-4473" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-4473"><a href="https://administration.esch.lu/commissions/">Commissions Consultatives &amp; Syndicats</a></li>
+			<li id="menu-item-4474" class="menu-item menu-item-type-custom menu-item-object-custom current-menu-item menu-item-4474"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/" aria-current="page">Séances publiques (Esch TV)</a></li>
+			<li id="menu-item-22719" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-22719"><a href="https://administration.esch.lu/budget-2026/">Budget 2026</a></li>
+		</ul>
+</li>
+	</ul>
+</li>
+	<li id="menu-item-4463" class="column col3 menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-4463"><a href="#"> </a>
+	<ul class="sub-menu">
+		<li id="menu-item-7472" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-7472"><a href="#">Découvrir la ville</a>
+		<ul class="sub-menu">
+			<li id="menu-item-4413" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4413"><a href="https://administration.esch.lu/affaires-internationales/">Affaires Internationales</a></li>
+			<li id="menu-item-17493" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-17493"><a href="https://administration.esch.lu/city-app-esch/">City App Esch</a></li>
+			<li id="menu-item-4414" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4414"><a href="https://administration.esch.lu/esch-sur-alzette-aujourdhui/">Esch-sur-Alzette aujourd’hui</a></li>
+			<li id="menu-item-4417" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4417"><a href="https://administration.esch.lu/histoire-de-ville-desch/">Histoire de la Ville d’Esch</a></li>
+			<li id="menu-item-13760" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-13760"><a href="https://administration.esch.lu/plan-interactif-de-la-ville/">Plan interactif de la ville</a></li>
+		</ul>
+</li>
+	</ul>
+</li>
+	<li id="menu-item-4543" class="column col3 menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-4543"><a href="#"> </a>
+	<ul class="sub-menu">
+		<li id="menu-item-19035" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-19035"><a href="#">Développement urbain</a>
+		<ul class="sub-menu">
+			<li id="menu-item-4537" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4537"><a href="https://administration.esch.lu/divisiondudeveloppementurbain/">La division du développement urbain</a></li>
+			<li id="menu-item-4536" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4536"><a href="https://administration.esch.lu/lhistoire-urbaine/">L’histoire urbaine</a></li>
+			<li id="menu-item-22376" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-22376"><a href="https://administration.esch.lu/logement-aborable-devenez-proprietaire/">Logement abordable : Devenez propriétaire !</a></li>
+			<li id="menu-item-4535" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4535"><a href="https://administration.esch.lu/le-projet-de-ville/">Les grands projets urbains</a></li>
+			<li id="menu-item-14581" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-14581"><a href="https://administration.esch.lu/plan-damenagement-general-pag/">Plan d’aménagement général (PAG)</a></li>
+			<li id="menu-item-16064" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-16064"><a href="https://administration.esch.lu/plan-damenagement-particulier-pap/">Plan d’aménagement particulier (PAP)</a></li>
+			<li id="menu-item-4534" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4534"><a href="https://administration.esch.lu/construire-transformer-et-renover/">Construire, transformer et rénover</a></li>
+			<li id="menu-item-13926" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-13926"><a href="https://administration.esch.lu/colocations/">Colocations</a></li>
+		</ul>
+</li>
+	</ul>
+</li>
+	<li id="menu-item-19050" class="column col3 menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-19050"><a href="#"> </a>
+	<ul class="sub-menu">
+		<li id="menu-item-7473" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-7473"><a href="#">Développement économique</a>
+		<ul class="sub-menu">
+			<li id="menu-item-19036" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-19036"><a href="https://administration.esch.lu/intro-et-contact-dev_eco/">Intro et contact</a></li>
+			<li id="menu-item-23268" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-23268"><a href="https://administration.esch.lu/cargo-bike/">Cargo-Bike</a></li>
+			<li id="menu-item-19037" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-19037"><a href="https://administration.esch.lu/le-projet-claire-dev_eco/">Le projet Claire</a></li>
+			<li id="menu-item-19038" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-19038"><a href="https://administration.esch.lu/espaces-commerciaux-disponibles-dev_eco/">Espaces commerciaux disponibles</a></li>
+			<li id="menu-item-19039" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-19039"><a href="https://administration.esch.lu/espaces-pop-up-stores/">Espaces Pop Up Stores</a></li>
+			<li id="menu-item-19040" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-19040"><a href="https://administration.esch.lu/primes-et-taxes/">Primes et taxes</a></li>
+			<li id="menu-item-19041" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-19041"><a href="https://administration.esch.lu/den-escher-blog/">Den Escher Blog</a></li>
+			<li id="menu-item-19042" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-19042"><a href="https://administration.esch.lu/evenements-et-marches/">Evènements et marchés</a></li>
+		</ul>
+</li>
+	</ul>
+</li>
+	<li id="menu-item-4467" class="column column-3 column-highlight column-highlight-bottom menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-4467"><a href="#"> </a>
+	<ul class="sub-menu">
+		<li id="menu-item-4470" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-4470"><a href="#panel-alerts" style="background-image: url(https://administration.esch.lu/wp-content/uploads/sites/2/2019/02/menu-bg-reportit.png)"><span>Report-it</span></a></li>
+		<li id="menu-item-4641" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4641"><a href="https://administration.esch.lu/recrutement/" style="background-image: url(https://administration.esch.lu/wp-content/uploads/sites/2/2019/02/menu-bg-recrutement.png)"><span>Recrutement</span></a></li>
+		<li id="menu-item-12388" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-12388"><a href="https://claire.esch.lu/" style="background-image: url(https://administration.esch.lu/wp-content/uploads/sites/2/2019/10/Shopping-Claire-iStock-1131097418.jpg)"><span>Revitalisation commerciale CLAIRE</span></a></li>
+	</ul>
+</li>
+</ul>
+</div></li>
+<li id="menu-item-4563" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-4563"><a href="https://administration.esch.lu/ma-vie/">Ma Vie</a><div class="menu-wrapper">
+<ul class="sub-menu">
+	<li id="menu-item-4564" class="column col4 menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-4564"><a href="#"> </a>
+	<ul class="sub-menu">
+		<li id="menu-item-7475" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-7475"><a href="#">Jeunesse (12-30)</a>
+		<ul class="sub-menu">
+			<li id="menu-item-4561" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4561"><a href="https://administration.esch.lu/service-jeunesse/">Service jeunesse</a></li>
+			<li id="menu-item-10116" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-10116"><a href="https://administration.esch.lu/jugendinfopunkt-esch/">Jugendinfopunkt Esch</a></li>
+			<li id="menu-item-10879" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-10879"><a href="https://administration.esch.lu/logements-pour-jeunes/">Logements pour jeunes actifs</a></li>
+			<li id="menu-item-4559" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4559"><a href="https://administration.esch.lu/youth-sports-cool-sports/">Youth Sports – Cool Sports</a></li>
+		</ul>
+</li>
+		<li id="menu-item-7476" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-7476"><a href="#">Enseignement</a>
+		<ul class="sub-menu">
+			<li id="menu-item-24490" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-24490"><a href="https://administration.esch.lu/service-scolaire/">Service scolaire</a></li>
+			<li id="menu-item-4557" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4557"><a href="https://administration.esch.lu/enseignement-fondamental/">Enseignement fondamental</a></li>
+			<li id="menu-item-4556" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4556"><a href="https://administration.esch.lu/enseignement-secondaire/">Enseignement secondaire</a></li>
+			<li id="menu-item-4555" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4555"><a href="https://administration.esch.lu/conservatoire-de-musique/">Conservatoire de Musique</a></li>
+			<li id="menu-item-4554" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4554"><a href="https://administration.esch.lu/cours-de-langues/">Cours de langues</a></li>
+		</ul>
+</li>
+	</ul>
+</li>
+	<li id="menu-item-4565" class="column col4 menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-4565"><a href="#"> </a>
+	<ul class="sub-menu">
+		<li id="menu-item-7485" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-7485"><a href="#">Université et Recherche</a>
+		<ul class="sub-menu">
+			<li id="menu-item-10121" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-10121"><a href="https://administration.esch.lu/universite-du-luxembourg/">Université du Luxembourg</a></li>
+			<li id="menu-item-4582" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4582"><a href="https://administration.esch.lu/logements-etudiants/">Logements étudiants</a></li>
+			<li id="menu-item-4581" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4581"><a href="https://administration.esch.lu/centres-de-recherche-et-innovation/">Pôle national de la recherche et de l’innovation</a></li>
+		</ul>
+</li>
+		<li id="menu-item-7483" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-7483"><a href="#">Écologie</a>
+		<ul class="sub-menu">
+			<li id="menu-item-23434" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-23434"><a href="https://administration.esch.lu/solutions-locales-pour-un-avenir-durable/">Solutions locales pour un avenir durable</a></li>
+			<li id="menu-item-4579" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4579"><a href="https://administration.esch.lu/dechets/">Déchets</a></li>
+			<li id="menu-item-4578" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4578"><a href="https://administration.esch.lu/eau/">Eau</a></li>
+			<li id="menu-item-18744" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-18744"><a href="https://administration.esch.lu/fairtrade/">Fairtrade Gemeng</a></li>
+			<li id="menu-item-4577" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4577"><a href="https://administration.esch.lu/forets-et-espaces-verts/">Forêts et espaces verts</a></li>
+			<li id="menu-item-22920" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-22920"><a href="https://administration.esch.lu/pacte-climat-et-pacte-nature/">Pacte Climat et Pacte Nature</a></li>
+			<li id="menu-item-4637" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4637"><a href="https://administration.esch.lu/subventions/">Subventions</a></li>
+			<li id="menu-item-4635" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4635"><a href="https://administration.esch.lu/calculateur-empreinte-co2/">Calculateur d’empreinte CO2</a></li>
+			<li id="menu-item-24402" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-24402"><a href="https://administration.esch.lu/suiviimpactemissionsindustrielle/">Suivi de l’impact des émissions d’origine industrielle</a></li>
+			<li id="menu-item-24939" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-24939"><a href="https://administration.esch.lu/mobiliteitswoch/">Mobilitéitswoch</a></li>
+		</ul>
+</li>
+	</ul>
+</li>
+	<li id="menu-item-4586" class="column col4 menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-4586"><a href="#"> </a>
+	<ul class="sub-menu">
+		<li id="menu-item-8075" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-8075"><a href="#">Sportförderprogramm</a>
+		<ul class="sub-menu">
+			<li id="menu-item-8090" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-8090"><a href="https://administration.esch.lu/lasep/">LASEP</a></li>
+			<li id="menu-item-8091" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-8091"><a href="https://administration.esch.lu/youth-sports-cool-sports/">Youth Sports – Cool Sports</a></li>
+			<li id="menu-item-8089" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-8089"><a href="https://administration.esch.lu/fit60/">Fit60+</a></li>
+			<li id="menu-item-8088" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-8088"><a href="https://administration.esch.lu/integration-par-le-sport/">Femmes en mouvement</a></li>
+			<li id="menu-item-8087" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-8087"><a href="https://administration.esch.lu/sportpourtous/">Sport pour tous</a></li>
+		</ul>
+</li>
+		<li id="menu-item-13902" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-13902"><a href="#">Santé</a>
+		<ul class="sub-menu">
+			<li id="menu-item-13901" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-13901"><a href="https://administration.esch.lu/infos-sante-rendez-vous-conseils/">Infos santé, rendez-vous, conseils …</a></li>
+			<li id="menu-item-23351" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-23351"><a href="https://administration.esch.lu/reseau-de-defibrillateurs-a-esch-chaque-seconde-compte/">Réseau de défibrillateurs à Esch : chaque seconde compte</a></li>
+		</ul>
+</li>
+	</ul>
+</li>
+	<li id="menu-item-4640" class="column col4 menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-4640"><a href="#"> </a>
+	<ul class="sub-menu">
+		<li id="menu-item-7479" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-7479"><a href="#">Engagements sociétaux</a>
+		<ul class="sub-menu">
+			<li id="menu-item-14929" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-14929"><a href="https://administration.esch.lu/egalite-entre-femmes-et-hommes/">Égalité entre femmes et hommes</a></li>
+			<li id="menu-item-14930" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-14930"><a href="https://administration.esch.lu/integration/">Intégration</a></li>
+			<li id="menu-item-22971" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-22971"><a href="https://administration.esch.lu/pacte-du-vivre-ensemble-interculturel/">Le pacte communal du vivre-ensemble interculturel</a></li>
+			<li id="menu-item-14931" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-14931"><a href="https://administration.esch.lu/lgbtiq/">LGBTIQ+</a></li>
+			<li id="menu-item-19607" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-19607"><a href="https://administration.esch.lu/observatoire-social/">Observatoire Social</a></li>
+			<li id="menu-item-4633" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4633"><a href="https://administration.esch.lu/developpement-social/">Offre sociale</a></li>
+			<li id="menu-item-4632" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4632"><a href="https://administration.esch.lu/maison-des-citoyens/">Maison des Citoyens</a></li>
+			<li id="menu-item-13879" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-13879"><a href="https://administration.esch.lu/seniors-besoins-specifiques/">Seniors – Besoins spécifiques</a></li>
+			<li id="menu-item-13533" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-13533"><a href="https://administration.esch.lu/logements/">Logements</a></li>
+			<li id="menu-item-15929" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-15929"><a href="https://administration.esch.lu/mediation-de-voisinage/">Médiation de voisinage</a></li>
+		</ul>
+</li>
+	</ul>
+</li>
+</ul>
+</div></li>
+<li id="menu-item-7722" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-7722"><a href="https://administration.esch.lu/services-au-citoyen/">Services au Citoyen</a></li>
+<li id="menu-item-19" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-19"><a href="https://administration.esch.lu/actualite/">Actualités</a></li>
+<li id="menu-item-20" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-20"><a href="https://administration.esch.lu/publications/">Publications</a></li>
+<li id="menu-item-4377" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4377"><a href="https://administration.esch.lu/annuaire/">Contact</a></li>
+</ul>            </nav>
+
+            
+            <button class="mobile-menu-button">
+                <span></span>
+            </button>
+
+        </div>
+    </header>
+    
+    <div id="content">
+
+        <aside class="navbar navbar-council-session">
+    <span class="mobile-close"><i class="icon-close"></i>Close</span>
+    <h2 class="archive-year">Année</h2>
+    <ul>
+        <li class="year has-children collapsedactive"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2026">2026</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2025">2025</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2024">2024</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2023">2023</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2022">2022</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2021">2021</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2020">2020</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2019">2019</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2018">2018</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2017">2017</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2016">2016</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2015">2015</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2014">2014</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2013">2013</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2012">2012</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2011">2011</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2010">2010</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2009">2009</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2008">2008</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2007">2007</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2006">2006</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2005">2005</a></li><li class="year has-children collapsed"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/?y=2004">2004</a></li>    </ul>
+</aside>
+        <div id="inner-content" class="wrap clearfix">
+
+            <div class="nav-toggle-container">
+                <span class="nav-toggle"><i class="icon"></i>Choisir une année</span>
+            </div>
+
+            <span tabindex="0" id="social-share">
+    <a class="share"><i class="icon-event-share"></i>
+        partager    </a>
+    <div tabindex="-1" class="share-event">
+        <ul tabindex="-1">
+            <li><a tabindex="0" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https://administration.esch.lu/seances-publiques-conseil-communal/"><i class="icon-facebook"></i></a></li>
+            <li><a tabindex="0" target="_blank" href="https://twitter.com/intent/tweet?url=https://administration.esch.lu/seances-publiques-conseil-communal/"><i class="icon-twitter"></i></a></li>
+            <li><a tabindex="0" target="_blank" href="https://www.linkedin.com/shareArticle?mini=true&url=https://administration.esch.lu/seances-publiques-conseil-communal/"><i class="icon-linkedin"></i></a></li>
+            <li><a tabindex="0" target="_blank" href="mailto:?subject=Page intéressante sur esch.lu&body=https://administration.esch.lu/seances-publiques-conseil-communal/"><i
+                            class="icon-mail"></i></a>
+            </li>
+        </ul>
+    </div>
+</span>
+
+            
+            <div id="post-3904" class="clearfix post-3904 page type-page status-publish hentry">
+
+                <header class="article-header">
+                    <h1 class="page-title">Séances publiques du Conseil Communal</h1>
+                </header>
+                                <section class="entry-content clearfix">
+                    <ul class="council-sessions">
+                        <li class="heading"><a>
+                                <div class="date">Date</div>
+                                <div class="position">Type</div>
+                                                                <div class="time">Durée</div>
+                                <div class="time-closed">Huis-Clos</div>
+                                                            </a></li>
+                        <li><a href="https://administration.esch.lu/sessions_conseil/conseil-communal-du-23-octobre-2026/"><div class="date">23/10/2026</div><div class="title">Séance Ordinaire</div><div class="time">De 08:30 à 13:00</div><div class="time-closed">De 08:30 à 09:00</div><span></span></a></li><li><a href="https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"><div class="date">02/10/2026</div><div class="title">Séance Ordinaire</div><div class="time">De 08:30 à 13:00</div><div class="time-closed">De 09:00 à 09:30</div><span></span></a></li><li><a href="https://administration.esch.lu/sessions_conseil/conseil-communal-du-16-septembre-2026/"><div class="date">16/09/2026</div><div class="title">Séance Ordinaire</div><div class="time">De 11:00 à 11:30</div><div class="time-closed"></div><span></span></a></li><li><a href="https://administration.esch.lu/sessions_conseil/conseil-communal-du-10-juillet-2026/"><div class="date">10/07/2026</div><div class="title">Séance Ordinaire</div><div class="time">De 08:30 à 13:00</div><div class="time-closed">De 08:30 à 09:00</div><span></span></a></li><li><a href="https://administration.esch.lu/sessions_conseil/conseil-communal-du-19-juin-2026/"><div class="date">19/06/2026</div><div class="title">Séance Ordinaire</div><div class="time">De 08:30 à 13:00</div><div class="time-closed">De 08:30 à 09:00</div><span></span></a></li><li><a href="https://administration.esch.lu/sessions_conseil/conseil-communal-du-22-mai-2026/"><div class="date">22/05/2026</div><div class="title">Séance Ordinaire</div><div class="time">De 08:30 à 13:00</div><div class="time-closed">De 08:30 à 09:00</div><span></span></a></li><li><a href="https://administration.esch.lu/sessions_conseil/conseil-communal-du-17-avril-2026/"><div class="date">17/04/2026</div><div class="title">Séance Ordinaire</div><div class="time">De 08:00 à 13:00</div><div class="time-closed">De 08:00 à 08:20</div><span></span></a></li><li><a href="https://administration.esch.lu/sessions_conseil/conseil-communal-du-13-mars-2026/"><div class="date">13/03/2026</div><div class="title">Séance Ordinaire</div><div class="time">De 08:30 à 13:00</div><div class="time-closed">De 08:30 à 08:50</div><span></span></a></li><li><a href="https://administration.esch.lu/sessions_conseil/conseil-communal-du-30-janvier-2026/"><div class="date">30/01/2026</div><div class="title">Séance Ordinaire</div><div class="time">De 08:30 à 13:00</div><div class="time-closed">De 08:30 à 08:50</div><span></span></a></li>                    </ul>
+
+                                    </section>
+
+            </div>
+
+            <div class="nav-toggle-container">
+                <span class="nav-toggle nav-toggle-bottom"><i class="icon"></i>Choisir une année</span>
+            </div>
+
+        </div>
+
+    </div>
+
+<footer class="footer">
+    <div id="inner-footer" class="wrap clearfix">
+        <a href="https://esch.lu" class="logo">
+            <span>Ville d'Esch-sur-Alzette</span></a>
+        <div class="contact">
+            <div class="small-title">Accueil téléphonique: <span>+352 2754 1</span></div>
+
+            <a href="https://formulaires.esch.lu/Annuaire/" target="_blank" class="button">Contactez la Ville d’Esch</a>
+            
+            <p class="hotel">
+                <strong>Hôtel de Ville</strong> B.P. 145<br>
+                L-4002 Esch-sur-Alzette
+            </p>
+
+            <a href="#panel-alerts" class="permanence">Permanences</a>
+            <a href="http://topographie.villeesch.lu/" target="_blank" class="permanence">Plan de la ville</a>
+
+            <div class="social hidden-phone visible-desktop">
+                <div class="small-title suivez-nous">Suivez-nous:</div>
+                <p class="social-icons">
+                    <a aria-label="Suivez-nous sur Facebook" target="_blank" class="icon-facebook" href="https://www.facebook.com/VilleEsch/" title="Facebook"></a><a aria-label="Suivez-nous sur Instagram" target="_blank" class="icon-instagram" href="https://www.instagram.com/villeesch/ " title="Instagram"></a>                    <a aria-label="Vers esch.tv" target="_blank" href="https://esch.tv/" class="logo-esch-tv"
+                       style="background-image: url(https://administration.esch.lu/wp-content/themes/esch-administration/images/esch-tv.png)"></a>
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="social visible-mobile hidden-desktop">
+            <div class="small-title suivez-nous">Suivez-nous :</div>
+            <p class="social-icons">
+                <a aria-label="Suivez-nous sur Facebook" target="_blank" class="icon-facebook" href="https://www.facebook.com/VilleEsch/" title="Facebook"></a><a aria-label="Suivez-nous sur Instagram" target="_blank" class="icon-instagram" href="https://www.instagram.com/villeesch/ " title="Instagram"></a>                <a aria-label="Vers esch.tv" target="_blank" href="https://esch.tv/" class="logo-esch-tv" style="background-image: url(https://administration.esch.lu/wp-content/themes/esch-administration/images/esch-tv.png)"></a>
+
+            </p>
+
+        </div>
+        <div class="menu">
+            <div class="wrapper">
+                                <div class="citylife">
+                    <div class="title"><a href="https://citylife.esch.lu/">City Life<i class="icon-arrow-footer"></i></a></div>
+                    <ul id="menu-pied-de-page" class="nav footer-links clearfix"><li id="menu-item-6115" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-6115"><a href="https://citylife.esch.lu/actualites/">Actualités</a></li>
+<li id="menu-item-6217" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-6217"><a href="https://citylife.esch.lu/agenda/">Agenda</a></li>
+<li id="menu-item-6116" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-6116"><a href="https://citylife.esch.lu/sinceesch2022/">Since Esch2022</a></li>
+<li id="menu-item-6222" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-6222"><a href="https://citylife.esch.lu/strategie-culturelle/">Stratégie culturelle</a></li>
+<li id="menu-item-6221" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-6221"><a href="https://citylife.esch.lu/kultesch/">Le magazine Kultesch</a></li>
+<li id="menu-item-6265" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-6265"><a href="#panel-traffic">Mobilité</a></li>
+<li id="menu-item-6223" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-6223"><a href="https://citylife.esch.lu/systeme-de-guidage-park/">Système de guidage parkings</a></li>
+<li id="menu-item-6220" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-6220"><a href="https://citylife.esch.lu/infrastructures-sportives/">Infrastructures sportives</a></li>
+</ul>                </div>
+                                <div class="administration">
+                    <div class="title"><a href="https://administration.esch.lu/">L'Administration<i class="icon-arrow-footer"></i></a></div>
+                    <ul id="menu-pied-de-page-1" class="nav footer-links clearfix"><li id="menu-item-10162" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-10162"><a href="https://administration.esch.lu/actualite/">Actualités</a></li>
+<li id="menu-item-10382" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-10382"><a href="https://administration.esch.lu/bourgmestre-college/">Collège des bourgmestre et échevins</a></li>
+<li id="menu-item-10383" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-10383"><a href="https://administration.esch.lu/conseil-communal/">Conseil communal</a></li>
+<li id="menu-item-10444" class="menu-item menu-item-type-post_type menu-item-object-page current-menu-item page_item page-item-3904 current_page_item menu-item-10444"><a href="https://administration.esch.lu/seances-publiques-conseil-communal/" aria-current="page">Séances publiques (Esch TV)</a></li>
+<li id="menu-item-28" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-28"><a href="https://administration.esch.lu/publications/">Publications</a></li>
+<li id="menu-item-10160" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-10160"><a href="https://administration.esch.lu/recrutement/">Recrutement</a></li>
+<li id="menu-item-10161" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-10161"><a href="https://administration.esch.lu/services-au-citoyen/">Services au Citoyen</a></li>
+<li id="menu-item-10386" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-10386"><a href="https://administration.esch.lu/enseignement-fondamental/">Enseignement fondamental</a></li>
+<li id="menu-item-10385" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-10385"><a href="https://administration.esch.lu/universite-du-luxembourg/">Université du Luxembourg</a></li>
+<li id="menu-item-10442" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-10442"><a href="#panel-alerts">Report-it</a></li>
+</ul>                </div>
+                            </div>
+            <div class="bottom-menu-holder">
+                <ul id="menu-generic-menu" class="nav footer-links clearfix"><li id="menu-item-78" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-78"><a href="https://esch.lu/plan-du-site/">Plan du site</a></li>
+<li id="menu-item-77" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-77"><a href="https://esch.lu/mentions-legales/">Mentions légales</a></li>
+<li id="menu-item-10194" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-10194"><a href="https://administration.esch.lu/espace-presse/">Espace presse</a></li>
+<li id="menu-item-24142" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-24142"><a href="https://esch.lu/declaration-sur-laccessibilite/">Déclaration sur l’accessibilité</a></li>
+</ul>                <p class="source-org copyright">Ville d’Esch-sur-Alzette 2026</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<div class="toolbar">
+    <div class="weather">
+            </div>
+
+    <ul id="utilities-panel">
+        <li class="open-panel">
+            <a tabindex="1" href="https://esch.lu" title="Accueil"><i class="icon-home"></i></a>
+            <div class="description">Accueil</div>
+        </li>
+        <li class="open-panel">
+            <a tabindex="1" class="alerts" href="#panel-alerts" title="Informations utiles"><i class="icon-alert"></i></a>
+            <div class="description description-alert">Informations utiles</div>
+        </li>
+        <li class="open-panel">
+            <a tabindex="1" href="#panel-map" title="Carte"><i class="icon-map"></i></a>
+            <div class="description">Carte</div>
+        </li>
+        <li class="open-panel">
+            <a tabindex="1" href="#panel-traffic" title="Mobilité"><i class="icon-car"></i></a>
+            <div class="description">Mobilité</div>
+        </li>
+        <li class="open-panel">
+            <a tabindex="1" target="_blank" href="https://esch.tv" title="Esch-tv"><i class="icon-television"></i></a>
+            <div class="description">Esch-tv</div>
+        </li>
+        <li class="open-panel">
+            <a tabindex="1" href="#panel-search" title="Recherche"><i class="icon-search"></i></a>
+            <div class="description">Recherche</div>
+        </li>
+    </ul>
+
+    <div tabindex="3" class="close-panels"><i class="icon-toolbar-close"></i></div>
+
+</div>
+
+<div class="toolbar-mobile">
+    <ul>
+        <li class="open-panel">
+            <a href="https://esch.lu" title="Accueil"><i class="icon-home"></i></a>
+        </li>
+        <li class="open-panel">
+            <a class="alerts" href="#panel-alerts" title="Alertes"><i class="icon-alert"></i></a>
+        </li>
+        <li class="open-panel">
+            <a href="#panel-map" title="Carte"><i class="icon-map"></i></a>
+        </li>
+        <li class="open-panel">
+            <a href="#panel-traffic" title="Traffic"><i class="icon-car"></i></a>
+        </li>
+        <li class="open-panel">
+            <a href="#panel-search" title="Recherche"><i class="icon-search"></i></a>
+        </li>
+        <li class="open-panel">
+            <a target="_blank" href="https://esch.tv" title="Esch-tv"><i class="icon-television"></i></a>
+        </li>
+    </ul>
+</div>
+
+<div class="panels">
+    <div class="panel" id="panel-alerts"></div>
+    <div class="panel" id="panel-map"></div>
+    <div class="panel" id="panel-traffic"></div>
+    <div class="panel" id="panel-search"></div>
+</div></div>
+<script type="speculationrules">
+{"prefetch":[{"source":"document","where":{"and":[{"href_matches":"/*"},{"not":{"href_matches":["/wp-*.php","/wp-admin/*","/wp-content/uploads/sites/2/*","/wp-content/*","/wp-content/plugins/*","/wp-content/themes/esch-administration/*","/*\\?(.+)"]}},{"not":{"selector_matches":"a[rel~=\"nofollow\"]"}},{"not":{"selector_matches":".no-prefetch, .no-prefetch a"}}]},"eagerness":"conservative"}]}
+</script>
+<div
+        id="lightbulb-lu-a11y-plugin"
+        lbx-data="lightbulbA11yContainer({color: '#4da5e4', position:'lbx-bottom-right'})"
+        class="lightbulb__lu__a11y__plugin js-lightbulb__lu__a11y__plugin"
+        lbx-bind:class="data.position"
+        lbx-on:click.away="open ? toggle() : null"
+>
+
+    <div
+            style="border-top-color: #4da5e4; border-bottom-color: #4da5e4"
+            id="lightbulb-lu-a11y-readingMask"
+            class="lightbulb__a11y-reading-mask"
+            lbx-ref="readingMaskElement"
+    ></div>
+
+    <div
+            style="border-left-color: #4da5e4"
+            lbx-bind:class="{'active': open}" class="lightbulb__a11y__main">
+        <div class="lightbulb__a11y-header">
+            <h3 class="lightbulb__a11y-header-title">Menu d'accessibilité</h3>
+            <button
+                    tabindex="3"
+                    style="background: #4da5e4"
+                    aria-label="Fermer le menu d'accessibilité"
+                    title="Fermer le menu d'accessibilité"
+                    lbx-on:click="toggle()"
+                    class="lightbulb__a11y-header-close"
+            >
+                <span lbx-html="getSpriteSvg('close', 'ui' ,'lbx__icon' )"></span>
+            </button>
+        </div>
+        <div class="lightbulb__a11y--functional">
+            <div class="lightbulb__a11y-option">
+                <button
+                        tabindex="2"
+                        lbx-bind:style="{'background': options.blackAndWhite ? data.color : ''}"
+                        title="Noir-Blanc"
+                        aria-label="Noir-Blanc"
+                        lbx-bind:class="{'active': options.blackAndWhite}" lbx-ref="toggleBlackAndWhite"
+                        id="lbx-blackAndWhite"
+                        lbx-on:click="toggleBlackAndWhite($event)"
+                        class="lightbulb__a11y-white"
+                >
+                    <span lbx-html="getSpriteSvg('black-and-white', 'ui' ,'lbx__icon' )"></span>
+                    Noir-Blanc                    <span
+                            class="lightbulb__a11y-fake-hover"
+                            lbx-bind:style="{'border-color': data.color }"
+                    ></span>
+                </button>
+                <button
+                        tabindex="2"
+                        lbx-bind:style="{'background': options.readableText ? data.color : ''}"
+                        title="Mode dyslexie"
+                        aria-label="Mode dyslexie"
+                        lbx-bind:class="{'active': options.readableText}"
+                        lbx-ref="toggleReadableText"
+                        id="lbx-readableText"
+                        lbx-on:click="toggleReadableText($event)"
+                        class="lightbulb__a11y-white"
+                >
+                    <span lbx-html="getSpriteSvg('dys', 'ui' ,'lbx__icon' )"></span>
+                    Mode dyslexie                    <span
+                            class="lightbulb__a11y-fake-hover"
+                            lbx-bind:style="{'border-color': data.color }"
+                    ></span>
+                </button>
+            </div>
+            <div class="lightbulb__a11y-option">
+                <button
+                        tabindex="2"
+                        lbx-bind:style="{'background': options.reverseContrast ? data.color : ''}"
+                        title="Contraste inversé"
+                        aria-label="Contraste inversé"
+                        lbx-bind:class="{'active': options.reverseContrast}" lbx-ref="toggleReverseContrast"
+                        id="lbx-reverseContrast"
+                        lbx-on:click="toggleReverseContrast($event)"
+                        class="lightbulb__a11y-white"
+                >
+                    <span lbx-html="getSpriteSvg('invert-colors', 'ui' ,'lbx__icon' )"></span>
+                    Contraste inversé                    <span
+                            class="lightbulb__a11y-fake-hover"
+                            lbx-bind:style="{'border-color': data.color }"
+                    ></span>
+                </button>
+                <button
+                        tabindex="2"
+                        lbx-bind:style="{'background': options.brightContrast ? data.color : ''}"
+                        title="Contraste doux"
+                        aria-label="Contraste doux"
+                        lbx-bind:class="{'active': options.brightContrast}" lbx-ref="toggleBrightContrast"
+                        id="lbx-brightContrast"
+                        lbx-on:click="toggleBrightContrast($event)"
+                        class="lightbulb__a11y-white"
+                >
+                    <span lbx-html="getSpriteSvg('softcontrast', 'ui' ,'lbx__icon' )"></span>
+                    Contraste doux                    <span
+                            class="lightbulb__a11y-fake-hover"
+                            lbx-bind:style="{'border-color': data.color }"
+                    ></span>
+                </button>
+
+            </div>
+            <div class="lightbulb__a11y-option">
+                <div class="lightbulb__a11y-double-control lightbulb__a11y-white">
+                    <button
+                            tabindex="2"
+                            style="background: #4da5e4"
+                            title="Diminuer la taille de la police"
+                            aria-label="Diminuer la taille de la police"
+                            lbx-bind:disabled="fontSizeIncrement === 0"
+                            lbx-bind:class="{'active':false, 'lightbulb__a11y-clickable': true}"
+                            lbx-ref="decreaseFontSize" id="lbx-decreaseText" lbx-on:click="changeFontSize($event, 'decrease')">-
+                    </button>
+                    <div class="lightbulb__a11y-double-control-middle">
+                        <div class="lightbulb__a11y--double-label">
+                            <span lbx-html="getSpriteSvg('fontsize', 'ui' ,'lbx__icon' )"></span>
+                            Taille de police                        </div>
+                        <span title="Taille de police" aria-label="Taille de police" lbx-text="`1${fontSizeIncrement * 10}0 %`"></span>
+                    </div>
+                    <button
+                            tabindex="2"
+                            style="background: #4da5e4"
+                            title="Augmenter la taille de la police" aria-label="Augmenter la taille de la police" lbx-bind:disabled="fontSizeIncrement === 0.8"
+                            lbx-bind:class="{'active': fontSizeIncrement > 0, 'lightbulb__a11y-clickable': true}"
+                            lbx-ref="increaseFontSize" id="lbx-increaseText" lbx-on:click="changeFontSize($event, 'increase')">+
+                    </button>
+
+                </div>
+
+                <div class="lightbulb__a11y-double-control lightbulb__a11y-white">
+                    <button
+                            tabindex="2"
+                            style="background: #4da5e4"
+                            title="Diminuer le zoom" aria-label="Diminuer le zoom"
+                            lbx-bind:disabled="zoom === 0"
+                            lbx-bind:class="{'active':false, 'lightbulb__a11y-clickable': true}" lbx-ref="decreaseZoom"
+                            id="lbx-decreaseZoom" lbx-on:click="changeZoom($event, 'decrease')">-
+                    </button>
+                    <div class="lightbulb__a11y-double-control-middle">
+                        <div class="lightbulb__a11y--double-label">
+                            <span lbx-html="getSpriteSvg('zoom', 'ui' ,'lbx__icon' )"></span>
+                            Zoom                        </div>
+                        <span title="Zoom" aria-label="Zoom" lbx-text="`1${zoom ?? 0}0%`"></span>
+                    </div>
+                    <button
+                            tabindex="2"
+                            style="background: #4da5e4"
+                            title="Augmenter le zoom" aria-label="Augmenter le zoom"
+                            lbx-bind:disabled="zoom === 8"
+                            lbx-bind:class="{'active': zoom > 0, 'lightbulb__a11y-clickable': true}" lbx-ref="increaseZoom"
+                            id="lbx-increaseZoom" lbx-on:click="changeZoom($event, 'increase')">+
+                    </button>
+                </div>
+            </div>
+            <div class="lightbulb__a11y-option">
+                <button
+                        tabindex="2"
+                        lbx-bind:style="{'background': options.underlineLinks ? data.color : ''}"
+                        title="Souligner les liens"
+                        aria-label="Souligner les liens"
+                        lbx-bind:class="{'active': options.underlineLinks}" lbx-ref="toggleUnderlineLinks"
+                        id="lbx-underlineLinks"
+                        lbx-on:click="toggleUnderlineLinks($event)"
+                        class="lightbulb__a11y-white"
+                >
+                    <span lbx-html="getSpriteSvg('underline-links', 'ui' ,'lbx__icon' )"></span>
+                    Souligner les liens                    <span
+                            class="lightbulb__a11y-fake-hover"
+                            lbx-bind:style="{'border-color': data.color }"
+                    ></span>
+                </button>
+                <button
+                        tabindex="2"
+                        lbx-bind:style="{'background': options.underlineHeaders ? data.color : ''}"
+                        title="Souligner les en-têtes"
+                        aria-label="Souligner les en-têtes"
+                        lbx-bind:class="{'active': options.underlineHeaders}"
+                        lbx-ref="toggleUnderlineHeaders"
+                        id="lbx-underlineHeaders"
+                        lbx-on:click="toggleUnderlineHeaders($event)"
+                        class="lightbulb__a11y-white"
+                >
+                    <span lbx-html="getSpriteSvg('underline-header', 'ui' ,'lbx__icon' )"></span>
+                    Souligner les en-têtes                    <span
+                            class="lightbulb__a11y-fake-hover"
+                            lbx-bind:style="{'border-color': data.color }"
+                    ></span>
+                </button>
+            </div>
+            <div class="lightbulb__a11y-option">
+                <button
+                        tabindex="2"
+                        lbx-bind:style="{'background': options.imagesTitles ? data.color : ''}"
+                        title="Images alternatives"
+                        aria-label="Images alternatives"
+                        lbx-bind:class="{'active': options.imagesTitles}"
+                        lbx-ref="toggleImagesTitles"
+                        id="lbx-imagesTitles"
+                        lbx-on:click="toggleImagesTitles($event)"
+                        class="lightbulb__a11y-white"
+                >
+                    <span lbx-html="getSpriteSvg('image', 'ui' ,'lbx__icon' )"></span>
+                    Images alternatives                    <span
+                            class="lightbulb__a11y-fake-hover"
+                            lbx-bind:style="{'border-color': data.color }"
+                    ></span>
+                </button>
+                <button
+                        tabindex="2"
+                        lbx-bind:style="{'background': options.readingMask ? data.color : ''}"
+                        title="Images alternatives"
+                        aria-label="Images alternatives"
+                        lbx-bind:class="{'active': options.readingMask}"
+                        lbx-ref="toggleReadingMask"
+                        id="lbx-readingMask"
+                        lbx-on:click="toggleReadingMask($event)"
+                        class="lightbulb__a11y-white"
+                >
+                    <span lbx-html="getSpriteSvg('reading-mask', 'ui' ,'lbx__icon' )"></span>
+                    Masque de lecture                    <span
+                            class="lightbulb__a11y-fake-hover"
+                            lbx-bind:style="{'border-color': data.color }"
+                    ></span>
+                </button>
+            </div>
+            <div class="lightbulb__a11y-option">
+                <button
+                        tabindex="2"
+                        lbx-bind:style="{'background': options.whiteCursor ? data.color : ''}"
+                        title="Curseur blanc"
+                        aria-label="Curseur blanc"
+                        lbx-bind:class="{'active': options.whiteCursor}"
+                        lbx-ref="toggleWhiteCursor"
+                        id="lbx-whiteCursor"
+                        lbx-on:click="toggleWhiteCursor($event)"
+                        class="lightbulb__a11y-white"
+                >
+                    <span lbx-html="getSpriteSvg('cursor-white', 'ui' ,'lbx__icon' )"></span>
+                    Curseur blanc                    <span
+                            class="lightbulb__a11y-fake-hover"
+                            lbx-bind:style="{'border-color': data.color }"
+                    ></span>
+                </button>
+                <button
+                        tabindex="2"
+                        lbx-bind:style="{'background': options.blackCursor ? data.color : ''}"
+                        title="Curseur noir"
+                        aria-label="Curseur noir"
+                        lbx-bind:class="{'active': options.blackCursor}"
+                        lbx-ref="toggleBlackCursor"
+                        id="lbx-blackCursor"
+                        lbx-on:click="toggleBlackCursor($event)"
+                        class="lightbulb__a11y-white"
+                >
+                    <span lbx-html="getSpriteSvg('cursor-dark', 'ui' ,'lbx__icon' )"></span>
+                    Curseur noir                    <span
+                            class="lightbulb__a11y-fake-hover"
+                            lbx-bind:style="{'border-color': data.color }"
+                    ></span>
+                </button>
+
+            </div>
+            <div class="lightbulb__a11y-reset-container">
+                <button
+                        tabindex="2"
+                        style="background: #4da5e4"
+                        class="lightbulb__a11y-reset"
+                        aria-label="Réinitialiser tous les paramètres d'accessibilité"
+                        title="Réinitialiser tous les paramètres d'accessibilité"
+                        lbx-bind:disabled="!enableReset"
+                        lbx-on:click="resetAll()"
+                >
+                    <span lbx-html="getSpriteSvg('reset', 'ui' ,'lbx__icon__reset' )"></span>
+                    Réinitialiser tous les paramètres d'accessibilité                </button>
+            </div>
+        </div>
+    </div>
+    <div class="lightbulb__a11y--toggle-container">
+        <button
+                tabindex="1"
+                lbx-bind:class="{'lightbulb__a11y--toggle': true, 'active': enableReset}"
+                style="background: #4da5e4"
+                title="Ouvrir le menu d'accessibilité"
+                aria-label="Ouvrir le menu d'accessibilité"
+                lbx-on:click="toggle()">
+            <span lbx-html="getSpriteSvg('accessibility', 'ui' ,'lbx__icon' )"></span>
+            <span class="lightbulb__a11y-reset-active" lbx-show="enableReset" lbx-html="getSpriteSvg('exclamation', 'ui' ,'lbx__icon' )"></span>
+        </button>
+    </div>
+</div>
+        <div id="cookie-notice">
+            <div class="cookie-notice-container">
+                <p>
+                    Certains cookies sont nécessaires au fonctionnement de ce site. En outre, certains services externes nécessitent votre autorisation pour fonctionner.                </p>
+                <div id="cookie-notice-details" class="is-hidden">
+
+                    <div class="wrapper">
+                        <fieldset><legend>Cookies requis</legend><label class="required"><input type="checkbox" checked disabled> Cookies d'identification (login), etc<span></span></label></fieldset><fieldset><legend>Statistics</legend><label><input class="cookie-notice-selection" type="checkbox" data-cookie="GDPR_OK_analytics_esch_lu" data-domain="analytics.esch.lu"> Esch Analytics<span></span></label></fieldset>                    </div>
+
+                    <button type="submit" class="button" id="cookie-notice-accept-selection">Sauvegarder la sélection</button>                </div>
+                <div id="cookie-notice-buttons">
+                    <button id="cookie-notice-accept" class="button">Tout accepter</button>
+                    <button id="cookie-notice-choose" class="button">Choisir quoi accepter</button>
+                                    </div>
+            </div>
+        </div>
+    <script type="text/javascript" id="lightbulb-a11y-js-before">
+/* <![CDATA[ */
+window.lightbulbA11y = {"pluginUrl":"https:\/\/administration.esch.lu\/wp-content\/plugins\/lightbulb-accessibility-plugin\/"}
+//# sourceURL=lightbulb-a11y-js-before
+/* ]]> */
+</script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/plugins/lightbulb-accessibility-plugin/assets/dist/main.js?ver=16" id="lightbulb-a11y-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/plugins/lightbulb-gdpr-1.10.1/assets/dist/bundle.js?ver=16" id="cookie-notice-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/../esch/js/libs/jquery.inview.min.js?ver=16" id="jquery-inview-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/../esch/js/libs/jquery.pseudo-select.js?ver=16" id="jquery-pseudo-select-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/../esch/js/libs/jquery.mCustomScrollbar.concat.min.js?ver=16" id="customScrollbar-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/../esch/js/libs/leaflet.js?ver=16" id="leaflet-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/../esch/js/libs/ofi.min.js?ver=16" id="ofi-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/../esch/js/libs/chosen.jquery.min.js?ver=16" id="chosen-js-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/../esch/js/reportit.js?ver=16" id="energysaver-reportit-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/../esch/js/panels.js?ver=16" id="energysaver-panels-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/../esch/js/maps.js?ver=16" id="energysaver-maps-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/../esch/js/libs/featherlight.min.js?ver=16" id="featherlight-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/../esch/js/libs/featherlight.gallery.min.js?ver=16" id="featherlight-gallery-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/../esch/js/general.js?ver=16" id="energysaver-general-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/js/scripts.js?ver=16" id="energysaver-js-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/js/scroll-to-title.js?ver=16" id="scroll-to-title-js-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/../esch/js/archives-ajax.js?ver=16" id="archives-ajax-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/../esch-tv/js/libs/rangeslider.min.js?ver=16" id="rangeslider-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/themes/esch-administration/../esch-tv/js/video-controls.js?ver=16" id="tv-player-js"></script>
+<script type="text/javascript" src="https://administration.esch.lu/wp-content/plugins/lightbulb-esch-tv/assets/script.js?ver=16" id="script-tv-player-js"></script>
+            
+            <script>
+                if (gdprPlugin && gdprPlugin.isCookieSetForDomain('analytics.esch.lu')) {
+                  var _paq = window._paq = window._paq || [];
+                  /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+                  _paq.push(['trackPageView']);
+                  _paq.push(['enableLinkTracking']);
+                  (function() {
+                    var u="//analytics.esch.lu/";
+                    _paq.push(['setTrackerUrl', u+'matomo.php']);
+                    _paq.push(['setSiteId', '2']);
+                    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+                    g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+                  })();
+                } 
+            </script>
+            </body>
+</html>
+<!-- Cached page generated by WP-Super-Cache on 2026-10-06 00:04:35 -->
+
+<!-- super cache -->

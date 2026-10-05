@@ -13,6 +13,15 @@ USER_AGENT = "Democracy2-Docket/0.1 (+https://github.com/7empes7s/demo2.0)"
 MAX_BYTES = 40_000_000  # official PDFs can be large, but never this large
 
 
+class FetchError(RuntimeError):
+    """A request that failed after its retries. `status` is the HTTP status, or None when the
+    server could not be reached at all."""
+
+    def __init__(self, message: str, status: int | None = None):
+        super().__init__(message)
+        self.status = status
+
+
 @dataclass
 class Fetched:
     url: str
@@ -65,7 +74,8 @@ class Fetcher:
                 error = exc
             if attempt < self.retries - 1:
                 time.sleep(2**attempt)
-        raise RuntimeError(f"could not fetch {url}: {error}")
+        status = error.code if isinstance(error, urllib.error.HTTPError) else None
+        raise FetchError(f"could not fetch {url}: {error}", status)
 
 
 def pdf_text(data: bytes, max_pages: int = 60) -> str:

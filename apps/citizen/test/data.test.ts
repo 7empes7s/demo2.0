@@ -1,7 +1,24 @@
 import type { DocketItem } from "@democracy2/companion";
 import { describe, expect, it } from "vitest";
 
-import { historyOf, matches, nextMeeting, safeUrl, sortItems, stageOf, statusOf } from "../src/lib/data.ts";
+import {
+  groupFiles,
+  historyOf,
+  kindOf,
+  lastMeeting,
+  loadSnapshot,
+  matches,
+  nextMeeting,
+  placeOf,
+  placesOf,
+  routeOf,
+  safeUrl,
+  sitesOf,
+  sortItems,
+  stageOf,
+  statusOf,
+  voteKey,
+} from "../src/lib/data.ts";
 import { CompanionFailure, errorKey } from "../src/lib/errors.ts";
 import { DICTS, formatDate, guessLang, translate } from "../src/lib/i18n.ts";
 import { SampleProvider } from "../src/lib/sample-provider.ts";
@@ -26,6 +43,45 @@ function item(over: Partial<DocketItem> = {}): DocketItem {
     documents: [],
     ...over,
   };
+}
+
+function eschPoint(over: Partial<DocketItem> = {}): DocketItem {
+  return item({
+    id: "lu.esch.1522",
+    source: "esch.lu",
+    jurisdiction_id: "lu-esch",
+    number: "3",
+    type: "agenda",
+    type_label: "Décision",
+    title: { fr: "Convention d'exemple" },
+    status: "Approuvé",
+    deposited: null,
+    updated: null,
+    agenda: [{ meeting_id: "esch-1", date: "2026-10-02", time: "08:30", body: "Conseil communal d'Esch-sur-Alzette", steps: [] }],
+    reference: "2026/123",
+    theme: "Mobilité",
+    votes: { counts: { Oui: 11, Non: 8 }, by_party: {}, members: [] },
+    ...over,
+  });
+}
+
+function consultation(): DocketItem {
+  return item({
+    id: "lu.esch.participation.survey.abc",
+    source: "esch.lu",
+    jurisdiction_id: "lu-esch",
+    number: null,
+    type: "other",
+    type_label: "Enquête",
+    title: { fr: "Enquête d'exemple" },
+    status: "Actif",
+    deposited: null,
+    updated: null,
+    summary: "Donnez votre avis sur les parcs.",
+    opens: "2026-10-01",
+    closes: "2026-10-30",
+    phases: [],
+  });
 }
 
 describe("file stages", () => {
@@ -79,6 +135,100 @@ describe("agenda", () => {
   });
 });
 
+describe("loading the snapshot", () => {
+  const page = (json: unknown) =>
+    ({ getElementById: () => ({ textContent: JSON.stringify(json) }) }) as unknown as Document;
+  const noFetch = (() => Promise.reject(new Error("no network"))) as unknown as typeof fetch;
+
+  it("reads a /1 snapshot (Chamber only) embedded in the page", async () => {
+    const s = await loadSnapshot(
+      page({ schema: "d2.docket.snapshot/1", generated_at: "2026-10-05T00:00:00Z", source: { name: "Chambre des Députés" }, items: [item()], meetings: [], errors: [] }),
+      noFetch,
+    );
+    expect(s.items).toHaveLength(1);
+    expect(sitesOf(s)).toBe("chd.lu");
+  });
+
+  it("fetches a /2 snapshot with both bodies", async () => {
+    const v2 = {
+      schema: "d2.docket.snapshot/2",
+      generated_at: "2026-10-05T00:00:00Z",
+      sources: [{ id: "chd" }, { id: "esch" }],
+      meetings: [],
+      items: [item(), eschPoint(), consultation()],
+      errors: [],
+    };
+    const empty = { getElementById: () => null } as unknown as Document;
+    const fetcher = (async () => new Response(JSON.stringify(v2))) as typeof fetch;
+    const s = await loadSnapshot(empty, fetcher);
+    expect(s.items.map(kindOf)).toEqual(["chamber", "council", "consultation"]);
+    expect(sitesOf(s)).toBe("chd.lu, esch.lu");
+  });
+
+  it("refuses a schema it does not know", async () => {
+    await expect(loadSnapshot(page({ schema: "d2.docket.snapshot/9", items: [] }), noFetch)).rejects.toThrow(/unsupported/);
+  });
+});
+
+describe("Esch files", () => {
+  it("knows the place, and gives each file an address that does not collide", () => {
+    expect(placeOf(item())).toBe("chamber");
+    expect(placeOf(eschPoint())).toBe("esch");
+    expect(routeOf(item({ number: "8739" }))).toBe("8739");
+    expect(routeOf(eschPoint())).toBe("esch.1522");
+    expect(routeOf(consultation())).toBe("esch.participation.survey.abc");
+  });
+
+  it("shows the last council meeting once it has passed, and finds points by reference", () => {
+    const p = eschPoint();
+    expect(nextMeeting(p, "2026-10-05")).toBeUndefined();
+    expect(lastMeeting(p, "2026-10-05")?.date).toBe("2026-10-02");
+    expect(matches(p, "2026/123")).toBe(true);
+    expect(matches(consultation(), "parcs")).toBe(true);
+  });
+
+  it("translates the council's vote values it knows", () => {
+    expect(voteKey("Oui")).toBe("vote_yes");
+    expect(voteKey("Non")).toBe("vote_no");
+    expect(voteKey("Abstention")).toBe("vote_abstain");
+    expect(voteKey("Absent")).toBeNull();
+  });
+
+  it("never shows the text null for a missing vote", () => {
+    for (const missing of [null, "", "null"]) expect(voteKey(missing)).toBe("vote_none");
+    for (const lang of Object.keys(DICTS) as (keyof typeof DICTS)[]) expect(translate(lang, "vote_none")).not.toMatch(/null/i);
+  });
+});
+
+describe("place filter", () => {
+  // one past council session adds ~70 points; the Chamber's files must not sink below them
+  const points = Array.from({ length: 70 }, (_, n) => eschPoint({ id: `lu.esch.${n}`, number: String(n) }));
+  const chamber = [item({ id: "lu.chd.8752", number: "8752", updated: "2026-01-02" }), item({ id: "lu.chd.8700", number: "8700", type: "debate", updated: "2026-01-01" })];
+  const all = [...points, consultation(), ...chamber];
+  const opts = { filter: "all" as const, place: "all" as const, query: "" };
+
+  it("offers places only when there are two or more, Chamber first", () => {
+    expect(placesOf(all)).toEqual(["chamber", "esch"]);
+    expect(placesOf(chamber)).toEqual(["chamber"]);
+    expect(placesOf([])).toEqual([]);
+  });
+
+  it("lists the Chamber's files first, then Esch's, when showing every place", () => {
+    const groups = groupFiles(all, "2026-10-05", opts);
+    expect(groups.map((g) => g.place)).toEqual(["chamber", "esch"]);
+    expect(groups[0].items.map((i) => i.id)).toEqual(["lu.chd.8752", "lu.chd.8700"]);
+    expect(groups[1].items).toHaveLength(71);
+  });
+
+  it("shows only the picked place, combined with the type filter and search", () => {
+    expect(groupFiles(all, "2026-10-05", { ...opts, place: "esch" }).map((g) => g.place)).toEqual(["esch"]);
+    const chamberOnly = groupFiles(all, "2026-10-05", { ...opts, place: "chamber" });
+    expect(chamberOnly.flatMap((g) => g.items).every((i) => placeOf(i) === "chamber")).toBe(true);
+    expect(groupFiles(all, "2026-10-05", { ...opts, place: "chamber", filter: "bill" })[0].items.map((i) => i.id)).toEqual(["lu.chd.8752"]);
+    expect(groupFiles(all, "2026-10-05", { ...opts, query: "parcs" }).flatMap((g) => g.items).map((i) => i.id)).toEqual([consultation().id]);
+  });
+});
+
 describe("languages", () => {
   it("has every key in every language", () => {
     const keys = Object.keys(DICTS.en).sort();
@@ -88,6 +238,9 @@ describe("languages", () => {
   it("fills variables and formats dates for Luxembourg", () => {
     expect(translate("fr", "next_meeting", { body: "Commission", date: "7 octobre", time: "10:00" })).toBe("Commission, 7 octobre à 10:00");
     expect(formatDate("de", "2026-10-05")).toMatch(/5\. Oktober 2026/);
+    // browsers have no lb date data; the app writes Luxembourgish dates itself
+    expect(formatDate("lb", "2026-10-02")).toBe("2. Oktober 2026");
+    expect(formatDate("lb", "2026-03-01")).toBe("1. Mäerz 2026");
     expect(guessLang(["pt-PT", "en"])).toBe("pt");
     expect(guessLang(["it"])).toBe("fr");
   });

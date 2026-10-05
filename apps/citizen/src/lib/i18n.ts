@@ -8,7 +8,7 @@ const en = {
   language: "Language",
   theme_toggle: "Switch light or dark",
   agenda_title: "On the Chamber's agenda",
-  data_note: "Official data from chd.lu, read on {date}.",
+  data_note: "Official data from {sites}, read on {date}.",
   filter_all: "All",
   filter_bill: "Bills",
   filter_other: "Debates and other",
@@ -84,6 +84,25 @@ const en = {
   group_stance: "Your stance",
   group_filter: "Filter files",
   made_with: "Prompt {prompt} · model {model}",
+  agenda_title_both: "On the agenda",
+  tagline_both: "What the Chamber of Deputies and the Esch-sur-Alzette council are working on, explained in your language.",
+  place_chamber: "Chamber",
+  place_esch: "Esch-sur-Alzette",
+  group_place: "Filter by place",
+  point_no: "Point {n}",
+  fact_reference: "Reference",
+  fact_theme: "Theme",
+  fact_opens: "Opens",
+  fact_closes: "Closes",
+  last_label: "Last on the agenda",
+  votes_title: "How the council voted",
+  votes_members: "Each councillor's vote",
+  vote_yes: "Yes",
+  vote_no: "No",
+  vote_abstain: "Abstained",
+  phases: "Phases",
+  vote_none: "No vote recorded",
+  fact_when: "When",
 };
 
 export type Key = keyof typeof en;
@@ -95,7 +114,7 @@ const fr: Dict = {
   language: "Langue",
   theme_toggle: "Passer en clair ou en sombre",
   agenda_title: "À l'ordre du jour de la Chambre",
-  data_note: "Données officielles de chd.lu, lues le {date}.",
+  data_note: "Données officielles de {sites}, lues le {date}.",
   filter_all: "Tout",
   filter_bill: "Projets de loi",
   filter_other: "Débats et autres",
@@ -171,6 +190,25 @@ const fr: Dict = {
   group_stance: "Votre position",
   group_filter: "Filtrer les dossiers",
   made_with: "Consigne {prompt} · modèle {model}",
+  agenda_title_both: "À l'ordre du jour",
+  tagline_both: "Ce que la Chambre des Députés et le conseil communal d'Esch-sur-Alzette préparent, expliqué dans votre langue.",
+  place_chamber: "Chambre",
+  place_esch: "Esch-sur-Alzette",
+  group_place: "Filtrer par lieu",
+  point_no: "Point {n}",
+  fact_reference: "Référence",
+  fact_theme: "Thème",
+  fact_opens: "Ouverture",
+  fact_closes: "Clôture",
+  last_label: "Dernière séance",
+  votes_title: "Vote du conseil communal",
+  votes_members: "Vote de chaque conseiller",
+  vote_yes: "Oui",
+  vote_no: "Non",
+  vote_abstain: "Abstention",
+  phases: "Étapes",
+  vote_none: "Aucun vote enregistré",
+  fact_when: "Calendrier",
 };
 
 const de: Dict = {
@@ -179,7 +217,7 @@ const de: Dict = {
   language: "Sprache",
   theme_toggle: "Hell oder dunkel",
   agenda_title: "Auf der Tagesordnung der Kammer",
-  data_note: "Offizielle Daten von chd.lu, abgerufen am {date}.",
+  data_note: "Offizielle Daten von {sites}, abgerufen am {date}.",
   filter_all: "Alle",
   filter_bill: "Gesetzentwürfe",
   filter_other: "Debatten und Sonstiges",
@@ -255,6 +293,25 @@ const de: Dict = {
   group_stance: "Ihr Standpunkt",
   group_filter: "Akten filtern",
   made_with: "Vorgabe {prompt} · Modell {model}",
+  agenda_title_both: "Auf der Tagesordnung",
+  tagline_both: "Woran die Abgeordnetenkammer und der Gemeinderat von Esch-sur-Alzette arbeiten, erklärt in Ihrer Sprache.",
+  place_chamber: "Kammer",
+  place_esch: "Esch-sur-Alzette",
+  group_place: "Nach Ort filtern",
+  point_no: "Punkt {n}",
+  fact_reference: "Aktenzeichen",
+  fact_theme: "Thema",
+  fact_opens: "Beginn",
+  fact_closes: "Ende",
+  last_label: "Zuletzt auf der Tagesordnung",
+  votes_title: "Abstimmung im Gemeinderat",
+  votes_members: "Stimme jedes Ratsmitglieds",
+  vote_yes: "Ja",
+  vote_no: "Nein",
+  vote_abstain: "Enthaltung",
+  phases: "Phasen",
+  vote_none: "Keine Stimme erfasst",
+  fact_when: "Zeitraum",
 };
 
 const lb: Dict = {
@@ -263,7 +320,7 @@ const lb: Dict = {
   language: "Sprooch",
   theme_toggle: "Hell oder däischter",
   agenda_title: "Um Ordre du jour vun der Chamber",
-  data_note: "Offiziell Donnéeë vu chd.lu, gelies den {date}.",
+  data_note: "Offiziell Donnéeë vu {sites}, gelies den {date}.",
   filter_all: "All",
   filter_bill: "Gesetzprojeten",
   filter_other: "Debatten an Anerer",
@@ -339,6 +396,25 @@ const lb: Dict = {
   group_stance: "Äre Standpunkt",
   group_filter: "Dossieren filteren",
   made_with: "Virgab {prompt} · Modell {model}",
+  agenda_title_both: "Um Ordre du jour",
+  tagline_both: "Wat d'Chamber an de Gemengerot vun Esch-Uelzecht virbereeden, erkläert an Ärer Sprooch.",
+  place_chamber: "Chamber",
+  place_esch: "Esch-Uelzecht",
+  group_place: "No Plaz filteren",
+  point_no: "Punkt {n}",
+  fact_reference: "Referenz",
+  fact_theme: "Thema",
+  fact_opens: "Ufank",
+  fact_closes: "Enn",
+  last_label: "Fir d'lescht um Ordre du jour",
+  votes_title: "Ofstëmmung am Gemengerot",
+  votes_members: "Stëmm vun all Conseiller",
+  vote_yes: "Jo",
+  vote_no: "Nee",
+  vote_abstain: "Enthalung",
+  phases: "Etappen",
+  vote_none: "Keng Stëmm erfaasst",
+  fact_when: "Zäitraum",
 };
 
 const pt: Dict = {
@@ -347,7 +423,7 @@ const pt: Dict = {
   language: "Língua",
   theme_toggle: "Mudar para claro ou escuro",
   agenda_title: "Na agenda da Câmara",
-  data_note: "Dados oficiais de chd.lu, lidos a {date}.",
+  data_note: "Dados oficiais de {sites}, lidos a {date}.",
   filter_all: "Tudo",
   filter_bill: "Projetos de lei",
   filter_other: "Debates e outros",
@@ -423,6 +499,25 @@ const pt: Dict = {
   group_stance: "A sua posição",
   group_filter: "Filtrar processos",
   made_with: "Instrução {prompt} · modelo {model}",
+  agenda_title_both: "Na agenda",
+  tagline_both: "O que a Câmara dos Deputados e o conselho municipal de Esch-sur-Alzette estão a preparar, explicado na sua língua.",
+  place_chamber: "Câmara",
+  place_esch: "Esch-sur-Alzette",
+  group_place: "Filtrar por local",
+  point_no: "Ponto {n}",
+  fact_reference: "Referência",
+  fact_theme: "Tema",
+  fact_opens: "Abertura",
+  fact_closes: "Encerramento",
+  last_label: "Última vez na agenda",
+  votes_title: "Votação no conselho municipal",
+  votes_members: "Voto de cada vereador",
+  vote_yes: "Sim",
+  vote_no: "Não",
+  vote_abstain: "Abstenção",
+  phases: "Fases",
+  vote_none: "Nenhum voto registado",
+  fact_when: "Calendário",
 };
 
 export const DICTS: Record<Lang, Dict> = { en, fr, de, lb, pt };
@@ -443,11 +538,18 @@ export function translate(lang: Lang, key: Key, vars: Record<string, string | nu
   return text.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? `{${k}}`));
 }
 
+/** Browsers have no Luxembourgish date data (Intl prints "2026 M10 2"), so lb is written by hand. */
+const LB_MONTHS = ["Januar", "Februar", "Mäerz", "Abrëll", "Mee", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+
 export function formatDate(lang: Lang, iso: string | null | undefined): string {
   if (!iso) return "";
   const d = new Date(iso.length === 10 ? `${iso}T12:00:00Z` : iso);
   if (Number.isNaN(d.getTime())) return iso;
   try {
+    if (lang === "lb") {
+      const [y, m, day] = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Luxembourg" }).format(d).split("-").map(Number);
+      return `${day}. ${LB_MONTHS[m - 1]} ${y}`;
+    }
     return new Intl.DateTimeFormat(LOCALES[lang], { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Luxembourg" }).format(d);
   } catch {
     return iso;

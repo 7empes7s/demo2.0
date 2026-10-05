@@ -1,7 +1,8 @@
 name: Docket snapshot
 
-# Builds the Chamber of Deputies snapshot from chd.lu on main's code and keeps it as a workflow
-# artifact (14 days). The citizen app demo is refreshed from it; nothing is committed.
+# Builds the Docket snapshot (Chamber of Deputies from chd.lu, Esch-sur-Alzette council and
+# consultations from esch.lu) on main's code and keeps it as a workflow artifact (14 days).
+# The citizen app demo is refreshed from it; nothing is committed.
 on:
   schedule:
     - cron: "30 4 * * *"
@@ -23,7 +24,18 @@ jobs:
       - name: Build snapshot
         run: |
           uv run --frozen --no-dev --package d2-docket d2-docket snapshot --out lu-chd.json --max-items 40
-          python3 -c "import json; d = json.load(open('lu-chd.json')); print(len(d['items']), 'files;', len(d['errors']), 'errors')"
+          python3 - <<'PY'
+          import collections, json
+          d = json.load(open("lu-chd.json"))
+          assert d["schema"] == "d2.docket.snapshot/2", d["schema"]
+          by = collections.Counter(i["jurisdiction_id"] for i in d["items"])
+          for place in ("lu", "lu-esch"):
+              if not by[place]:
+                  print(f"::warning::no {place} items in the snapshot")
+          print(d["schema"], len(d["items"]), "files", dict(by), len(d.get("meetings", [])), "meetings;", len(d["errors"]), "errors")
+          for e in d["errors"]:
+              print("  error:", json.dumps(e, ensure_ascii=False)[:300])
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: lu-chd-snapshot

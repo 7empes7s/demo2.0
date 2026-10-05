@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { challenge, checkClaim, explain, extractArguments } from "../src/companion.ts";
 import { buildSources, normalise, parseJson, quoteIsIn, renderSources } from "../src/sources.ts";
-import { FakeProvider, ITEM } from "./fixtures.ts";
+import { argumentsSystem, explainSystem, fileKind } from "../src/prompts.ts";
+import { ESCH_CONSULTATION, ESCH_POINT, FakeProvider, ITEM } from "./fixtures.ts";
 
 const json = (v: unknown) => "```json\n" + JSON.stringify(v) + "\n```";
 
@@ -82,7 +83,7 @@ describe("explain", () => {
     expect(ghost.sources).toEqual([]);
     expect(link.verified).toBe(false);
     expect(out.verified_share).toBeCloseTo(1 / 2);
-    expect(out.provenance).toMatchObject({ model: "fake-1", item_id: ITEM.id, prompt_version: "companion-prompts/1" });
+    expect(out.provenance).toMatchObject({ model: "fake-1", item_id: ITEM.id, prompt_version: "companion-prompts/2" });
     expect(provider.requests[0].system).toContain("in English");
     expect(provider.requests[0].system).toContain("never recommend how to vote");
   });
@@ -150,5 +151,21 @@ describe("claim check", () => {
     expect(ok.evidence[0].url).toBe("https://example.org/avis.pdf");
     const bad = await checkClaim(provider, ITEM, { lang: "en", claim: "Something." });
     expect(bad).toMatchObject({ grade: "yellow", downgraded: true, evidence: [] });
+  });
+});
+
+describe("prompt wording", () => {
+  it("names the kind of file from the item, never calling every file parliamentary", () => {
+    expect(fileKind(ITEM)).toContain("bill before the Chamber of Deputies");
+    expect(fileKind(ESCH_POINT)).toContain("Esch-sur-Alzette municipal council");
+    expect(fileKind(ESCH_CONSULTATION)).toContain("public consultation");
+    for (const item of [ITEM, ESCH_POINT, ESCH_CONSULTATION]) {
+      const prompts = [explainSystem("en", "short", item), argumentsSystem(item)];
+      for (const p of prompts) {
+        expect(p).toContain(fileKind(item));
+        expect(p).not.toMatch(/parliamentary|the bill's/);
+      }
+    }
+    expect(explainSystem("en", "short", ESCH_POINT)).not.toContain("Chamber");
   });
 });

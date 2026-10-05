@@ -12,6 +12,13 @@ if (!snapshotPath) {
 
 const html = readFileSync("dist-single/index.html", "utf8");
 const snapshot = JSON.parse(readFileSync(snapshotPath, "utf8"));
+// The app reads Docket snapshot/1 (Chamber only) and /2 (several sources); refuse anything else
+// here rather than ship a page that cannot load its data.
+const SCHEMAS = ["d2.docket.snapshot/1", "d2.docket.snapshot/2"];
+if (!SCHEMAS.includes(snapshot.schema) || !Array.isArray(snapshot.items)) {
+  console.error(`${snapshotPath}: not a Docket snapshot the app can read (schema ${JSON.stringify(snapshot.schema)}; expected ${SCHEMAS.join(" or ")})`);
+  process.exit(1);
+}
 // JSON inside <script> must not be able to close the tag.
 const data = JSON.stringify(snapshot).replace(/</g, "\\u003c");
 const tag = `<script type="application/json" id="snapshot">${data}</script>`;
@@ -30,4 +37,5 @@ if (flag === "--fragment") {
   out = html.replace("</head>", () => `${tag}\n</head>`);
 }
 writeFileSync(outPath, out);
-console.log(`${outPath}: ${(out.length / 1024).toFixed(0)} KB, ${snapshot.items.length} files`);
+const sources = (snapshot.sources ?? (snapshot.source ? [{ id: "chd" }] : [])).map((x) => x.id).join(", ");
+console.log(`${outPath}: ${(out.length / 1024).toFixed(0)} KB, ${snapshot.items.length} files (${snapshot.schema}; ${sources || "no sources"})`);

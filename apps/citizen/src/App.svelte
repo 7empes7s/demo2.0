@@ -5,7 +5,7 @@
   import FileList from "./components/FileList.svelte";
   import FileView from "./components/FileView.svelte";
   import { LocalClient, RemoteClient, type CompanionClient } from "./lib/client.ts";
-  import { loadSnapshot, luxembourgToday } from "./lib/data.ts";
+  import { loadSnapshot, luxembourgToday, placeOf, routeOf, sitesOf } from "./lib/data.ts";
   import { LANG_LABELS } from "./lib/i18n.ts";
   import { prefs } from "./lib/prefs.ts";
   import { findSample, SampleProvider } from "./lib/sample-provider.ts";
@@ -20,8 +20,11 @@
   const today = luxembourgToday();
 
   const selected = $derived<DocketItem | null>(
-    snapshot && route ? (snapshot.items.find((i) => i.number === route) ?? null) : null,
+    snapshot && route ? (snapshot.items.find((i) => routeOf(i) === route) ?? null) : null,
   );
+
+  /** Once Esch files are in the snapshot, the headings name both bodies. */
+  const both = $derived(!!snapshot?.items.some((i) => placeOf(i) === "esch"));
 
   function readRoute(): string {
     const raw = location.hash.replace(/^#/, "");
@@ -44,14 +47,14 @@
     applyTheme(theme);
   }
 
-  async function open(number: string | null) {
-    if (number) location.hash = number;
+  async function open(target: string | null) {
+    if (target) location.hash = target;
     else history.pushState(null, "", location.pathname + location.search);
-    route = number ?? "";
+    route = target ?? "";
     window.scrollTo({ top: 0 });
     // Move focus to what just appeared, so keyboard and screen-reader users land on it.
     await tick();
-    document.getElementById(number ? "file-title" : "list-title")?.focus({ preventScroll: true });
+    document.getElementById(target ? "file-title" : "list-title")?.focus({ preventScroll: true });
   }
 
   onMount(() => {
@@ -115,11 +118,11 @@
     <div class="layout">
       <aside class="list-pane">
         <div class="intro">
-          <h1 class="serif" id="list-title" tabindex="-1">{t("agenda_title")}</h1>
-          <p class="muted">{t("tagline")}</p>
+          <h1 class="serif" id="list-title" tabindex="-1">{t(both ? "agenda_title_both" : "agenda_title")}</h1>
+          <p class="muted">{t(both ? "tagline_both" : "tagline")}</p>
         </div>
-        <FileList items={snapshot.items} {today} selected={selected?.number ?? null} onopen={open} />
-        <p class="muted source-note">{t("data_note", { date: date(snapshot.generated_at) })}</p>
+        <FileList items={snapshot.items} {today} selected={selected ? routeOf(selected) : null} onopen={open} />
+        <p class="muted source-note">{t("data_note", { sites: sitesOf(snapshot), date: date(snapshot.generated_at) })}</p>
       </aside>
       <main class="detail-pane">
         {#if selected}

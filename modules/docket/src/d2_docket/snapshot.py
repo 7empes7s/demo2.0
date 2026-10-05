@@ -1,19 +1,24 @@
-"""Build the Docket snapshot the citizen app reads: what is on the Chamber's agenda now."""
+"""Build the Docket snapshot the citizen app reads: what the Chamber of Deputies and the
+Esch-sur-Alzette council are deciding now, and what Esch is consulting residents on."""
 
 from __future__ import annotations
 
 import json
 import time
 from dataclasses import asdict
+from datetime import date
 from pathlib import Path
 
-from . import chd
+from . import chd, esch
 from .fetch import Fetcher, pdf_text
 
-SCHEMA = "d2.docket.snapshot/1"
+SCHEMA = "d2.docket.snapshot/2"
+SOURCES = ("chd", "esch")
 TEXT_KINDS = ("depot", "avis", "rapport", "amendement")  # procès-verbaux are skipped
 CHARS = {"depot": 40_000, "avis": 15_000, "rapport": 20_000, "amendement": 10_000}
 BILL_TYPES = ("projet de loi", "proposition de loi", "gesetzprojet")
+ESCH_COUNCIL = "Conseil communal d'Esch-sur-Alzette"
+ESCH_DELAY = 3.0  # minimum seconds between requests for the Esch source
 
 
 def item_type(type_label: str | None) -> str:
@@ -24,6 +29,18 @@ def item_type(type_label: str | None) -> str:
     if "débat" in low or "debatt" in low:
         return "debate"
     return "other"
+
+
+def _now() -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def _link_only(doc) -> dict:
+    """A document listed by URL only: not fetched, so no hash or text yet."""
+    return {**asdict(doc), "sha256": None, "fetched_at": None, "text": "", "truncated": False}
+
+
+# --- Chamber of Deputies ---
 
 
 def build_item(dossier: chd.Dossier, meetings: list[chd.Meeting], documents: list[dict]) -> dict:
@@ -65,7 +82,7 @@ def build_item(dossier: chd.Dossier, meetings: list[chd.Meeting], documents: lis
 def fetch_documents(fetcher: Fetcher, dossier: chd.Dossier, limit: int = 8) -> list[dict]:
     out = []
     for doc in [d for d in dossier.documents if d.kind in TEXT_KINDS][:limit]:
-        entry = {**asdict(doc), "sha256": None, "fetched_at": None, "text": "", "truncated": False}
+        entry = _link_only(doc)
         try:
             got = fetcher.get(doc.url)
             entry["sha256"], entry["fetched_at"] = got.sha256, got.fetched_at
@@ -83,7 +100,7 @@ def fetch_documents(fetcher: Fetcher, dossier: chd.Dossier, limit: int = 8) -> l
     return out
 
 
-def build(fetcher: Fetcher, max_items: int = 40) -> dict:
+def build_chd(fetcher: Fetcher, max_items: int = 40) -> dict:
     agenda_page = fetcher.get(f"{chd.BASE}/fr/agenda")
     meetings = chd.parse_agenda(agenda_page.body.decode("utf-8", "replace"))
     numbers: list[str] = []
@@ -98,18 +115,295 @@ def build(fetcher: Fetcher, max_items: int = 40) -> dict:
             dossier = chd.parse_dossier(page.body.decode("utf-8", "replace"), number)
             items.append(build_item(dossier, meetings, fetch_documents(fetcher, dossier)))
         except Exception as exc:
-            errors.append({"number": number, "error": str(exc)[:300]})
+            errors.append({"source": "chd.lu", "number": number, "error": str(exc)[:300]})
     return {
-        "schema": SCHEMA,
-        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "source": {
+            "id": "chd",
             "name": "Chambre des Députés",
             "url": f"{chd.BASE}/fr/agenda",
             "sha256": agenda_page.sha256,
         },
-        "meetings": [asdict(m) for m in meetings],
+        "meetings": [{"source": "chd.lu", **asdict(m)} for m in meetings],
         "items": items,
         "errors": errors,
+    }
+
+
+# --- Esch-sur-Alzette ---
+
+
+def esch_meeting(
+    session: esch.Session,
+    link: esch.SessionLink | None,
+    page: esch.SessionPage | None,
+    points: list[esch.Point],
+) -> dict:
+    start, end = esch.time_range(session.duration)
+    return {
+        "source": "esch.lu",
+        "id": f"esch-{session.id}",
+        "date": session.date,
+        "time": start,
+        "end_time": end,
+        "body": ESCH_COUNCIL,
+        "location": None,  # the city does not state it per session
+        "title": session.title,
+        "nature": session.nature,
+        "closed_part": session.closed_duration,
+        "announced": session.announced,
+        "convened": session.convened,
+        "present": session.present,
+        "excused": session.excused,
+        "url": link.url if link else None,
+        "video_url": page.video_url if page and not page.live else None,
+        "live_url": page.video_url if page and page.live else None,
+        "documents": [_link_only(d) for d in session.documents],
+        "points": [{"text": p.title, "dossier": None, "steps": []} for p in points],
+    }
+
+
+def esch_point_item(meeting: dict, point: esch.Point, votes: dict | None) -> dict:
+    return {
+        "id": f"lu.esch.{point.id}",
+        "source": "esch.lu",
+        "jurisdiction_id": "lu-esch",
+        "number": point.number,
+        "type": "agenda",
+        "type_label": point.category,
+        "title": {"fr": point.title},
+        "status": point.status,
+        "author": None,
+        "committee": None,
+        "deposited": None,
+        "updated": None,
+        "urls": {"fr": meeting["url"]} if meeting["url"] else {},
+        "agenda": [
+            {
+                "meeting_id": meeting["id"],
+                "date": meeting["date"],
+                "time": meeting["time"],
+                "body": meeting["body"],
+                "steps": [],
+            }
+        ],
+        "activities": [],
+        "documents": [_link_only(d) for d in point.documents],
+        "reference": point.reference,
+        "theme": point.group,
+        "votes": votes,
+    }
+
+
+def esch_consultation_item(c: esch.Consultation, page: esch.ConsultationPage | None) -> dict:
+    return {
+        "id": f"lu.esch.participation.{c.kind}.{c.id}",
+        "source": "esch.lu",
+        "jurisdiction_id": "lu-esch",
+        "number": None,
+        "type": "other",
+        "type_label": c.type_label,
+        "title": {"fr": c.title},
+        "status": c.status,
+        "author": None,
+        "committee": None,
+        "deposited": None,
+        "updated": None,
+        "urls": {"fr": c.url},
+        "agenda": [],
+        "activities": [],
+        "documents": [_link_only(d) for d in page.attachments] if page else [],
+        "summary": c.summary,
+        "when": c.when,
+        "opens": page.start if page else None,
+        "closes": page.end if page else None,
+        "phases": [asdict(p) for p in page.phases] if page else [],
+    }
+
+
+def pick_sessions(sessions: list[esch.Session], today: date, past: int = 1) -> list[esch.Session]:
+    """Every session from today on, plus the most recent `past` ones before today."""
+    dated = sorted((s for s in sessions if s.date), key=lambda s: s.date or "")
+    upcoming = [s for s in dated if s.date >= today.isoformat()]
+    before = [s for s in dated if s.date < today.isoformat()]
+    return (before[-past:] if past else []) + upcoming
+
+
+def _text(fetcher: Fetcher, url: str) -> str:
+    return fetcher.get(url).body.decode("utf-8", "replace")
+
+
+def _err(source: str, exc: Exception, **where) -> dict:
+    return {"source": source, **where, "error": str(exc)[:300]}
+
+
+VOTES_GIVE_UP_AFTER = 3  # failed votes requests before the rest are skipped
+
+
+def _stops_votes(exc: Exception) -> bool:
+    """True when the votes API itself is unreachable (refused connection, timeout, 429, 5xx).
+
+    A 404 or other 4xx for one point only costs that point its votes."""
+    status = getattr(exc, "status", None)
+    return status is None or status == 429 or status >= 500
+
+
+def build_esch_council(
+    fetcher: Fetcher, today: date, past_sessions: int, errors: list[dict]
+) -> tuple[list[dict], list[dict], str | None]:
+    """Council sessions and their points. Returns (meetings, items, sha256 of the list page).
+
+    The public list page only adds each session's page link (video, vote charts); without it
+    the sessions still come from the API. The previous year is a best-effort extra."""
+    links: list[esch.SessionLink] = []
+    list_sha = None
+    try:
+        list_page = fetcher.get(esch.sessions_url(today.year))
+        links = esch.parse_sessions_list(list_page.body.decode("utf-8", "replace"))
+        list_sha = list_page.sha256
+    except Exception as exc:
+        errors.append(_err("esch.lu", exc, url=esch.sessions_url(today.year)))
+    sessions = esch.parse_sessions_api(_text(fetcher, esch.sessions_api_url(today.year)))
+    earlier = [s for s in sessions if s.date and s.date < today.isoformat()]
+    if len(earlier) < past_sessions:
+        # early in the year: the last sessions before today are in the previous year's list
+        last = today.year - 1
+        try:
+            sessions += esch.parse_sessions_api(_text(fetcher, esch.sessions_api_url(last)))
+        except Exception as exc:
+            errors.append(_err("esch.lu", exc, url=esch.sessions_api_url(last)))
+        try:
+            links += esch.parse_sessions_list(_text(fetcher, esch.sessions_url(last)))
+        except Exception as exc:
+            errors.append(_err("esch.lu", exc, url=esch.sessions_url(last)))
+    by_date = {link.date: link for link in links if link.date}
+
+    meetings, items = [], []
+    votes_failures, votes_stopped, skipped = 0, False, []
+    for session in pick_sessions(sessions, today, past_sessions):
+        link = by_date.get(session.date)
+        page, points = None, []
+        try:
+            if link:
+                page = esch.parse_session_page(_text(fetcher, link.url))
+            points = esch.parse_points_api(
+                _text(fetcher, esch.points_api_url(session.id)), session.date
+            )
+        except Exception as exc:
+            errors.append(_err("esch.lu", exc, session=session.id))
+        points = [p for p in points if not p.closed]  # huis clos points are not public
+        meeting = esch_meeting(session, link, page, points)
+        meetings.append(meeting)
+        voted = set(page.voted_item_ids) if page else set()
+        for point in points:
+            votes = None
+            if point.id in voted and votes_stopped:
+                skipped.append(point.id)
+            elif point.id in voted:
+                try:
+                    votes = esch.parse_votes_api(_text(fetcher, esch.votes_api_url(point.id)))
+                except Exception as exc:
+                    errors.append(_err("esch.lu", exc, point=point.id))
+                    votes_failures += 1
+                    # the workflow API starts refusing connections after a few dozen requests;
+                    # once it does, stop asking rather than spend minutes on retries
+                    if _stops_votes(exc) or votes_failures >= VOTES_GIVE_UP_AFTER:
+                        votes_stopped = True
+            items.append(esch_point_item(meeting, point, votes))
+    if skipped:
+        errors.append(
+            {
+                "source": "esch.lu",
+                "points": skipped,
+                "error": "votes not fetched after earlier votes requests failed",
+            }
+        )
+    return meetings, items, list_sha
+
+
+def build_esch_participation(fetcher: Fetcher, errors: list[dict]) -> list[dict]:
+    """Projects and surveys from participation.esch.lu, a separate site from the council's."""
+    items = []
+    for consultation in esch.parse_participation_home(_text(fetcher, esch.PARTICIPATION + "/")):
+        page = None
+        try:
+            page = esch.parse_participation_page(_text(fetcher, consultation.url))
+        except Exception as exc:
+            errors.append(_err("participation.esch.lu", exc, url=consultation.url))
+        items.append(esch_consultation_item(consultation, page))
+    return items
+
+
+def build_esch(fetcher: Fetcher, today: date | None = None, past_sessions: int = 1) -> dict:
+    """The council and the participation site fail separately: one down keeps the other."""
+    today = today or date.today()
+    errors: list[dict] = []
+    meetings, items, sha = [], [], None
+    try:
+        meetings, items, sha = build_esch_council(fetcher, today, past_sessions, errors)
+    except Exception as exc:
+        errors.append(_err("esch.lu", exc))
+    try:
+        items += build_esch_participation(fetcher, errors)
+    except Exception as exc:
+        errors.append(_err("participation.esch.lu", exc))
+    return {
+        "source": {
+            "id": "esch",
+            "name": "Ville d'Esch-sur-Alzette",
+            "url": esch.sessions_url(),
+            "sha256": sha,  # of the council's sessions list; None when it could not be read
+        },
+        "meetings": meetings,
+        "items": items,
+        "errors": errors,
+    }
+
+
+# --- The snapshot ---
+
+
+def build(
+    fetcher: Fetcher,
+    max_items: int = 40,
+    sources: tuple[str, ...] = SOURCES,
+    today: date | None = None,
+    esch_past_sessions: int = 1,
+) -> dict:
+    unknown = [s for s in sources if s not in SOURCES]
+    if unknown:
+        raise ValueError(f"unknown source(s) {', '.join(unknown)}; known: {', '.join(SOURCES)}")
+    parts = []
+    for source in sources:
+        try:
+            if source == "chd":
+                parts.append(build_chd(fetcher, max_items=max_items))
+            elif source == "esch":
+                # workflow.esch.lu refused connections after ~30 requests at 1 per second and
+                # answered all of them at 1 per 3 seconds, so Esch is fetched more slowly
+                delay = getattr(fetcher, "delay", None)
+                if delay is not None:
+                    fetcher.delay = max(delay, ESCH_DELAY)
+                try:
+                    parts.append(build_esch(fetcher, today=today, past_sessions=esch_past_sessions))
+                finally:
+                    if delay is not None:
+                        fetcher.delay = delay
+        except Exception as exc:  # one unreachable site must not sink the other sources
+            parts.append(
+                {
+                    "source": {"id": source},
+                    "meetings": [],
+                    "items": [],
+                    "errors": [{"source": source, "error": str(exc)[:300]}],
+                }
+            )
+    return {
+        "schema": SCHEMA,
+        "generated_at": _now(),
+        "sources": [p["source"] for p in parts],
+        "meetings": [m for p in parts for m in p["meetings"]],
+        "items": [i for p in parts for i in p["items"]],
+        "errors": [e for p in parts for e in p["errors"]],
     }
 
 
