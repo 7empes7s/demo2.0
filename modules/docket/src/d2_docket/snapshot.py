@@ -17,8 +17,13 @@ BILL_TYPES = ("projet de loi", "proposition de loi", "gesetzprojet")
 
 
 def item_type(type_label: str | None) -> str:
+    """bill, debate or other (the values spec/schemas/source-item allows for Chamber dossiers)."""
     low = (type_label or "").lower()
-    return "bill" if any(t in low for t in BILL_TYPES) else "other"
+    if any(t in low for t in BILL_TYPES):
+        return "bill"
+    if "débat" in low or "debatt" in low:
+        return "debate"
+    return "other"
 
 
 def build_item(dossier: chd.Dossier, meetings: list[chd.Meeting], documents: list[dict]) -> dict:

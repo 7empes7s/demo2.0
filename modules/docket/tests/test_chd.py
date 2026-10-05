@@ -45,7 +45,24 @@ def test_orientation_debate_has_no_deposit_document():
     d = chd.parse_dossier(read("dossier-8821-fr.html"), "8821")
     assert d.type == "Débat d'orientation"
     assert d.deposit_document is None
+    assert snapshot.item_type(d.type) == "debate"
+    assert d.committee == "Commission de la Mobilité et des Travaux publics"
+
+
+def test_rule_revision_is_other():
+    d = chd.parse_dossier(read("dossier-8700-fr.html"), "8700")
     assert snapshot.item_type(d.type) == "other"
+
+
+def test_committee_comes_from_latest_referral():
+    d = chd.parse_dossier(read("dossier-8752-fr.html"), "8752")
+    assert d.committee == "Commission des Finances"
+
+
+def test_impossible_dates_become_none():
+    assert chd._iso("31.02.2026") is None
+    assert chd._iso("00.00.0000") is None
+    assert chd._iso("not a date") is None
 
 
 def test_agenda_meetings_are_deduplicated_and_linked():

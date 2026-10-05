@@ -91,7 +91,10 @@ def _iso(day: str | None) -> str | None:
     if not m:
         return None
     d, mo, y = (int(x) for x in m.groups())
-    return date(y, mo, d).isoformat()
+    try:
+        return date(y, mo, d).isoformat()
+    except ValueError:  # e.g. 31.02.2026 or a 00.00.0000 placeholder
+        return None
 
 
 def _doc_kind(label: str, url: str) -> str:
@@ -179,6 +182,14 @@ def parse_dossier(html: str, number: str) -> Dossier:
                 deposit_doc.date = act.date
                 break
 
+    # The info box has no committee row; the latest referral in the history names it.
+    committee = pick("Commission", "Kommission", "Committee", "Kommissioun")
+    if not committee:
+        for act in reversed(sorted(activities, key=lambda a: a.date or "")):
+            if act.kind in ("Commission", "Commission-pressentie") and act.actors:
+                committee = act.actors[0]
+                break
+
     return Dossier(
         number=number,
         title=title,
@@ -189,7 +200,7 @@ def parse_dossier(html: str, number: str) -> Dossier:
             pick("Date de dépôt", "Datum der Einreichung", "Date of submission", "Datum vum Depot")
         ),
         updated=updated,
-        committee=pick("Commission", "Kommission", "Committee", "Kommissioun"),
+        committee=committee,
         deposit_document=deposit_doc,
         activities=activities,
     )
