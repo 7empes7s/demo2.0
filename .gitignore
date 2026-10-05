@@ -11,3 +11,4 @@ target/
 .env*
 !.env.example
 .claude/worktrees/
+dist-single/
