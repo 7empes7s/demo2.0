@@ -1,0 +1,15 @@
+# Cloudflare Tunnel for cracia.techinsiderbytes.com -> the Companion server on Mulinux.
+# No inbound port is opened; cloudflared dials out to Cloudflare. TLS ends at Cloudflare.
+#
+# One-time, as root on Mulinux (cloudflared already logged in to the account that holds
+# techinsiderbytes.com; see ops/deploy/publish-cloudflare.sh, which runs these steps):
+#   cloudflared tunnel create cracia
+#   cloudflared tunnel route dns cracia cracia.techinsiderbytes.com
+#   install this file as /etc/cloudflared/cracia.yml with the tunnel id filled in
+#   cloudflared service install --config /etc/cloudflared/cracia.yml  (or a cloudflared@cracia unit)
+tunnel: TUNNEL_ID
+credentials-file: /etc/cloudflared/TUNNEL_ID.json
+ingress:
+  - hostname: cracia.techinsiderbytes.com
+    service: http://127.0.0.1:8787
+  - service: http_status:404
