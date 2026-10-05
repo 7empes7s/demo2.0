@@ -1,0 +1,7 @@
+{
+  "id": "example-x",
+  "kind": "city",
+  "name": {
+    "en": "Example city"
+  }
+}

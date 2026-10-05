@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://democracy2.dev/spec/argument-rating.schema.json",
+  "title": "ArgumentRating",
+  "description": "One rater's verdict on whether an argument is strong. Owned by Commons.",
+  "type": "object",
+  "properties": {
+    "argument_id": { "type": "string", "minLength": 1 },
+    "rater_nym": { "type": "string", "minLength": 1 },
+    "strong": { "type": "boolean" },
+    "rater_cluster": { "type": ["string", "null"], "minLength": 1 }
+  },
+  "required": ["argument_id", "rater_nym", "strong"],
+  "additionalProperties": false
+}

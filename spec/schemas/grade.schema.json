@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://democracy2.dev/spec/grade.schema.json",
+  "title": "Grade",
+  "description": "One checker's grade of a claim, with the records it rests on. Owned by Provenance.",
+  "type": "object",
+  "properties": {
+    "claim_id": { "type": "string", "minLength": 1 },
+    "checker_id": { "type": "string", "minLength": 1 },
+    "grade": {
+      "description": "green: solid. yellow: contested or unclear. red: flatly false.",
+      "enum": ["green", "yellow", "red"]
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Evidence" },
+      "minItems": 1
+    },
+    "model_version": { "type": "string", "minLength": 1 }
+  },
+  "required": ["claim_id", "checker_id", "grade", "evidence", "model_version"],
+  "additionalProperties": false,
+  "$defs": {
+    "Evidence": {
+      "description": "A passage of a record that the grade rests on.",
+      "type": "object",
+      "properties": {
+        "url": {
+          "description": "A link a reader can open to see the record.",
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https?://"
+        },
+        "source_document_id": { "type": ["string", "null"], "minLength": 1 },
+        "excerpt": { "type": "string", "minLength": 1 },
+        "locator": {
+          "description": "Where the excerpt is in the document, such as a page or article.",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": ["url", "excerpt"],
+      "additionalProperties": false
+    }
+  }
+}

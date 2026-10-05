@@ -1,0 +1,13 @@
+{
+  "id": "example-item-1",
+  "source": "example-source",
+  "jurisdiction_id": "example-country",
+  "type": "agenda",
+  "title": {
+    "en": "Example agenda"
+  },
+  "dates": {
+    "meeting": "1 January 2026"
+  },
+  "document_ids": []
+}

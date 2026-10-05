@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://democracy2.dev/spec/claim.schema.json",
+  "title": "Claim",
+  "description": "A factual statement sent for grading. Owned by Provenance.",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "text": { "type": "string", "minLength": 1 },
+    "context_ref": {
+      "description": "Where the claim was made, such as a source item or argument ID.",
+      "type": ["string", "null"],
+      "minLength": 1
+    }
+  },
+  "required": ["id", "text"],
+  "additionalProperties": false
+}

@@ -1,0 +1,11 @@
+{
+  "id": "example-arg-1",
+  "matter_id": "example-matter",
+  "stance_option_id": "example-option-yes",
+  "text": "Example argument: the example measure costs less than it saves.",
+  "source_refs": [
+    "example-doc-1"
+  ],
+  "author_nym": "example-nym-a",
+  "cluster_id": "example-cluster-1"
+}
