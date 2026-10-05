@@ -1,3 +1,18 @@
 # spec
 
-JSON Schemas (`schemas/`) and OpenAPI files (`openapi/`) that modules share. Nothing else is shared.
+The contracts modules share. Nothing else is shared.
+
+| Path | What lives there |
+|---|---|
+| `schemas/<name>.schema.json` | JSON Schema (draft 2020-12), `$id` `https://democracy2.dev/spec/<name>.schema.json` |
+| `examples/<name>/` | One or more valid examples per schema, and invalid ones named `invalid-*.json` |
+| `record-types.json` | The entry types Record accepts |
+| `openapi/` | API contracts (when they land) |
+| `tests/` | Checks every schema and example; run by `tools/check.sh` |
+
+The data model behind these files is `docs/architecture/03-data-model.md`. Examples are synthetic; they never describe real bills or people.
+
+## Versioning
+
+- Within a major version, changes are additive only, such as a new optional field.
+- A breaking change (removing or renaming a field, making a field required, narrowing a type or enum) is a new major file, `<name>.v2.schema.json` with its own `$id` and its own `examples/<name>.v2/`. The old file stays until no module uses it.

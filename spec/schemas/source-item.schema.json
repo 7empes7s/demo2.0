@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://democracy2.dev/spec/source-item.schema.json",
+  "title": "SourceItem",
+  "description": "One official item (bill, agenda, minutes, budget, vote, petition or question), normalized across sources. Owned by Docket.",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "source": {
+      "description": "The source plugin that produced this item.",
+      "type": "string",
+      "minLength": 1
+    },
+    "jurisdiction_id": { "type": "string", "minLength": 1 },
+    "type": { "enum": ["bill", "agenda", "minutes", "budget", "vote", "petition", "question"] },
+    "title": { "$ref": "localized-text.schema.json" },
+    "status": {
+      "description": "Status as the source states it.",
+      "type": "string",
+      "minLength": 1
+    },
+    "dates": {
+      "description": "Named dates from the source, such as tabled or voted, as RFC 3339 full dates.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "format": "date",
+        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+      }
+    },
+    "document_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  },
+  "required": ["id", "source", "jurisdiction_id", "type", "title", "document_ids"],
+  "additionalProperties": false
+}
