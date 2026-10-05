@@ -1,0 +1,183 @@
+{
+  "version": "0.1.0",
+  "scope": {
+    "population_source": "data/lu-jurisdictions.json",
+    "thresholds": [
+      {
+        "tier": "national",
+        "min_population": 300000
+      },
+      {
+        "tier": "regional",
+        "min_population": 50000
+      },
+      {
+        "tier": "local",
+        "min_population": 1000
+      },
+      {
+        "tier": "minor",
+        "min_population": 0
+      }
+    ]
+  },
+  "tiers": {
+    "national": {
+      "queue_priority": 1,
+      "details_drafted_by": "citizens_vote",
+      "review_panel": {
+        "min": 50,
+        "max": 100
+      },
+      "review_rounds": 2,
+      "delivery_verified_by": "expert_panel_by_lottery",
+      "ratification": "full_vote"
+    },
+    "regional": {
+      "queue_priority": 2,
+      "details_drafted_by": "citizens_vote",
+      "review_panel": {
+        "min": 15,
+        "max": 30
+      },
+      "review_rounds": 1,
+      "delivery_verified_by": "expert_panel",
+      "ratification": "full_vote"
+    },
+    "local": {
+      "queue_priority": 3,
+      "details_drafted_by": "operator",
+      "review_panel": {
+        "min": 5,
+        "max": 9
+      },
+      "review_rounds": 1,
+      "delivery_verified_by": "local_crowd_photo_proof",
+      "ratification": "local_vote"
+    },
+    "minor": {
+      "queue_priority": 4,
+      "details_drafted_by": "operator",
+      "review_panel": {
+        "min": 3,
+        "max": 3
+      },
+      "review_rounds": 1,
+      "delivery_verified_by": "local_crowd_photo_proof",
+      "ratification": "silent_ratification"
+    }
+  },
+  "silent_ratification": {
+    "objection_window_days": 14,
+    "objection_share_to_force_vote": 0.01
+  },
+  "delegation": {
+    "cap_share_of_electorate": 0.01,
+    "max_depth": 1,
+    "ttl_months": 12
+  },
+  "vote_budget": {
+    "matters_per_week": 5
+  },
+  "bans": {
+    "bar_years_by_rating": {
+      "good": 0,
+      "mixed": 0,
+      "poor": 2,
+      "failed": 4
+    },
+    "good_rating_reward": "auto_shortlist"
+  },
+  "reopen_windows": {
+    "delivery_verdict_days": 90
+  },
+  "door": {
+    "epoch_months": 12,
+    "revoked_id_credential": "survives_until_epoch_end"
+  },
+  "eligibility": {
+    "outsiders": "advise"
+  },
+  "compensation": {
+    "panel": "stipend_multi_week",
+    "review": "none"
+  },
+  "agora": {
+    "upvote_hidden_hours": 24
+  },
+  "arena": {
+    "max_pass_rate_gap": 0.1
+  },
+  "watchtower": {
+    "max_false_flag_rate": 0.05
+  },
+  "treasury": {
+    "max_tranche_share": 0.5
+  },
+  "charter_change": {
+    "majority": {
+      "numerator": 2,
+      "denominator": 3
+    },
+    "quorum_share_of_electorate": 0.2
+  },
+  "protected_rights": [
+    {
+      "id": "life_and_bodily_integrity",
+      "topics": [
+        "rights.life",
+        "rights.bodily_integrity"
+      ]
+    },
+    {
+      "id": "equality_and_non_discrimination",
+      "topics": [
+        "rights.equality"
+      ]
+    },
+    {
+      "id": "freedom_of_expression_and_press",
+      "topics": [
+        "rights.expression"
+      ]
+    },
+    {
+      "id": "freedom_of_assembly_and_association",
+      "topics": [
+        "rights.assembly",
+        "rights.association"
+      ]
+    },
+    {
+      "id": "freedom_of_conscience_and_religion",
+      "topics": [
+        "rights.conscience"
+      ]
+    },
+    {
+      "id": "privacy_and_data_protection",
+      "topics": [
+        "rights.privacy"
+      ]
+    },
+    {
+      "id": "fair_trial_and_due_process",
+      "topics": [
+        "rights.fair_trial"
+      ]
+    },
+    {
+      "id": "right_to_vote_and_secret_ballot",
+      "topics": [
+        "rights.vote",
+        "democracy.ballot_secrecy"
+      ]
+    },
+    {
+      "id": "anonymity_of_participation",
+      "topics": [
+        "democracy.participant_anonymity"
+      ]
+    }
+  ]
+}

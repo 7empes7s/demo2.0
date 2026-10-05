@@ -97,5 +97,8 @@ def test_reference_data_is_consistent():
     cantons = [j for j in LU["jurisdictions"] if j["kind"] == "region"]
     assert len(cantons) == 12
     total = BY_ID["lu"]["population"]
-    assert abs(sum(c["population"] for c in cantons) - total) / total < 0.02
+    # The canton figures are rounded estimates (verified_against_source: false) and sum to about
+    # 0.65% above the national figure. 1% tolerates that rounding but not a wrong canton. Make it
+    # exact once the STATEC table is entered.
+    assert abs(sum(c["population"] for c in cantons) - total) / total < 0.01
     assert {"lu-commune-luxembourg", "lu-commune-esch-sur-alzette"} <= BY_ID.keys()

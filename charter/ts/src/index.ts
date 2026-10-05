@@ -66,7 +66,12 @@ export class Charter {
    * commune). They come from the caller, never from the matter, and can't replace a known id.
    */
   constructor(root: string = CHARTER_ROOT, extraJurisdictions: Jurisdiction[] = []) {
-    this.#data = parse(readFileSync(join(root, "charter.yaml"), "utf8")) as Data;
+    // YAML 1.1, the dialect PyYAML reads, so `300_000`, `014` and `no` mean the same in every
+    // binding. charter/vectors/charter.parsed.json pins the result in both test suites.
+    this.#data = parse(readFileSync(join(root, "charter.yaml"), "utf8"), {
+      version: "1.1",
+    }) as Data;
+    checkShape(this.#data);
     this.version = this.#data.version as string;
     const scope = this.#data.scope as { population_source: string; thresholds: unknown[] };
     this.#thresholds = readThresholds(scope.thresholds);
@@ -104,6 +109,7 @@ export class Charter {
     if (j === undefined) {
       throw new CharterError("unknown_jurisdiction", `no jurisdiction "${jurisdiction_id}"`);
     }
+    // A whole number, however it is written: JSON makes 1000 and 1000.0 the same, so Python agrees.
     const population = j.population;
     if (typeof population !== "number" || !Number.isInteger(population) || population < 0) {
       throw new CharterError("no_population", `jurisdiction "${jurisdiction_id}" has no population`);
@@ -131,6 +137,50 @@ export class Charter {
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+const isWhole = (v: unknown): v is number => typeof v === "number" && Number.isInteger(v);
+
+/** The structure the library reads. charter.schema.json checks the rest in CI. */
+function checkShape(data: unknown): asserts data is Data {
+  const bad = (why: string) => new CharterError("invalid_charter", why);
+  if (!isPlainObject(data)) throw bad("charter.yaml must be a mapping");
+  if (typeof data.version !== "string") throw bad("version must be a string");
+  const scope = data.scope;
+  if (!isPlainObject(scope) || typeof scope.population_source !== "string") {
+    throw bad("scope.population_source must be a string");
+  }
+  const thresholds = scope.thresholds;
+  if (
+    !Array.isArray(thresholds) ||
+    !thresholds.every(
+      (t) => isPlainObject(t) && typeof t.tier === "string" && isWhole(t.min_population),
+    )
+  ) {
+    throw bad("scope.thresholds must list {tier, min_population} with integer minimums");
+  }
+  const rights = data.protected_rights;
+  if (
+    !Array.isArray(rights) ||
+    !rights.every(
+      (r) =>
+        isPlainObject(r) &&
+        Array.isArray(r.topics) &&
+        r.topics.every((t: unknown) => typeof t === "string"),
+    )
+  ) {
+    throw bad("protected_rights must list entries with a topics list of strings");
+  }
+  const tiers = data.tiers;
+  if (!isPlainObject(tiers)) throw bad("tiers must be a mapping");
+  for (const [name, spec] of Object.entries(tiers)) {
+    const panel = isPlainObject(spec) ? spec.review_panel : undefined;
+    if (panel === undefined) continue;
+    const ok = isPlainObject(panel) && isWhole(panel.min) && isWhole(panel.max);
+    if (!ok || (panel.min as number) > (panel.max as number)) {
+      throw bad(`tiers.${name}.review_panel needs integer min <= max`);
+    }
+  }
 }
 
 function readThresholds(raw: unknown[]): [Tier, number][] {

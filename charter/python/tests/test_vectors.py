@@ -3,6 +3,7 @@
 import json
 
 import pytest
+import yaml
 from d2_charter import CHARTER_ROOT, Charter, CharterError, is_protected, param
 
 VECTORS = CHARTER_ROOT / "vectors"
@@ -70,4 +71,59 @@ def test_thresholds_out_of_order_are_rejected(tmp_path):
     (tmp_path / "data" / src.name).write_text(src.read_text())
     with pytest.raises(CharterError) as err:
         Charter(tmp_path)
+    assert err.value.code == "invalid_charter"
+
+
+def test_charter_yaml_reads_as_the_pinned_json():
+    # vectors/charter.parsed.json pins what charter.yaml means. The TypeScript binding checks the
+    # same file, so a YAML dialect difference (300_000, 014, no) fails CI in one of them.
+    pinned = json.loads((VECTORS / "charter.parsed.json").read_text())
+    loaded = {key: param(key) for key in pinned}
+    assert json.dumps(loaded, sort_keys=True) == json.dumps(pinned, sort_keys=True)
+
+
+def test_whole_float_population_is_an_int():
+    area = {"id": "test-float", "parent_id": "lu", "kind": "district", "population": 1000.0}
+    population = Charter(extra_jurisdictions=[area]).affected_population(
+        {"jurisdiction_id": "test-float", "topic_ids": []}
+    )
+    assert population == 1000
+    assert type(population) is int
+
+
+def _charter_with(tmp_path, change):
+    data = yaml.safe_load((CHARTER_ROOT / "charter.yaml").read_text())
+    change(data)
+    (tmp_path / "charter.yaml").write_text(yaml.safe_dump(data))
+    (tmp_path / "data").mkdir()
+    src = CHARTER_ROOT / "data" / "lu-jurisdictions.json"
+    (tmp_path / "data" / src.name).write_text(src.read_text())
+    return lambda: Charter(tmp_path)
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        lambda d: d.pop("protected_rights"),
+        lambda d: d.pop("scope"),
+        lambda d: d.pop("tiers"),
+        lambda d: d.pop("version"),
+        lambda d: d["scope"].pop("thresholds"),
+        lambda d: d["protected_rights"][0].pop("topics"),
+        lambda d: d["tiers"]["local"]["review_panel"].update(min=10, max=9),
+    ],
+    ids=[
+        "no protected_rights",
+        "no scope",
+        "no tiers",
+        "no version",
+        "no thresholds",
+        "right without topics",
+        "panel min above max",
+    ],
+)
+def test_malformed_charter_is_rejected(tmp_path, change):
+    build = _charter_with(tmp_path, change)
+    with pytest.raises(CharterError) as err:
+        build()
     assert err.value.code == "invalid_charter"

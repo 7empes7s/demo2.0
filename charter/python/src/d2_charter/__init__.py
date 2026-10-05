@@ -60,6 +60,7 @@ class Charter:
     ) -> None:
         root = Path(root)
         self._data: dict[str, Any] = yaml.safe_load((root / "charter.yaml").read_text("utf-8"))
+        _check_shape(self._data)
         self.version: str = self._data["version"]
         self._thresholds = _thresholds(self._data["scope"]["thresholds"])
         self._protected = [t for right in self._data["protected_rights"] for t in right["topics"]]
@@ -89,11 +90,18 @@ class Charter:
         if j is None:
             raise CharterError("unknown_jurisdiction", f"no jurisdiction {jurisdiction_id!r}")
         population = j.get("population")
-        if not isinstance(population, int) or isinstance(population, bool) or population < 0:
+        # A whole number, however it is written: 1000 and 1000.0 are the same population. JSON
+        # parsers in other bindings can't tell them apart, so neither may this one.
+        if (
+            not isinstance(population, int | float)
+            or isinstance(population, bool)
+            or not float(population).is_integer()
+            or population < 0
+        ):
             raise CharterError(
                 "no_population", f"jurisdiction {jurisdiction_id!r} has no population"
             )
-        return population
+        return int(population)
 
     def tier(self, matter: Any) -> str:
         """The matter's tier from its affected population. Labels on the matter are ignored."""
@@ -109,6 +117,48 @@ class Charter:
         return any(
             topic == p or topic.startswith(p + ".") for topic in topic_ids for p in self._protected
         )
+
+
+def _check_shape(data: Any) -> None:
+    """The structure the library reads. charter.schema.json checks the rest in CI."""
+
+    def bad(why: str) -> CharterError:
+        return CharterError("invalid_charter", why)
+
+    if not isinstance(data, dict):
+        raise bad("charter.yaml must be a mapping")
+    if not isinstance(data.get("version"), str):
+        raise bad("version must be a string")
+    scope = data.get("scope")
+    if not isinstance(scope, dict) or not isinstance(scope.get("population_source"), str):
+        raise bad("scope.population_source must be a string")
+    thresholds = scope.get("thresholds")
+    if not isinstance(thresholds, list) or not all(
+        isinstance(t, dict)
+        and isinstance(t.get("tier"), str)
+        and isinstance(t.get("min_population"), int)
+        and not isinstance(t.get("min_population"), bool)
+        for t in thresholds
+    ):
+        raise bad("scope.thresholds must list {tier, min_population} with integer minimums")
+    rights = data.get("protected_rights")
+    if not isinstance(rights, list) or not all(
+        isinstance(r, dict)
+        and isinstance(r.get("topics"), list)
+        and all(isinstance(t, str) for t in r["topics"])
+        for r in rights
+    ):
+        raise bad("protected_rights must list entries with a topics list of strings")
+    tiers = data.get("tiers")
+    if not isinstance(tiers, dict):
+        raise bad("tiers must be a mapping")
+    for name, spec in tiers.items():
+        panel = spec.get("review_panel") if isinstance(spec, dict) else None
+        if panel is None:
+            continue
+        lo, hi = (panel.get("min"), panel.get("max")) if isinstance(panel, dict) else (None, None)
+        if not all(isinstance(n, int) and not isinstance(n, bool) for n in (lo, hi)) or lo > hi:
+            raise bad(f"tiers.{name}.review_panel needs integer min <= max")
 
 
 def _thresholds(raw: list[Mapping[str, Any]]) -> list[tuple[str, int]]:

@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
+import { parse, stringify } from "yaml";
 
 import { CHARTER_ROOT, Charter, CharterError, is_protected, isProtected, param } from "../src/index.ts";
 
@@ -94,4 +95,43 @@ it("rejects thresholds out of order", () => {
     text.replace("min_population: 50000", "min_population: 400000"),
   );
   expect(errorCode(() => new Charter(dir))).toBe("invalid_charter");
+});
+
+it("reads charter.yaml as the pinned JSON", () => {
+  // vectors/charter.parsed.json pins what charter.yaml means. The Python binding checks the same
+  // file, so a YAML dialect difference (300_000, 014, no) fails CI in one of them.
+  const pinned = JSON.parse(
+    readFileSync(join(CHARTER_ROOT, "vectors", "charter.parsed.json"), "utf8"),
+  ) as Record<string, unknown>;
+  const loaded = Object.fromEntries(Object.keys(pinned).map((k) => [k, param(k)]));
+  expect(loaded).toEqual(pinned);
+});
+
+it("counts a population written as 1000.0 as 1000", () => {
+  const area = { id: "test-float", parent_id: "lu", kind: "district", population: 1000.0 };
+  const c = new Charter(CHARTER_ROOT, [area]);
+  expect(c.affectedPopulation({ jurisdiction_id: "test-float", topic_ids: [] })).toBe(1000);
+});
+
+describe("rejects a malformed charter", () => {
+  type D = Record<string, any>;
+  const changes: [string, (d: D) => void][] = [
+    ["no protected_rights", (d) => delete d.protected_rights],
+    ["no scope", (d) => delete d.scope],
+    ["no tiers", (d) => delete d.tiers],
+    ["no version", (d) => delete d.version],
+    ["no thresholds", (d) => delete d.scope.thresholds],
+    ["right without topics", (d) => delete d.protected_rights[0].topics],
+    ["panel min above max", (d) => Object.assign(d.tiers.local.review_panel, { min: 10, max: 9 })],
+  ];
+  it.each(changes)("%s", (_, change) => {
+    const dir = mkdtempSync(join(tmpdir(), "charter-"));
+    cpSync(join(CHARTER_ROOT, "data"), join(dir, "data"), { recursive: true });
+    const data = parse(readFileSync(join(CHARTER_ROOT, "charter.yaml"), "utf8"), {
+      version: "1.1",
+    }) as D;
+    change(data);
+    writeFileSync(join(dir, "charter.yaml"), stringify(data, { version: "1.1" }));
+    expect(errorCode(() => new Charter(dir))).toBe("invalid_charter");
+  });
 });
