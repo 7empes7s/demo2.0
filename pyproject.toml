@@ -1,0 +1,29 @@
+# Root of the Python workspace. Each Python module under modules/ is its own package
+# (own pyproject, licence and changelog); this file only ties them together for dev and CI.
+[project]
+name = "democracy2-workspace"
+version = "0.0.0"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6", "jsonschema>=4.23", "pyyaml>=6"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["modules/*"]
+exclude = ["modules/companion"]
+
+[tool.pytest.ini_options]
+# Tests are discovered by glob, never listed by hand.
+testpaths = ["tools/tests", "spec", "charter", "modules"]
+addopts = "--import-mode=importlib"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
