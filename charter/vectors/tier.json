@@ -1,0 +1,399 @@
+{
+  "description": "tier(matter) and affected_population(matter). The tier follows the affected population only; labels a proposer adds are input, never output. Thresholds are Charter 0.1.0: national >= 300000, regional >= 50000, local >= 1000, minor below. Pass extra_jurisdictions to the library alongside the Luxembourg reference data.",
+  "charter_version": "0.1.0",
+  "extra_jurisdictions": [
+    {
+      "id": "test-pop-0",
+      "parent_id": "lu",
+      "kind": "district",
+      "name": {
+        "en": "Test area of 0 people"
+      },
+      "population": 0
+    },
+    {
+      "id": "test-pop-1",
+      "parent_id": "lu",
+      "kind": "district",
+      "name": {
+        "en": "Test area of 1 people"
+      },
+      "population": 1
+    },
+    {
+      "id": "test-pop-999",
+      "parent_id": "lu",
+      "kind": "district",
+      "name": {
+        "en": "Test area of 999 people"
+      },
+      "population": 999
+    },
+    {
+      "id": "test-pop-1000",
+      "parent_id": "lu",
+      "kind": "district",
+      "name": {
+        "en": "Test area of 1000 people"
+      },
+      "population": 1000
+    },
+    {
+      "id": "test-pop-1001",
+      "parent_id": "lu",
+      "kind": "district",
+      "name": {
+        "en": "Test area of 1001 people"
+      },
+      "population": 1001
+    },
+    {
+      "id": "test-pop-49999",
+      "parent_id": "lu",
+      "kind": "district",
+      "name": {
+        "en": "Test area of 49999 people"
+      },
+      "population": 49999
+    },
+    {
+      "id": "test-pop-50000",
+      "parent_id": "lu",
+      "kind": "district",
+      "name": {
+        "en": "Test area of 50000 people"
+      },
+      "population": 50000
+    },
+    {
+      "id": "test-pop-50001",
+      "parent_id": "lu",
+      "kind": "district",
+      "name": {
+        "en": "Test area of 50001 people"
+      },
+      "population": 50001
+    },
+    {
+      "id": "test-pop-299999",
+      "parent_id": "lu",
+      "kind": "district",
+      "name": {
+        "en": "Test area of 299999 people"
+      },
+      "population": 299999
+    },
+    {
+      "id": "test-pop-300000",
+      "parent_id": "lu",
+      "kind": "district",
+      "name": {
+        "en": "Test area of 300000 people"
+      },
+      "population": 300000
+    },
+    {
+      "id": "test-pop-300001",
+      "parent_id": "lu",
+      "kind": "district",
+      "name": {
+        "en": "Test area of 300001 people"
+      },
+      "population": 300001
+    },
+    {
+      "id": "test-pop-10000000",
+      "parent_id": "lu",
+      "kind": "district",
+      "name": {
+        "en": "Test area of 10000000 people"
+      },
+      "population": 10000000
+    },
+    {
+      "id": "test-no-population",
+      "parent_id": "lu",
+      "kind": "district",
+      "name": {
+        "en": "Test area with no population figure"
+      }
+    }
+  ],
+  "cases": [
+    {
+      "name": "national: the whole country",
+      "matter": {
+        "jurisdiction_id": "lu",
+        "topic_ids": [
+          "transport"
+        ]
+      },
+      "expect": {
+        "tier": "national",
+        "affected_population": 672050
+      }
+    },
+    {
+      "name": "regional: the capital commune",
+      "matter": {
+        "jurisdiction_id": "lu-commune-luxembourg",
+        "topic_ids": [
+          "housing"
+        ]
+      },
+      "expect": {
+        "tier": "regional",
+        "affected_population": 134700
+      }
+    },
+    {
+      "name": "regional: Esch-sur-Alzette canton",
+      "matter": {
+        "jurisdiction_id": "lu-canton-esch-sur-alzette",
+        "topic_ids": []
+      },
+      "expect": {
+        "tier": "regional",
+        "affected_population": 196600
+      }
+    },
+    {
+      "name": "local: Esch-sur-Alzette commune",
+      "matter": {
+        "jurisdiction_id": "lu-commune-esch-sur-alzette",
+        "topic_ids": [
+          "parks"
+        ]
+      },
+      "expect": {
+        "tier": "local",
+        "affected_population": 37000
+      }
+    },
+    {
+      "name": "local: the smallest canton",
+      "matter": {
+        "jurisdiction_id": "lu-canton-vianden",
+        "topic_ids": []
+      },
+      "expect": {
+        "tier": "local",
+        "affected_population": 5800
+      }
+    },
+    {
+      "name": "relabelling: a proposer's labels and numbers are ignored",
+      "matter": {
+        "jurisdiction_id": "lu-commune-esch-sur-alzette",
+        "topic_ids": [
+          "parks"
+        ],
+        "scope_tier": "national",
+        "claimed_tier": "national",
+        "tier": "national",
+        "affected_population": 10000000,
+        "population": 10000000,
+        "queue_priority": 1
+      },
+      "expect": {
+        "tier": "local",
+        "affected_population": 37000
+      }
+    },
+    {
+      "name": "relabelling downward is ignored too",
+      "matter": {
+        "jurisdiction_id": "lu",
+        "topic_ids": [],
+        "scope_tier": "minor",
+        "claimed_tier": "minor"
+      },
+      "expect": {
+        "tier": "national",
+        "affected_population": 672050
+      }
+    },
+    {
+      "name": "boundary: 0 people",
+      "matter": {
+        "jurisdiction_id": "test-pop-0",
+        "topic_ids": []
+      },
+      "expect": {
+        "tier": "minor",
+        "affected_population": 0
+      }
+    },
+    {
+      "name": "boundary: 1 people",
+      "matter": {
+        "jurisdiction_id": "test-pop-1",
+        "topic_ids": []
+      },
+      "expect": {
+        "tier": "minor",
+        "affected_population": 1
+      }
+    },
+    {
+      "name": "boundary: 999 people",
+      "matter": {
+        "jurisdiction_id": "test-pop-999",
+        "topic_ids": []
+      },
+      "expect": {
+        "tier": "minor",
+        "affected_population": 999
+      }
+    },
+    {
+      "name": "boundary: 1000 people",
+      "matter": {
+        "jurisdiction_id": "test-pop-1000",
+        "topic_ids": []
+      },
+      "expect": {
+        "tier": "local",
+        "affected_population": 1000
+      }
+    },
+    {
+      "name": "boundary: 1001 people",
+      "matter": {
+        "jurisdiction_id": "test-pop-1001",
+        "topic_ids": []
+      },
+      "expect": {
+        "tier": "local",
+        "affected_population": 1001
+      }
+    },
+    {
+      "name": "boundary: 49999 people",
+      "matter": {
+        "jurisdiction_id": "test-pop-49999",
+        "topic_ids": []
+      },
+      "expect": {
+        "tier": "local",
+        "affected_population": 49999
+      }
+    },
+    {
+      "name": "boundary: 50000 people",
+      "matter": {
+        "jurisdiction_id": "test-pop-50000",
+        "topic_ids": []
+      },
+      "expect": {
+        "tier": "regional",
+        "affected_population": 50000
+      }
+    },
+    {
+      "name": "boundary: 50001 people",
+      "matter": {
+        "jurisdiction_id": "test-pop-50001",
+        "topic_ids": []
+      },
+      "expect": {
+        "tier": "regional",
+        "affected_population": 50001
+      }
+    },
+    {
+      "name": "boundary: 299999 people",
+      "matter": {
+        "jurisdiction_id": "test-pop-299999",
+        "topic_ids": []
+      },
+      "expect": {
+        "tier": "regional",
+        "affected_population": 299999
+      }
+    },
+    {
+      "name": "boundary: 300000 people",
+      "matter": {
+        "jurisdiction_id": "test-pop-300000",
+        "topic_ids": []
+      },
+      "expect": {
+        "tier": "national",
+        "affected_population": 300000
+      }
+    },
+    {
+      "name": "boundary: 300001 people",
+      "matter": {
+        "jurisdiction_id": "test-pop-300001",
+        "topic_ids": []
+      },
+      "expect": {
+        "tier": "national",
+        "affected_population": 300001
+      }
+    },
+    {
+      "name": "boundary: 10000000 people",
+      "matter": {
+        "jurisdiction_id": "test-pop-10000000",
+        "topic_ids": []
+      },
+      "expect": {
+        "tier": "national",
+        "affected_population": 10000000
+      }
+    },
+    {
+      "name": "error: unknown jurisdiction",
+      "matter": {
+        "jurisdiction_id": "lu-commune-atlantis",
+        "topic_ids": []
+      },
+      "expect_error": "unknown_jurisdiction"
+    },
+    {
+      "name": "error: jurisdiction without a population figure",
+      "matter": {
+        "jurisdiction_id": "test-no-population",
+        "topic_ids": []
+      },
+      "expect_error": "no_population"
+    },
+    {
+      "name": "error: no jurisdiction",
+      "matter": {
+        "topic_ids": []
+      },
+      "expect_error": "invalid_matter"
+    },
+    {
+      "name": "error: jurisdiction is not a string",
+      "matter": {
+        "jurisdiction_id": 7,
+        "topic_ids": []
+      },
+      "expect_error": "invalid_matter"
+    },
+    {
+      "name": "error: no topic list",
+      "matter": {
+        "jurisdiction_id": "lu"
+      },
+      "expect_error": "invalid_matter"
+    },
+    {
+      "name": "error: matter is not an object",
+      "matter": "lu",
+      "expect_error": "invalid_matter"
+    },
+    {
+      "name": "error: matter is a list",
+      "matter": [
+        "lu"
+      ],
+      "expect_error": "invalid_matter"
+    }
+  ]
+}

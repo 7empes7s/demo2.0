@@ -1,0 +1,158 @@
+{
+  "description": "is_protected(matter): true when any topic is a protected-rights topic or sits under one. Charter 0.1.0.",
+  "charter_version": "0.1.0",
+  "cases": [
+    {
+      "name": "no topics",
+      "matter": {
+        "jurisdiction_id": "lu",
+        "topic_ids": []
+      },
+      "expect": false
+    },
+    {
+      "name": "ordinary topics",
+      "matter": {
+        "jurisdiction_id": "lu-commune-esch-sur-alzette",
+        "topic_ids": [
+          "parks",
+          "transport.buses"
+        ]
+      },
+      "expect": false
+    },
+    {
+      "name": "protected topic exactly",
+      "matter": {
+        "jurisdiction_id": "lu",
+        "topic_ids": [
+          "rights.expression"
+        ]
+      },
+      "expect": true
+    },
+    {
+      "name": "subtopic of a protected topic",
+      "matter": {
+        "jurisdiction_id": "lu-commune-esch-sur-alzette",
+        "topic_ids": [
+          "rights.expression.press"
+        ]
+      },
+      "expect": true
+    },
+    {
+      "name": "one protected topic among ordinary ones",
+      "matter": {
+        "jurisdiction_id": "lu",
+        "topic_ids": [
+          "parks",
+          "democracy.ballot_secrecy"
+        ]
+      },
+      "expect": true
+    },
+    {
+      "name": "a local matter is still protected",
+      "matter": {
+        "jurisdiction_id": "lu-commune-esch-sur-alzette",
+        "topic_ids": [
+          "rights.assembly"
+        ]
+      },
+      "expect": true
+    },
+    {
+      "name": "a similar prefix is not a subtopic",
+      "matter": {
+        "jurisdiction_id": "lu",
+        "topic_ids": [
+          "rights.votes",
+          "rights.expressionism"
+        ]
+      },
+      "expect": false
+    },
+    {
+      "name": "the parent of a protected topic is not protected",
+      "matter": {
+        "jurisdiction_id": "lu",
+        "topic_ids": [
+          "rights"
+        ]
+      },
+      "expect": false
+    },
+    {
+      "name": "matching is case-sensitive; topic ids are lowercase",
+      "matter": {
+        "jurisdiction_id": "lu",
+        "topic_ids": [
+          "Rights.Expression"
+        ]
+      },
+      "expect": false
+    },
+    {
+      "name": "relabelling: a proposer's protected=false flag is ignored",
+      "matter": {
+        "jurisdiction_id": "lu",
+        "topic_ids": [
+          "rights.privacy"
+        ],
+        "protected": false,
+        "is_protected": false
+      },
+      "expect": true
+    },
+    {
+      "name": "relabelling: a proposer's protected=true flag is ignored",
+      "matter": {
+        "jurisdiction_id": "lu",
+        "topic_ids": [
+          "parks"
+        ],
+        "protected": true,
+        "is_protected": true
+      },
+      "expect": false
+    },
+    {
+      "name": "unknown jurisdiction does not matter for protection",
+      "matter": {
+        "jurisdiction_id": "lu-commune-atlantis",
+        "topic_ids": [
+          "rights.vote"
+        ]
+      },
+      "expect": true
+    },
+    {
+      "name": "error: topic list is not a list",
+      "matter": {
+        "jurisdiction_id": "lu",
+        "topic_ids": "rights.vote"
+      },
+      "expect_error": "invalid_matter"
+    },
+    {
+      "name": "error: a topic is not a string",
+      "matter": {
+        "jurisdiction_id": "lu",
+        "topic_ids": [
+          1
+        ]
+      },
+      "expect_error": "invalid_matter"
+    },
+    {
+      "name": "error: no jurisdiction",
+      "matter": {
+        "topic_ids": [
+          "rights.vote"
+        ]
+      },
+      "expect_error": "invalid_matter"
+    }
+  ]
+}
