@@ -20,15 +20,34 @@ PY_IMPORT = re.compile(r"^\s*(?:from|import)\s+d2_([a-z0-9_]+)", re.M)
 TS_IMPORT = re.compile(
     r"""(?:from\s+|import\s*\(\s*|require\s*\(\s*|import\s+)['"]@democracy2/([a-z0-9-]+)"""
 )
-REL_ESCAPE = re.compile(r"""['"](?:\.\./)+modules/([a-z0-9_-]+)""")
+# Relative imports: `from './x'`, `import('../y')`, `require('../../z')`, `import '../w'`.
+REL_IMPORT = re.compile(
+    r"""(?:from\s+|import\s*\(\s*|require\s*\(\s*|import\s+)['"](\.{1,2}/[^'"]*)['"]"""
+)
+SOURCE_SUFFIXES = {".py", ".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs", ".svelte"}
 
 
 def _source_files(module_dir: Path):
     for path in module_dir.rglob("*"):
-        if any(part in SKIP_DIRS for part in path.parts):
+        if any(part in SKIP_DIRS for part in path.relative_to(module_dir).parts):
             continue
-        if path.is_file() and path.suffix in {".py", ".ts", ".js", ".svelte", ".mjs"}:
+        if path.is_file() and path.suffix in SOURCE_SUFFIXES:
             yield path
+
+
+def _relative_targets(root: Path, path: Path, text: str):
+    """Yield the top-level owner ('modules/<x>', 'spec', ...) of each relative import."""
+    for spec in REL_IMPORT.findall(text):
+        target = (path.parent / spec).resolve()
+        try:
+            parts = target.relative_to(root.resolve()).parts
+        except ValueError:
+            yield "outside the repo"
+            continue
+        if len(parts) >= 2 and parts[0] == "modules":
+            yield parts[1]
+        elif parts:
+            yield parts[0]
 
 
 def check(root: Path) -> list[str]:
@@ -47,7 +66,7 @@ def check(root: Path) -> list[str]:
             rel = path.relative_to(root)
             found = {m.replace("_", "-") for m in PY_IMPORT.findall(text)}
             found |= set(TS_IMPORT.findall(text))
-            found |= set(REL_ESCAPE.findall(text))
+            found |= set(_relative_targets(root, path, text))
             for other in sorted(found):
                 if other in SHARED or other == name:
                     continue

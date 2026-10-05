@@ -42,11 +42,12 @@ check_pr() {
   fi
 
   # Latest review per reviewer: none may request changes.
+  # Only APPROVED, CHANGES_REQUESTED and DISMISSED change a reviewer's verdict; a later comment doesn't clear a change request.
   reviews=$(gh api "repos/$repo/pulls/$n/reviews?per_page=100" \
-    | jq --arg a "$author" '[.[] | select(.user.login != $a and .state != "PENDING")] | group_by(.user.login) | map(max_by(.submitted_at))') \
+    | jq --arg a "$author" '[.[] | select(.user.login != $a and (.state == "APPROVED" or .state == "CHANGES_REQUESTED" or .state == "DISMISSED"))] | group_by(.user.login) | map(max_by(.submitted_at))') \
     || { echo "#$n: could not read reviews"; return 1; }
   if jq -e 'any(.[]; .state == "CHANGES_REQUESTED")' <<<"$reviews" >/dev/null; then echo "#$n: changes requested"; return 1; fi
-  if [ "${REQUIRE_REVIEW:-}" = "true" ] && ! jq -e 'length > 0' <<<"$reviews" >/dev/null; then
+  if [ "${REQUIRE_REVIEW:-}" = "true" ] && ! jq -e 'any(.[]; .state == "APPROVED")' <<<"$reviews" >/dev/null; then
     echo "#$n: waiting for a review"; return 1
   fi
 
@@ -63,8 +64,12 @@ for n in $(gh api "repos/$repo/issues?labels=automerge&state=open&per_page=100" 
   if check_pr "$n"; then
     if [ -n "${DRY_RUN:-}" ]; then echo "#$n: ready (dry run)"; continue; fi
     echo "#$n: merging"
-    gh pr merge "$n" -R "$repo" --merge --delete-branch
-    merged=$((merged + 1))
+    # One failed merge must not stop the others or the CI dispatch below.
+    if gh pr merge "$n" -R "$repo" --merge --delete-branch; then
+      merged=$((merged + 1))
+    else
+      echo "#$n: merge failed"
+    fi
   fi
 done
 

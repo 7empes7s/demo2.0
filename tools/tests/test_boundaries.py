@@ -45,9 +45,39 @@ def test_typescript_cross_module_import_fails(tmp_path):
 
 
 def test_relative_escape_fails(tmp_path):
-    _module(tmp_path, "agora", {"src/a.ts": "import x from '../../modules/door/src/x';\n"})
+    _module(tmp_path, "agora", {"src/a.ts": "import x from '../../door/src/x';\n"})
     [problem] = boundaries.check(tmp_path)
     assert "imports module 'door'" in problem
+
+
+def test_relative_escape_to_apps_fails(tmp_path):
+    _module(tmp_path, "agora", {"src/a.tsx": "import x from '../../../apps/citizen/x';\n"})
+    [problem] = boundaries.check(tmp_path)
+    assert "imports module 'apps'" in problem
+
+
+def test_relative_import_to_spec_and_inside_module_pass(tmp_path):
+    _module(
+        tmp_path,
+        "agora",
+        {
+            "src/a.ts": "import s from '../../../spec/x';\n"
+            "import b from './b';\nimport c from '../c';\n"
+        },
+    )
+    assert boundaries.check(tmp_path) == []
+
+
+def test_tsx_cross_module_import_fails(tmp_path):
+    _module(tmp_path, "agora", {"src/a.tsx": "import y from '@democracy2/door';\n"})
+    [problem] = boundaries.check(tmp_path)
+    assert "imports module 'door'" in problem
+
+
+def test_checkout_under_build_dir_still_checked(tmp_path):
+    root = tmp_path / "build" / "repo"
+    _module(root, "agora", {"src/a.ts": "import y from '@democracy2/door';\n"})
+    assert len(boundaries.check(root)) == 1
 
 
 def test_node_modules_ignored(tmp_path):

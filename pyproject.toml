@@ -13,8 +13,8 @@ dev = ["pytest>=8", "ruff>=0.6", "jsonschema>=4.23", "pyyaml>=6"]
 package = false
 
 [tool.uv.workspace]
-members = ["modules/*"]
-exclude = ["modules/companion"]
+# Python modules only (TypeScript and Rust modules have no pyproject). Add one line per Python module.
+members = []
 
 [tool.pytest.ini_options]
 # Tests are discovered by glob, never listed by hand.

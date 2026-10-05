@@ -4,7 +4,10 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-command -v uv >/dev/null || python3 -m pip install -q uv
+if ! command -v uv >/dev/null; then
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  export PATH="$HOME/.local/bin:$PATH"
+fi
 uv sync --quiet --all-packages
 
 if [ -f package.json ]; then

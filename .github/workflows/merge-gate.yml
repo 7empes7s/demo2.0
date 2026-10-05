@@ -2,14 +2,15 @@ name: Merge gate
 
 # Merges PRs labelled `automerge` once they are safe. It works on the free GitHub plan,
 # where private repos get no branch protection. See tools/merge-gate.sh for the rules.
+# Every trigger here runs the default branch's copy of this file, so a PR can't edit the gate
+# that judges it. (pull_request and pull_request_review would run the PR's own copy.)
+# After resolving review threads or a review, re-add the label or dispatch this workflow.
 on:
   workflow_run:
     workflows: [CI]
     types: [completed]
-  pull_request_review:
-    types: [submitted]
-  pull_request:
-    types: [labeled, ready_for_review, synchronize]
+  pull_request_target:
+    types: [labeled, ready_for_review]
   workflow_dispatch:
 
 concurrency:
@@ -28,7 +29,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      # Always run the default branch's copy, so a PR can't change the gate that judges it.
+      # Always run the default branch's copy of the script too; never check out PR code here.
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.repository.default_branch }}
