@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 from d2_docket import chd, esch, snapshot
-from d2_docket.__main__ import sources_arg
-from d2_docket.fetch import Fetched
+from d2_docket.__main__ import main, sources_arg
+from d2_docket.fetch import Fetched, FetchError
 
 FIX = Path(__file__).parent / "fixtures"
 
@@ -75,11 +75,22 @@ def test_votes_api():
     assert esch.parse_votes_api("[]") is None
 
 
+def test_votes_without_a_vote_or_party_are_never_keyed_null():
+    raw = '[{"vote": null, "politicalMember": {"user": {"displayName": "A B"}}}, {"vote": "Oui"}]'
+    votes = esch.parse_votes_api(raw)
+    assert votes["counts"] == {"": 1, "Oui": 1}
+    assert votes["by_party"] == {"": {"": 1, "Oui": 1}}
+    assert votes["members"][0] == {"name": "A B", "party": None, "vote": None}
+
+
 def test_dates_and_times():
     assert esch.iso_french("19 sept. 2026") == "2026-09-19"
     assert esch.iso_french("31 déc. 2026") == "2026-12-31"
     assert esch.iso_french("Terminé le 16 juillet 2026") == "2026-07-16"
     assert esch.iso_french("452 jours restants") is None
+    # impossible days are no date, not a crash
+    assert esch.iso_slash("31/02/2026") is None
+    assert esch.iso_french("32 janvier 2026") is None
     assert esch.time_range("De 08:30 à 13:00") == ("08:30", "13:00")
     assert esch.time_range("") == (None, None)
 
@@ -112,16 +123,21 @@ def test_participation_pages():
 
 
 class FakeFetcher:
-    """Serves recorded fixtures by URL; anything not recorded fails like a network error."""
+    """Serves recorded fixtures by URL; anything not recorded fails like a network error.
 
-    def __init__(self, pages: dict[str, str]):
+    A value is a fixture name, raw bytes served as they are, or an exception to raise."""
+
+    def __init__(self, pages: dict[str, str | bytes | Exception]):
         self.pages, self.asked = pages, []
 
     def get(self, url: str) -> Fetched:
         self.asked.append(url)
         if url not in self.pages:
             raise RuntimeError(f"not recorded: {url}")
-        body = read(self.pages[url]).encode("utf-8")
+        page = self.pages[url]
+        if isinstance(page, Exception):
+            raise page
+        body = page if isinstance(page, bytes) else read(page).encode("utf-8")
         return Fetched(url, "2026-10-05T00:00:00Z", hashlib.sha256(body).hexdigest(), "", body)
 
 
@@ -155,7 +171,12 @@ def test_build_esch_from_recorded_pages():
     oct2, oct23 = snap["meetings"]
     assert oct2["url"].endswith("conseil-communal-du-02-octobre-2026/")
     assert oct2["time"] == "08:30" and oct2["video_url"] is None and oct2["live_url"] is None
-    assert oct23["points"] == [] and oct23["live_url"].startswith("https://esch.tv/stream/")
+    assert oct23["live_url"].startswith("https://esch.tv/stream/")
+    # the 23 October agenda (AgendaItems/1547) is not recorded: its fetch fails, the session is
+    # still listed without points, and the failure is recorded rather than hidden
+    assert oct23["points"] == []
+    assert esch.points_api_url(1547) in fetcher.asked
+    assert any(e.get("session") == 1547 and "not recorded" in e["error"] for e in snap["errors"])
 
     items = {i["id"]: i for i in snap["items"]}
     pap = items["lu.esch.42063"]
@@ -221,3 +242,103 @@ def test_esch_is_fetched_at_most_one_request_per_three_seconds():
     snapshot.build(fetcher, sources=("esch",), today=date(2026, 10, 5))
     assert set(fetcher.delays) == {snapshot.ESCH_DELAY}
     assert fetcher.delay == 1.0  # restored for the other sources
+
+
+CHAMBER = {
+    "https://www.chd.lu/fr/agenda": "agenda-fr.html",
+    chd.dossier_url("8752", "fr"): "dossier-8752-fr.html",
+}
+HTML_ERROR = b"<html><body>Service Unavailable</body></html>"
+
+
+def test_an_html_error_page_from_the_workflow_api_keeps_the_chamber_and_participation():
+    pages = {**CHAMBER, **RECORDED, esch.sessions_api_url(2026): HTML_ERROR}
+    snap = snapshot.build(FakeFetcher(pages), sources=("chd", "esch"), today=date(2026, 10, 5))
+    ids = [i["id"] for i in snap["items"]]
+    assert "lu.chd.8752" in ids
+    assert "lu.esch.participation.project.650" in ids
+    assert not any(i.startswith("lu.esch.4") for i in ids)  # no council points without the API
+    assert any(e["source"] == "esch.lu" and "Expecting value" in e["error"] for e in snap["errors"])
+
+
+def test_an_impossible_date_does_not_crash_the_snapshot():
+    sessions = (FIX / "esch-api-sessions-2026.json").read_text(encoding="utf-8")
+    broken = sessions.replace('"02/10/2026"', '"31/02/2026"', 1).encode("utf-8")
+    assert broken != sessions.encode("utf-8")
+    pages = {**CHAMBER, **RECORDED, esch.sessions_api_url(2026): broken}
+    snap = snapshot.build(FakeFetcher(pages), sources=("chd", "esch"), today=date(2026, 10, 5))
+    ids = [i["id"] for i in snap["items"]]
+    assert "lu.chd.8752" in ids and "lu.esch.participation.project.650" in ids
+    # the session with no real date is left out; the others are still read
+    assert "esch-1547" in [m["id"] for m in snap["meetings"]]
+
+
+def test_council_down_keeps_participation():
+    pages = {k: v for k, v in RECORDED.items() if "administration.esch.lu" not in k}
+    pages = {k: v for k, v in pages.items() if "workflow.esch.lu" not in k}
+    snap = snapshot.build(FakeFetcher(pages), sources=("esch",), today=date(2026, 10, 5))
+    ids = [i["id"] for i in snap["items"]]
+    assert "lu.esch.participation.project.650" in ids
+    assert snap["meetings"] == [] and snap["sources"][0]["sha256"] is None
+    assert any(e["source"] == "esch.lu" for e in snap["errors"])
+
+
+def test_sessions_list_page_down_keeps_the_council_points():
+    pages = {k: v for k, v in RECORDED.items() if k != esch.sessions_url(2026)}
+    snap = snapshot.build(FakeFetcher(pages), sources=("esch",), today=date(2026, 10, 5))
+    ids = [i["id"] for i in snap["items"]]
+    assert "lu.esch.42063" in ids and "lu.esch.participation.project.650" in ids
+    assert all(m["url"] is None for m in snap["meetings"])  # no session page links
+    assert snap["sources"][0]["sha256"] is None
+
+
+def test_previous_year_unavailable_keeps_this_year_and_participation():
+    # early January: no session before today in 2026, and the 2025 pages are not recorded
+    snap = snapshot.build(FakeFetcher(RECORDED), sources=("esch",), today=date(2026, 1, 5))
+    ids = [i["id"] for i in snap["items"]]
+    assert "lu.esch.participation.project.650" in ids
+    assert "esch-1522" in [m["id"] for m in snap["meetings"]]
+    assert any(esch.sessions_api_url(2025) in e.get("url", "") for e in snap["errors"])
+
+
+def test_participation_down_keeps_the_council():
+    pages = {k: v for k, v in RECORDED.items() if "participation.esch.lu" not in k}
+    snap = snapshot.build(FakeFetcher(pages), sources=("esch",), today=date(2026, 10, 5))
+    ids = [i["id"] for i in snap["items"]]
+    assert "lu.esch.42063" in ids
+    assert not any("participation" in i for i in ids)
+    assert any(e["source"] == "participation.esch.lu" for e in snap["errors"])
+
+
+def test_a_404_for_one_vote_does_not_stop_the_others():
+    page = esch.parse_session_page(read("esch-session-2026-10-02.html"))
+    answered = {esch.votes_api_url(i): "esch-api-votes-42063.json" for i in page.voted_item_ids}
+    missing = FetchError("could not fetch: HTTP Error 404: Not Found", status=404)
+    fetcher = FakeFetcher({**RECORDED, **answered, esch.votes_api_url(42065): missing})
+    snap = snapshot.build(fetcher, sources=("esch",), today=date(2026, 10, 5))
+    items = {i["id"]: i for i in snap["items"]}
+    asked = [u for u in fetcher.asked if "/Votes/" in u]
+    assert asked[0] == esch.votes_api_url(42065)  # the first one asked is the missing one
+    assert items["lu.esch.42065"]["votes"] is None
+    assert items["lu.esch.42063"]["votes"]["counts"] == {"Oui": 11, "Non": 8}
+    assert len(asked) == len(page.voted_item_ids)
+    assert any(e.get("point") == 42065 for e in snap["errors"])
+    assert not any("points" in e for e in snap["errors"])  # nothing skipped
+
+
+def test_votes_stop_after_repeated_failures():
+    page = esch.parse_session_page(read("esch-session-2026-10-02.html"))
+    missing = {
+        esch.votes_api_url(i): FetchError("HTTP Error 404", status=404) for i in page.voted_item_ids
+    }
+    fetcher = FakeFetcher({**RECORDED, **missing})
+    snap = snapshot.build(fetcher, sources=("esch",), today=date(2026, 10, 5))
+    asked = [u for u in fetcher.asked if "/Votes/" in u]
+    assert len(asked) == snapshot.VOTES_GIVE_UP_AFTER < len(page.voted_item_ids)
+    assert any("points" in e for e in snap["errors"])
+
+
+def test_negative_past_sessions_is_rejected(capsys):
+    with pytest.raises(SystemExit):
+        main(["snapshot", "--out", "x.json", "--esch-past-sessions", "-1"])
+    assert "0 or more" in capsys.readouterr().err

@@ -6,8 +6,9 @@ export const SNAPSHOT_SCHEMAS = ["d2.docket.snapshot/1", "d2.docket.snapshot/2"]
 
 /**
  * /1 has one `source` (the Chamber) and no source on meetings or errors; /2 has a `sources`
- * list and tags meetings and errors with their site. Both come back in the /2 shape. Any other
- * schema is refused rather than half-read.
+ * list and tags meetings and errors with their site. Both come back in the /2 shape, labelled
+ * /2, so whatever serves the result never shows a /1 label on a /2 body. Any other schema is
+ * refused rather than half-read.
  */
 export function readSnapshot(raw: unknown): DocketSnapshot {
   const data = (raw ?? {}) as Record<string, unknown>;
@@ -22,7 +23,7 @@ export function readSnapshot(raw: unknown): DocketSnapshot {
   if (schema === "d2.docket.snapshot/1") {
     const one = data.source as DocketSource | undefined;
     return {
-      schema,
+      schema: "d2.docket.snapshot/2",
       generated_at: String(data.generated_at ?? ""),
       sources: one ? [{ ...one, id: one.id ?? "chd" }] : [],
       meetings: meetings.map((m) => ({ source: "chd.lu", ...m })),

@@ -27,8 +27,11 @@ jobs:
           python3 - <<'PY'
           import collections, json
           d = json.load(open("lu-chd.json"))
-          assert d["schema"] in ("d2.docket.snapshot/1", "d2.docket.snapshot/2"), d["schema"]
+          assert d["schema"] == "d2.docket.snapshot/2", d["schema"]
           by = collections.Counter(i["jurisdiction_id"] for i in d["items"])
+          for place in ("lu", "lu-esch"):
+              if not by[place]:
+                  print(f"::warning::no {place} items in the snapshot")
           print(d["schema"], len(d["items"]), "files", dict(by), len(d.get("meetings", [])), "meetings;", len(d["errors"]), "errors")
           for e in d["errors"]:
               print("  error:", json.dumps(e, ensure_ascii=False)[:300])

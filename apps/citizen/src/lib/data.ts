@@ -17,6 +17,34 @@ export async function loadSnapshot(doc: Document = document, fetcher: typeof fet
 /** Which body a file belongs to. Snapshot/1 only has the Chamber. */
 export type Place = "chamber" | "esch";
 export const placeOf = (item: DocketItem): Place => (item.jurisdiction_id === "lu-esch" ? "esch" : "chamber");
+/** The order places are listed in: the Chamber first, so one council session's ~70 points don't bury it. */
+export const PLACES: Place[] = ["chamber", "esch"];
+
+/** The places present in the list, in display order. The place filter shows only for 2 or more. */
+export function placesOf(items: DocketItem[]): Place[] {
+  const present = new Set(items.map(placeOf));
+  return PLACES.filter((p) => present.has(p));
+}
+
+export type TypeFilter = "all" | "bill" | "other";
+
+/**
+ * The list as shown: filtered by type, place and search, sorted, then grouped by place in
+ * PLACES order. With one place (or one picked) there is one group.
+ */
+export function groupFiles(
+  items: DocketItem[],
+  today: string,
+  opts: { filter: TypeFilter; place: "all" | Place; query: string },
+): { place: Place; items: DocketItem[] }[] {
+  const shown = sortItems(items, today).filter(
+    (i) =>
+      (opts.filter === "all" || (opts.filter === "bill" ? i.type === "bill" : i.type !== "bill")) &&
+      (opts.place === "all" || placeOf(i) === opts.place) &&
+      matches(i, opts.query),
+  );
+  return PLACES.map((place) => ({ place, items: shown.filter((i) => placeOf(i) === place) })).filter((g) => g.items.length);
+}
 
 /** A Chamber file, a point on the Esch council's agenda, or an Esch consultation. */
 export type Kind = "chamber" | "council" | "consultation";
@@ -41,9 +69,13 @@ export function sitesOf(snapshot: DocketSnapshot): string {
   return names.length ? names.join(", ") : "chd.lu";
 }
 
-/** Council vote values are published in French; the known ones are translated. */
-export function voteKey(value: string | null): "vote_yes" | "vote_no" | "vote_abstain" | null {
+/**
+ * Council vote values are published in French; the known ones are translated. A missing vote
+ * (null, or the "" / "null" key it is counted under) is "no vote recorded", never the text "null".
+ */
+export function voteKey(value: string | null): "vote_yes" | "vote_no" | "vote_abstain" | "vote_none" | null {
   const v = (value ?? "").trim().toLowerCase();
+  if (v === "" || v === "null") return "vote_none";
   if (v === "oui") return "vote_yes";
   if (v === "non") return "vote_no";
   if (v.startsWith("abst")) return "vote_abstain";

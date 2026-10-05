@@ -22,10 +22,10 @@
   const last = $derived(meeting ? undefined : lastMeeting(item, today));
   const votes = $derived(item.votes && Object.keys(item.votes.counts).length ? item.votes : null);
   const phases = $derived(item.phases ?? []);
-  /** "Oui" becomes "Yes" in English; a value the app does not know stays in French. */
+  /** "Oui" becomes "Yes" in English; a missing vote reads "No vote recorded"; a value the app does not know stays in French. */
   const voteName = (value: string | null) => {
     const key = voteKey(value);
-    return key ? t(key) : (value ?? "—");
+    return key ? t(key) : (value ?? t("vote_none"));
   };
   /** Yes, then no, then abstained, then anything else the council publishes. */
   const ORDER = ["vote_yes", "vote_no", "vote_abstain"];
@@ -58,6 +58,7 @@
       {#if item.theme}<div><dt class="label">{t("fact_theme")}</dt><dd lang="fr">{item.theme}</dd></div>{/if}
       {#if item.opens}<div><dt class="label">{t("fact_opens")}</dt><dd>{date(item.opens)}</dd></div>{/if}
       {#if item.closes}<div><dt class="label">{t("fact_closes")}</dt><dd>{date(item.closes)}</dd></div>{/if}
+      {#if item.when}<div><dt class="label">{t("fact_when")}</dt><dd lang="fr">{item.when}</dd></div>{/if}
       <div><dt class="label">{t("fact_status")}</dt><dd lang="fr">{statusOf(item) ?? t("status_unknown")}</dd></div>
     </dl>
     {#if kind === "chamber"}<StageTrack stage={stageOf(item)} />{/if}
@@ -101,7 +102,7 @@
           <summary>{t("votes_members")}</summary>
           <ul class="parties">
             {#each votes.members as m, i (i)}
-              <li><span>{m.name ?? "—"}{#if m.party}<span class="muted"> · {m.party}</span>{/if}</span><span>{voteName(m.vote)}</span></li>
+              <li><span>{m.name ?? "—"}{#if m.party && m.party !== "null"}<span class="muted">{" · "}{m.party}</span>{/if}</span><span>{voteName(m.vote)}</span></li>
             {/each}
           </ul>
         </details>

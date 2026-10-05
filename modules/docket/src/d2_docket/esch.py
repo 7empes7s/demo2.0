@@ -61,12 +61,15 @@ def _text(node: Tag | None) -> str:
 
 
 def iso_slash(day: str | None) -> str | None:
-    """'02/10/2026' -> '2026-10-02'. None for anything else."""
+    """'02/10/2026' -> '2026-10-02'. None for anything else, impossible days included."""
     m = re.fullmatch(r"(\d{2})/(\d{2})/(\d{4})", (day or "").strip())
     if not m:
         return None
     d, mo, y = (int(x) for x in m.groups())
-    return date(y, mo, d).isoformat()
+    try:
+        return date(y, mo, d).isoformat()
+    except ValueError:  # e.g. 31/02: not a real day, so no date rather than a crash
+        return None
 
 
 def iso_french(text: str | None) -> str | None:
@@ -74,7 +77,10 @@ def iso_french(text: str | None) -> str | None:
     m = re.search(r"(\d{1,2})(?:er)?\s+([a-zéû]+)\.?\s+(\d{4})", (text or "").lower())
     if not m or m.group(2) not in FR_MONTHS:
         return None
-    return date(int(m.group(3)), FR_MONTHS[m.group(2)], int(m.group(1))).isoformat()
+    try:
+        return date(int(m.group(3)), FR_MONTHS[m.group(2)], int(m.group(1))).isoformat()
+    except ValueError:  # e.g. "32 janvier": not a real day
+        return None
 
 
 def time_range(text: str | None) -> tuple[str | None, str | None]:
@@ -302,9 +308,11 @@ def parse_votes_api(raw: str) -> dict | None:
         party = (member.get("politicalParty") or {}).get("name")
         vote = r.get("vote")
         members.append({"name": name, "party": party, "vote": vote})
-        counts[vote] = counts.get(vote, 0) + 1
-        party_counts = by_party.setdefault(party, {})
-        party_counts[vote] = party_counts.get(vote, 0) + 1
+        # JSON keys cannot be null: a missing vote or party is counted under "" (never "null")
+        vote_key, party_key = vote or "", party or ""
+        counts[vote_key] = counts.get(vote_key, 0) + 1
+        party_counts = by_party.setdefault(party_key, {})
+        party_counts[vote_key] = party_counts.get(vote_key, 0) + 1
     return {"counts": counts, "by_party": by_party, "members": members}
 
 

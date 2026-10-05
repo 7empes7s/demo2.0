@@ -28,6 +28,7 @@ const v2 = {
 describe("reading the Docket snapshot", () => {
   it("turns a /1 snapshot's single source into a sources list", () => {
     const s = readSnapshot(v1);
+    expect(s.schema).toBe("d2.docket.snapshot/2"); // served with the label of the shape it has
     expect(s.sources).toEqual([{ id: "chd", name: "Chambre des Députés", url: "https://example.org/fr/agenda", sha256: "ab" }]);
     expect(s.meetings?.[0].source).toBe("chd.lu");
     expect(s.errors?.[0]).toMatchObject({ source: "chd.lu", number: "0002" });

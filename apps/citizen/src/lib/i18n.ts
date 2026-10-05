@@ -101,6 +101,8 @@ const en = {
   vote_no: "No",
   vote_abstain: "Abstained",
   phases: "Phases",
+  vote_none: "No vote recorded",
+  fact_when: "When",
 };
 
 export type Key = keyof typeof en;
@@ -205,6 +207,8 @@ const fr: Dict = {
   vote_no: "Non",
   vote_abstain: "Abstention",
   phases: "Étapes",
+  vote_none: "Aucun vote enregistré",
+  fact_when: "Calendrier",
 };
 
 const de: Dict = {
@@ -306,6 +310,8 @@ const de: Dict = {
   vote_no: "Nein",
   vote_abstain: "Enthaltung",
   phases: "Phasen",
+  vote_none: "Keine Stimme erfasst",
+  fact_when: "Zeitraum",
 };
 
 const lb: Dict = {
@@ -407,6 +413,8 @@ const lb: Dict = {
   vote_no: "Nee",
   vote_abstain: "Enthalung",
   phases: "Etappen",
+  vote_none: "Keng Stëmm erfaasst",
+  fact_when: "Zäitraum",
 };
 
 const pt: Dict = {
@@ -508,6 +516,8 @@ const pt: Dict = {
   vote_no: "Não",
   vote_abstain: "Abstenção",
   phases: "Fases",
+  vote_none: "Nenhum voto registado",
+  fact_when: "Calendário",
 };
 
 export const DICTS: Record<Lang, Dict> = { en, fr, de, lb, pt };
@@ -528,11 +538,18 @@ export function translate(lang: Lang, key: Key, vars: Record<string, string | nu
   return text.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? `{${k}}`));
 }
 
+/** Browsers have no Luxembourgish date data (Intl prints "2026 M10 2"), so lb is written by hand. */
+const LB_MONTHS = ["Januar", "Februar", "Mäerz", "Abrëll", "Mee", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+
 export function formatDate(lang: Lang, iso: string | null | undefined): string {
   if (!iso) return "";
   const d = new Date(iso.length === 10 ? `${iso}T12:00:00Z` : iso);
   if (Number.isNaN(d.getTime())) return iso;
   try {
+    if (lang === "lb") {
+      const [y, m, day] = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Luxembourg" }).format(d).split("-").map(Number);
+      return `${day}. ${LB_MONTHS[m - 1]} ${y}`;
+    }
     return new Intl.DateTimeFormat(LOCALES[lang], { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Luxembourg" }).format(d);
   } catch {
     return iso;

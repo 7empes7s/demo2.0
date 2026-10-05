@@ -3,9 +3,21 @@
  * the version so a Symmetry report can be tied to the exact wording that produced it.
  */
 
-import { LANG_NAMES, type Depth, type Lang, type Position } from "./types.ts";
+import { LANG_NAMES, type Depth, type DocketItem, type Lang, type Position } from "./types.ts";
 
-export const PROMPT_VERSION = "companion-prompts/1";
+export const PROMPT_VERSION = "companion-prompts/2";
+
+/** What kind of public file this is, so the model never calls a council point a bill. */
+export function fileKind(item: DocketItem): string {
+  if (item.jurisdiction_id === "lu-esch") {
+    return item.type === "agenda"
+      ? "a point on the agenda of the Esch-sur-Alzette municipal council"
+      : "a public consultation run by the city of Esch-sur-Alzette";
+  }
+  return item.type === "bill"
+    ? "a bill before the Chamber of Deputies, Luxembourg's parliament"
+    : "a file before the Chamber of Deputies, Luxembourg's parliament";
+}
 
 const NEUTRALITY = `You are the Democracy2.0 Companion, a neutral civic explainer for residents of Luxembourg.
 Rules you never break:
@@ -20,12 +32,12 @@ const DEPTH: Record<Depth, string> = {
   deep: "6 to 8 sections, 3 to 6 sentences each, including the details, the history of the file and what the formal opinions say.",
 };
 
-export function explainSystem(lang: Lang, depth: Depth): string {
+export function explainSystem(lang: Lang, depth: Depth, item: DocketItem): string {
   return `${NEUTRALITY}
 
-Task: explain one parliamentary file to a resident, in ${LANG_NAMES[lang]}.
+Task: explain one public file to a resident, in ${LANG_NAMES[lang]}. This file is ${fileKind(item)}.
 Length: ${DEPTH[depth]}
-Suggested sections (skip any the sources can't support): what it is, why it was proposed, what would change and for whom, where it stands now and what happens next, what the formal opinions say.
+Suggested sections (skip any the sources can't support): what it is, why it was proposed, what would change and for whom, where it stands now and what happens next, what the formal opinions or votes say.
 
 Every sentence that states a fact must cite at least one source number and include "quote": a short passage (5 to 25 words) copied character for character from that source, in the source's original language. Do not translate or alter the quote. Sentences that only connect ideas may have empty sources and no quote.
 
@@ -34,10 +46,10 @@ Reply with JSON only, no other text:
  "sections": [{"heading": "...", "sentences": [{"text": "...", "sources": [1], "quote": "..."}]}]}`;
 }
 
-export function argumentsSystem(): string {
+export function argumentsSystem(item: DocketItem): string {
   return `${NEUTRALITY}
 
-Task: list the distinct arguments that the formal opinions, reports and the bill's own explanatory statement make about this file. These are the positions of named institutions, not yours.
+Task: list the distinct arguments that the formal opinions, reports and the file's own explanatory statement, if any, make about this file. This file is ${fileKind(item)}. These are the positions of named institutions, not yours.
 For each argument give: "stance" ("supports" the file, "opposes" it, or "asks_changes"), "by" (who makes it, as named in the source), "summary_en" (one neutral English sentence), "source" (the source number) and "quote" (10 to 40 words copied character for character from that source).
 Only include arguments actually made in the sources. Maximum 12. If there are none, return an empty list.
 

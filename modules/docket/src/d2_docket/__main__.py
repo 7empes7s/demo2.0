@@ -21,6 +21,16 @@ def sources_arg(value: str) -> tuple[str, ...]:
     return names
 
 
+def count_arg(value: str) -> int:
+    try:
+        n = int(value)
+    except ValueError:
+        n = -1
+    if n < 0:
+        raise argparse.ArgumentTypeError(f"expected a whole number of 0 or more, got {value!r}")
+    return n
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="d2-docket")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -35,7 +45,7 @@ def main(argv: list[str] | None = None) -> int:
     snap.add_argument("--max-items", type=int, default=40, help="Chamber dossiers to fetch")
     snap.add_argument(
         "--esch-past-sessions",
-        type=int,
+        type=count_arg,
         default=1,
         help="Esch council sessions before today to include, besides every upcoming one",
     )
