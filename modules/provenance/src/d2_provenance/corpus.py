@@ -12,6 +12,7 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from .text import sentences
 
@@ -48,8 +49,19 @@ class Corpus:
         return sum(len(i.sentences) for i in self.items.values())
 
 
+def openable(url: object) -> bool:
+    """An http(s) link with a host: something a reader can open (`https://` alone is not)."""
+    if not isinstance(url, str):
+        return False
+    try:
+        parts = urlsplit(url)
+    except ValueError:
+        return False
+    return parts.scheme in ("http", "https") and bool(parts.hostname)
+
+
 def _http(url: object) -> str | None:
-    return url if isinstance(url, str) and url.startswith(("http://", "https://")) else None
+    return url if openable(url) else None
 
 
 def _item_url(raw: dict) -> str | None:

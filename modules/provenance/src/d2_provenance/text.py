@@ -31,31 +31,33 @@ MONTHS = {
 _MONTH = "|".join(sorted(MONTHS, key=len, reverse=True))
 DATE_PATTERNS = (
     # 2026-05-15
-    (re.compile(r"\b(\d{4})-(\d{1,2})-(\d{1,2})\b"), ("y", "m", "d")),
+    (re.compile(r"\b(\d{4})-(\d{1,2})-(\d{1,2})\b", re.ASCII), ("y", "m", "d")),
     # 15/05/2026, 15.05.2026
-    (re.compile(r"\b(\d{1,2})[./](\d{1,2})[./](\d{4})\b"), ("d", "m", "y")),
+    (re.compile(r"\b(\d{1,2})[./](\d{1,2})[./](\d{4})\b", re.ASCII), ("d", "m", "y")),
     # 15 mai 2026, 1er juin 2026, 15. Mai 2026, 15 de maio de 2026
     (
-        re.compile(rf"\b(\d{{1,2}})(?:er|\.)?\s+(?:de\s+)?({_MONTH})\.?\s+(?:de\s+)?(\d{{4}})\b"),
+        re.compile(
+            rf"\b(\d{{1,2}})(?:er|\.)?\s+(?:de\s+)?({_MONTH})\.?\s+(?:de\s+)?(\d{{4}})\b", re.ASCII
+        ),
         ("d", "mon", "y"),
     ),
     # May 15, 2026 / May 15th 2026
     (
-        re.compile(rf"\b({_MONTH})\.?\s+(\d{{1,2}})(?:st|nd|rd|th)?,?\s+(\d{{4}})\b"),
+        re.compile(rf"\b({_MONTH})\.?\s+(\d{{1,2}})(?:st|nd|rd|th)?,?\s+(\d{{4}})\b", re.ASCII),
         ("mon", "d", "y"),
     ),
 )
 
 NEGATIONS = frozenset(
     "ne n pas not no never nicht kein keine keinen nie jamais aucun aucune sans without nao "
-    "nunca nee net keng".split()
+    "nunca nee net keng ni weder nem nada nein cannot".split()
 )
 
 STOPWORDS = frozenset(
     """
     le la les un une des du de d l au aux et ou en dans sur par pour avec ce cet cette ces qui que
     quoi dont est sont ete etre a ont avait sera son sa ses leur leurs il elle ils elles se s y
-    qu plus ne pas lui eux on nous vous
+    qu ne pas lui eux on nous vous
     the a an of to in on at by for with from and or is are was were be been has have had it its
     this that these those as which who
     der die das den dem des ein eine einen einem einer und oder ist sind war wurde wurden im am
@@ -75,9 +77,18 @@ OPINION_WORDS = frozenset(
 )
 
 
+def _plain(c: str) -> str:
+    """Drop invisible format characters (zero-width space, soft hyphen); any digit to 0-9."""
+    if unicodedata.category(c) == "Cf":
+        return ""
+    if not c.isascii() and (d := unicodedata.decimal(c, None)) is not None:
+        return str(d)
+    return c
+
+
 def fold(text: str) -> str:
-    """Lowercase, strip accents, unify quotes, join PDF hyphenation, collapse spaces."""
-    text = unicodedata.normalize("NFKC", text)
+    """Lowercase, strip accents, unify quotes and digits, join PDF hyphenation, collapse spaces."""
+    text = "".join(_plain(c) for c in unicodedata.normalize("NFKC", text))
     text = re.sub(r"(\w)-\s*\n\s*(\w)", r"\1\2", text)
     text = text.replace("’", "'").replace("‘", "'").replace(" ", " ")
     text = text.replace(" ", " ")
@@ -111,8 +122,8 @@ class Number:
     unit: str  # the next content word (or the previous one at the end of a sentence)
 
 
-_NUM = re.compile(r"(?<![\w/])\d+(?:[., ]\d+)*(?![\w/])")
-_REF = re.compile(r"\b\d+(?:/\d+)+\b")
+_NUM = re.compile(r"(?<![\w/])\d+(?:[., ]\d+)*(?![\w/])", re.ASCII)
+_REF = re.compile(r"\b\d+(?:/\d+)+\b", re.ASCII)
 
 
 def _canon(groups: list[str], seps: list[str]) -> list[str]:
@@ -175,7 +186,36 @@ def references(folded: str) -> set[str]:
 
 
 def has_negation(folded: str) -> bool:
+    """A negation word, or an English contraction ("wasn't", "didn't")."""
+    if re.search(r"n't\b", folded):
+        return True
     return any(w in NEGATIONS for w in re.findall(r"[a-z]+", folded))
+
+
+# "more than" and "less than" must match exactly between a claim and a record sentence
+_COMPARATORS = (
+    ("ge", r"au moins|at least|mindestens|pelo menos|minimum|minimal\w*"),
+    ("le", r"au plus|at most|hochstens|no maximo|maximum|maximal\w*"),
+    ("gt", r"plus de|plus que|more than|over|above|exceeding|mehr als|uber|mais de|mais do que"
+     r"|iwwer|superieur\w*"),
+    ("lt", r"moins de|moins que|less than|fewer than|under|below|weniger als|unter|menos de"
+     r"|menos do que|enner|inferieur\w*"),
+)  # fmt: skip
+_COMPARATOR = re.compile("|".join(rf"(?P<{k}>\b(?:{p})\b)" for k, p in _COMPARATORS), re.ASCII)
+
+
+def comparators(folded: str) -> frozenset[str]:
+    """Which comparisons the text makes: ge (at least), le (at most), gt (more), lt (less)."""
+    return frozenset(m.lastgroup for m in _COMPARATOR.finditer(folded) if m.lastgroup)
+
+
+def mixed_scripts(text: str) -> bool:
+    """A word that mixes Latin letters with another alphabet ("cоût" with a Cyrillic о)."""
+    for token in re.findall(r"[^\W\d_]+", unicodedata.normalize("NFKC", text)):
+        scripts = {unicodedata.name(c, "?").split()[0] for c in token if c.isalpha()}
+        if len(scripts) > 1 and "LATIN" in scripts:
+            return True
+    return False
 
 
 def is_opinion(folded: str) -> bool:

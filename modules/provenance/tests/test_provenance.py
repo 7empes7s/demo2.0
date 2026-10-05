@@ -1,4 +1,5 @@
 import json
+import socket
 import threading
 import urllib.error
 import urllib.request
@@ -9,9 +10,18 @@ import pytest
 from d2_provenance.__main__ import main
 from d2_provenance.corpus import load
 from d2_provenance.evaluate import RED_PRECISION_BAR, evaluate
-from d2_provenance.grader import CHECKER_ID, Grader, NoRecord, claim_id
+from d2_provenance.grader import CHECKER_ID, Grader, NoRecord, UnknownContext, claim_id
 from d2_provenance.server import make_server
-from d2_provenance.text import find_dates, fold, numbers, sentences, words
+from d2_provenance.text import (
+    comparators,
+    find_dates,
+    fold,
+    has_negation,
+    mixed_scripts,
+    numbers,
+    sentences,
+    words,
+)
 
 HERE = Path(__file__).parent
 FIXTURES = HERE / "fixtures"
@@ -87,6 +97,27 @@ def test_fold_joins_pdf_hyphenation_and_strips_accents():
     assert words(fold("Les communes")) == ["commun"]
 
 
+def test_fold_drops_invisible_characters_and_reads_any_digit():
+    assert fold("1\u200b2 mi\u00adllions") == "12 millions"
+    assert [n.value for n in numbers(fold("\u0661\u0662 millions"))] == ["12"]
+    assert [n.value for n in numbers(fold("\uff11\uff12 millions"))] == ["12"]
+
+
+@pytest.mark.parametrize(
+    "text", ["Bill 8752 wasn't filed", "The council didn’t approve it", "It cannot be"]
+)
+def test_english_contractions_are_negations(text):
+    assert has_negation(fold(text))
+
+
+def test_comparators_and_mixed_alphabets():
+    assert comparators(fold("plus de 5.000")) == {"gt"}
+    assert comparators(fold("moins de 5.000")) == {"lt"}
+    assert comparators(fold("at least 5")) == {"ge"}
+    assert mixed_scripts("Le c\u043e\u00fbt total")  # Cyrillic о inside a French word
+    assert not mixed_scripts("Le coût total, mise en œuvre")
+
+
 def test_sentences_split_on_full_stops_and_blank_lines():
     got = sentences("Première phrase. Deuxième phrase avec 5.000 habitants.\n\nTroisième")
     assert got == ["Première phrase.", "Deuxième phrase avec 5.000 habitants.", "Troisième"]
@@ -124,6 +155,20 @@ def test_corpus_rejects_other_json(tmp_path):
         ("Bill 8752 was filed on 21 July 2026", "red"),
         ("Das Gesetzesprojet 8752 wurde am 15. Mai 2026 eingereicht", "green"),
         ("Le projet de loi 8752 n'a pas été déposé le 15 mai 2026", "yellow"),
+        ("Bill 8752 wasn't filed on 15 May 2026", "yellow"),
+        # a matching date supports green only when the record states the rest of the claim too
+        ("Le projet de loi 8752 a été déposé le 15 mai 2026 et adopté à l'unanimité", "yellow"),
+        ("Le projet de loi 8752 a été déposé et voté le 15 mai 2026", "yellow"),
+        ("Le projet de loi 8752 a été déposé par l'opposition le 15 mai 2026", "yellow"),
+        ("Le projet de loi 8752 a été déposé le 15 mai 2026 à la Cour de justice", "yellow"),
+        ("Le projet de loi 8752 sera déposé le 15 mai 2026", "yellow"),
+        # another document deposited on another day is not the dossier's deposit
+        (
+            "L'avis de la Chambre de Commerce sur le projet de loi 8752 a été déposé le "
+            "30 septembre 2026",
+            "yellow",
+        ),
+        ("Le rapport sur le projet de loi 8752 sera déposé le 9 octobre 2026", "yellow"),
     ],
 )
 def test_deposit_dates(recorded, text, want):
@@ -141,6 +186,15 @@ def test_deposit_dates(recorded, text, want):
         ("Le point a été rejeté par 11 voix contre 8", "red"),
         ("Le PAP Quai Neiduerf a été voté à l'unanimité", "red"),
         ("Le vote de 11 voix contre 8 est un scandale", "yellow"),
+        # the outcome is checked, not only the numbers
+        ("Le PAP Quai Neiduerf a été rejeté par 8 voix contre 11", "red"),
+        ("The plan failed, 11 votes to 8", "red"),
+        ("The plan lost by 11 votes to 8", "red"),
+        ("Le PAP a été approuvé par 11 voix pour, 8 contre et 3 abstentions", "red"),
+        ("Le PAP Quai Neiduerf a été adopté par 8 voix contre 11", "yellow"),
+        # matching figures support green only when the record states the rest of the claim
+        ("Le PAP a été approuvé par 11 voix contre 8 le 3 octobre 2026", "yellow"),
+        ("Le PAP a été approuvé par 11 voix contre 8 par le conseil de Differdange", "yellow"),
     ],
 )
 def test_council_votes(recorded, text, want):
@@ -149,7 +203,43 @@ def test_council_votes(recorded, text, want):
     assert "Oui : 11" in g["evidence"][0]["excerpt"]
 
 
+def test_a_negated_vote_claim_is_never_green(recorded):
+    text = "The council didn't approve the Quai Neiduerf plan by 11 votes to 8"
+    assert recorded.grade(text, "lu.esch.42063")["grade"] == "yellow"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "The Quai Neiduerf plan, debated from 2024 to 2026, was approved by the council",
+        "Le PAP Quai Neiduerf, discuté de 2024 à 2026, a été approuvé",
+        "Le PAP prévoit 120 logements contre 80 auparavant",
+    ],
+)
+def test_a_range_of_years_is_not_a_vote_tally(recorded, text):
+    assert recorded.grade(text, "lu.esch.42063")["grade"] == "yellow"
+
+
+def test_a_dossier_named_in_the_claim_wins_over_context(recorded):
+    text = "Le projet de loi 8752 a été déposé le 15 mai 2026"
+    for ctx in ("lu.chd.8821", "lu.esch.42063", "lu.chd.8752", None):
+        g = recorded.grade(text, ctx)
+        assert g["grade"] == "green"
+        assert g["evidence"][0]["url"] == "https://www.chd.lu/fr/dossier/8752"
+
+
+def test_an_unknown_context_is_reported(recorded):
+    with pytest.raises(UnknownContext):
+        recorded.grade("Le projet de loi 8752 a été déposé le 15 mai 2026", "nonexistent")
+
+
 # --- grading: record text --------------------------------------------------------------------
+
+
+OBJECT = "Le présent projet de loi a pour objet d'"
+NET = "un réseau cyclable continu d'ici 2030"
+ROAD = "un réseau routier continu d'ici 2030"
+BROKEN = "un réseau cyclable discontinu d'ici 2030"
 
 
 @pytest.mark.parametrize(
@@ -166,6 +256,30 @@ def test_council_votes(recorded, text, want):
         ("Le coût de 12 millions d'euros est trop élevé pour les communes rurales", "yellow"),
         # one claim word the record lacks ("fonds" vs "Il") keeps it yellow
         ("Le fonds finance la construction de 1.200 logements abordables par an", "yellow"),
+        # "plus de" is not "moins de"
+        ("Les communes de plus de 5.000 habitants ne sont pas concernées", "yellow"),
+        # one swapped word in a long copied sentence is not green
+        (
+            OBJECT + "interdire à chaque commune de plus de 5.000 habitants de créer " + NET,
+            "yellow",
+        ),
+        (OBJECT + "obliger chaque commune de moins de 5.000 habitants à créer " + NET, "yellow"),
+        (OBJECT + "obliger chaque région de plus de 5.000 habitants à créer " + NET, "yellow"),
+        (OBJECT + "obliger chaque commune de plus de 5.000 habitants à créer " + ROAD, "yellow"),
+        (OBJECT + "obliger chaque commune de plus de 5.000 habitants à créer " + BROKEN, "yellow"),
+        # red needs every figure for the counted thing to differ; one matching figure: yellow
+        (
+            "Le coût total est estimé à 12 millions d'euros sur cinq ans, et 2 millions d'euros",
+            "yellow",
+        ),
+        ("Le coût total est estimé à 12 millions d'euros, dont 3 millions d'euros", "yellow"),
+        ("L'État prend en charge 40 % du coût des travaux et 60 % du coût des travaux", "yellow"),
+        # other digits and invisible characters read as the number they show
+        ("Le coût total est estimé à \u0661\u0662 millions d'euros", "green"),
+        ("Le coût total est estimé à 1\u200b2 millions d'euros", "green"),
+        ("Les communes de moins de 5.000 habitants n\u200be sont pa\u200bs concernées", "green"),
+        # a word mixing alphabets is never compared
+        ("Le c\u043e\u00fbt total est estimé à 20 millions d'euros", "yellow"),
     ],
 )
 def test_record_text(synthetic, text, want):
@@ -238,7 +352,7 @@ def test_claim_id_is_stable():
 
 
 def test_model_version_names_the_corpus(recorded):
-    assert recorded.model_version == f"match/1+docket:{recorded.corpus.sha256[:12]}"
+    assert recorded.model_version == f"match/2+docket:{recorded.corpus.sha256[:12]}"
 
 
 # --- labelled sets ---------------------------------------------------------------------------
@@ -254,6 +368,31 @@ def test_labelled_sets_meet_the_red_precision_bar(name):
     assert report["graded_without_source"] == 0
     # a false green is the next most costly error: none on these sets
     assert sum(report["confusion"][w]["green"] for w in ("yellow", "red", "none")) == 0
+
+
+class _Unsourced:
+    model_version = "test"
+
+    def __init__(self, url):
+        self.url = url
+
+    def grade(self, text, context=None):
+        return {"grade": "yellow", "evidence": [{"url": self.url}] if self.url else []}
+
+
+@pytest.mark.parametrize("url", [None, "https://", "javascript:alert(1)", "ftp://example.org/x"])
+def test_the_source_check_fails_on_a_grade_no_reader_can_open(url):
+    report = evaluate(_Unsourced(url), {"claims": [{"text": "x", "label": "yellow"}]})
+    assert report["graded_without_source"] == 1
+    assert report["passed"] is False
+
+
+def test_corpus_drops_links_without_a_host(tmp_path):
+    path = tmp_path / "s.json"
+    item = {"id": "lu.chd.0009", "number": "0009", "title": {"fr": "Projet de loi"}}
+    item["urls"] = {"fr": "https://"}
+    path.write_text(json.dumps({"schema": "d2.docket.snapshot/2", "items": [item]}))
+    assert load(path).items["lu.chd.0009"].url is None
 
 
 # --- HTTP API and CLI ------------------------------------------------------------------------
@@ -294,11 +433,28 @@ def test_http_api(api):
     assert status == 200 and body["checkers"][0]["checker_id"] == CHECKER_ID
     status, body = api("/healthz")
     assert status == 200 and body["ok"] and body["items"] == 2
+    status, body = api("/claims/grade", {"text": "x", "context": "lu.chd.9999"})
+    assert status == 400 and "unknown context" in body["error"]
+    # deep nesting under the size limit is bad input, not a crash
+    assert api("/claims/grade", raw=b"[" * 8000 + b"]" * 8000)[0] == 400
+
+
+def test_http_api_times_out_a_body_that_never_arrives(synthetic):
+    server = make_server(synthetic, port=0, timeout=0.5)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        with socket.create_connection(server.server_address, timeout=5) as conn:
+            conn.sendall(b"POST /claims/grade HTTP/1.1\r\nHost: x\r\nContent-Length: 1000\r\n\r\n{")
+            assert conn.recv(4096).startswith(b"HTTP/1.0 408")
+    finally:
+        server.shutdown()
+        server.server_close()
 
 
 def test_cli(capsys):
     assert main(["grade", "--docket", str(SYNTHETIC), "L'État prend en charge 40 % du coût"]) == 0
-    assert json.loads(capsys.readouterr().out)["grade"] in {"green", "yellow"}
+    assert json.loads(capsys.readouterr().out)["grade"] == "green"
+    assert main(["grade", "--docket", str(SYNTHETIC), "--context", "nope", "x y z"]) == 2
     assert main(["grade", "--docket", str(SYNTHETIC), "La Lune est faite de fromage"]) == 3
     assert main(["grade", "--docket", str(FIXTURES / "missing.json"), "x"]) == 2
     capsys.readouterr()

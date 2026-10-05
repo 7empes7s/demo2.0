@@ -1,11 +1,13 @@
 """Score a checker on a labelled set of claims.
 
 The bar from docs/architecture/01-modules.md: red precision at least 95% (a false red is the
-costly error) and every grade backed by at least one source a reader can open.
+costly error) and every grade backed by at least one source a reader can open. "Can open" is
+checked offline (an http(s) link with a host); whether the link answers is not checked here.
 """
 
 from __future__ import annotations
 
+from .corpus import openable
 from .grader import Grader, NoRecord
 
 RED_PRECISION_BAR = 0.95
@@ -22,9 +24,7 @@ def evaluate(grader: Grader, labels: dict) -> dict:
         try:
             g = grader.grade(case["text"], case.get("context"))
             got = g["grade"]
-            if not g["evidence"] or not all(
-                e["url"].startswith(("http://", "https://")) for e in g["evidence"]
-            ):
+            if not g["evidence"] or not all(openable(e.get("url")) for e in g["evidence"]):
                 unsourced += 1
         except NoRecord:
             got = "none"

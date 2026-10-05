@@ -2,7 +2,8 @@
 
 POST /claims/grade   {text, context?}  -> 200 Grade (spec/schemas/grade.schema.json)
                                         -> 404 {error} when no record mentions the claim
-                                        -> 400 {error} on bad input
+                                        -> 400 {error} on bad input or an unknown context
+                                        -> 408 {error} when the body does not arrive in time
 GET  /checkers                         -> {checkers: [{checker_id, model_version, method, corpus}]}
 GET  /healthz                          -> {ok, items, sentences}
 """
@@ -16,11 +17,18 @@ from urllib.parse import urlsplit
 from .grader import Grader, NoRecord
 
 MAX_BODY = 16 * 1024
+TIMEOUT = 10.0  # seconds a client may take to send its request
 
 
-def make_server(grader: Grader, host: str = "127.0.0.1", port: int = 8090) -> ThreadingHTTPServer:
+def make_server(
+    grader: Grader, host: str = "127.0.0.1", port: int = 8090, timeout: float = TIMEOUT
+) -> ThreadingHTTPServer:
     class Handler(BaseHTTPRequestHandler):
         server_version = "d2-provenance/0.1"
+
+        def setup(self):
+            self.timeout = timeout  # a slow or short body cannot hold a thread forever
+            super().setup()
 
         def log_message(self, format, *args):  # noqa: A002 - stdlib signature
             pass
@@ -55,8 +63,15 @@ def make_server(grader: Grader, host: str = "127.0.0.1", port: int = 8090) -> Th
             if length <= 0 or length > MAX_BODY:
                 return self._json(400 if length <= 0 else 413, {"error": "body size"})
             try:
-                body = json.loads(self.rfile.read(length))
-            except (ValueError, UnicodeDecodeError):
+                raw = self.rfile.read(length)
+            except TimeoutError:
+                self.close_connection = True
+                return self._json(408, {"error": "body did not arrive in time"})
+            if len(raw) < length:
+                return self._json(400, {"error": "body is shorter than Content-Length"})
+            try:
+                body = json.loads(raw)
+            except (ValueError, RecursionError):  # RecursionError: nesting too deep
                 return self._json(400, {"error": "body is not JSON"})
             if not isinstance(body, dict) or not isinstance(body.get("text"), str):
                 return self._json(400, {"error": "text must be a string"})
