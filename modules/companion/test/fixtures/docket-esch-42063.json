@@ -1,0 +1,119 @@
+{
+  "id": "lu.esch.42063",
+  "source": "esch.lu",
+  "jurisdiction_id": "lu-esch",
+  "number": "6.1",
+  "type": "agenda",
+  "type_label": "Plans d'Aménagement",
+  "title": {
+    "fr": "PAP Quai Neiduerf ; vote complémentaire relatif à la renonciation à l'indemnité compensatoire : décision"
+  },
+  "status": "Délibéré",
+  "author": null,
+  "committee": null,
+  "deposited": null,
+  "updated": null,
+  "urls": {
+    "fr": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+  },
+  "agenda": [
+    {
+      "meeting_id": "esch-1522",
+      "date": "2026-10-02",
+      "time": "08:30",
+      "body": "Conseil communal d'Esch-sur-Alzette",
+      "steps": []
+    }
+  ],
+  "activities": [],
+  "documents": [
+    {
+      "label": "10 Délibération du Conseil Communal du 22 mai 2026.pdf",
+      "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42063/427441",
+      "date": "2026-10-02",
+      "kind": "deliberation",
+      "sha256": null,
+      "fetched_at": null,
+      "text": "",
+      "truncated": false
+    },
+    {
+      "label": "20 Approbation Ministère intérieur_2024859C.pdf",
+      "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42063/427436",
+      "date": "2026-10-02",
+      "kind": "other",
+      "sha256": null,
+      "fetched_at": null,
+      "text": "",
+      "truncated": false
+    },
+    {
+      "label": "30 PAP Quai Neiduerf_PE_approuvé.pdf",
+      "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42063/427431",
+      "date": "2026-10-02",
+      "kind": "other",
+      "sha256": null,
+      "fetched_at": null,
+      "text": "",
+      "truncated": false
+    },
+    {
+      "label": "40 PAP Quai Neiduerf_PG1_approuvé.pdf",
+      "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42063/427426",
+      "date": "2026-10-02",
+      "kind": "other",
+      "sha256": null,
+      "fetched_at": null,
+      "text": "",
+      "truncated": false
+    },
+    {
+      "label": "45 PAP Quai Neiduerf_PG2_approuvé.pdf",
+      "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42063/427421",
+      "date": "2026-10-02",
+      "kind": "other",
+      "sha256": null,
+      "fetched_at": null,
+      "text": "",
+      "truncated": false
+    },
+    {
+      "label": "50 Illustration PAP pour site.pdf",
+      "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42063/427416",
+      "date": "2026-10-02",
+      "kind": "other",
+      "sha256": null,
+      "fetched_at": null,
+      "text": "",
+      "truncated": false
+    }
+  ],
+  "reference": "EWF-P-42063",
+  "theme": "Développement urbain",
+  "votes": {
+    "counts": {
+      "Non": 8,
+      "Oui": 11
+    },
+    "by_party": {
+      "LSAP": {
+        "Non": 6
+      },
+      "déi Lénk": {
+        "Non": 1
+      },
+      "ADR": {
+        "Non": 1
+      },
+      "CSV": {
+        "Oui": 6
+      },
+      "déi gréng": {
+        "Oui": 3
+      },
+      "DP": {
+        "Oui": 2
+      }
+    }
+  }
+}

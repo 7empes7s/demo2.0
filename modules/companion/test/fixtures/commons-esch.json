@@ -1,0 +1,215 @@
+{
+  "schema": "d2.commons.library/1",
+  "generated_at": "2026-10-06T00:00:00Z",
+  "sources": [
+    {
+      "id": "esch-council-votes",
+      "from": "Docket snapshot",
+      "docket_generated_at": "2026-10-05T00:00:00Z",
+      "arguments": 6
+    },
+    {
+      "id": "esch-participation",
+      "url": "https://participation.esch.lu/projet/650/budget-participatif-2026",
+      "arguments": 8
+    }
+  ],
+  "arguments": [
+    {
+      "id": "esch-75f79506e757c3c3",
+      "matter_id": "lu.esch.42063",
+      "stance_option_id": "no",
+      "text": "ADR: 1 councillor voted against at the Esch-sur-Alzette municipal council on 2026-10-02.",
+      "source_refs": [
+        "lu.esch.42063"
+      ],
+      "author_nym": "source:esch.lu-council",
+      "cluster_id": null,
+      "kind": "position",
+      "attribution": "ADR group, Esch-sur-Alzette municipal council",
+      "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+    },
+    {
+      "id": "esch-31df08d4bce367b6",
+      "matter_id": "lu.esch.42063",
+      "stance_option_id": "yes",
+      "text": "CSV: 6 councillors voted in favour at the Esch-sur-Alzette municipal council on 2026-10-02.",
+      "source_refs": [
+        "lu.esch.42063"
+      ],
+      "author_nym": "source:esch.lu-council",
+      "cluster_id": null,
+      "kind": "position",
+      "attribution": "CSV group, Esch-sur-Alzette municipal council",
+      "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+    },
+    {
+      "id": "esch-5952a064a29ac7a8",
+      "matter_id": "lu.esch.42063",
+      "stance_option_id": "yes",
+      "text": "DP: 2 councillors voted in favour at the Esch-sur-Alzette municipal council on 2026-10-02.",
+      "source_refs": [
+        "lu.esch.42063"
+      ],
+      "author_nym": "source:esch.lu-council",
+      "cluster_id": null,
+      "kind": "position",
+      "attribution": "DP group, Esch-sur-Alzette municipal council",
+      "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+    },
+    {
+      "id": "esch-2c6dc9829980e137",
+      "matter_id": "lu.esch.42063",
+      "stance_option_id": "no",
+      "text": "LSAP: 6 councillors voted against at the Esch-sur-Alzette municipal council on 2026-10-02.",
+      "source_refs": [
+        "lu.esch.42063"
+      ],
+      "author_nym": "source:esch.lu-council",
+      "cluster_id": null,
+      "kind": "position",
+      "attribution": "LSAP group, Esch-sur-Alzette municipal council",
+      "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+    },
+    {
+      "id": "esch-f24ae56ed10ebc02",
+      "matter_id": "lu.esch.42063",
+      "stance_option_id": "no",
+      "text": "déi Lénk: 1 councillor voted against at the Esch-sur-Alzette municipal council on 2026-10-02.",
+      "source_refs": [
+        "lu.esch.42063"
+      ],
+      "author_nym": "source:esch.lu-council",
+      "cluster_id": null,
+      "kind": "position",
+      "attribution": "déi Lénk group, Esch-sur-Alzette municipal council",
+      "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+    },
+    {
+      "id": "esch-b3cdcf4e6e5a2717",
+      "matter_id": "lu.esch.42063",
+      "stance_option_id": "yes",
+      "text": "déi gréng: 3 councillors voted in favour at the Esch-sur-Alzette municipal council on 2026-10-02.",
+      "source_refs": [
+        "lu.esch.42063"
+      ],
+      "author_nym": "source:esch.lu-council",
+      "cluster_id": null,
+      "kind": "position",
+      "attribution": "déi gréng group, Esch-sur-Alzette municipal council",
+      "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+    },
+    {
+      "id": "esch-7e2c13ad88b5325e",
+      "matter_id": "lu.esch.participation.project.650",
+      "stance_option_id": "lu.esch.participation.project.650.proposal.3958989",
+      "text": "Improving public gym and calisthenics facilities: The public gym facilities are lacking in esch and calisthenics are very basic even in new installations.\nTo take an example :\nthe city of luxemb…",
+      "source_refs": [
+        "lu.esch.participation.project.650"
+      ],
+      "author_nym": "source:participation.esch.lu",
+      "cluster_id": null,
+      "kind": "proposal",
+      "attribution": "A resident, on the city's participation platform",
+      "source_url": "https://participation.esch.lu/shout/3958989/improving-public-gym-and-calisthenics-facilities"
+    },
+    {
+      "id": "esch-6a6dc32343cb2188",
+      "matter_id": "lu.esch.participation.project.650",
+      "stance_option_id": "lu.esch.participation.project.650.proposal.3969826",
+      "text": "24x7 surveillance around Hotel de Ville and setup of SOS booths: Sir/Madam,\nThe area around Hotel de Ville in Esch sur alzette specially on the side of 1 rue des artisans is occupied day and night by miscreants a…",
+      "source_refs": [
+        "lu.esch.participation.project.650"
+      ],
+      "author_nym": "source:participation.esch.lu",
+      "cluster_id": null,
+      "kind": "proposal",
+      "attribution": "A resident, on the city's participation platform",
+      "source_url": "https://participation.esch.lu/shout/3969826/24x7-surveillance-around-hotel-de-ville-and-setup-of-sos-booths"
+    },
+    {
+      "id": "esch-d9f5c0a163187674",
+      "matter_id": "lu.esch.participation.project.650",
+      "stance_option_id": "lu.esch.participation.project.650.proposal.3971561",
+      "text": "Clair Chene Wald aufwerten: Wald verschönern und als Naherholungsgebiet gestaltwn mit Kinderspielplatz, Hundewiese, schönen Bänken, Naturlehrpfad, Aufwertung der Quelle und den W…",
+      "source_refs": [
+        "lu.esch.participation.project.650"
+      ],
+      "author_nym": "source:participation.esch.lu",
+      "cluster_id": null,
+      "kind": "proposal",
+      "attribution": "A resident, on the city's participation platform",
+      "source_url": "https://participation.esch.lu/shout/3971561/clair-chene-wald-aufwerten"
+    },
+    {
+      "id": "esch-3eacb09e832cb703",
+      "matter_id": "lu.esch.participation.project.650",
+      "stance_option_id": "lu.esch.participation.project.650.proposal.3975559",
+      "text": "Podium Hotel de Ville, Brill, Belval etc: On peut beaucoup faire aves des plaques résopales ou palettes. Des scênes pour musiciens (d'ecoles tout genre), sport, danse, comedy, théatre etz. Une…",
+      "source_refs": [
+        "lu.esch.participation.project.650"
+      ],
+      "author_nym": "source:participation.esch.lu",
+      "cluster_id": null,
+      "kind": "proposal",
+      "attribution": "A resident, on the city's participation platform",
+      "source_url": "https://participation.esch.lu/shout/3975559/podium-hotel-de-ville-brill-belval-etc"
+    },
+    {
+      "id": "esch-3a51164a19bea229",
+      "matter_id": "lu.esch.participation.project.650",
+      "stance_option_id": "lu.esch.participation.project.650.proposal.3977586",
+      "text": "Toilette publique et gratuite au Quartier Brill: Au quartier Brill se retrouvent beaucoup de personnes qui n‘ont pas acces a des toilettes privees. Il y avait une toilette publique dans l‘ancien bati…",
+      "source_refs": [
+        "lu.esch.participation.project.650"
+      ],
+      "author_nym": "source:participation.esch.lu",
+      "cluster_id": null,
+      "kind": "proposal",
+      "attribution": "A resident, on the city's participation platform",
+      "source_url": "https://participation.esch.lu/shout/3977586/toilette-publique-et-gratuite-au-quartier-brill"
+    },
+    {
+      "id": "esch-8f84a8cc13016404",
+      "matter_id": "lu.esch.participation.project.650",
+      "stance_option_id": "lu.esch.participation.project.650.proposal.3984917",
+      "text": "Ouverture des Maisons Relais à partir de 6:00/6:30: Nous proposons que les Maisons Relais de la Ville d’Esch-sur-Alzette puissent ouvrir à partir de 6h/6h30 au lieu de 7h00.\nDe nombreux parents comme…",
+      "source_refs": [
+        "lu.esch.participation.project.650"
+      ],
+      "author_nym": "source:participation.esch.lu",
+      "cluster_id": null,
+      "kind": "proposal",
+      "attribution": "A resident, on the city's participation platform",
+      "source_url": "https://participation.esch.lu/shout/3984917/ouverture-des-maisons-relais-a-partir-de-600630"
+    },
+    {
+      "id": "esch-1b9a283963bc7010",
+      "matter_id": "lu.esch.participation.project.650",
+      "stance_option_id": "lu.esch.participation.project.650.proposal.3990090",
+      "text": "Book the books: Buying children books (for learning to read, say for 5 to 12 years old) for the BESA library.\nMany books in Portuguese (200), several for the commo…",
+      "source_refs": [
+        "lu.esch.participation.project.650"
+      ],
+      "author_nym": "source:participation.esch.lu",
+      "cluster_id": null,
+      "kind": "proposal",
+      "attribution": "A resident, on the city's participation platform",
+      "source_url": "https://participation.esch.lu/shout/3990090/book-the-books"
+    },
+    {
+      "id": "esch-b8fa19d788fa8a22",
+      "matter_id": "lu.esch.participation.project.650",
+      "stance_option_id": "lu.esch.participation.project.650.proposal.3996415",
+      "text": "A Community Supermarket: A supermarket owned by the community, for the community.\n🏠 Connect: A welcoming place that brings people and generations together in Esch-sur-Alze…",
+      "source_refs": [
+        "lu.esch.participation.project.650"
+      ],
+      "author_nym": "source:participation.esch.lu",
+      "cluster_id": null,
+      "kind": "proposal",
+      "attribution": "A resident, on the city's participation platform",
+      "source_url": "https://participation.esch.lu/shout/3996415/a-community-supermarket"
+    }
+  ]
+}

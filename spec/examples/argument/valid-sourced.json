@@ -1,0 +1,12 @@
+{
+  "id": "example-arg-2",
+  "matter_id": "example-matter",
+  "stance_option_id": "no",
+  "text": "Example group: 4 councillors voted against at the example council meeting of 2026-01-01.",
+  "source_refs": ["example-matter"],
+  "author_nym": "source:example.org",
+  "cluster_id": null,
+  "kind": "position",
+  "attribution": "Example group, example municipal council",
+  "source_url": "https://example.org/council/2026-01-01"
+}

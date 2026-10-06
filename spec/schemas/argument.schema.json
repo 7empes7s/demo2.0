@@ -5,22 +5,69 @@
   "description": "An argument for one option of a matter. Owned by Commons.",
   "type": "object",
   "properties": {
-    "id": { "type": "string", "minLength": 1 },
-    "matter_id": { "type": "string", "minLength": 1 },
-    "stance_option_id": { "type": "string", "minLength": 1 },
-    "text": { "type": "string", "minLength": 1 },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "matter_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stance_option_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
     "source_refs": {
       "description": "IDs of the source items or source documents the argument cites.",
       "type": "array",
-      "items": { "type": "string", "minLength": 1 }
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "author_nym": {
       "description": "The author's pseudonym inside Commons, never a person.",
       "type": "string",
       "minLength": 1
     },
-    "cluster_id": { "type": ["string", "null"], "minLength": 1 }
+    "cluster_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "kind": {
+      "description": "argument: a reason someone gives. position: who took this side (for example a council group's recorded vote), without reasons. proposal: an option a resident proposed in a public consultation, with the reason they gave.",
+      "enum": [
+        "argument",
+        "position",
+        "proposal"
+      ]
+    },
+    "attribution": {
+      "description": "Who made the argument, as the public source names them: an institution, a council group, or 'a resident' for a consultation contribution. Never a private individual's name.",
+      "type": "string",
+      "minLength": 1
+    },
+    "source_url": {
+      "description": "A link a reader can open to see the argument at its public source.",
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://"
+    }
   },
-  "required": ["id", "matter_id", "stance_option_id", "text", "source_refs", "author_nym"],
+  "required": [
+    "id",
+    "matter_id",
+    "stance_option_id",
+    "text",
+    "source_refs",
+    "author_nym"
+  ],
   "additionalProperties": false
 }
