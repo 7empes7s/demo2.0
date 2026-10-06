@@ -3,6 +3,7 @@
   d2-agora serve --db agora.db [--host 127.0.0.1] [--port 8091]
                  [--door-url URL --door-epoch N [--new-epoch] | --read-only
                   | --dev-identity (--nym-key-file PATH | --dev-insecure-key)]
+                 [--lottery-cmd d2-lottery] [--lottery-chain quicknet]
 
 Identity, exactly one of:
 - Door: --door-url or DOOR_URL (the Door verifier, `d2-door serve`) and --door-epoch or
@@ -17,6 +18,10 @@ Identity, exactly one of:
   without --dev-identity, so a production unit cannot pick the stand-in by accident.
 With none of these, or two of them, the server refuses to start.
 
+ScopeChallenge panels are drawn by the Lottery module's CLI (--lottery-cmd, default `d2-lottery`,
+or $LOTTERY_CMD; split on spaces), committing to a round of --lottery-chain (quicknet or
+default). The CLI fetches and verifies the drand beacon itself.
+
 Exit codes: 0 ok, 2 bad input (for example a database that cannot be opened or no identity).
 """
 
@@ -30,6 +35,7 @@ import sys
 from .agora import Agora, AgoraError
 from .identity import DEV_KEY, DoorNyms, KeyedNyms, MissingKey, ReadOnly
 from .server import make_server
+from .sortition import LotteryCli
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -55,6 +61,8 @@ def main(argv: list[str] | None = None) -> int:
     key.add_argument(
         "--dev-insecure-key", action="store_true", help="use a public key; development only"
     )
+    s.add_argument("--lottery-cmd", help="the Lottery CLI (default $LOTTERY_CMD or d2-lottery)")
+    s.add_argument("--lottery-chain", choices=("quicknet", "default"), default="quicknet")
     args = p.parse_args(argv)
 
     door_url = args.door_url or os.environ.get("DOOR_URL")
@@ -94,7 +102,11 @@ def main(argv: list[str] | None = None) -> int:
                 "d2-agora: development identity (KeyedNyms): one upvote per id, not per human",
                 file=sys.stderr,
             )
-        agora = Agora(args.db, nyms=nyms)
+        command = (args.lottery_cmd or os.environ.get("LOTTERY_CMD") or "d2-lottery").split()
+        if not command:
+            raise MissingKey("--lottery-cmd is empty")
+        lottery = LotteryCli(command, chain=args.lottery_chain)
+        agora = Agora(args.db, nyms=nyms, lottery=lottery)
         if isinstance(nyms, DoorNyms):
             agora.accept_door_epoch(nyms.epoch, new=args.new_epoch)
         server = make_server(agora, args.host, args.port)

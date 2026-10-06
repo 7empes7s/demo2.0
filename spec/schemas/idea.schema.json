@@ -6,7 +6,16 @@
   "type": "object",
   "properties": {
     "id": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$", "description": "ULID." },
-    "jurisdiction_id": { "type": "string", "minLength": 1 },
+    "jurisdiction_id": {
+      "description": "The idea's current jurisdiction: the one it was filed under, or the narrower one a ScopeChallenge decided. The queue filters on it.",
+      "type": "string",
+      "minLength": 1
+    },
+    "filed_jurisdiction_id": {
+      "description": "The jurisdiction the proposer filed the idea under. Pseudonyms for the idea (proposer, upvotes, challengers, panel votes) are made for this area. Agora always sends it; optional so readers of older answers still validate.",
+      "type": "string",
+      "minLength": 1
+    },
     "topic_ids": {
       "type": "array",
       "maxItems": 8,
@@ -21,9 +30,12 @@
       "minLength": 1
     },
     "created_at": { "type": "string", "format": "date-time" },
-    "scope_tier": { "enum": ["national", "regional", "local", "minor"] },
+    "scope_tier": {
+      "description": "The current tier: Scope applied to jurisdiction_id. A contested idea keeps its tier until its challenge is decided.",
+      "enum": ["national", "regional", "local", "minor"]
+    },
     "charter_version": {
-      "description": "The Charter version the tier was computed under.",
+      "description": "The Charter version the current tier was computed under.",
       "type": "string",
       "minLength": 1
     },
@@ -31,6 +43,10 @@
       "description": "Upvotes so far; null while the count is hidden (Charter agora.upvote_hidden_hours after created_at).",
       "type": ["integer", "null"],
       "minimum": 0
+    },
+    "contested": {
+      "description": "True while a ScopeChallenge against the idea's tier is open. Agora always sends it; optional so readers of older answers still validate.",
+      "type": "boolean"
     }
   },
   "required": [

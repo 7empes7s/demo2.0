@@ -1,10 +1,10 @@
 {
-  "description": "param(key, version?): a dotted key into the Charter; list items are not addressable by index. Charter 0.1.0.",
-  "charter_version": "0.1.0",
+  "description": "param(key, version?): a dotted key into the Charter; list items are not addressable by index. Charter 0.2.0.",
+  "charter_version": "0.2.0",
   "cases": [
     {
       "key": "version",
-      "expect": "0.1.0"
+      "expect": "0.2.0"
     },
     {
       "key": "tiers.national.review_panel",
@@ -31,7 +31,7 @@
     },
     {
       "key": "tiers.regional.queue_priority",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "expect": 2
     },
     {
@@ -68,6 +68,14 @@
         "numerator": 2,
         "denominator": 3
       }
+    },
+    {
+      "key": "scope_challenge.panel_size",
+      "expect": 5
+    },
+    {
+      "key": "scope_challenge.decision_days",
+      "expect": 7
     },
     {
       "key": "silent_ratification.objection_window_days",
@@ -137,6 +145,11 @@
     {
       "key": "door.epoch_months",
       "version": "0.0.9",
+      "expect_error": "unknown_version"
+    },
+    {
+      "key": "tiers.local.queue_priority",
+      "version": "0.1.0",
       "expect_error": "unknown_version"
     }
   ]
