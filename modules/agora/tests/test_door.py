@@ -16,6 +16,7 @@ import logging
 import os
 import shutil
 import socket
+import sqlite3
 import subprocess
 import threading
 import urllib.error
@@ -223,6 +224,48 @@ def test_same_person_same_nym_per_area_and_cannot_upvote_twice(door, api):
     p4 = door.present("alice", ctx(COUNTRY), challenge(api), levels=1)
     status, national = api("/ideas", idea(COUNTRY, p4, 2))
     assert status == 201 and national["proposer_nym"] != posted["proposer_nym"]
+
+
+def test_agora_keeps_the_nym_and_nothing_else_of_a_presentation(door, agora_with, tmp_path, caplog):
+    """Phase 2 unlinkability, Agora's side (Door's side: modules/door/tests/unlinkability.rs).
+
+    After real Door-backed posts and upvotes in two areas, the whole database and every log
+    record Agora wrote hold each person's nym and no other part of any presentation: no proof,
+    pseudonym point, challenge or disclosed path. So what an attacker gets from Agora is at
+    most what the Rust harness already hands its attacker (it gets the full presentations).
+    """
+    caplog.set_level(logging.DEBUG)
+    agora, api = agora_with(door.url)
+    shown = []
+    p = door.present("alice", ctx(ESCH), challenge(api))
+    shown.append(p)
+    _, posted = api("/ideas", idea(ESCH, p))
+    for who in ("bob", "alice"):
+        p = door.present(who, ctx(ESCH), challenge(api))
+        shown.append(p)
+        api(f"/ideas/{posted['id']}/upvote", {"participant": p})
+    p = door.present("bob", ctx(COUNTRY), challenge(api), levels=1)
+    shown.append(p)
+    status, national = api("/ideas", idea(COUNTRY, p, 2))
+    assert status == 201
+
+    db = tmp_path / "agora0.db"
+    conn = sqlite3.connect(db)
+    try:
+        dump = "\n".join(conn.iterdump())
+    finally:
+        conn.close()
+    nyms = {nym_of(p) for p in shown}
+    assert len(nyms) == 3  # alice and bob in Esch, bob nationally: unlinkable to Esch-bob
+    for nym in nyms:
+        assert nym in dump
+    stored = dump + caplog.text
+    for p in shown:
+        for secret in (p["proof"], p["pseudonym"], p["challenge"]):
+            # No 32-character run of it, anywhere.
+            for i in range(0, len(secret) - 31, 16):
+                assert secret[i : i + 32] not in stored
+    assert ESCH_PATH not in stored and "jurisdiction_path" not in stored
 
 
 # --- refusals ----------------------------------------------------------------------------------
