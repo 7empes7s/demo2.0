@@ -103,6 +103,25 @@ class Charter:
             )
         return int(population)
 
+    def jurisdiction_path(self, jurisdiction_id: str) -> list[str]:
+        """The jurisdiction and its ancestors, root first, by `parent_id`:
+        `["lu", "lu-canton-esch-sur-alzette", "lu-commune-esch-sur-alzette"]`. Door writes a
+        resident's jurisdiction as these ids joined by `.`, so a verifier compares paths level
+        by level. A non-string id is a TypeError, never an empty path."""
+        if not isinstance(jurisdiction_id, str):
+            raise TypeError("jurisdiction_id must be a string")
+        path: list[str] = []
+        current: Any = jurisdiction_id
+        while current is not None:
+            j = self._jurisdictions.get(current) if isinstance(current, str) else None
+            if j is None:
+                raise CharterError("unknown_jurisdiction", f"no jurisdiction {current!r}")
+            if current in path:
+                raise CharterError("invalid_charter", f"jurisdiction {current!r} is its own parent")
+            path.append(current)
+            current = j.get("parent_id")
+        return path[::-1]
+
     def tier(self, matter: Any) -> str:
         """The matter's tier from its affected population. Labels on the matter are ignored."""
         population = self.affected_population(matter)

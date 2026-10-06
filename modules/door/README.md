@@ -70,11 +70,55 @@ Two things found while integrating `zkryptium`, both guarded in this crate:
 
 ```sh
 tools/dev-setup.sh                         # installs the pinned toolchain (rust-toolchain.toml)
-cargo test -p d2-door                      # 25 unit and integration tests, a no-panic sweep, 2 vector drift tests
+cargo test -p d2-door                      # unit, flow, HTTP service, two no-panic sweeps, vector drift
 cargo run -p d2-door -- demo               # enrol the demo people, present in three contexts, verify
+cargo run -p d2-door -- serve --issuer-key key-epoch1.json   # verifier service on 127.0.0.1:8092
 cargo run -p d2-door -- check spec/door/vectors.json
 cargo run -p d2-door -- vectors --out spec/door/vectors.json   # regenerate (only with a format change)
 ```
+
+## Verifier service (`d2-door serve`)
+
+So that modules in other languages can check presentations without linking this crate, `d2-door
+serve` runs the verifier as a small HTTP service: standard library only (no HTTP framework), on
+`127.0.0.1:8092` by default. Issuer public keys come from files, one `IssuerKey` JSON per epoch
+(`--issuer-key` repeated); a key that does not decode or a second key for an epoch stops the
+start.
+
+| Request | Response |
+|---|---|
+| `POST /presentations/verify` `{presentation, context, challenge, epoch, require?}` | `200 {pseudonym, nym, disclosed, epoch}` |
+| `GET /issuer-keys` | `200 {keys: [IssuerKey, ...]}` |
+| `GET /healthz` | `200 {ok, epochs}` |
+
+- `context` is the caller's own context, `challenge` the one-time value it issued (lowercase hex,
+  1-64 bytes); the service does not remember challenges, the caller makes them single use.
+- `epoch` is the **one** epoch the caller accepts for this context. The service never takes the
+  epoch from the presentation, so a holder with credentials for two epochs cannot get two
+  pseudonyms in one context through it.
+- `require` is a `Disclosure` (`jurisdiction_levels`, `adult`, `epoch`); default nothing. The
+  answer gives the disclosed values; policy on them (adult must be true, which jurisdiction) is
+  the caller's.
+- Errors are `{error, code}`: `422` with `epoch_mismatch`, `context_mismatch`,
+  `challenge_mismatch`, `missing_disclosure`, `malformed` (proof length), `invalid_proof` or
+  `unknown_epoch`; `400` with `invalid_body` (not the documented shape, unknown field, bad
+  challenge or context) or `malformed` (a presentation field that does not parse, such as the
+  pseudonym).
+- Limits: head 8 KiB (`431`), body 64 KiB (`413`), `Content-Length` required (`411`),
+  `Transfer-Encoding` refused (`501`), a head line ending in a bare LF refused on sight (`400`),
+  the whole request within 5 s (`408`), 32 connections at once (`503 busy`); every answer
+  closes the connection. A client that opens a connection and never finishes its head holds a
+  slot for the full 5 s, so 32 of them delay every verification by that long (and Agora answers
+  `503 door_unavailable` after using the challenge up). That is why `d2-door serve` listens on
+  loopback only, with Agora as its one caller; never route it through Caddy.
+- No panics: `tests/no_panic.rs::random_http_input_never_panics` feeds random bytes as whole
+  requests and as bodies, truncated and bit-flipped valid requests, odd `Content-Length` values
+  and request lines, and values of every JSON type in every body and presentation field.
+
+Holder-side helpers for tests and development (mock identity provider only):
+`d2-door dev-world --out <dir> --person <name>:<adult|minor>:<path>` writes a fresh issuer's
+public key and one credential per person; `d2-door present --credential <file> --issuer-key
+<file> --context <id> --challenge <hex> --levels <n> --adult` prints a presentation.
 
 ## Library API
 
@@ -124,6 +168,13 @@ All types serialise to JSON (`IssuerKey`, `Issuance`, `Credential`, `Presentatio
   another Door's key fail; tampered disclosure, pseudonym swap and flipped proof bits fail;
   `adult=false` cannot claim adult; disclosure is minimal (nothing about Esch leaks when only the
   country is disclosed); malformed input is an error, never a panic; JSON round trips;
+- `tests/http.rs`: the verifier service: every answer of `POST /presentations/verify` (success,
+  minor, other context, other challenge, unknown epoch, missing disclosure, tampered fields,
+  unknown fields, bad challenge or context), request reading and every limit, a slow client
+  getting `408` within the total deadline, key files, and a real round trip over TCP including
+  the connection cap;
+- `tests/no_panic.rs`: random input in every external field of the library, and in every part
+  of an HTTP request to the service;
 - `tests/vectors.rs`: `spec/door/vectors.json` still checks (40 checks), and regenerating gives
   the same deterministic parts and case list.
 
@@ -156,30 +207,31 @@ Honest list, in protocol order. Each is a gap to close, not a design change.
 - Zeroising secrets in memory. `IssuerSecret`, `UniquenessKey` and `Holder` keep their secrets in
   ordinary memory with no `zeroize` on drop, and `Credential` serialises `nym_secret` and `blind`
   to JSON (device-local by design). Needed together with the HSM work, before any deployment.
-- Durable uniqueness store; HTTP API (`POST /enrol/start`, `POST /enrol/issue`, `GET /issuer-keys`); Record publication.
+- Durable uniqueness store; enrolment over HTTP (`POST /enrol/start`, `POST /enrol/issue`); Record publication of issuer keys (the verifier reads them from files for now).
+- A systemd unit for `d2-door serve` (`civic-door-verify.service`): needs the release binary built in CI and shipped, since Mulinux does not build; Agora is not deployed yet either.
+- Epoch rollover for long-lived contexts: Agora accepts one epoch, so when it moves to the next epoch every holder gets new pseudonyms and could upvote an old idea again.
 - Running the CFRG BBS fixtures. The published `zkryptium` crate does not ship its test fixtures (`autotests = false`), and this session could not reach the upstream repository, so no standard vectors were run. Because of the `calculate_b` deviation noted above, cross-implementation checks need their own work.
 - WASM / UniFFI builds for the holder side in the citizen app.
 - Full AGPL text in `LICENSE` (gnu.org was unreachable; the file carries the SPDX identifier and a pointer).
 
-## Intended integration with Agora (next PR)
+## Agora integration
 
-Agora's `NymSource` (`modules/agora/src/d2_agora/identity.py`) takes `(participant, context_id)`
-and returns a `nym-...` string; v1 ships `KeyedNyms`, which enforces one upvote per nym but not
-one per human. The Door-backed replacement:
+Agora's `DoorNyms` (`modules/agora/src/d2_agora/identity.py`) is the Door-backed `NymSource`:
 
-1. The citizen app holds a `Credential` and asks Agora for a one-time challenge for the
-   context `agora:<jurisdiction>`.
-2. It calls `Credential::present(key, context, challenge, Disclosure { jurisdiction_levels: depth of the idea's jurisdiction, adult: true, epoch: false })` and sends the `Presentation` JSON as the `participant` value.
-3. A `DoorNyms` implementation of `NymSource` calls `verify` with the `IssuerKey` of the one
-   epoch that context accepts (or puts the epoch into the context id, e.g.
-   `agora:lu.esch@1`); it must never accept two epochs for one context, or a holder with
-   credentials for both gets two pseudonyms there. With that key it calls `verify`
-   (keys from `GET /issuer-keys`, later from Record), checks that the disclosed jurisdiction equals
-   the idea's and that `adult` is true, consumes the challenge, and returns `pseudonym.nym()`.
-   The format is the one `KeyedNyms` already produces, so Agora's tables do not change.
-4. Agora's `participant` validation (`[A-Za-z0-9_-]{16,128}`) is replaced by presentation
-   parsing; nothing of the presentation is stored, only the nym.
+1. The app asks Agora for a one-time challenge (`GET /challenge`, 32 random bytes, 120 s, single
+   use).
+2. It calls `Credential::present(key, "agora:<jurisdiction_id>", challenge, Disclosure {
+   jurisdiction_levels: depth of the idea's jurisdiction in Charter, adult: true, epoch: false })`
+   and sends the `Presentation` JSON as `participant` in `POST /ideas` or
+   `POST /ideas/<id>/upvote`.
+3. Agora uses the challenge up, asks `d2-door serve` to verify against the one epoch it is
+   configured for (`DOOR_EPOCH`), requires `adult` true and the disclosed path to start with the
+   idea's jurisdiction path, and stores only `nym`.
 
-Since Agora is Python, the simplest bridge is a small Rust `d2-door verify` HTTP endpoint on
-loopback (one systemd unit, health endpoint), or a PyO3 binding if the call volume warrants it.
-Decide in that PR.
+Jurisdiction paths for Agora are Charter ids, root first, joined by `.`:
+`lu.lu-canton-esch-sur-alzette.lu-commune-esch-sur-alzette` (`Charter.jurisdiction_path`). The
+demo people and the vectors use short illustrative paths (`lu.esch`); a real identity adapter
+must emit the Charter form.
+
+The bridge is the HTTP service above rather than a PyO3 binding: one process, no Python build
+step, and the call volume (one verification per post or upvote) is small.

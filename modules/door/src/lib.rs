@@ -32,6 +32,7 @@
 pub mod attributes;
 pub mod error;
 pub mod holder;
+pub mod http;
 pub mod identity;
 pub mod issuer;
 pub mod pseudonym;

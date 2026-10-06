@@ -41,35 +41,83 @@ is seeded.
 
 ## Identity
 
-Agora never sees a person, only a per-context pseudonym (`nym`; context `agora:<jurisdiction>`).
-The `NymSource` interface (`identity.py`) turns the caller's `participant` value into a nym.
-Door, which will derive nyms from anonymous credentials, does not exist yet, so v1 ships
-`KeyedNyms`: nym = `nym-` + base32(HMAC-SHA256(server key, context NUL participant)), 26
-characters. The participant must be an opaque id (16-128 characters of `A-Z a-z 0-9 _ -`), so an
-email address, a name or a phone number is refused. The participant id is never stored or
-published, and a proposer's nyms in two jurisdictions cannot be linked.
+Agora never sees a person, only a per-context pseudonym (`nym`; context `agora:<jurisdiction>`,
+so one nym per person per area, and a person's nyms in two areas cannot be linked). The
+`NymSource` interface (`identity.py`) turns the request's `participant` value into a nym.
 
-The key is a file of at least 32 bytes, outside git (mode 600), passed with `--nym-key-file` or
-`AGORA_NYM_KEY_FILE`. Without one `d2-agora serve` refuses to start; `--dev-insecure-key` uses a
-public key, for development only. Changing the key changes every nym, so a participant could
-upvote again: keep the key for the life of the database.
+**Door (`DoorNyms`, the real one).** Started with `DOOR_URL` (the Door verifier, `d2-door serve`,
+see `modules/door/README.md`) and `DOOR_EPOCH` (the one credential epoch Agora accepts):
 
-**Gap:** with `KeyedNyms`, one upvote per nym is enforced, one per human is not. Anyone who can
-reach the API can invent nyms. Keep the server on loopback behind a caller that issues the ids
-until a Door-backed `NymSource` lands.
+1. The app gets a one-time challenge: `GET /challenge` gives 32 random bytes as hex, valid for
+   120 s, usable once (in memory, at most 10,000 open). When 10,000 are open, expired ones are
+   dropped first; if it is still full the answer is `503 challenge_capacity`. A live challenge
+   is never dropped to make room, so a flood of `GET /challenge` cannot cancel the ones already
+   handed out, but it can use up the room for new ones. **Deployment requirement:** a
+   per-client rate limit at the edge (Caddy or the Companion) on `GET /challenge` and writes.
+2. It sends a Door presentation as `participant`: made for the context `agora:<jurisdiction_id>`
+   of the idea, answering that challenge, disclosing `adult` and as many jurisdiction levels as
+   the idea's jurisdiction has in Charter (`lu` is 1, a canton 2, a commune 3).
+3. Agora uses the challenge up (even if the rest fails), then asks Door to verify it against the
+   configured epoch's issuer key, requires `adult` to be true, and requires the disclosed
+   jurisdiction path to start with the idea's (Charter ids, root first:
+   `lu.lu-canton-esch-sur-alzette.lu-commune-esch-sur-alzette`). It stores only the nym.
+
+A raw participant id is refused (`400 presentation_required`). Door down, slow (5 s) or
+answering nonsense: posts and upvotes fail closed with `503 door_unavailable`; reads never ask
+Door. Door finding Agora's own request bad (`400` other than `malformed`, for example a Charter
+path deeper than Door's 4 levels) is a server problem: also `503 door_unavailable`, with one log
+line naming Door's code (`Door answered 400 <code> to Agora's request`), nothing else.
+
+**Epoch.** The database keeps the first Door epoch it was started with. Starting it with another
+`DOOR_EPOCH` stops the start: every holder would get new nyms and could upvote the same ideas
+again. `--new-epoch` accepts the new epoch deliberately (and stores it).
+
+| Refusal | Status, code |
+|---|---|
+| Challenge never issued, used or expired (replay) | `400 unknown_challenge` |
+| Presentation that does not parse | `400 malformed` |
+| Made for another context, or another challenge | `403 context_mismatch`, `403 challenge_mismatch` |
+| Another epoch | `403 epoch_mismatch` |
+| Fewer jurisdiction levels than the idea's, or no `adult` | `403 missing_disclosure` |
+| Edited fields, wrong key, bad proof | `403 invalid_proof` (or `malformed` for a wrong proof length) |
+| `adult=false` | `403 not_adult` |
+| Lives elsewhere (disclosed path does not start with the idea's) | `403 jurisdiction_not_covered` |
+
+A presentation proves "an adult resident of this area, with this nym here"; it is not tied to
+the idea's content, so whoever holds one before its challenge is used can spend it. Serve Agora
+only over TLS (Caddy) once deployed; challenges live 120 s.
+
+**Read only (`--read-only`).** No identity at all: Agora serves the queue and ideas and refuses
+every post and upvote (`403 read_only`); `/healthz` says `"identity": "none"`. For a deployment
+without Door (`ops/deploy/civic-agora.service`).
+
+**Development stand-in (`KeyedNyms`).** Only with `--dev-identity`, and then with
+`--nym-key-file` (or `AGORA_NYM_KEY_FILE`, a file of at least 32 bytes, outside git, mode 600;
+the bytes are the key as they stand, only one trailing newline is dropped) or
+`--dev-insecure-key` (a public key). Without `--dev-identity` the key options stop the start, so a
+production unit cannot pick the stand-in by accident; with none of Door, `--read-only` or
+`--dev-identity` Agora does not start. nym = `nym-` + base32(HMAC-SHA256(key,
+context NUL participant)), 26 characters; the participant is an opaque id (16-128 characters of
+`A-Z a-z 0-9 _ -`). One upvote per id, **not per human**: anyone who can reach the API can invent
+ids. Development and tests only; `/healthz` says `"identity": "dev"`. Giving `--dev-identity`
+together with `DOOR_URL` stops the start.
 
 ## HTTP API
 
-`uv run d2-agora serve --db agora.db --nym-key-file /etc/agora/nym.key` (default
+`DOOR_URL=http://127.0.0.1:8092 DOOR_EPOCH=1 uv run d2-agora serve --db agora.db` (default
 `127.0.0.1:8091`). Standard library only.
 
 | Request | Response |
 |---|---|
+| `GET /challenge` | `200 {challenge, expires_in}` (Door only; `404` otherwise; `503 challenge_capacity` when full) |
 | `POST /ideas` `{participant, jurisdiction_id, topic_ids?, title, text}` | `201` Idea (`spec/schemas/idea.schema.json`) |
 | `POST /ideas/<id>/upvote` `{participant}` | `201 {idea_id, upvoted: true}`; `409 duplicate_upvote`; `404 unknown_idea` |
 | `GET /ideas/<id>` | `200` Idea |
 | `GET /queue?jurisdiction=<id>&jurisdiction=<id>&limit=<n>` | `200 {charter_version, ideas}` in queue order; no `jurisdiction` means all |
-| `GET /healthz` | `{ok, ideas}` |
+| `GET /healthz` | `{ok, ideas, identity}` (`door`, `dev`, or `none` when read only) |
+
+`participant` is a Door presentation (an object) with Door, an opaque id with the stand-in. Door
+refusals are listed under Identity.
 
 `title` and `text` are objects of language (`lb fr de en pt`) to text. Errors are
 `{error, code}`; an unexpected failure is `500 internal` with no details.
@@ -90,25 +138,33 @@ separators and zero-width characters.
 
 ## Not done yet
 
-- **Jurisdiction widening (known v1 gap).** The proposer picks `jurisdiction_id`, so a commune
-  matter filed under `lu` is stored as national and goes to the top of every queue that includes
-  `lu`. That is a matter raising its own tier by relabelling the jurisdiction. Pinned by
-  `test_known_gap_a_proposer_can_widen_the_jurisdiction_to_raise_the_tier`. Closing it needs
-  Door eligibility (bind the jurisdiction to the proposer's area) or a `ScopeChallenge` /
-  moderation step for ideas filed wider than the proposer's area. Required before any pilot.
+- **Jurisdiction widening (known gap, narrowed).** With Door a proposer can only file in an area
+  their credential places them in: nobody files in a commune they do not live in
+  (`test_door.py::test_a_jurisdiction_the_credential_does_not_cover_is_refused`). What remains:
+  a resident can still file a commune matter under an area that contains their own (an Esch
+  resident under `lu`), so it is stored as national and goes to the top of every queue that
+  includes `lu`. Pinned by
+  `test_known_gap_a_proposer_can_widen_the_jurisdiction_to_raise_the_tier`. Closing it needs a
+  `ScopeChallenge` or a moderation step for ideas filed wider than the proposer's own commune.
+  Required before any pilot.
+- **Epoch rollover.** Agora accepts one Door epoch (`DOOR_EPOCH`) and refuses to start with
+  another unless `--new-epoch` is given. Moving to the next epoch gives every holder new nyms,
+  so they could upvote ideas from the old epoch again. Needs a rule (close the queue per epoch,
+  or carry upvotes forward) before the first rollover.
 - **Record.** Architecture logs a matter, its tier and the proposer pseudonym in Record when an
   idea is promoted. Agora may not import `d2_record`, signing an entry needs an Ed25519 key in
   the signed-note format, and `spec/record-types.json` has no idea-level types. Deferred with
   promotion.
 - **Promotion** (`POST /ideas/{id}/promote` to a `Matter`, by rule), `ProposerRecord` and
   proposer ratings.
-- **Door.** A `NymSource` that verifies credential presentations (see Identity).
 - **Topic-based scope.** The Charter's v0 Scope uses the jurisdiction only (see
   `charter/README.md`, Known gaps), so a national subject filed under a commune ranks as local
   until a `ScopeChallenge` exists.
+- **A unit for `d2-door serve`** (`civic-door-verify.service`), which needs a release binary built
+  in CI (Mulinux does not build).
 - **Posting and upvoting from the citizen app.** The app shows the queue read only (Companion
   `GET /api/ideas`), and `ops/deploy/civic-agora.service` runs Agora on loopback; the Companion
-  never forwards `POST /ideas` or upvotes until a Door-backed `NymSource` exists. Not installed
+  never forwards `POST /ideas` or upvotes until Door is deployed. Not installed
   on Mulinux yet.
-- **Operations:** no rate limit; the queue is ranked in memory, fine for a commune pilot, not for
+- **Operations:** no rate limit of its own (put one at the edge, see Identity); the queue is ranked in memory, fine for a commune pilot, not for
   millions of ideas.

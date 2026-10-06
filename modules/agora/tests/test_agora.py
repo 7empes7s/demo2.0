@@ -1,5 +1,6 @@
 """Agora v1. Every idea, participant and district here is synthetic."""
 
+import base64
 import json
 import random
 import socket
@@ -20,6 +21,7 @@ from d2_agora import (
     DuplicateUpvote,
     KeyedNyms,
     MissingKey,
+    ReadOnly,
     UnknownIdea,
     rank_key,
 )
@@ -160,10 +162,12 @@ def test_stored_ideas_and_upvotes_cannot_be_rewritten(agora):
 
 
 def test_known_gap_a_proposer_can_widen_the_jurisdiction_to_raise_the_tier(agora):
-    # KNOWN v1 GAP, pinned on purpose (README "Not done yet", STATE.md): the proposer picks the
+    # KNOWN GAP, pinned on purpose (README "Not done yet", STATE.md): the proposer picks the
     # jurisdiction, so a commune matter filed under "lu" is stored as national and jumps the
-    # queue. Closing it needs Door eligibility (the proposer's area) or a ScopeChallenge. When
-    # that lands this test must change to expect a refusal or a challenge.
+    # queue. With Door (test_door.py) a proposer can only file in an area their credential
+    # places them in, which stops filing in someone else's commune but not widening to an area
+    # that contains their own (a resident of Esch can still file under "lu"). Closing the rest
+    # needs a ScopeChallenge; when that lands this test must change to expect a challenge.
     commune_matter = {**body(ESCH), "title": {"en": "Synthetic commune bench repair"}}
     honest = agora.post_idea(commune_matter)
     widened = agora.post_idea({**commune_matter, "jurisdiction_id": COUNTRY})
@@ -327,12 +331,48 @@ def test_there_is_no_default_nym_key(monkeypatch, tmp_path):
 
 def test_cli_refuses_to_start_without_a_nym_key(tmp_path, monkeypatch, capsys):
     monkeypatch.delenv("AGORA_NYM_KEY_FILE", raising=False)
+    monkeypatch.delenv("DOOR_URL", raising=False)
     assert main(["serve", "--db", str(tmp_path / "agora.db"), "--port", "0"]) == 2
     assert "nym key" in capsys.readouterr().err
     short = tmp_path / "short.key"
     short.write_bytes(b"too short")
     args = ["serve", "--db", str(tmp_path / "agora.db"), "--nym-key-file", str(short)]
-    assert main(args) == 2
+    assert main([*args, "--dev-identity"]) == 2
+    assert "at least 32 bytes" in capsys.readouterr().err
+
+
+def test_cli_needs_dev_identity_for_the_stand_in(tmp_path, monkeypatch, capsys):
+    # A production unit cannot pick the development identity by accident.
+    monkeypatch.delenv("DOOR_URL", raising=False)
+    key = tmp_path / "nym.key"
+    key.write_bytes(b"k" * 32)
+    monkeypatch.setenv("AGORA_NYM_KEY_FILE", str(key))
+    db = str(tmp_path / "agora.db")
+    for args in ([], ["--nym-key-file", str(key)], ["--dev-insecure-key"]):
+        assert main(["serve", "--db", db, "--port", "0", *args]) == 2
+        assert "--dev-identity" in capsys.readouterr().err
+    for args in (["--dev-identity"], ["--door-url", "http://127.0.0.1:1", "--door-epoch", "1"]):
+        assert main(["serve", "--db", db, "--port", "0", "--read-only", *args]) == 2
+        assert "--read-only takes no identity" in capsys.readouterr().err
+    assert main(["serve", "--db", db, "--port", "0", "--new-epoch", "--read-only"]) == 2
+    assert "--new-epoch needs Door" in capsys.readouterr().err
+
+
+def test_the_key_file_is_raw_bytes_with_at_most_one_newline_dropped(tmp_path):
+    # Raw random bytes that start and end with whitespace bytes stay 32 bytes (no strip).
+    raw = b" \t" + bytes(range(100, 127)) + b"\r\n\x0b"
+    assert len(raw) == 32
+    key = tmp_path / "raw.key"
+    key.write_bytes(raw)
+    assert KeyedNyms.from_file(key).nym(who(1), "c") == KeyedNyms(raw).nym(who(1), "c")
+    key.write_bytes(raw + b"\n")
+    assert KeyedNyms.from_file(key).nym(who(1), "c") == KeyedNyms(raw).nym(who(1), "c")
+    key.write_bytes(raw + b"\n\n")  # only one newline is dropped
+    assert KeyedNyms.from_file(key).nym(who(1), "c") == KeyedNyms(raw + b"\n").nym(who(1), "c")
+    # The README's key: 32 random bytes as base64 text, used as its 44 characters.
+    text = base64.b64encode(bytes(range(32)))
+    key.write_bytes(text + b"\n")
+    assert KeyedNyms.from_file(key).nym(who(1), "c") == KeyedNyms(text).nym(who(1), "c")
 
 
 def test_a_tz_naive_clock_is_refused_at_construction():
@@ -462,7 +502,7 @@ def api(agora):
 
 
 def test_http_api(api, clock):
-    assert api("/healthz") == (200, {"ok": True, "ideas": 0})
+    assert api("/healthz") == (200, {"ok": True, "ideas": 0, "identity": "dev"})
     assert api("/queue") == (200, {"charter_version": "0.1.0", "ideas": []})
 
     status, local = api("/ideas", body(ESCH, 1))
@@ -501,7 +541,8 @@ def test_http_api(api, clock):
         {"error": "no idea with that id", "code": "unknown_idea"},
     )
     assert api("/nope")[0] == 404
-    assert api("/healthz") == (200, {"ok": True, "ideas": 2})
+    assert api("/healthz") == (200, {"ok": True, "ideas": 2, "identity": "dev"})
+    assert api("/challenge") == (404, {"error": "Door is not configured", "code": "not_found"})
 
 
 def test_http_api_refuses_relabelling_and_bad_scope(api):
@@ -633,5 +674,46 @@ def test_server_binds_loopback_by_default(agora):
 
 def test_cli_reports_a_database_it_cannot_open(tmp_path, capsys):
     db = str(tmp_path / "missing-dir" / "agora.db")
-    assert main(["serve", "--db", db, "--port", "0", "--dev-insecure-key"]) == 2
+    assert main(["serve", "--db", db, "--port", "0", "--dev-identity", "--dev-insecure-key"]) == 2
     assert "d2-agora" in capsys.readouterr().err
+
+
+def test_read_only_serves_reads_and_refuses_every_write(tmp_path, clock):
+    writer = Agora(tmp_path / "agora.db", nyms=NYMS, now=clock)
+    stored = writer.post_idea(body(ESCH, 1))
+    writer.close()
+    agora = Agora(tmp_path / "agora.db", nyms=ReadOnly(), now=clock)
+    server = make_server(agora, port=0)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{server.server_address[1]}"
+
+    def call(path, payload=None):
+        data = None if payload is None else json.dumps(payload).encode()
+        try:
+            with urllib.request.urlopen(urllib.request.Request(base + path, data=data)) as r:
+                return r.status, json.loads(r.read())
+        except urllib.error.HTTPError as exc:
+            return exc.code, json.loads(exc.read())
+
+    try:
+        assert call("/healthz") == (200, {"ok": True, "ideas": 1, "identity": "none"})
+        assert call(f"/ideas/{stored['id']}")[1]["id"] == stored["id"]
+        assert [i["id"] for i in call("/queue")[1]["ideas"]] == [stored["id"]]
+        assert call("/challenge")[0] == 404
+        for path, payload in (
+            ("/ideas", body(ESCH, 2)),
+            ("/ideas", {"anything": 1}),
+            (f"/ideas/{stored['id']}/upvote", {"participant": who(3)}),
+        ):
+            assert call(path, payload) == (
+                403,
+                {"error": "this Agora is read only", "code": "read_only"},
+            )
+        with pytest.raises(AgoraError) as err:
+            agora.upvote(stored["id"], who(3))
+        assert (err.value.status, err.value.code) == (403, "read_only")
+        assert agora.count() == 1
+    finally:
+        server.shutdown()
+        server.server_close()
+        agora.close()

@@ -17,11 +17,13 @@ Environment=UV_PROJECT_ENVIRONMENT=/opt/civic/shared/venv UV_CACHE_DIR=/opt/civi
 # the civic user. It starts empty; nothing is seeded.
 StateDirectory=civic-agora
 StateDirectoryMode=0700
-# Loopback only: Agora's identity is a stand-in that lets anyone who reaches it invent
-# participants, so only the Companion server calls it (AGORA_URL in companion.env), and the
-# Companion passes on reads only (GET /api/ideas), never posts or upvotes.
-# The nym key is a file outside git, mode 600, owned by civic (see README, One-time install).
-ExecStart=/usr/bin/env uv run --frozen --no-dev --package d2-agora d2-agora serve --db /var/lib/civic-agora/agora.db --nym-key-file /etc/civic/agora-nym.key --host 127.0.0.1 --port 8091
+# READ ONLY: Door (secure sign-in) is not deployed yet, so Agora runs with --read-only: no
+# identity, it serves the queue and refuses every post and upvote (403 read_only); /healthz says
+# "identity": "none". Loopback only; only the Companion calls it (AGORA_URL in companion.env)
+# and it forwards reads only (GET /api/ideas). To open writes, run civic-door-verify and replace
+# --read-only with DOOR_URL and DOOR_EPOCH; the Companion must forward writes only while
+# Agora's /healthz says "identity": "door". Never use --dev-identity here.
+ExecStart=/usr/bin/env uv run --frozen --no-dev --package d2-agora d2-agora serve --db /var/lib/civic-agora/agora.db --read-only --host 127.0.0.1 --port 8091
 Restart=on-failure
 RestartSec=3
 # Hardening: read-only system, no new privileges, private /tmp. uv may write only its own

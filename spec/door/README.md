@@ -93,7 +93,19 @@ In this order, stopping at the first failure:
 
 On success the verifier learns the pseudonym and the disclosed attributes, nothing else.
 
-## 6. vectors.json
+## 6. Verifier service
+
+`d2-door serve` exposes section 5 over HTTP for verifiers in other languages:
+`POST /presentations/verify` with `{presentation, context, challenge (lowercase hex), epoch,
+require: {jurisdiction_levels, adult, epoch}}`, answering `200 {pseudonym (96 hex), nym,
+disclosed, epoch}` or `{error, code}` with the codes above (`422`), `unknown_epoch` (`422`),
+`invalid_body` or `malformed` (`400`). The verifier picks the epoch, never the presentation.
+Details and limits: `modules/door/README.md`.
+
+A verifier that compares jurisdictions with Charter (Agora) expects each level to be a Charter
+jurisdiction id: `lu.lu-canton-esch-sur-alzette.lu-commune-esch-sur-alzette`.
+
+## 7. vectors.json
 
 | field | content |
 |---|---|
