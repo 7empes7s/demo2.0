@@ -8,6 +8,7 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "d2-agora",
     "d2-charter",
     "d2-commons",
     "d2-docket",
@@ -367,6 +368,17 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/97/ec/ad474dcb1f6c1ebfdda3c2ad2edbb1af122a0e79c9ff2cb901ffb5f59662/cytoolz-1.1.0-pp311-pypy311_pp73-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a12a2a1a6bc44099491c05a12039efa08cc33a3d0f8c7b0566185e085e139283", size = 964279, upload-time = "2025-10-19T00:44:52.476Z" },
     { url = "https://files.pythonhosted.org/packages/68/8c/d245fd416c69d27d51f14d5ad62acc4ee5971088ee31c40ffe1cc109af68/cytoolz-1.1.0-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:047defa7f5f9a32f82373dbc3957289562e8a3fa58ae02ec8e4dca4f43a33a21", size = 916630, upload-time = "2025-10-19T00:44:54.059Z" },
 ]
+
+[[package]]
+name = "d2-agora"
+version = "0.1.0"
+source = { editable = "modules/agora" }
+dependencies = [
+    { name = "d2-charter" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "d2-charter", editable = "charter/python" }]
 
 [[package]]
 name = "d2-charter"

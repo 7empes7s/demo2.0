@@ -46,6 +46,7 @@ tier({ jurisdiction_id: "lu-commune-esch-sur-alzette", topic_ids: ["parks"] }); 
 ## Known gaps in v0
 
 - **Scope uses the jurisdiction only, not the topic.** The architecture says Scope computes affected population "from jurisdiction and topic". v0 ignores topics for the tier, so a national subject (say a national tax rate) filed under a commune comes out `local`. Since the proposer picks the jurisdiction, this is a way to shrink a matter's tier. Until topics widen scope, the only remedy is a `ScopeChallenge`. Open question for Marouane: which topics, if any, always count as national.
+- **The proposer can also widen the jurisdiction.** Scope trusts the jurisdiction it is given, so a commune matter filed under `lu` comes out `national` and jumps the Agora queue. Charter cannot tell; the fix sits with the caller: bind the jurisdiction to the proposer's eligibility (Door) or allow a `ScopeChallenge` against an inflated tier. Agora pins the current behaviour in a test (see `modules/agora/README.md`, Not done yet).
 - **The libraries need this repo's layout.** Both bindings read `charter.yaml`, `data/` and `vectors/` from this folder (`CHARTER_ROOT`), so they work only as an editable workspace install (the uv workspace and npm workspaces here). A built wheel or npm tarball does not include the data. Pass `root` to `Charter` to load another folder.
 
 ## Placeholders
