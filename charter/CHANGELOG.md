@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Python `Charter.jurisdiction_path` raises `TypeError` for a non-string id instead of returning an empty path.
+
 ## 0.1.0
 
 - First Charter: scope thresholds, the tier dial, delegation, vote budget, bans, reopen windows, silent ratification, protected rights.

@@ -276,6 +276,17 @@ fn request_reading_and_limits() {
     let big_head = format!("GET / HTTP/1.1\r\nX: {}\r\n\r\n", "a".repeat(MAX_HEAD));
     assert_eq!(status(big_head.as_bytes()), Some(431));
 
+    // A bare LF anywhere in the head is refused; one in the body is just body.
+    for raw in [
+        &b"GET /healthz HTTP/1.1\n\n"[..],
+        b"GET /healthz HTTP/1.1\r\nX: 1\n\r\n",
+        b"\nGET /healthz HTTP/1.1\r\n\r\n",
+    ] {
+        assert_eq!(status(raw), Some(400), "{}", String::from_utf8_lossy(raw));
+    }
+    let r = req(b"POST / HTTP/1.1\r\nContent-Length: 3\r\n\r\n{\n}").unwrap();
+    assert_eq!(r.body, b"{\n}");
+
     let keys = BTreeMap::new();
     let route = |m: &str, p: &str| {
         handle(
@@ -332,6 +343,41 @@ fn a_slow_client_gets_408_within_the_total_deadline() {
     let r = read_request(&mut drip, Duration::from_millis(100)).unwrap_err();
     assert_eq!(r.status, 408);
     assert!(started.elapsed() < Duration::from_secs(1));
+}
+
+/// A reader that hands out its data once and then stalls (times out), like an idle client.
+struct Stall<'a>(&'a [u8]);
+
+impl Read for Stall<'_> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        if self.0.is_empty() {
+            return Err(std::io::ErrorKind::TimedOut.into());
+        }
+        let n = self.0.len().min(buf.len());
+        buf[..n].copy_from_slice(&self.0[..n]);
+        self.0 = &self.0[n..];
+        Ok(n)
+    }
+}
+
+impl TimedRead for Stall<'_> {
+    fn set_timeout(&mut self, _left: Duration) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+#[test]
+fn an_lf_only_head_is_refused_on_sight_not_after_the_timeout() {
+    let r = read_request(
+        &mut Stall(b"GET /healthz HTTP/1.1\n\n"),
+        Duration::from_secs(5),
+    );
+    assert_eq!(r.unwrap_err().status, 400);
+    let r = read_request(
+        &mut Stall(b"GET /healthz HTTP/1.1\r\n"),
+        Duration::from_secs(5),
+    );
+    assert_eq!(r.unwrap_err().status, 408);
 }
 
 #[test]

@@ -105,8 +105,12 @@ start.
   challenge or context) or `malformed` (a presentation field that does not parse, such as the
   pseudonym).
 - Limits: head 8 KiB (`431`), body 64 KiB (`413`), `Content-Length` required (`411`),
-  `Transfer-Encoding` refused (`501`), the whole request within 5 s (`408`), 32 connections at
-  once (`503 busy`); every answer closes the connection.
+  `Transfer-Encoding` refused (`501`), a head line ending in a bare LF refused on sight (`400`),
+  the whole request within 5 s (`408`), 32 connections at once (`503 busy`); every answer
+  closes the connection. A client that opens a connection and never finishes its head holds a
+  slot for the full 5 s, so 32 of them delay every verification by that long (and Agora answers
+  `503 door_unavailable` after using the challenge up). That is why `d2-door serve` listens on
+  loopback only, with Agora as its one caller; never route it through Caddy.
 - No panics: `tests/no_panic.rs::random_http_input_never_panics` feeds random bytes as whole
   requests and as bodies, truncated and bit-flipped valid requests, odd `Content-Length` values
   and request lines, and values of every JSON type in every body and presentation field.

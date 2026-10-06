@@ -107,7 +107,9 @@ class Charter:
         """The jurisdiction and its ancestors, root first, by `parent_id`:
         `["lu", "lu-canton-esch-sur-alzette", "lu-commune-esch-sur-alzette"]`. Door writes a
         resident's jurisdiction as these ids joined by `.`, so a verifier compares paths level
-        by level."""
+        by level. A non-string id is a TypeError, never an empty path."""
+        if not isinstance(jurisdiction_id, str):
+            raise TypeError("jurisdiction_id must be a string")
         path: list[str] = []
         current: Any = jurisdiction_id
         while current is not None:

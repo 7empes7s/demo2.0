@@ -70,6 +70,11 @@ CREATE TABLE IF NOT EXISTS upvotes (
   created_at TEXT NOT NULL,
   PRIMARY KEY (idea_id, voter_nym)
 );
+-- Settings the database must keep across restarts: `door_epoch`, the Door epoch it accepts.
+CREATE TABLE IF NOT EXISTS meta (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
 CREATE TRIGGER IF NOT EXISTS ideas_append_only_u BEFORE UPDATE ON ideas
   BEGIN SELECT RAISE(ABORT, 'agora is append-only'); END;
 CREATE TRIGGER IF NOT EXISTS ideas_append_only_d BEFORE DELETE ON ideas
@@ -183,6 +188,25 @@ class Agora:
 
     def close(self) -> None:
         self._db.close()
+
+    def accept_door_epoch(self, epoch: int, new: bool = False) -> None:
+        """Record the Door epoch this database accepts. A different epoch gives every holder new
+        nyms, so they could upvote the same ideas again: refuse it unless `new` is set (the
+        operator's explicit `--new-epoch`), which then replaces the stored one."""
+        with self._lock:
+            row = self._db.execute("SELECT value FROM meta WHERE key = 'door_epoch'").fetchone()
+            if row is not None and row[0] != str(epoch) and not new:
+                raise AgoraError(
+                    "epoch_changed",
+                    f"this database accepts Door epoch {row[0]}, not {epoch}: a new epoch gives"
+                    " every holder new nyms, so they could upvote the same ideas again."
+                    " Start with --new-epoch to accept it.",
+                )
+            self._db.execute(
+                "INSERT INTO meta VALUES ('door_epoch', ?)"
+                " ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                (str(epoch),),
+            )
 
     # --- writes -------------------------------------------------------------------------------
 

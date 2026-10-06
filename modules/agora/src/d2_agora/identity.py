@@ -10,7 +10,8 @@ same context always gets the same nym, and nyms from different contexts cannot b
   per epoch, so one upvote per human per idea.
 - `KeyedNyms` is the development stand-in: it derives the nym from the caller's participant id
   with a server key. One upvote per nym, not per human: anyone who can reach the API can invent
-  participant ids. Development only.
+  participant ids. Development only (`d2-agora serve --dev-identity`).
+- `ReadOnly` takes no identity at all: every post and upvote is refused (`--read-only`).
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ import base64
 import hashlib
 import hmac
 import json
+import logging
 import os
 import re
 import secrets
@@ -38,6 +40,7 @@ KEY_FILE_ENV = "AGORA_NYM_KEY_FILE"
 MIN_KEY_BYTES = 32
 # Public and therefore worthless as a secret: only for `d2-agora serve --dev-insecure-key`.
 DEV_KEY = b"d2-agora development key, never use outside a laptop"
+log = logging.getLogger("d2_agora")
 
 
 class IdentityError(ValueError):
@@ -95,7 +98,7 @@ class KeyedNyms:
     `from_env`.
     """
 
-    kind = "keyed"
+    kind = "dev"
 
     def __init__(self, key: bytes) -> None:
         if not isinstance(key, bytes) or len(key) < MIN_KEY_BYTES:
@@ -105,10 +108,13 @@ class KeyedNyms:
     @classmethod
     def from_file(cls, path: str | Path) -> KeyedNyms:
         try:
-            key = Path(path).read_bytes().strip()
+            key = Path(path).read_bytes()
         except OSError as exc:
             raise MissingKey(f"cannot read the nym key file: {exc.strerror}") from exc
-        return cls(key)
+        # The key is raw bytes: only the one newline an editor or `echo` adds is dropped, so a
+        # random key that starts or ends with a whitespace byte keeps it. A base64 text key
+        # (ops/deploy/README.md) is used as it stands, its characters as the key bytes.
+        return cls(key.removesuffix(b"\n"))
 
     @classmethod
     def from_env(cls) -> KeyedNyms:
@@ -126,13 +132,26 @@ class KeyedNyms:
         return "nym-" + base64.b32encode(mac.digest()).decode().lower()[:26]
 
 
+class ReadOnly:
+    """No identity: Agora serves reads, and every post and upvote is refused (403 `read_only`).
+    For a deployment that has no Door yet (`d2-agora serve --read-only`)."""
+
+    kind = "none"
+
+    def nym(self, participant: Any, context_id: str) -> str:
+        raise IdentityError("this Agora is read only", "read_only", 403)
+
+
 class Challenges:
     """One-time challenges for Door presentations: random 32 bytes, lowercase hex, valid for
     `ttl` seconds and usable once. A presentation signs the challenge into its proof, so a
     captured presentation cannot be replayed once its challenge is used or expired.
 
-    In memory, bounded to `max_outstanding` (oldest dropped first); a restart drops them all,
-    which only makes clients ask again.
+    In memory, bounded to `max_outstanding`. When full, expired challenges are dropped and, if
+    it is still full, `issue` refuses (503 `challenge_capacity`) rather than dropping a live
+    challenge, so a flood of `GET /challenge` cannot cancel challenges already handed out. It
+    can still use up the capacity for new ones: rate-limit `GET /challenge` per client at the
+    edge. A restart drops them all, which only makes clients ask again.
     """
 
     def __init__(
@@ -153,8 +172,10 @@ class Challenges:
         with self._lock:
             while self._open and next(iter(self._open.values())) <= now:
                 self._open.popitem(last=False)
-            while len(self._open) >= self._max:
-                self._open.popitem(last=False)
+            if len(self._open) >= self._max:
+                raise Unavailable(
+                    "too many open challenges: try again shortly", "challenge_capacity"
+                )
             self._open[challenge] = now + self.ttl
         return {"challenge": challenge, "expires_in": int(self.ttl)}
 
@@ -264,10 +285,17 @@ class DoorNyms:
         except (OSError, ValueError) as exc:  # unreachable, timeout, not JSON
             raise Unavailable("the Door verifier is unavailable") from exc
         code = answer.get("code") if isinstance(answer, dict) else None
-        if status in (400, 422) and isinstance(code, str) and re.fullmatch(r"[a-z_]{1,40}", code):
+        valid_code = isinstance(code, str) and re.fullmatch(r"[a-z_]{1,40}", code)
+        if status == 400 and code == "malformed":
+            # The presentation itself does not parse: the client's fault.
+            raise InvalidParticipant("Door refused the presentation: malformed", code)
+        if status == 400:
+            # Door found the rest of Agora's request bad (say a Charter path deeper than Door's
+            # levels): a server problem, not the user's. Log Door's code only, nothing else.
+            log.error("Door answered 400 %s to Agora's request", code if valid_code else "?")
+            raise Unavailable("the Door verifier is unavailable")
+        if status == 422 and valid_code:
             # Door's own reason: context_mismatch, challenge_mismatch, invalid_proof, malformed...
-            if status == 400:
-                raise InvalidParticipant(f"Door refused the presentation: {code}", code)
             raise Refused(f"Door refused the presentation: {code}", code)
         if status != 200 or not isinstance(answer, dict):
             raise Unavailable("the Door verifier is unavailable")

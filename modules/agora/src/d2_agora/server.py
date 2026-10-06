@@ -4,7 +4,7 @@
 opaque id with the development stand-in (`KeyedNyms`).
 
 GET  /challenge            -> 200 {challenge, expires_in}: one-time, for a Door presentation
-                              (404 without Door)
+                              (404 without Door, 503 challenge_capacity when too many are open)
 POST /ideas                {participant, jurisdiction_id, topic_ids?, title, text}
                            -> 201 Idea (spec/schemas/idea.schema.json)
 POST /ideas/<id>/upvote    {participant} -> 201 {idea_id, upvoted: true}
@@ -12,7 +12,8 @@ POST /ideas/<id>/upvote    {participant} -> 201 {idea_id, upvoted: true}
 GET  /ideas/<id>           -> 200 Idea
 GET  /queue?jurisdiction=<id>&jurisdiction=<id>&limit=<n>
                            -> 200 {charter_version, ideas: [Idea, ...]} in queue order
-GET  /healthz              -> {ok, ideas, identity: "door" | "keyed"}
+GET  /healthz              -> {ok, ideas, identity: "door" | "dev" | "none"}
+                              ("none": --read-only, every POST is 403 read_only)
 
 Errors are {error, code}: 400 bad input, 403 presentation refused (not adult, jurisdiction not
 covered, Door's proof checks), 404 unknown idea or path, 408 body too slow, 409 duplicate upvote,
@@ -30,6 +31,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
 from .agora import Agora, AgoraError
+from .identity import IdentityError
 
 # A maximum-length post (5 languages x (200 + 4,000) characters) with every character sent as a
 # JSON \u escape of a surrogate pair is 21,000 x 12 = 252,000 bytes, plus under 3 KB for the
@@ -152,7 +154,10 @@ def make_server(
                     issue = getattr(agora.nyms, "challenge", None)
                     if issue is None:
                         return self._error(404, "not_found", "Door is not configured")
-                    return self._json(200, issue())
+                    try:
+                        return self._json(200, issue())
+                    except IdentityError as exc:  # full: 503 challenge_capacity
+                        return self._error(exc.status, exc.code, str(exc))
                 if url.path == "/queue":
                     q = parse_qs(url.query)
                     raw_limit = q.get("limit", ["100"])[-1]
@@ -174,6 +179,9 @@ def make_server(
             upvote = _UPVOTE.fullmatch(path)
             if path != "/ideas" and not upvote:
                 return self._error(404, "not_found", "not found")
+            if getattr(agora.nyms, "kind", None) == "none":
+                self.close_connection = True  # the body is not read
+                return self._error(403, "read_only", "this Agora is read only")
             if self.headers.get("Content-Length") is None:
                 return self._error(411, "length_required", "Content-Length is required")
             try:

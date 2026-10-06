@@ -27,6 +27,7 @@ from .identity import (
     KeyedNyms,
     MissingKey,
     NymSource,
+    ReadOnly,
 )
 
 __all__ = [
@@ -40,6 +41,7 @@ __all__ = [
     "KeyedNyms",
     "MissingKey",
     "NymSource",
+    "ReadOnly",
     "UnknownIdea",
     "rank_key",
 ]

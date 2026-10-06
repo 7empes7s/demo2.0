@@ -12,8 +12,10 @@
 //! ```
 //!
 //! Limits: head 8 KiB (431), body 64 KiB (413), `Content-Length` required (411),
-//! `Transfer-Encoding` refused (501), the whole request within the timeout (408), at most
-//! `max_connections` at once (503). Nothing here panics on any input: [`read_request`] and
+//! `Transfer-Encoding` refused (501), a line ending in a bare `\n` refused on sight (400), the
+//! whole request within the timeout (408), at most `max_connections` at once (503). A client
+//! that never finishes its head still holds a slot until the timeout, so `max_connections` such
+//! clients delay everyone else for that long: serve on loopback only, behind the one caller. Nothing here panics on any input: [`read_request`] and
 //! [`handle`] are pure enough to be swept with random bytes (`tests/no_panic.rs`).
 //!
 //! The verifier is told which epoch to check against (`epoch` in the request) instead of taking
@@ -137,7 +139,18 @@ pub fn read_request<S: TimedRead>(stream: &mut S, timeout: Duration) -> Result<R
 
     // Head.
     let head_end = loop {
-        if let Some(i) = find(&buf, b"\r\n\r\n") {
+        let end = find(&buf, b"\r\n\r\n");
+        if has_bare_lf(
+            buf.get(..end.map_or(buf.len(), |i| i + 4))
+                .unwrap_or_default(),
+        ) {
+            return Err(Response::error(
+                400,
+                "invalid_request",
+                "lines must end in CRLF",
+            ));
+        }
+        if let Some(i) = end {
             break i;
         }
         if buf.len() > MAX_HEAD {
@@ -269,6 +282,13 @@ fn read_some<S: TimedRead>(
             other => return other,
         }
     }
+}
+
+/// A `\n` not preceded by `\r`: an LF-only client would otherwise wait for the timeout.
+fn has_bare_lf(head: &[u8]) -> bool {
+    head.iter()
+        .enumerate()
+        .any(|(i, &b)| b == b'\n' && (i == 0 || head.get(i - 1) != Some(&b'\r')))
 }
 
 fn find(haystack: &[u8], needle: &[u8]) -> Option<usize> {
@@ -414,7 +434,11 @@ pub fn serve(
     let keys = Arc::new(keys);
     let active = Arc::new(AtomicUsize::new(0));
     for stream in listener.incoming() {
-        let Ok(mut stream) = stream else { continue };
+        let Ok(mut stream) = stream else {
+            // EMFILE, ENFILE, ENOMEM: do not spin at full CPU while they last.
+            std::thread::sleep(Duration::from_millis(50));
+            continue;
+        };
         if active.fetch_add(1, Ordering::SeqCst) >= max_connections {
             active.fetch_sub(1, Ordering::SeqCst);
             // Answer without reading, from the accept loop: no blocking reads here.

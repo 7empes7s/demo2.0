@@ -156,3 +156,10 @@ def test_jurisdiction_path_refuses_a_cycle_and_a_missing_parent():
     with pytest.raises(CharterError) as e:
         c.jurisdiction_path("orphan")
     assert e.value.code == "unknown_jurisdiction"
+
+
+@pytest.mark.parametrize("bad", [None, 5, b"lu", ["lu"]])
+def test_jurisdiction_path_refuses_a_non_string(bad):
+    # An empty path would cover every jurisdiction (levels[:0] == []), so never return one.
+    with pytest.raises(TypeError):
+        Charter().jurisdiction_path(bad)

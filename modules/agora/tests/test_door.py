@@ -9,8 +9,10 @@ HTTP. The binary is built with cargo if needed (tools/dev-setup.sh installs the 
 from __future__ import annotations
 
 import base64
+import functools
 import hashlib
 import json
+import logging
 import os
 import shutil
 import socket
@@ -35,6 +37,7 @@ ESCH_PATH = ".".join(CHARTER.jurisdiction_path(ESCH))
 CITY_PATH = ".".join(CHARTER.jurisdiction_path(CITY))
 
 
+@functools.cache  # one build per test session
 def _door_binary() -> Path:
     cargo = shutil.which("cargo") or str(Path.home() / ".cargo" / "bin" / "cargo")
     build = subprocess.run(
@@ -45,7 +48,8 @@ def _door_binary() -> Path:
         timeout=900,
     )
     assert build.returncode == 0, f"cargo build -p d2-door failed:\n{build.stderr}"
-    target = Path(os.environ.get("CARGO_TARGET_DIR", ROOT / "target"))
+    # cargo resolves a relative CARGO_TARGET_DIR against its cwd (ROOT), so do the same here.
+    target = ROOT / os.environ.get("CARGO_TARGET_DIR", "target")
     return target / "debug" / "d2-door"
 
 
@@ -350,6 +354,7 @@ def test_door_down_writes_fail_closed_reads_work(door, agora_with):
         (200, ["not", "an", "object"]),
         (404, {"error": "not found", "code": "not_found"}),
         (422, {"code": "Not A Code"}),
+        (400, {"code": "Not A Code"}),
         OSError("connection refused"),
         ValueError("not JSON"),
     ],
@@ -367,6 +372,29 @@ def test_door_answering_nonsense_is_unavailable(answer):
     with pytest.raises(IdentityError) as err:
         nyms.nym({"challenge": challenges.issue()["challenge"]}, ctx(ESCH))
     assert (err.value.status, err.value.code) == (503, "door_unavailable")
+
+
+@pytest.mark.parametrize("code", ["invalid_body", "something_new"])
+def test_door_finding_agoras_request_bad_is_a_server_problem(code, caplog):
+    # Door's 400 (other than a malformed presentation) means Agora sent something Door cannot
+    # take, such as a Charter path deeper than Door's levels: 503 for the user, logged here.
+    challenges = Challenges()
+    nyms = DoorNyms(
+        "http://127.0.0.1:1",
+        epoch=1,
+        charter=CHARTER,
+        challenges=challenges,
+        post=lambda url, body, timeout: (400, {"error": "secret detail", "code": code}),
+    )
+    presentation = {"challenge": challenges.issue()["challenge"], "pseudonym": "ab" * 48}
+    with caplog.at_level(logging.ERROR, logger="d2_agora"):
+        with pytest.raises(IdentityError) as err:
+            nyms.nym(presentation, ctx(ESCH))
+    assert (err.value.status, err.value.code) == (503, "door_unavailable")
+    assert [r.getMessage() for r in caplog.records] == [
+        f"Door answered 400 {code} to Agora's request"
+    ]
+    assert presentation["pseudonym"] not in caplog.text and "secret detail" not in caplog.text
 
 
 def test_door_nyms_asks_door_for_the_idea_depth_and_the_one_epoch():
@@ -414,14 +442,90 @@ def test_challenges_are_single_use_short_lived_and_bounded():
     with pytest.raises(IdentityError):
         c.consume(late)
 
-    issued = [c.issue()["challenge"] for _ in range(4)]  # one over the cap: oldest dropped
+    issued = [c.issue()["challenge"] for _ in range(3)]  # `late` expired: pruned, not counted
+    with pytest.raises(IdentityError) as err:  # full: refuse, never drop a live challenge
+        c.issue()
+    assert (err.value.status, err.value.code) == (503, "challenge_capacity")
+    assert [c.consume(x) for x in issued] == issued
+    now[0] += 1
+    more = [c.issue()["challenge"] for _ in range(3)]
+    now[0] += 120  # all expired: room again
+    c.issue()
     with pytest.raises(IdentityError):
-        c.consume(issued[0])
-    assert [c.consume(x) for x in issued[1:]] == issued[1:]
+        c.consume(more[0])
     for bad in (None, 7, "", "zz", "AB" * 32, "a" * 129):
         with pytest.raises(IdentityError) as err:
             c.consume(bad)
         assert err.value.code == "unknown_challenge"
+
+
+def test_a_flood_of_challenges_cannot_cancel_a_legitimate_one():
+    c = Challenges(max_outstanding=1000)
+    mine = c.issue()["challenge"]
+    refused = 0
+    for _ in range(5000):
+        try:
+            c.issue()
+        except IdentityError as exc:
+            assert exc.code == "challenge_capacity"
+            refused += 1
+    assert refused == 5000 - 999
+    assert c.consume(mine) == mine
+
+
+def test_challenge_capacity_over_http(door, tmp_path):
+    agora = Agora(tmp_path / "agora.db", nyms=DoorNyms(door.url, epoch=1))
+    agora.nyms.challenges = Challenges(max_outstanding=2)
+    server = make_server(agora, port=0)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    api = _client(f"http://127.0.0.1:{server.server_address[1]}")
+    try:
+        mine = challenge(api)
+        challenge(api)
+        status, err = api("/challenge")
+        assert (status, err["code"]) == (503, "challenge_capacity")
+        p = door.present("alice", ctx(ESCH), mine)
+        assert api("/ideas", idea(ESCH, p))[0] == 201
+    finally:
+        server.shutdown()
+        server.server_close()
+        agora.close()
+
+
+# --- epoch ------------------------------------------------------------------------------------
+
+
+def test_the_database_keeps_its_door_epoch(tmp_path):
+    db = tmp_path / "agora.db"
+    agora = Agora(db, nyms=DoorNyms("http://127.0.0.1:1", epoch=1, charter=CHARTER))
+    agora.accept_door_epoch(1)
+    agora.accept_door_epoch(1)
+    agora.close()
+    agora = Agora(db, nyms=DoorNyms("http://127.0.0.1:1", epoch=2, charter=CHARTER))
+    with pytest.raises(ValueError) as err:
+        agora.accept_door_epoch(2)
+    assert err.value.code == "epoch_changed"
+    agora.accept_door_epoch(2, new=True)
+    agora.accept_door_epoch(2)
+    with pytest.raises(ValueError):
+        agora.accept_door_epoch(1)
+    agora.close()
+
+
+def test_cli_refuses_another_door_epoch_without_new_epoch(tmp_path, monkeypatch, capsys):
+    db = tmp_path / "agora.db"
+    agora = Agora(db, nyms=DoorNyms("http://127.0.0.1:1", epoch=1, charter=CHARTER))
+    agora.accept_door_epoch(1)
+    agora.close()
+    monkeypatch.setenv("DOOR_URL", "http://127.0.0.1:1")
+    assert main(["serve", "--db", str(db), "--port", "0", "--door-epoch", "2"]) == 2
+    assert "--new-epoch" in capsys.readouterr().err
+    # With --new-epoch the epoch is stored; stop at serving (a bad host fails after the check).
+    args = ["serve", "--db", str(db), "--door-epoch", "2", "--new-epoch", "--host", "256.0.0.1"]
+    assert main(args) == 2
+    agora = Agora(db, nyms=DoorNyms("http://127.0.0.1:1", epoch=2, charter=CHARTER))
+    agora.accept_door_epoch(2)  # now the stored one
+    agora.close()
 
 
 # --- CLI ----------------------------------------------------------------------------------------
@@ -433,8 +537,11 @@ def test_cli_door_configuration(tmp_path, monkeypatch, capsys):
     monkeypatch.delenv("DOOR_EPOCH", raising=False)
     assert main(["serve", "--db", db, "--port", "0"]) == 2
     assert "DOOR_EPOCH" in capsys.readouterr().err
-    assert main(["serve", "--db", db, "--door-epoch", "1", "--dev-insecure-key"]) == 2
+    args = ["serve", "--db", db, "--door-epoch", "1", "--dev-identity", "--dev-insecure-key"]
+    assert main(args) == 2
     assert "Door is configured" in capsys.readouterr().err
+    assert main(["serve", "--db", db, "--door-epoch", "1", "--dev-insecure-key"]) == 2
+    assert "--dev-identity" in capsys.readouterr().err
     assert main(["serve", "--db", db, "--door-epoch", "x"]) == 2
     monkeypatch.setenv("DOOR_URL", "file:///etc/passwd")
     assert main(["serve", "--db", db, "--door-epoch", "1"]) == 2

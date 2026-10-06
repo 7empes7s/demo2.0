@@ -5,7 +5,12 @@
 - `DoorNyms`: posts and upvotes take a Door presentation (context `agora:<jurisdiction>`) checked by the Door verifier service (`DOOR_URL`, one accepted epoch `DOOR_EPOCH`); the nym is Door's per-context pseudonym. Requires `adult` true and a disclosed jurisdiction path that starts with the idea's, so nobody files or upvotes outside the areas their credential names. Raw participant ids are refused when Door is configured. Door unreachable or answering nonsense: writes fail closed with `503 door_unavailable`, reads are unaffected.
 - `GET /challenge`: one-time challenges (32 bytes, 120 s, single use) so a presentation cannot be replayed.
 - `403` for refused presentations (`not_adult`, `jurisdiction_not_covered`, and Door's `context_mismatch`, `challenge_mismatch`, `epoch_mismatch`, `missing_disclosure`, `invalid_proof`); `/healthz` reports `identity`.
-- `KeyedNyms` stays as the development stand-in; `serve` refuses a nym key option together with `DOOR_URL`.
+- `KeyedNyms` stays as the development stand-in, only with `serve --dev-identity` (the key options are refused without it, and `--dev-identity` is refused together with `DOOR_URL`); `/healthz` reports it as `dev`.
+- `serve --read-only`: no identity, every post and upvote refused (`403 read_only`), `/healthz` `identity: "none"`. The Mulinux unit uses it until Door is deployed.
+- `GET /challenge` refuses with `503 challenge_capacity` when full instead of dropping the oldest live challenge (expired ones are pruned first), so a flood cannot cancel challenges already handed out.
+- The database stores the accepted Door epoch; `serve` refuses another `DOOR_EPOCH` unless `--new-epoch` is given.
+- Door's `400` (other than `malformed`) is Agora's own problem: `503 door_unavailable` and a log line with Door's code only.
+- The nym key file is read as raw bytes with at most one trailing newline dropped (it was stripped, so a random key with whitespace bytes at its ends lost them).
 
 ## 0.1.0 (unreleased)
 

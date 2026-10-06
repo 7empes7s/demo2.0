@@ -6,7 +6,7 @@
  *
  * Every idea must pass spec/schemas/idea.schema.json before it is passed on, and the proposer's
  * pseudonym is dropped here, so it never reaches a browser. Posting and supporting ideas are not
- * proxied: Agora's identity is a stand-in until secure sign-in (Door) exists.
+ * proxied: Agora runs read only (`--read-only`) until secure sign-in (Door) is deployed.
  */
 
 import ideaSchema from "../../../spec/schemas/idea.schema.json" with { type: "json" };
