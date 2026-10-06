@@ -59,7 +59,7 @@
   const history = $derived(historyOf(item));
 </script>
 
-<article class="file">
+<article class="file-page">
   <button class="back" onclick={onback}>← {backLabel}</button>
 
   <header class="head">
@@ -193,13 +193,13 @@
 </article>
 
 <style>
-  .file { display: grid; gap: 24px; padding-top: 4px; }
+  .file-page { display: grid; gap: 24px; padding-top: 4px; }
   .back {
     justify-self: start;
     background: none;
     border: 0;
     padding: 4px 0;
-    color: var(--accent-fg);
+    color: var(--fg);
     font-weight: 600;
     cursor: pointer;
   }
@@ -212,7 +212,7 @@
   .facts div { display: flex; gap: 6px; align-items: baseline; }
   .facts dd { margin: 0; }
   .links { margin: 0; }
-  .next { display: grid; gap: 6px; border-left: 3px solid var(--accent); }
+  .next { display: grid; gap: 6px; box-shadow: 7px 7px 0 0 var(--backing-navy), 7px 7px 0 var(--rule) var(--backing); }
   .next p { margin: 0; }
   .when { font-weight: 600; }
   .steps { margin: 4px 0 0; padding-left: 1.2rem; color: var(--muted); }
@@ -220,14 +220,14 @@
   .votes p { margin: 0; }
   .parties { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 0.92rem; }
   .parties li { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  details summary { cursor: pointer; color: var(--accent-fg); font-weight: 600; font-size: 0.92rem; }
+  details summary { cursor: pointer; color: var(--fg); font-weight: 600; font-size: 0.92rem; }
   details[open] summary { margin-bottom: 6px; }
   .never {
     margin: 0;
     font-size: 0.88rem;
-    color: var(--muted);
-    border-top: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
+    color: var(--fg);
+    border-top: var(--rule) solid var(--line);
+    border-bottom: var(--rule) solid var(--line);
     padding-block: 10px;
   }
   .sub { font-size: 1.5rem; margin-bottom: 4px; }

@@ -24,9 +24,6 @@ export const prefs = {
   setLang: (lang: string) => write("d2.lang", lang),
   theme: () => read("d2.theme") as "light" | "dark" | null,
   setTheme: (theme: "light" | "dark" | null) => write("d2.theme", theme),
-  /** The look flag (see `look.ts`): "affichage" or nothing. */
-  look: () => read("d2.look"),
-  setLook: (look: string | null) => write("d2.look", look),
   /** A resident's stance stays on their device and is never sent anywhere on its own. */
   stance: (itemId: string) => read(`d2.stance.${itemId}`) as Position | null,
   setStance: (itemId: string, stance: Position | null) => write(`d2.stance.${itemId}`, stance),

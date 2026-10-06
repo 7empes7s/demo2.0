@@ -36,5 +36,7 @@ of concept or a publication.
 
 ## Implementation plan
 
-Behind a flag in `apps/citizen`, three PRs: tokens and type, sheets and marks,
-motion. Not started as of the lock-in.
+Landed in `apps/citizen` on 2026-10-06 in three PRs behind a flag (tokens and type #34,
+sheets and marks #35, motion #36), then made the only look with the flag removed and a
+night mode (navy wall, paper sheets) in the PR after. The app's `src/tokens.css` is now the
+source of the material; this folder stays the record of the decision.

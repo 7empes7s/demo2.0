@@ -176,27 +176,25 @@
   .head h2:focus { outline: none; }
   .head p { margin: 0; }
   .intro { max-width: 60ch; }
-  .setup { display: grid; gap: 16px; border-color: var(--accent); }
+  .setup { display: grid; gap: 16px; box-shadow: 7px 7px 0 0 var(--accent), 7px 7px 0 var(--rule) var(--backing); }
   .setup h3 { font-size: 1.5rem; }
   .setup-grid { display: grid; gap: 16px; }
   .field { display: grid; gap: 6px; align-content: start; margin: 0; padding: 0; border: 0; min-width: 0; }
   select {
     width: 100%;
-    background: var(--surface-2);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
+    background: var(--surface);
+    border: var(--rule) solid var(--line);
     padding: 0.6rem 0.8rem;
   }
   .hint { margin: 0; font-size: 0.85rem; }
   .topics { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip { padding: 0.3rem 0.8rem; font-size: 0.85rem; font-weight: 500; max-width: 100%; white-space: normal; text-align: left; }
-  .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .chip { max-width: 100%; white-space: normal; text-align: left; }
   .chip[aria-pressed="true"]::before { content: "✓ "; }
   .private {
     margin: 0;
     padding: 0.55rem 0.8rem;
-    border-radius: var(--radius);
-    background: var(--surface-2);
+    border: var(--rule) solid var(--line);
+    background: var(--surface);
     font-size: 0.9rem;
   }
   .private.small { font-size: 0.82rem; flex-basis: 100%; }
@@ -208,7 +206,7 @@
   .group-title { font-size: 1.05rem; font-weight: 700; display: flex; gap: 8px; align-items: baseline; margin: 0; }
   .count { color: var(--muted); font-weight: 400; }
   .small { font-size: 0.86rem; margin: 0; }
-  .empty { margin: 0; padding: 12px 14px; border: 1px dashed var(--line); border-radius: var(--radius); color: var(--muted); font-size: 0.92rem; }
+  .empty { margin: 0; padding: 12px 14px; border: var(--rule) dashed var(--line); color: var(--muted); font-size: 0.92rem; }
   .others summary { cursor: pointer; list-style-position: outside; }
   .others[open] summary { margin-bottom: 8px; }
   .entries { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
@@ -217,14 +215,13 @@
     gap: 8px;
     height: 100%;
     padding: 14px 16px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
+    border: var(--rule) solid var(--line);
     background: var(--surface);
     color: var(--fg);
     text-decoration: none;
-    transition: border-color 120ms;
+    transition: box-shadow 120ms;
   }
-  .entry:hover { border-color: var(--accent); }
+  .entry:hover { box-shadow: 5px 5px 0 0 var(--accent), 5px 5px 0 var(--rule) var(--backing); }
   .meta { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
   .title {
     font-weight: 600;
@@ -237,13 +234,13 @@
     overflow-wrap: anywhere;
   }
   .when { font-size: 0.85rem; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; align-self: end; }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+  .dot { width: 8px; height: 8px; border: 2px solid var(--line); background: var(--accent); flex: none; }
   .tags { margin-left: auto; display: flex; gap: 6px; }
-  .tag { flex: none; padding: 0.05rem 0.55rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
-  .topic { background: var(--surface-2); color: var(--accent-fg); }
-  .understood { background: var(--green-bg); color: var(--green); }
+  .tag { flex: none; padding: 0 6px; border: 2px solid var(--line); font: 700 0.75rem/1.5 var(--serif); text-transform: uppercase; letter-spacing: 0.02em; }
+  .topic { background: var(--surface-2); color: var(--fg); }
+  .understood { background: var(--accent); color: var(--accent-ink); }
   .understood::before { content: "✓ "; }
-  .foot { display: grid; gap: 8px; justify-items: start; border-top: 1px solid var(--line); padding-top: 16px; }
+  .foot { display: grid; gap: 8px; justify-items: start; border-top: var(--rule) solid var(--line); padding-top: 16px; }
   .tech summary { cursor: pointer; }
   .tech p { margin: 6px 0 0; color: var(--muted); }
 

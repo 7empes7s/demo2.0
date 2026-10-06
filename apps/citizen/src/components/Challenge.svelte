@@ -134,20 +134,19 @@
   .sub { font-size: 1.5rem; }
   .stances { display: flex; flex-wrap: wrap; gap: 8px; }
   .small { font-size: 0.88rem; margin: 0; }
-  .test { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 14px; justify-items: start; }
+  .test { display: grid; gap: 10px; border-top: var(--rule) solid var(--line); padding-top: 14px; justify-items: start; }
   .test > * { max-width: 68ch; }
   .chat { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; width: 100%; }
-  .chat li { display: grid; gap: 4px; padding: 10px 12px; border-radius: 10px; }
+  .chat li { display: grid; gap: 4px; padding: 10px 12px; border: var(--rule) solid var(--line); }
   .chat li p { margin: 0; }
-  .chat li.assistant { background: var(--surface-2); }
-  .chat li.user { border: 1px solid var(--line); margin-left: 12%; }
+  .chat li.assistant { background: var(--surface); }
+  .chat li.user { background: var(--accent); color: var(--accent-ink); margin-left: 12%; }
   .reply { display: flex; gap: 8px; width: 100%; }
   .reply input {
     flex: 1;
     min-width: 0;
-    background: var(--bg);
-    border: 1px solid var(--line);
-    border-radius: 999px;
+    background: var(--surface);
+    border: var(--rule) solid var(--line);
     padding: 0.5rem 1rem;
   }
   .shown { margin: 0; padding-left: 1.1rem; display: grid; gap: 4px; }
