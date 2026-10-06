@@ -1,0 +1,118 @@
+{
+  "id": "lu.example.1:seed/1",
+  "item_id": "lu.example.1",
+  "questions": [
+    {
+      "id": "aim",
+      "origin": "seed",
+      "generator": "arena.seed/1",
+      "prompt": {
+        "en": "According to its title, what does this bill change?",
+        "fr": "D'après son titre, que modifie ce projet de loi ?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": {
+            "en": "The rules on library opening hours",
+            "fr": "Les règles sur les horaires des bibliothèques"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "en": "The rules on street lighting",
+            "fr": "Les règles sur l'éclairage public"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "en": "The rules on school holidays",
+            "fr": "Les règles sur les vacances scolaires"
+          }
+        }
+      ],
+      "answer": "a",
+      "evidence": [
+        {
+          "field": "title.fr",
+          "quote": "horaires d'ouverture des bibliothèques",
+          "url": "https://example.org/dossier/1"
+        }
+      ],
+      "correct": "a"
+    },
+    {
+      "id": "committee",
+      "origin": "seed",
+      "generator": "arena.seed/1",
+      "prompt": {
+        "en": "Which committee is handling this file?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": {
+            "fr": "Commission de la Culture"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "fr": "Commission des Finances"
+          }
+        }
+      ],
+      "answer": "a",
+      "evidence": [
+        {
+          "field": "committee",
+          "quote": "Commission de la Culture",
+          "url": "https://example.org/dossier/1"
+        }
+      ]
+    },
+    {
+      "id": "vote",
+      "origin": "seed",
+      "generator": "arena.seed/1",
+      "prompt": {
+        "en": "How did the council vote?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": {
+            "en": "10 in favour, 5 against"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "en": "5 in favour, 10 against"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "en": "15 in favour, none against"
+          }
+        }
+      ],
+      "answer": "a",
+      "evidence": [
+        {
+          "field": "votes.counts.Oui",
+          "quote": "10",
+          "url": "https://example.org/session/1"
+        },
+        {
+          "field": "votes.counts.Non",
+          "quote": "5",
+          "url": "https://example.org/session/1"
+        }
+      ]
+    }
+  ]
+}

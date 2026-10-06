@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { DocketItem } from "@democracy2/companion";
 
+  import { progressOf } from "../lib/arena.svelte.ts";
   import { groupFiles, kindOf, nextMeeting, placesOf, routeOf, stageOf, statusOf, titleOf, type Place, type TypeFilter } from "../lib/data.ts";
   import { date, t } from "../lib/ui.svelte.ts";
   import FileMeta from "./FileMeta.svelte";
@@ -69,6 +70,7 @@
               {:else}
                 <span class="muted">{statusOf(item) ?? t("status_unknown")}</span>
               {/if}
+              {#if progressOf(item.id)?.understood}<span class="understood" data-badge="understood">{t("arena_understood")}</span>{/if}
             </span>
           </a>
         </li>
@@ -142,5 +144,16 @@
     overflow: hidden;
   }
   .when { font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
+  .understood {
+    margin-left: auto;
+    flex: none;
+    padding: 0.05rem 0.55rem 0.05rem 0.45rem;
+    border-radius: 999px;
+    background: var(--green-bg);
+    color: var(--green);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  .understood::before { content: "✓ "; }
   .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
 </style>

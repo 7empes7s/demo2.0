@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Phase 2 acceptance tests. `tests/acceptance.rs` (Sybil): 1,000 enrolment attempts with 100 duplicates issue exactly 900 credentials, and other spellings of a person id never become a second credential. `tests/unlinkability.rs`: Door's full enrolment data plus every Agora presentation links no better than chance under byte-matching, similarity, `rid`, proof-reuse and cross-context attacks, and a planted leak is caught. Report in `spec/door/unlinkability.md`.
 - `d2-door serve`: the verifier as an HTTP service, standard library only, loopback by default. `POST /presentations/verify` with the caller's context, challenge and the one epoch it accepts; `GET /issuer-keys`; `GET /healthz`. Issuer keys from files, one per epoch. Head 8 KiB, body 64 KiB, 5 s per request, 32 connections; `Transfer-Encoding` refused.
 - A head line ending in a bare LF is refused on sight (`400`) instead of waiting for the timeout; the accept loop sleeps 50 ms after an `accept()` error instead of spinning.
 - No-panic sweep extended to the HTTP input (raw requests, bodies, every body and presentation field with every JSON type).

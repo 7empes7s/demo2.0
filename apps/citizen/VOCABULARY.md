@@ -18,6 +18,10 @@ Use one word per role, and use it everywhere: in the UI, the docs and the prompt
 | idea | proposal, petition, suggestion | What a resident posts on the Ideas page (Agora). "Proposal" is kept for the drafted plan an idea may become later. |
 | support (an idea), supporter | upvote, like, vote, sign | Supporting an idea puts it higher on the list. It is not a vote. |
 | reach (national, regional, local, small) | tier, scope, priority, importance | How many people an idea affects, from the Charter's population rule. It says nothing about whether the idea is good. |
+| questions (on what the text says) | quiz, test, exam, game | The Arena section on each file. It checks what the text says, never what the resident thinks. |
+| matches the text, the text says something else | correct, right, wrong, failed | An answer is judged only against the quoted passage. |
+| understood (a file) | passed, certified, badge, score | Shown when every answer matched the text once. Kept on the device only. |
+| the official text | source (in feedback), proof | The quoted passage under each answer. |
 | secure sign-in | Door, login, account, credential | What posting and supporting wait for. Name no product or protocol. |
 
-Never in the UI: recommend, should vote, best option, correct answer, raw ids (`lu.chd.8739`, idea ids, jurisdiction ids), pseudonyms (`nym-…`, never shown at all), model names, except in the small provenance line.
+Never in the UI: recommend, should vote, best option, correct answer, wrong answer, streak, leaderboard, raw ids (`lu.chd.8739`, idea ids, jurisdiction ids), pseudonyms (`nym-…`, never shown at all), model names, except in the small provenance line.
