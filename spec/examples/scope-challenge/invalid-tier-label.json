@@ -1,0 +1,31 @@
+{
+  "id": "01JBBBBBBBBBBBBBBBBBBBBBBA",
+  "idea_id": "01JAAAAAAAAAAAAAAAAAAAAAAB",
+  "challenger_nym": "example-nym-challenger-a",
+  "from_jurisdiction_id": "lu",
+  "from_tier": "national",
+  "proposed_jurisdiction_id": "lu-commune-esch-sur-alzette",
+  "proposed_tier": "local",
+  "opened_at": "2026-10-06T10:00:00.000000Z",
+  "deadline": "2026-10-13T10:00:00.000000Z",
+  "charter_version": "0.2.0",
+  "panel_size": 5,
+  "status": "open",
+  "panel": null,
+  "draw": {
+    "pool": [
+      "example-nym-a",
+      "example-nym-b",
+      "example-nym-c",
+      "example-nym-d",
+      "example-nym-e"
+    ],
+    "commitment": {
+      "version": "d2.lottery.draw/1",
+      "purpose": "scope-challenge"
+    },
+    "transcript": null
+  },
+  "outcome": null,
+  "scope_tier": "national"
+}

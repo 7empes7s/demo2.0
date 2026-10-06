@@ -8,7 +8,7 @@
 # architecture docs give no number. They need a human decision before any binding use.
 # Every other value is the default named in docs/architecture/.
 
-version: "0.1.0"
+version: "0.2.0"
 
 # Scope: a matter's tier comes from its affected population, never from a proposer's label.
 # A matter takes the first tier, from the top, whose min_population it reaches.
@@ -101,6 +101,13 @@ compensation:
 # Agora: upvote counts stay hidden for the first hours so early votes don't snowball.
 agora:
   upvote_hidden_hours: 24
+
+# ScopeChallenge: contesting an idea's tier. A Lottery panel of this size, drawn from the area's
+# participants, votes uphold or narrow; a majority of the panel decides at once. Only that
+# majority narrows: without it when the window closes, the tier stands.
+scope_challenge:
+  panel_size: 5 # placeholder: decision needed
+  decision_days: 7 # placeholder: decision needed
 
 # Arena: a pass-rate gap above this between age bands, languages or regions opens a redesign task.
 arena:

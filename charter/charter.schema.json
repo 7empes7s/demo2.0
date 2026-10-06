@@ -120,6 +120,15 @@
       "required": ["upvote_hidden_hours"],
       "additionalProperties": false
     },
+    "scope_challenge": {
+      "type": "object",
+      "properties": {
+        "panel_size": { "$ref": "#/$defs/positive_int" },
+        "decision_days": { "$ref": "#/$defs/positive_int" }
+      },
+      "required": ["panel_size", "decision_days"],
+      "additionalProperties": false
+    },
     "arena": {
       "type": "object",
       "properties": { "max_pass_rate_gap": { "$ref": "#/$defs/share" } },
@@ -182,6 +191,7 @@
     "eligibility",
     "compensation",
     "agora",
+    "scope_challenge",
     "arena",
     "watchtower",
     "treasury",

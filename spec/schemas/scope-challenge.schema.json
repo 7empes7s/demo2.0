@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://democracy2.dev/spec/scope-challenge.schema.json",
+  "title": "ScopeChallenge",
+  "description": "A challenge against an Agora idea's tier, as Agora serves it. Owned by Agora. The challenger names a narrower jurisdiction; a Lottery panel drawn from the area's participants votes uphold or narrow. When narrowed, Scope computes the new tier; nobody sets it.",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$", "description": "ULID." },
+    "idea_id": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "challenger_nym": {
+      "description": "The challenger's pseudonym in the idea's filed area, never a person.",
+      "type": "string",
+      "minLength": 1
+    },
+    "from_jurisdiction_id": { "type": "string", "minLength": 1 },
+    "from_tier": { "$ref": "#/$defs/tier" },
+    "proposed_jurisdiction_id": {
+      "description": "Strictly inside from_jurisdiction_id, with a lower tier: a challenge never widens.",
+      "type": "string",
+      "minLength": 1
+    },
+    "proposed_tier": { "$ref": "#/$defs/tier" },
+    "opened_at": { "type": "string", "format": "date-time" },
+    "deadline": {
+      "description": "opened_at plus Charter scope_challenge.decision_days. Only a majority of the drawn panel (floor(panel_size/2)+1) narrows, before or at the deadline; without one the tier stands.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "charter_version": { "type": "string", "minLength": 1 },
+    "panel_size": { "type": "integer", "minimum": 1 },
+    "status": { "enum": ["open", "upheld", "narrowed"] },
+    "panel": {
+      "description": "The drawn panel's pseudonyms; null until the committed drand round is out.",
+      "type": ["array", "null"],
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "draw": {
+      "description": "What anyone needs to reproduce the panel (spec/lottery/README.md): the pool, the commitment made when the challenge opened, and the transcript once drawn.",
+      "type": "object",
+      "properties": {
+        "pool": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "commitment": { "type": "object" },
+        "transcript": { "type": ["object", "null"] }
+      },
+      "required": ["pool", "commitment", "transcript"],
+      "additionalProperties": false
+    },
+    "outcome": {
+      "description": "null while open.",
+      "type": ["object", "null"],
+      "properties": {
+        "decided_by": { "enum": ["majority", "deadline"] },
+        "votes": {
+          "type": "object",
+          "properties": {
+            "uphold": { "type": "integer", "minimum": 0 },
+            "narrow": { "type": "integer", "minimum": 0 }
+          },
+          "required": ["uphold", "narrow"],
+          "additionalProperties": false
+        },
+        "jurisdiction_id": { "type": "string", "minLength": 1 },
+        "scope_tier": { "$ref": "#/$defs/tier" },
+        "charter_version": { "type": "string", "minLength": 1 },
+        "decided_at": { "type": "string", "format": "date-time" },
+        "reason": {
+          "description": "Why the tier stands although the panel voted to narrow (Scope could not tier the proposed jurisdiction); null otherwise.",
+          "type": ["string", "null"]
+        }
+      },
+      "required": ["decided_by", "votes", "jurisdiction_id", "scope_tier", "charter_version", "decided_at"],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "id",
+    "idea_id",
+    "challenger_nym",
+    "from_jurisdiction_id",
+    "from_tier",
+    "proposed_jurisdiction_id",
+    "proposed_tier",
+    "opened_at",
+    "deadline",
+    "charter_version",
+    "panel_size",
+    "status",
+    "panel",
+    "draw",
+    "outcome"
+  ],
+  "additionalProperties": false,
+  "$defs": { "tier": { "enum": ["national", "regional", "local", "minor"] } }
+}

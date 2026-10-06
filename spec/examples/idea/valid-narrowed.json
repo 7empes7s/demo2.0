@@ -1,0 +1,20 @@
+{
+  "id": "01JAAAAAAAAAAAAAAAAAAAAAAB",
+  "jurisdiction_id": "lu-commune-esch-sur-alzette",
+  "topic_ids": [],
+  "title": {
+    "fr": "Exemple de titre",
+    "en": "Example title"
+  },
+  "text": {
+    "fr": "Exemple de texte synthétique.",
+    "en": "Example synthetic text."
+  },
+  "proposer_nym": "example-nym-proposer-b",
+  "created_at": "2026-10-01T09:00:00Z",
+  "scope_tier": "local",
+  "charter_version": "0.2.0",
+  "upvote_count": 3,
+  "filed_jurisdiction_id": "lu",
+  "contested": false
+}
