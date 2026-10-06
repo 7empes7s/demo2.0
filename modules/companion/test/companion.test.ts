@@ -83,7 +83,7 @@ describe("explain", () => {
     expect(ghost.sources).toEqual([]);
     expect(link.verified).toBe(false);
     expect(out.verified_share).toBeCloseTo(1 / 2);
-    expect(out.provenance).toMatchObject({ model: "fake-1", item_id: ITEM.id, prompt_version: "companion-prompts/2" });
+    expect(out.provenance).toMatchObject({ model: "fake-1", item_id: ITEM.id, prompt_version: "companion-prompts/3" });
     expect(provider.requests[0].system).toContain("in English");
     expect(provider.requests[0].system).toContain("never recommend how to vote");
   });

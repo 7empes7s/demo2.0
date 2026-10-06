@@ -5,7 +5,7 @@
 
 import { LANG_NAMES, type Depth, type DocketItem, type Lang, type Position } from "./types.ts";
 
-export const PROMPT_VERSION = "companion-prompts/2";
+export const PROMPT_VERSION = "companion-prompts/3";
 
 /** What kind of public file this is, so the model never calls a council point a bill. */
 export function fileKind(item: DocketItem): string {
@@ -56,21 +56,26 @@ Only include arguments actually made in the sources. Maximum 12. If there are no
 Reply with JSON only: {"arguments": [{"stance": "...", "by": "...", "summary_en": "...", "source": 2, "quote": "..."}]}`;
 }
 
-export function challengeSystem(lang: Lang, position: Position, argumentList: string): string {
+export function challengeSystem(lang: Lang, position: Position, argumentList: string, commonsSuffices = false): string {
   const goal =
     position === "unsure"
       ? "The user is unsure. Give the strongest case on each side, equally strong and equally long."
       : `The user leans ${position === "for" ? "in favour of" : "against"} this file. Make the strongest honest case for the other side, so they can test their view. Push exactly as hard as you would if they had landed on the opposite side.`;
+  const extra = commonsSuffices
+    ? 'The listed arguments are enough: do not add points of your own, and leave "new_arguments" empty.'
+    : 'If the list has too little on the other side, you may add up to 3 points of your own in "new_arguments", one sentence each. They are shown to the user labelled as written by you, not taken from a public source, so never present them as anyone\'s position.';
   return `${NEUTRALITY}
 
 Task: be a respectful devil's advocate, in ${LANG_NAMES[lang]}. ${goal}
-Build your reply from the listed arguments made by real institutions. You may rephrase them and connect them to the user's message, but you never invent a new position. If no listed argument fits, say so plainly and point to what the sources leave open.
+Build your reply from the listed arguments first. Ids starting with "c" come from Commons, the public library of arguments real people and groups made; use them before any other. An entry marked "position only" says who took that side, not why: never invent reasons for them. You may rephrase listed arguments and connect them to the user's message, but you never attribute a new position to anyone.
+${extra}
+If nothing fits, say so plainly and point to what the sources leave open.
 End by asking the user one short question that helps them think further. Never tell them what to conclude.
 
 Listed arguments:
 ${argumentList}
 
-Reply with JSON only: {"reply": "your message, 60 to 180 words", "argument_ids": ["a1"], "sources": [2]}`;
+Reply with JSON only: {"reply": "your message, 60 to 180 words", "argument_ids": ["c1"], "sources": [2], "new_arguments": []}`;
 }
 
 export function claimSystem(lang: Lang): string {

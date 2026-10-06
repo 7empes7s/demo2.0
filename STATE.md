@@ -2,6 +2,11 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-06: Commons seeded from Esch, Companion draws from it
+
+- Done: `d2_commons` 0.2.0 ingests Esch council groups' recorded votes (from a Docket snapshot) and resident proposals on participation.esch.lu into spec Arguments (new optional `kind`, `attribution`, `source_url`), with no person named and contact details removed; `seed/esch.json` (14 arguments from recorded fixtures); read API `GET /matters/{id}/arguments` and CLI `d2-commons`. Companion's devil's advocate reads Commons over HTTP (`COMMONS_URL`) first, returns each shown argument with origin and link, labels model-written points, and drops them when Commons has 2 or more on the other side. Fixture metric: 100% of the 18 arguments shown over 9 covered turns came from Commons (bar: 80%).
+- Next: live ingest from a session that can reach participation.esch.lu and workflow.esch.lu (this one got 403 from the proxy), so the seed covers every voted point, not one; read full proposal text from each proposal page (the project page shows only the start); reasons, not only positions, for council points (minutes or rapports, once a privacy rule for names in PDFs exists); a `civic-commons` systemd unit and `COMMONS_URL` on Mulinux; `POST /arguments` and ratings with Door; measure the 80% bar on live turns, not scripted ones.
+
 ## 2026-10-05: Phase 2, Lottery v1
 
 - Done: `modules/lottery` (pool Merkle root, commitments to a drand round at least an hour ahead, full BLS beacon verification with injectable fetch, stratified draw with replacements, CLI), `modules/lottery-verify` (independent TypeScript verifier), `spec/lottery/` (format, recorded real beacons, vectors). Panel sizes from Charter `tiers.<tier>.review_panel`.

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Argument, ChatMessage, DocketItem, Position } from "@democracy2/companion";
+  import type { Argument, ChatMessage, DocketItem, Position, ShownArgument } from "@democracy2/companion";
 
   import { untrack } from "svelte";
 
@@ -11,7 +11,7 @@
 
   let { item, client }: { item: DocketItem; client: CompanionClient } = $props();
 
-  type Turn = ChatMessage & { by?: string[] };
+  type Turn = ChatMessage & { by?: string[]; shown?: ShownArgument[] };
 
   // The component is re-created per file (keyed in FileView), so reading the stance once is right.
   let stance = $state<Position | null>(untrack(() => prefs.stance(item.id)));
@@ -50,8 +50,12 @@
       ]);
       if (mine !== generation) return;
       args = set.arguments;
-      const by = [...new Set(turn.argument_ids.map((id) => args?.find((a) => a.id === id)?.by).filter((b): b is string => !!b))];
-      turns = [...turns, { role: "assistant", content: turn.reply, by }];
+      const shown = turn.shown ?? [];
+      // Arguments with a link (Commons, documents) are listed with it; older servers send only ids.
+      const by = shown.length
+        ? []
+        : [...new Set(turn.argument_ids.map((id) => args?.find((a) => a.id === id)?.by).filter((b): b is string => !!b))];
+      turns = [...turns, { role: "assistant", content: turn.reply, by, shown }];
     } catch (e) {
       if (mine === generation) failure = errorKey(e);
     } finally {
@@ -87,6 +91,20 @@
             <span class="label">{turn.role === "user" ? t("you") : t("companion")}</span>
             <p>{turn.content}</p>
             {#if turn.by?.length}<p class="muted small">{t("grounded_from", { who: turn.by.join(", ") })}</p>{/if}
+            {#if turn.shown?.length}
+              <ul class="shown small">
+                {#each turn.shown as a, j (j)}
+                  <li>
+                    {#if a.origin === "model"}
+                      <span class="muted">{t("model_written")}</span> {a.text}
+                    {:else}
+                      {a.text} <span class="muted">({a.attribution})</span>
+                      {#if a.source_url}<a href={a.source_url} target="_blank" rel="noopener noreferrer">{t("open_source")}</a>{/if}
+                    {/if}
+                  </li>
+                {/each}
+              </ul>
+            {/if}
           </li>
         {/each}
       </ol>
@@ -134,5 +152,6 @@
     border-radius: 999px;
     padding: 0.5rem 1rem;
   }
+  .shown { margin: 0; padding-left: 1.1rem; display: grid; gap: 4px; }
   .error { color: var(--red); }
 </style>
