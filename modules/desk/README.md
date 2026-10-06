@@ -9,7 +9,7 @@ Desk is the pilot shape of three architecture modules in one: Agora (ideas), Del
 | A resident (end-user portal, in the citizen app) | Read every procedure and its updates; say whether a finished one was **done**, **needs work** or **not done**; post an idea and support others' (one support per resident); send feedback about anything and look it up later with its code; cast and change a ballot while a vote is open; read the published tally |
 | An operator | Keep procedures current (stages, dates, status, dated updates); read the feedback inbox, sort it, answer privately or publish the answer on the procedure or idea it is about; decide on ideas (taken up as a procedure, answered, declined, merged); create votes, open, close and publish them; ask the model to sort a message, draft an answer or translate an update, then edit what it wrote |
 | An admin | Staff accounts and roles; batches of one-time enrolment codes for residents; the commune's name, languages and intro; the model endpoint (any OpenAI-compatible address, model name, key) with a test button |
-| An auditor | The whole event log with its hash chain and a verify button; every vote's ballots (numbered voters, never identities) with a recount against the published tally; every model call (purpose, model, prompt hash, sizes, timing, outcome, never text), Desk's and the Companion's |
+| An auditor | The whole event log with its hash chain and a verify button; every vote's ballots (numbered voters, never identities) with a recount against the published tally; every model call Desk made (purpose, model, prompt hash, sizes, timing, outcome, never text) |
 
 ## What is honest about it
 
