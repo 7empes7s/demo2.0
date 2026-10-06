@@ -1,0 +1,688 @@
+<title>Seven Looks for Civic Companion</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;600;800&family=Schibsted+Grotesk:wght@400;500;700;900&family=Sora:wght@300;400;600;700&family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;800&family=JetBrains+Mono:wght@400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Courier+Prime:wght@400;700&family=Syne:wght@400;600;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Instrument+Serif&family=Public+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: a quiet charcoal gallery wall. Each direction is a framed exhibit: text column on the left, a phone mock on the right. The shell stays neutral so the mocks carry all the character. */
+:root {
+  --bg: #15161a;
+  --bg-2: #1c1e24;
+  --fg: #ecebe6;
+  --muted: #9b9a93;
+  --line: #2c2f37;
+  --accent: #e2b24a;
+  --chip: #23262e;
+  --display: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f1efe9; --bg-2: #e8e5dc; --fg: #1a1b1f; --muted: #5f6066; --line: #d6d2c6; --accent: #9a6a0a; --chip: #e2dfd5; color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f1efe9; --bg-2: #e8e5dc; --fg: #1a1b1f; --muted: #5f6066; --line: #d6d2c6; --accent: #9a6a0a; --chip: #e2dfd5; color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 16px/1.55 var(--body); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 2rem 4rem; padding-inline: 16px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; font-family: var(--display); }
+p { margin: 0; }
+a { color: inherit; }
+
+/* ---------- header ---------- */
+.hero { display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; align-items: start; padding-block: 1rem 2.5rem; border-bottom: 1px solid var(--line); }
+.hero h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1; font-weight: 900; letter-spacing: -0.03em; }
+.hero .lede { color: var(--muted); font-size: 1.05rem; max-width: 36rem; margin-top: 1rem; }
+.hero .lede b { color: var(--fg); font-weight: 600; }
+.kicker { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+.today { background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 1rem; }
+.today h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.6rem; }
+.today ul { margin: 0; padding-left: 1.1rem; color: var(--muted); font-size: 0.92rem; display: grid; gap: 0.3rem; }
+.today ul b { color: var(--fg); font-weight: 600; }
+
+/* ---------- nav ---------- */
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); margin-inline: -16px; padding-inline: 16px; }
+.nav ol { list-style: none; margin: 0; padding: 0.6rem 0; display: flex; gap: 0.4rem; overflow-x: auto; scrollbar-width: none; }
+.nav ol::-webkit-scrollbar { display: none; }
+.nav a { display: inline-flex; gap: 0.45rem; align-items: center; white-space: nowrap; text-decoration: none; font-size: 0.82rem; font-weight: 600; padding: 0.4rem 0.8rem; border-radius: 999px; background: var(--chip); border: 1px solid var(--line); }
+.nav a i { font-style: normal; font-family: var(--mono); font-size: 0.7rem; color: var(--muted); }
+.nav a:hover { border-color: var(--accent); }
+
+/* ---------- exhibit ---------- */
+.dir { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 400px); gap: 2.5rem; padding-block: 3.5rem; border-bottom: 1px solid var(--line); align-items: start; scroll-margin-top: 4rem; }
+.dir .num { font-family: var(--mono); color: var(--muted); font-size: 0.8rem; }
+.dir h2 { font-size: clamp(1.9rem, 3.4vw, 2.6rem); font-weight: 900; letter-spacing: -0.02em; line-height: 1.05; margin-top: 0.35rem; }
+.dir .thesis { font-size: 1.1rem; margin-top: 0.8rem; max-width: 34rem; }
+.dir .why { color: var(--muted); margin-top: 0.8rem; max-width: 34rem; }
+.spec { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.5rem; margin-top: 1.6rem; }
+.spec h4 { margin: 0 0 0.4rem; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.spec p, .spec li { font-size: 0.92rem; }
+.spec ul { margin: 0; padding-left: 1rem; display: grid; gap: 0.25rem; }
+.swatches { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.sw { width: 44px; height: 44px; border-radius: 8px; border: 1px solid rgb(0 0 0 / 0.2); position: relative; }
+.sw span { position: absolute; left: 0; right: 0; top: 100%; font-family: var(--mono); font-size: 0.6rem; color: var(--muted); margin-top: 3px; text-align: center; }
+.swatches { padding-bottom: 1rem; }
+.type-sample { display: grid; gap: 0.2rem; }
+.type-sample .big { font-size: 1.7rem; line-height: 1.05; }
+.type-sample .small { color: var(--muted); font-size: 0.85rem; }
+.fit { margin-top: 1.4rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.fit span { font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 6px; background: var(--chip); border: 1px solid var(--line); color: var(--muted); }
+.fit span b { color: var(--fg); font-weight: 600; }
+
+/* phone */
+.stage { position: sticky; top: 4.5rem; display: grid; justify-items: center; gap: 0.8rem; }
+.phone { width: 100%; max-width: 380px; border-radius: 42px; overflow: hidden; border: 8px solid #0b0b0d; box-shadow: 0 30px 80px rgb(0 0 0 / 0.45), 0 0 0 1px rgb(255 255 255 / 0.08); background: #000; position: relative; }
+.phone .scr { height: 760px; overflow: hidden; position: relative; }
+.stage .hint { font-size: 0.78rem; color: var(--muted); font-family: var(--mono); text-align: center; }
+
+/* ---------- comparison ---------- */
+.compare { padding-block: 3rem; }
+.compare h2 { font-size: 2rem; font-weight: 900; letter-spacing: -0.02em; }
+.tbl { overflow-x: auto; margin-top: 1.2rem; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; min-width: 640px; }
+th, td { text-align: left; padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+td b { font-weight: 700; }
+.dots { font-family: var(--mono); letter-spacing: 0.1em; color: var(--accent); }
+.reco { margin-top: 2rem; padding: 1.4rem; border: 1px solid var(--accent); border-radius: 14px; background: color-mix(in srgb, var(--accent) 8%, var(--bg-2)); max-width: 46rem; }
+.reco h3 { font-size: 1.2rem; font-weight: 800; }
+.reco p { margin-top: 0.5rem; color: var(--fg); }
+
+@media (max-width: 860px) {
+  .hero, .dir { grid-template-columns: 1fr; }
+  .stage { position: static; }
+  .spec { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* =====================================================================
+   SHARED MOCK SCAFFOLD. Each mock paints its own world and is single-theme on purpose.
+   ===================================================================== */
+.scr { font-size: 15px; line-height: 1.4; }
+.scr .sb { display: flex; justify-content: space-between; font-size: 12px; padding: 12px 22px 0; opacity: 0.8; font-variant-numeric: tabular-nums; }
+
+/* ---------------- 0. TODAY (the current app) ---------------- */
+.m-now { background: #0e1729; color: #eef1f6; font-family: "Public Sans", system-ui, sans-serif; height: 100%; padding: 0 18px 18px; }
+.m-now .top { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; }
+.m-now .brand { font-family: "Instrument Serif", Georgia, serif; font-size: 20px; }
+.m-now .brand b { color: #f5a623; font-weight: 400; margin-right: 6px; }
+.m-now .lbl { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #a3aec2; font-weight: 600; }
+.m-now h2 { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: 34px; margin: 4px 0 6px; }
+.m-now .intro { color: #a3aec2; font-size: 13px; }
+.m-now .card { background: #15223b; border: 1px solid #2a3a5e; border-radius: 10px; padding: 12px 14px; margin-top: 14px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+.m-now .btn { border: 1px solid #2a3a5e; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; }
+.m-now .g { margin-top: 18px; font-weight: 600; font-size: 14px; display: flex; gap: 6px; align-items: center; }
+.m-now .g i { font-style: normal; background: #1b2a4a; border-radius: 999px; font-size: 11px; padding: 0 7px; }
+.m-now .e { border-top: 1px solid #2a3a5e; padding: 12px 0; }
+.m-now .e .m { font-size: 11px; color: #a3aec2; }
+.m-now .e .t { font-size: 14px; margin: 3px 0; }
+.m-now .e .w { font-size: 12px; color: #a3aec2; display: flex; gap: 6px; align-items: center; }
+.m-now .e .w::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #f5a623; }
+.m-now .tag { background: #1b2a4a; border: 1px solid #f5a623; color: #f8bd57; border-radius: 999px; padding: 0 7px; font-size: 10px; }
+
+/* ---------------- 1. AFFICHAGE (neo-brutal civic poster) ---------------- */
+.m-brut { background: #f3efe4; color: #111; font-family: "Archivo", Arial, sans-serif; height: 100%; display: flex; flex-direction: column; }
+.m-brut .sb { color: #111; opacity: 1; font-weight: 600; }
+.m-brut .top { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px 0; }
+.m-brut .brand { font-family: "Archivo Black", Impact, sans-serif; font-size: 18px; letter-spacing: -0.02em; text-transform: uppercase; background: #111; color: #f3efe4; padding: 4px 8px; }
+.m-brut .lang { border: 3px solid #111; padding: 2px 8px; font-weight: 800; font-size: 12px; background: #fff; box-shadow: 3px 3px 0 #111; }
+.m-brut .wk { margin: 18px 18px 0; display: flex; align-items: baseline; gap: 10px; }
+.m-brut .wk b { font-family: "Archivo Black", Impact, sans-serif; font-size: 64px; line-height: 0.9; letter-spacing: -0.04em; }
+.m-brut .wk span { font-weight: 800; text-transform: uppercase; font-size: 12px; letter-spacing: 0.06em; line-height: 1.2; }
+.m-brut h2 { font-family: "Archivo Black", Impact, sans-serif; font-size: 40px; line-height: 0.95; letter-spacing: -0.03em; margin: 8px 18px 0; text-transform: uppercase; }
+.m-brut .where { margin: 14px 18px 0; display: flex; gap: 8px; }
+.m-brut .where > span { border: 3px solid #111; background: #ffd23f; padding: 6px 10px; font-weight: 800; font-size: 13px; box-shadow: 4px 4px 0 #111; }
+.m-brut .where > span.b { background: #4f8df0; color: #fff; }
+.m-brut ol { list-style: none; margin: 18px 18px 0; padding: 0; display: grid; gap: 12px; }
+.m-brut li { border: 3px solid #111; background: #fff; padding: 12px 12px 12px 14px; box-shadow: 6px 6px 0 #111; position: relative; transition: transform 0.12s, box-shadow 0.12s; cursor: pointer; }
+.m-brut li:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0 #111; }
+.m-brut li:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 #111; }
+.m-brut li .m { font-size: 11px; font-weight: 800; text-transform: uppercase; display: flex; justify-content: space-between; }
+.m-brut li .m em { font-style: normal; background: #e63b2e; color: #fff; padding: 0 6px; }
+.m-brut li .t { font-weight: 600; font-size: 15px; margin-top: 6px; line-height: 1.25; }
+.m-brut li .w { font-size: 12px; margin-top: 8px; font-weight: 600; }
+.m-brut li .w b { background: #ffd23f; padding: 0 4px; }
+.m-brut nav { margin-top: auto; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 3px solid #111; background: #fff; }
+.m-brut nav span { padding: 14px 4px 18px; text-align: center; font-weight: 800; font-size: 11px; text-transform: uppercase; border-right: 3px solid #111; }
+.m-brut nav span:last-child { border-right: 0; }
+.m-brut nav span.on { background: #111; color: #ffd23f; }
+
+/* ---------------- 2. SIGNAL (Swiss / state signage) ---------------- */
+.m-swiss { background: #fff; color: #000; font-family: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif; height: 100%; display: flex; flex-direction: column; }
+.m-swiss .sb { color: #000; opacity: 1; }
+.m-swiss .top { display: grid; grid-template-columns: 1fr auto; padding: 16px 20px 0; align-items: center; }
+.m-swiss .brand { font-weight: 700; font-size: 14px; letter-spacing: -0.01em; }
+.m-swiss .brand::before { content: ""; display: inline-block; width: 10px; height: 10px; background: #e2001a; margin-right: 8px; vertical-align: -1px; }
+.m-swiss .lang { font-size: 12px; font-weight: 500; color: #666; }
+.m-swiss .rule { height: 2px; background: #000; margin: 14px 20px 0; }
+.m-swiss .wk { display: grid; grid-template-columns: auto 1fr; gap: 0 16px; margin: 16px 20px 0; align-items: end; }
+.m-swiss .wk b { font-size: 112px; line-height: 0.82; font-weight: 900; letter-spacing: -0.07em; }
+.m-swiss .wk .r { font-size: 12px; line-height: 1.35; color: #000; padding-bottom: 6px; }
+.m-swiss .wk .r span { display: block; color: #666; }
+.m-swiss h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; margin: 6px 20px 0; }
+.m-swiss .where { margin: 14px 20px 0; display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #000; border-bottom: 1px solid #000; }
+.m-swiss .where div { padding: 8px 0; font-size: 12px; }
+.m-swiss .where div + div { border-left: 1px solid #000; padding-left: 12px; }
+.m-swiss .where small { display: block; color: #666; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+.m-swiss ol { list-style: none; margin: 8px 20px 0; padding: 0; }
+.m-swiss li { display: grid; grid-template-columns: 44px 1fr; gap: 0 10px; padding: 12px 0; border-bottom: 1px solid #ddd; cursor: pointer; }
+.m-swiss li:hover .t { text-decoration: underline; text-decoration-color: #e2001a; text-decoration-thickness: 2px; }
+.m-swiss li .n { font-weight: 900; font-size: 22px; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.m-swiss li .n small { display: block; font-size: 9px; letter-spacing: 0.08em; font-weight: 500; color: #666; margin-top: 3px; }
+.m-swiss li .t { font-size: 14px; font-weight: 500; line-height: 1.3; }
+.m-swiss li .w { font-size: 11px; color: #666; margin-top: 4px; display: flex; gap: 8px; }
+.m-swiss li .w b { color: #e2001a; font-weight: 700; }
+.m-swiss nav { margin-top: auto; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 2px solid #000; }
+.m-swiss nav span { padding: 14px 4px 18px; font-size: 11px; font-weight: 500; text-align: center; }
+.m-swiss nav span.on { font-weight: 700; box-shadow: inset 0 3px 0 #e2001a; }
+
+/* ---------------- 3. GLASS CHAMBER (3D glass, depth) ---------------- */
+.m-glass { height: 100%; color: #fff; font-family: "Sora", "Segoe UI", sans-serif; position: relative; overflow: hidden; background: #0a0f24; perspective: 900px; display: flex; flex-direction: column; }
+.m-glass .orb { position: absolute; border-radius: 50%; filter: blur(40px); opacity: 0.8; animation: drift 14s ease-in-out infinite alternate; }
+.m-glass .o1 { width: 260px; height: 260px; background: #ff9a3c; top: -80px; right: -60px; }
+.m-glass .o2 { width: 300px; height: 300px; background: #3d5afe; bottom: 60px; left: -120px; animation-delay: -5s; }
+.m-glass .o3 { width: 180px; height: 180px; background: #ff4ecd; bottom: -40px; right: 20px; animation-delay: -9s; opacity: 0.6; }
+@keyframes drift { to { transform: translate(30px, 40px) scale(1.15); } }
+.m-glass .sb { position: relative; color: #fff; }
+.m-glass .top { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 14px 20px 0; }
+.m-glass .brand { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.m-glass .brand i { width: 22px; height: 22px; border-radius: 7px; background: linear-gradient(135deg, #ffcc70, #ff8a3d); box-shadow: 0 6px 16px rgb(255 138 61 / 0.5); display: inline-block; }
+.m-glass .lang { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: rgb(255 255 255 / 0.1); border: 1px solid rgb(255 255 255 / 0.2); backdrop-filter: blur(10px); }
+.m-glass h2 { position: relative; margin: 26px 20px 0; font-size: 34px; font-weight: 300; letter-spacing: -0.02em; line-height: 1.05; }
+.m-glass h2 b { font-weight: 700; display: block; }
+.m-glass .sub { position: relative; margin: 8px 20px 0; font-size: 12px; color: rgb(255 255 255 / 0.65); }
+.m-glass .stack { position: relative; margin: 20px 20px 0; display: grid; gap: 14px; transform-style: preserve-3d; transition: transform 0.25s ease-out; }
+.m-glass .gcard { border-radius: 20px; padding: 14px 16px; background: linear-gradient(135deg, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0.05)); border: 1px solid rgb(255 255 255 / 0.25); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); box-shadow: 0 20px 50px rgb(0 0 0 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.4); transform: translateZ(var(--z, 0)); position: relative; }
+.m-glass .gcard::after { content: ""; position: absolute; inset: 0; border-radius: 20px; background: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 0.18) 45%, transparent 60%); pointer-events: none; }
+.m-glass .gcard .m { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgb(255 255 255 / 0.65); display: flex; justify-content: space-between; }
+.m-glass .gcard .m em { font-style: normal; color: #ffcc70; }
+.m-glass .gcard .t { font-size: 14px; font-weight: 600; margin-top: 6px; line-height: 1.3; }
+.m-glass .gcard .w { font-size: 11px; margin-top: 8px; color: rgb(255 255 255 / 0.7); }
+.m-glass .gcard.home { display: flex; justify-content: space-between; align-items: center; --z: 40px; }
+.m-glass .gcard.home .t { margin: 0; font-size: 15px; }
+.m-glass .gcard.home small { display: block; font-size: 11px; color: rgb(255 255 255 / 0.65); margin-top: 2px; font-weight: 400; }
+.m-glass .gcard.home .pill { font-size: 11px; padding: 6px 12px; border-radius: 999px; background: #ffcc70; color: #2b1a00; font-weight: 600; }
+.m-glass nav { position: relative; margin: auto 20px 18px; display: grid; grid-template-columns: repeat(3, 1fr); border-radius: 999px; padding: 6px; background: rgb(255 255 255 / 0.1); border: 1px solid rgb(255 255 255 / 0.2); backdrop-filter: blur(18px); }
+.m-glass nav span { text-align: center; font-size: 11px; padding: 10px 4px; border-radius: 999px; }
+.m-glass nav span.on { background: rgb(255 255 255 / 0.2); font-weight: 600; }
+
+/* ---------------- 4. CLAY COMMUNE (soft 3D) ---------------- */
+.m-clay { height: 100%; background: #e9e3f7; color: #2d2a3e; font-family: "Nunito", "Segoe UI", sans-serif; display: flex; flex-direction: column; overflow: hidden; }
+.m-clay .sb { color: #2d2a3e; }
+.m-clay .top { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px 0; }
+.m-clay .brand { font-family: "Fredoka", "Nunito", sans-serif; font-weight: 600; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+.m-clay .blob { width: 30px; height: 30px; border-radius: 45% 55% 50% 50% / 55% 45% 55% 45%; background: #ff9f6e; box-shadow: inset -6px -6px 10px rgb(0 0 0 / 0.15), inset 6px 6px 10px rgb(255 255 255 / 0.6), 6px 8px 14px rgb(120 90 180 / 0.25); animation: wobble 5s ease-in-out infinite; }
+@keyframes wobble { 50% { border-radius: 55% 45% 45% 55% / 45% 55% 45% 55%; transform: rotate(8deg); } }
+.m-clay .lang { font-weight: 800; font-size: 12px; padding: 6px 12px; border-radius: 999px; background: #fff; box-shadow: inset 2px 2px 5px rgb(255 255 255 / 0.9), 4px 6px 12px rgb(120 90 180 / 0.2); }
+.m-clay h2 { font-family: "Fredoka", "Nunito", sans-serif; font-weight: 600; font-size: 36px; margin: 22px 20px 0; line-height: 1; color: #3b2f6b; }
+.m-clay .sub { margin: 6px 20px 0; font-size: 13px; color: #6c6686; font-weight: 600; }
+.m-clay .home { margin: 18px 20px 0; border-radius: 26px; background: #b9f0d8; padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: inset 4px 4px 10px rgb(255 255 255 / 0.8), inset -5px -5px 10px rgb(0 0 0 / 0.08), 8px 12px 24px rgb(120 90 180 / 0.22); }
+.m-clay .home .pin { width: 44px; height: 44px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #ff6b8a; box-shadow: inset -5px -5px 8px rgb(0 0 0 / 0.15), inset 5px 5px 8px rgb(255 255 255 / 0.5); flex: none; animation: bob 2.4s ease-in-out infinite; }
+@keyframes bob { 50% { transform: rotate(-45deg) translate(-4px, -4px); } }
+.m-clay .home b { font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 17px; display: block; }
+.m-clay .home small { font-size: 12px; color: #4f6b5f; font-weight: 700; }
+.m-clay ol { list-style: none; margin: 18px 20px 0; padding: 0; display: grid; gap: 14px; }
+.m-clay li { border-radius: 26px; background: #fff; padding: 14px 16px; display: grid; grid-template-columns: 48px 1fr; gap: 12px; align-items: center; box-shadow: inset 3px 3px 8px rgb(255 255 255 / 1), inset -4px -4px 8px rgb(80 60 140 / 0.08), 8px 12px 22px rgb(120 90 180 / 0.18); transition: transform 0.2s cubic-bezier(.34,1.56,.64,1); cursor: pointer; }
+.m-clay li:hover { transform: translateY(-4px) scale(1.02); }
+.m-clay li .ic { width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; font-size: 22px; box-shadow: inset -5px -5px 9px rgb(0 0 0 / 0.12), inset 5px 5px 9px rgb(255 255 255 / 0.55); }
+.m-clay li .t { font-weight: 800; font-size: 14px; line-height: 1.3; }
+.m-clay li .w { font-size: 11.5px; color: #6c6686; font-weight: 700; margin-top: 3px; }
+.m-clay li .w b { color: #d94a6b; }
+.m-clay nav { margin: auto 20px 18px; display: grid; grid-template-columns: repeat(3, 1fr); border-radius: 999px; background: #fff; padding: 6px; box-shadow: inset 3px 3px 8px rgb(255 255 255 / 1), inset -4px -4px 8px rgb(80 60 140 / 0.08), 8px 12px 22px rgb(120 90 180 / 0.18); }
+.m-clay nav span { text-align: center; font-size: 11px; font-weight: 800; padding: 10px 4px; border-radius: 999px; color: #6c6686; }
+.m-clay nav span.on { background: #ffd166; color: #2d2a3e; box-shadow: inset -3px -3px 6px rgb(0 0 0 / 0.1), inset 3px 3px 6px rgb(255 255 255 / 0.6); }
+
+/* ---------------- 5. LEDGER (verifiable terminal) ---------------- */
+.m-led { height: 100%; background: #07090b; color: #d7e4d2; font-family: "JetBrains Mono", ui-monospace, Menlo, monospace; display: flex; flex-direction: column; position: relative; overflow: hidden; font-size: 12.5px; }
+.m-led::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgb(255 255 255 / 0.025) 0 1px, transparent 1px 3px); pointer-events: none; z-index: 2; }
+.m-led::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 55%, rgb(0 0 0 / 0.55)); pointer-events: none; z-index: 2; }
+.m-led .sb { color: #7fa68c; }
+.m-led .top { display: flex; justify-content: space-between; padding: 14px 18px 0; color: #9be38f; }
+.m-led .top b { font-weight: 700; }
+.m-led .top b::after { content: "_"; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.m-led .hd { margin: 20px 18px 0; }
+.m-led .hd .k { color: #7fa68c; }
+.m-led .hd h2 { font-family: inherit; font-size: 28px; font-weight: 700; color: #f0f7ec; letter-spacing: -0.02em; margin-top: 2px; }
+.m-led .hd h2 small { font-size: 12px; color: #e9b949; font-weight: 500; margin-left: 8px; }
+.m-led .hash { margin: 10px 18px 0; color: #5c7a66; font-size: 10.5px; word-break: break-all; }
+.m-led .hash b { color: #9be38f; font-weight: 500; }
+.m-led .box { margin: 14px 18px 0; border: 1px solid #244031; padding: 8px 10px; }
+.m-led .box .r { display: flex; justify-content: space-between; gap: 8px; }
+.m-led .box .r + .r { margin-top: 2px; }
+.m-led .box .r span:first-child { color: #7fa68c; }
+.m-led .box .r b { color: #f0f7ec; font-weight: 500; }
+.m-led table { border-collapse: collapse; margin: 14px 18px 0; width: auto; min-width: 0; font-size: 12px; }
+.m-led th { font: inherit; color: #7fa68c; text-align: left; padding: 0 8px 6px 0; border-bottom: 1px dashed #244031; letter-spacing: 0; text-transform: none; }
+.m-led td { padding: 7px 8px 7px 0; border-bottom: 1px dashed #1a2d22; vertical-align: top; }
+.m-led td.n { color: #e9b949; white-space: nowrap; }
+.m-led td.t { color: #f0f7ec; }
+.m-led td.t small { display: block; color: #7fa68c; font-size: 10.5px; margin-top: 2px; }
+.m-led td .ok { color: #9be38f; }
+.m-led td .tp { color: #e9b949; }
+.m-led tr:hover td { background: rgb(155 227 143 / 0.06); }
+.m-led .prompt { margin: 14px 18px 0; color: #9be38f; }
+.m-led .prompt::after { content: "█"; animation: blink 1s steps(1) infinite; }
+.m-led nav { margin: auto 18px 16px; display: flex; gap: 6px; }
+.m-led nav span { flex: 1; text-align: center; padding: 10px 4px; border: 1px solid #244031; font-size: 11px; color: #7fa68c; }
+.m-led nav span.on { background: #9be38f; color: #07090b; border-color: #9be38f; font-weight: 700; }
+
+/* ---------------- 6. STAMPED (civic paper, ink, perforation) ---------------- */
+.m-stamp { height: 100%; background: #c9b58f; color: #2b2622; font-family: "Courier Prime", "Courier New", monospace; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.m-stamp::before { content: ""; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"); pointer-events: none; opacity: 0.9; }
+.m-stamp .sb { color: #2b2622; position: relative; }
+.m-stamp .top { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 14px 20px 0; font-size: 12px; font-weight: 700; }
+.m-stamp .top .brand { font-family: "Fraunces", Georgia, serif; font-size: 18px; font-weight: 700; letter-spacing: 0.01em; }
+.m-stamp .sheet { position: relative; margin: 18px 16px 0; background: #f7f1e3; padding: 18px 18px 14px; box-shadow: 0 1px 0 #fff inset, 0 10px 30px rgb(40 30 10 / 0.25); }
+.m-stamp .sheet::after { content: ""; position: absolute; left: 0; right: 0; bottom: -8px; height: 8px; background: radial-gradient(circle at 6px -2px, transparent 5px, #f7f1e3 5.5px) 0 0 / 12px 8px; }
+.m-stamp .form { font-size: 10.5px; display: flex; justify-content: space-between; color: #6b5f4e; letter-spacing: 0.04em; }
+.m-stamp h2 { font-family: "Fraunces", Georgia, serif; font-size: 36px; font-weight: 500; font-variation-settings: "opsz" 144; line-height: 1; margin-top: 8px; letter-spacing: -0.01em; }
+.m-stamp .sub { font-size: 11.5px; margin-top: 6px; color: #4b4237; }
+.m-stamp .stamp { position: absolute; right: 14px; top: 22px; width: 92px; height: 92px; border: 3px double #b8362b; border-radius: 50%; color: #b8362b; display: grid; place-items: center; text-align: center; font-family: "Archivo", sans-serif; font-weight: 800; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.2; transform: rotate(-14deg); mix-blend-mode: multiply; opacity: 0.85; animation: slam 0.6s cubic-bezier(.2,1.4,.4,1) both; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.7'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.6 -0.25'/%3E%3C/filter%3E%3Crect width='90' height='90' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.m-stamp .stamp b { display: block; font-size: 15px; margin: 2px 0; }
+@keyframes slam { from { transform: rotate(-14deg) scale(1.8); opacity: 0; } to { transform: rotate(-14deg) scale(1); opacity: 0.85; } }
+.m-stamp .field { position: relative; margin: 14px 16px 0; display: flex; gap: 10px; align-items: baseline; font-size: 12px; }
+.m-stamp .field span { color: #4b4237; }
+.m-stamp .field b { flex: 1; border-bottom: 1px dotted #2b2622; font-weight: 700; }
+.m-stamp ol { list-style: none; margin: 14px 16px 0; padding: 0; position: relative; display: grid; gap: 10px; }
+.m-stamp li { background: #f7f1e3; padding: 12px 14px; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; box-shadow: 0 6px 18px rgb(40 30 10 / 0.18); position: relative; cursor: pointer; transition: transform 0.15s; }
+.m-stamp li:hover { transform: rotate(-0.6deg) translateY(-2px); }
+.m-stamp li .m { font-size: 10px; color: #6b5f4e; letter-spacing: 0.06em; grid-column: 1 / -1; }
+.m-stamp li .t { font-family: "Fraunces", Georgia, serif; font-size: 15px; font-weight: 500; line-height: 1.25; }
+.m-stamp li .w { font-size: 11px; grid-column: 1 / -1; color: #4b4237; }
+.m-stamp li .seal { width: 34px; height: 34px; border: 2px solid #b8362b; border-radius: 50%; color: #b8362b; font-size: 7px; display: grid; place-items: center; text-align: center; transform: rotate(10deg); font-family: "Archivo", sans-serif; font-weight: 800; mix-blend-mode: multiply; }
+.m-stamp li .seal.g { border-color: #2a6b3f; color: #2a6b3f; }
+.m-stamp nav { position: relative; margin: auto 0 0; background: #2b2622; color: #f7f1e3; display: grid; grid-template-columns: repeat(3, 1fr); }
+.m-stamp nav span { text-align: center; padding: 14px 4px 18px; font-size: 11px; }
+.m-stamp nav span.on { color: #e9b949; font-weight: 700; }
+
+/* ---------------- 7. KINETIC (motion-first) ---------------- */
+.m-kin { height: 100%; background: #0b0b0f; color: #f4f1ff; font-family: "DM Sans", "Segoe UI", sans-serif; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.m-kin .mesh { position: absolute; inset: -40%; background: conic-gradient(from 90deg at 50% 50%, #ff3d81, #ffb347, #39e6c8, #6b5bff, #ff3d81); filter: blur(60px) saturate(1.2); opacity: 0.55; animation: spin 18s linear infinite; }
+@keyframes spin { to { transform: rotate(1turn); } }
+.m-kin .veil { position: absolute; inset: 0; background: linear-gradient(180deg, rgb(11 11 15 / 0.2), rgb(11 11 15 / 0.85) 45%, #0b0b0f 70%); }
+.m-kin .sb, .m-kin .top, .m-kin .mq, .m-kin .big, .m-kin ol, .m-kin nav, .m-kin .home { position: relative; }
+.m-kin .top { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px 0; }
+.m-kin .brand { font-family: "Syne", sans-serif; font-weight: 800; font-size: 16px; letter-spacing: 0.04em; text-transform: uppercase; }
+.m-kin .lang { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 4px; background: #f4f1ff; color: #0b0b0f; }
+.m-kin .mq { margin-top: 16px; overflow: hidden; white-space: nowrap; border-top: 1px solid rgb(255 255 255 / 0.2); border-bottom: 1px solid rgb(255 255 255 / 0.2); padding: 6px 0; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; }
+.m-kin .mq span { display: inline-block; animation: marquee 16s linear infinite; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+.m-kin .big { margin: 14px 20px 0; font-family: "Syne", sans-serif; font-weight: 800; font-size: 60px; line-height: 0.88; letter-spacing: -0.05em; text-transform: uppercase; }
+.m-kin .big span { display: block; animation: rise 0.9s cubic-bezier(.2,.9,.2,1) both; }
+.m-kin .big span:nth-child(2) { animation-delay: 0.12s; color: transparent; -webkit-text-stroke: 1.5px #f4f1ff; }
+.m-kin .big span:nth-child(3) { animation-delay: 0.24s; background: linear-gradient(90deg, #ffb347, #ff3d81); -webkit-background-clip: text; background-clip: text; color: transparent; }
+@keyframes rise { from { transform: translateY(40px); opacity: 0; } }
+.m-kin .home { margin: 16px 20px 0; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+.m-kin .home b { font-weight: 700; }
+.m-kin .home i { font-style: normal; color: rgb(255 255 255 / 0.6); }
+.m-kin ol { list-style: none; margin: 14px 0 0; padding: 0; counter-reset: k; }
+.m-kin li { counter-increment: k; display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center; padding: 14px 20px; border-top: 1px solid rgb(255 255 255 / 0.15); cursor: pointer; transition: background 0.2s, padding-left 0.2s; }
+.m-kin li:hover { background: #f4f1ff; color: #0b0b0f; padding-left: 28px; }
+.m-kin li::before { content: counter(k, decimal-leading-zero); font-family: "Syne", sans-serif; font-weight: 800; font-size: 20px; letter-spacing: -0.04em; }
+.m-kin li .t { font-size: 13.5px; font-weight: 500; line-height: 1.3; }
+.m-kin li .w { font-size: 11px; opacity: 0.65; margin-top: 2px; }
+.m-kin li .arrow { font-size: 20px; transition: transform 0.2s; }
+.m-kin li:hover .arrow { transform: translateX(6px); }
+.m-kin nav { margin: auto 0 0; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid rgb(255 255 255 / 0.2); background: #0b0b0f; }
+.m-kin nav span { text-align: center; padding: 14px 4px 18px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.6; }
+.m-kin nav span.on { opacity: 1; box-shadow: inset 0 2px 0 #ffb347; }
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <p class="kicker">Civic Companion · visual directions · 6 October 2026</p>
+      <h1>Seven looks that don't read as AI</h1>
+      <p class="lede">The app is well built and the content is right. What gives it away is the <b>look</b>: it is the default look that every AI-made civic site has right now. Below are seven different worlds for the same "This week" screen, each one a live mock you can touch. Tap, hover, scroll. Pick one, mix two, or tell me what to push further.</p>
+    </div>
+    <aside class="today">
+      <h3>Why it reads as AI today</h3>
+      <ul>
+        <li><b>Serif headline over a sans body</b> on a dark navy ground, with one amber accent. This exact pairing is the 2025 default.</li>
+        <li><b>Rounded cards with a hairline border</b> for every block, so nothing has hierarchy.</li>
+        <li><b>Pill buttons</b> everywhere, including for navigation.</li>
+        <li><b>No material, no motion, no point of view.</b> Nothing in it is Luxembourg's, or politics', or paper's.</li>
+      </ul>
+    </aside>
+  </header>
+
+  <nav class="nav" aria-label="Directions">
+    <ol>
+      <li><a href="#now"><i>00</i> Today</a></li>
+      <li><a href="#affichage"><i>01</i> Affichage</a></li>
+      <li><a href="#signal"><i>02</i> Signal</a></li>
+      <li><a href="#glass"><i>03</i> Glass Chamber</a></li>
+      <li><a href="#clay"><i>04</i> Clay Commune</a></li>
+      <li><a href="#ledger"><i>05</i> Ledger</a></li>
+      <li><a href="#stamped"><i>06</i> Stamped</a></li>
+      <li><a href="#kinetic"><i>07</i> Kinetic</a></li>
+      <li><a href="#compare"><i>··</i> Compare</a></li>
+    </ol>
+  </nav>
+
+  <!-- ============ 00 TODAY ============ -->
+  <section class="dir" id="now">
+    <div>
+      <p class="num">00 · for reference</p>
+      <h2>Today</h2>
+      <p class="thesis">The current app, rebuilt here from its own tokens so you can compare like with like.</p>
+      <p class="why">Navy, amber, Instrument Serif headings, Public Sans body, 10px radius cards, pill buttons. Competent and calm, and indistinguishable from a hundred other AI-made dashboards.</p>
+      <div class="spec">
+        <div><h4>Palette</h4><div class="swatches"><i class="sw" style="background:#0e1729"><span>0E1729</span></i><i class="sw" style="background:#15223b"><span>15223B</span></i><i class="sw" style="background:#f5a623"><span>F5A623</span></i><i class="sw" style="background:#eef1f6"><span>EEF1F6</span></i></div></div>
+        <div><h4>Type</h4><div class="type-sample"><span class="big" style="font-family:'Instrument Serif',serif">This week</span><span class="small" style="font-family:'Public Sans',sans-serif">Public Sans for everything else.</span></div></div>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="phone"><div class="scr m-now">
+        <div class="sb"><span>09:41</span><span>●●● ᯤ ▮</span></div>
+        <div class="top"><span class="brand"><b>§</b>Civic Companion</span><span class="btn">EN ▾</span></div>
+        <p class="lbl">Week 41 · 6 Oct – 12 Oct</p>
+        <h2>This week</h2>
+        <p class="intro">Files that affect where you live, and files on topics you follow, from the public list. The sorting happens on this device.</p>
+        <div class="card"><span><span class="lbl">Where you live</span><br><b>Esch-sur-Alzette</b> <span style="color:#a3aec2">· 2 topics</span></span><span class="btn">Change</span></div>
+        <p class="g">Where you live <i>3</i></p>
+        <div class="e"><div class="m">Esch-sur-Alzette · Council · Point 7</div><div class="t">Réfection rues Brill et Spoo (phase 1) ; crédit spécial extraordinaire</div><div class="w">Council meets 10 Oct</div></div>
+        <div class="e"><div class="m">Esch-sur-Alzette · Council · Point 4</div><div class="t">Convention de recherche avec l'Université du Luxembourg sur l'Assemblée citoyenne</div><div class="w">Council meets 10 Oct <span class="tag">Your topic</span></div></div>
+        <div class="e"><div class="m">Chamber · Debate</div><div class="t">Débat d'orientation sur le financement des grands projets d'infrastructure</div><div class="w">Plenary 8 Oct</div></div>
+      </div></div>
+      <p class="hint">as deployed, rebuilt from tokens.css</p>
+    </div>
+  </section>
+
+  <!-- ============ 01 AFFICHAGE ============ -->
+  <section class="dir" id="affichage">
+    <div>
+      <p class="num">01</p>
+      <h2>Affichage</h2>
+      <p class="thesis">The public notice board, blown up. Thick black rules, flat primaries, hard offset shadows that move when you press them. Nothing is subtle and nothing hides.</p>
+      <p class="why">Politics is loud and public. A notice board on a commune wall is honest design: black ink, one or two spot colours, big numbers. Neo-brutalism gives the app a physical, printed feel that no AI default has, and it photographs brilliantly in a tweet or a poster.</p>
+      <div class="spec">
+        <div><h4>Palette</h4><div class="swatches"><i class="sw" style="background:#f3efe4"><span>F3EFE4</span></i><i class="sw" style="background:#111"><span>111111</span></i><i class="sw" style="background:#ffd23f"><span>FFD23F</span></i><i class="sw" style="background:#e63b2e"><span>E63B2E</span></i><i class="sw" style="background:#4f8df0"><span>4F8DF0</span></i></div></div>
+        <div><h4>Type</h4><div class="type-sample"><span class="big" style="font-family:'Archivo Black',sans-serif;text-transform:uppercase;letter-spacing:-0.03em">This week</span><span class="small" style="font-family:Archivo,sans-serif">Archivo Black for headings, Archivo for text. One family, two weights.</span></div></div>
+        <div><h4>Motion &amp; depth</h4><ul><li>Cards lift on hover and slam flat on press, like a physical button.</li><li>Page changes are hard cuts or a single wipe. No fades.</li><li>Week number flips like a split-flap board on load.</li></ul></div>
+        <div><h4>Light / dark</h4><p>Dark mode inverts paper and ink (black ground, cream ink) and keeps the yellow. Still fully on brand.</p></div>
+      </div>
+      <div class="fit"><span><b>Boldness</b> high</span><span><b>Phone fit</b> excellent</span><span><b>Build</b> cheap, CSS only</span><span><b>Risk</b> can feel shouty on long reads</span></div>
+    </div>
+    <div class="stage">
+      <div class="phone"><div class="scr m-brut">
+        <div class="sb"><span>09:41</span><span>●●● ᯤ ▮</span></div>
+        <div class="top"><span class="brand">Civic Companion</span><span class="lang">EN</span></div>
+        <div class="wk"><b>41</b><span>Week<br>6 – 12 Oct</span></div>
+        <h2>This<br>week</h2>
+        <div class="where"><span>📍 Esch-sur-Alzette</span><span class="b">2 topics</span></div>
+        <ol>
+          <li><div class="m"><span>Esch · Point 7</span><em>10 Oct</em></div><div class="t">Réfection rues Brill et Spoo (phase 1), crédit spécial</div><div class="w">Council meets <b>Friday</b></div></li>
+          <li><div class="m"><span>Esch · Point 4</span><em>10 Oct</em></div><div class="t">Convention avec l'Université sur l'Assemblée citoyenne</div><div class="w"><b>Your topic</b> · Council meets Friday</div></li>
+          <li><div class="m"><span>Chamber · Debate</span><em>8 Oct</em></div><div class="t">Financement des grands projets d'infrastructure</div><div class="w">Plenary <b>Wednesday</b></div></li>
+        </ol>
+        <nav><span class="on">This week</span><span>Check a claim</span><span>Ideas</span></nav>
+      </div></div>
+      <p class="hint">hover or press a card</p>
+    </div>
+  </section>
+
+  <!-- ============ 02 SIGNAL ============ -->
+  <section class="dir" id="signal">
+    <div>
+      <p class="num">02</p>
+      <h2>Signal</h2>
+      <p class="thesis">Swiss International style, as used by passports, train timetables and ministries. White ground, black type, one red square, giant numerals, and a visible grid.</p>
+      <p class="why">The most authoritative look there is, and the hardest to mistake for AI output, because AI leans decorative and this leans bare. Luxembourg's own red works as the single accent. The hero is the week number at 112px: the one fact every resident needs first.</p>
+      <div class="spec">
+        <div><h4>Palette</h4><div class="swatches"><i class="sw" style="background:#fff"><span>FFFFFF</span></i><i class="sw" style="background:#000"><span>000000</span></i><i class="sw" style="background:#e2001a"><span>E2001A</span></i><i class="sw" style="background:#666"><span>666666</span></i></div></div>
+        <div><h4>Type</h4><div class="type-sample"><span class="big" style="font-family:'Schibsted Grotesk',sans-serif;font-weight:900;letter-spacing:-0.05em">41</span><span class="small" style="font-family:'Schibsted Grotesk',sans-serif">Schibsted Grotesk, 400 to 900. Numbers always tabular.</span></div></div>
+        <div><h4>Motion &amp; depth</h4><ul><li>Almost none. One thing moves per screen: the week numeral counts up on open.</li><li>Red underline draws left to right on hover.</li><li>No shadows, no radii, no blur. Depth is grid and rule weight.</li></ul></div>
+        <div><h4>Light / dark</h4><p>Dark mode is black paper, white ink, same red. Equally strong.</p></div>
+      </div>
+      <div class="fit"><span><b>Boldness</b> medium, by restraint</span><span><b>Phone fit</b> excellent</span><span><b>Build</b> cheapest of all</span><span><b>Risk</b> can read as cold or official</span></div>
+    </div>
+    <div class="stage">
+      <div class="phone"><div class="scr m-swiss">
+        <div class="sb"><span>09:41</span><span>●●● ᯤ ▮</span></div>
+        <div class="top"><span class="brand">Civic Companion</span><span class="lang">EN · FR · DE · LB · PT</span></div>
+        <div class="rule"></div>
+        <div class="wk"><b data-count="41">41</b><div class="r">Week<span>6 – 12 October 2026</span></div></div>
+        <h2>This week</h2>
+        <div class="where"><div><small>Where you live</small>Esch-sur-Alzette</div><div><small>Topics you follow</small>Démocratie · Voirie</div></div>
+        <ol>
+          <li><div class="n">10<small>OCT</small></div><div><div class="t">Réfection rues Brill et Spoo (phase 1), crédit spécial extraordinaire</div><div class="w"><span>Esch council · Point 7</span></div></div></li>
+          <li><div class="n">10<small>OCT</small></div><div><div class="t">Convention de recherche avec l'Université du Luxembourg sur l'Assemblée citoyenne</div><div class="w"><span>Esch council · Point 4</span><b>Your topic</b></div></div></li>
+          <li><div class="n">08<small>OCT</small></div><div><div class="t">Débat d'orientation sur le financement des grands projets d'infrastructure</div><div class="w"><span>Chamber · Plenary</span></div></div></li>
+        </ol>
+        <nav><span class="on">This week</span><span>Check a claim</span><span>Ideas</span></nav>
+      </div></div>
+      <p class="hint">the week numeral counts up on load</p>
+    </div>
+  </section>
+
+  <!-- ============ 03 GLASS CHAMBER ============ -->
+  <section class="dir" id="glass">
+    <div>
+      <p class="num">03</p>
+      <h2>Glass Chamber</h2>
+      <p class="thesis">Frosted glass panels floating in real depth over slow-moving coloured light. Tilt the phone, or move your mouse over it, and the stack parallaxes.</p>
+      <p class="why">This is the direction that says "the newest technology in the world". It borrows from spatial interfaces (visionOS, the new iOS) rather than from web dashboards, so it reads as a product, not a page. Transparency is a nice metaphor for the mission too, if you want to lean on it.</p>
+      <div class="spec">
+        <div><h4>Palette</h4><div class="swatches"><i class="sw" style="background:#0a0f24"><span>0A0F24</span></i><i class="sw" style="background:#3d5afe"><span>3D5AFE</span></i><i class="sw" style="background:#ff9a3c"><span>FF9A3C</span></i><i class="sw" style="background:#ffcc70"><span>FFCC70</span></i><i class="sw" style="background:#ff4ecd"><span>FF4ECD</span></i></div></div>
+        <div><h4>Type</h4><div class="type-sample"><span class="big" style="font-family:Sora,sans-serif;font-weight:300">This <b style="font-weight:700">week</b></span><span class="small" style="font-family:Sora,sans-serif">Sora, light and bold. Geometric, slightly futuristic, very legible on glass.</span></div></div>
+        <div><h4>Motion &amp; depth</h4><ul><li>Real 3D: cards sit at different Z depths; gyroscope or pointer tilts the whole stack.</li><li>Three light orbs drift behind the glass for the whole session.</li><li>Opening a file: the card expands and the rest recedes into blur.</li></ul></div>
+        <div><h4>Light / dark</h4><p>Light mode is white frosted glass over pastel light. Needs care for contrast; doable.</p></div>
+      </div>
+      <div class="fit"><span><b>Boldness</b> high</span><span><b>Phone fit</b> very good</span><span><b>Build</b> medium, blur costs battery on old phones</span><span><b>Risk</b> closest to a current trend, may date</span></div>
+    </div>
+    <div class="stage">
+      <div class="phone"><div class="scr m-glass" id="glassScr">
+        <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+        <div class="sb"><span>09:41</span><span>●●● ᯤ ▮</span></div>
+        <div class="top"><span class="brand"><i></i>Civic Companion</span><span class="lang">EN</span></div>
+        <h2>This <b>week</b></h2>
+        <p class="sub">Week 41 · 6 – 12 October · sorted on this device</p>
+        <div class="stack" id="glassStack">
+          <div class="gcard home"><div><div class="t">Esch-sur-Alzette<small>Following Démocratie and Voirie</small></div></div><span class="pill">Change</span></div>
+          <div class="gcard" style="--z:24px"><div class="m"><span>Esch · Point 7</span><em>10 Oct</em></div><div class="t">Réfection rues Brill et Spoo (phase 1), crédit spécial extraordinaire</div><div class="w">Council meets Friday</div></div>
+          <div class="gcard" style="--z:12px"><div class="m"><span>Esch · Point 4 · Your topic</span><em>10 Oct</em></div><div class="t">Convention avec l'Université du Luxembourg sur l'Assemblée citoyenne</div><div class="w">Council meets Friday</div></div>
+          <div class="gcard" style="--z:0"><div class="m"><span>Chamber · Debate</span><em>8 Oct</em></div><div class="t">Financement des grands projets d'infrastructure de l'État</div><div class="w">Plenary Wednesday</div></div>
+        </div>
+        <nav><span class="on">This week</span><span>Check</span><span>Ideas</span></nav>
+      </div></div>
+      <p class="hint">move your pointer over the phone to tilt it</p>
+    </div>
+  </section>
+
+  <!-- ============ 04 CLAY COMMUNE ============ -->
+  <section class="dir" id="clay">
+    <div>
+      <p class="num">04</p>
+      <h2>Clay Commune</h2>
+      <p class="thesis">Soft 3D. Every element is a puffy, moulded object with an inner shadow, like a toy town of the commune. Rounded type, pastel clay colours, bouncy springs.</p>
+      <p class="why">"Fun first" taken seriously. Democracy apps all look like tax forms; this one looks like something a 19-year-old would open on the bus. It also gives the Arena questions and the "understood" state a natural home: progress as a physical object you build. The playful look is a real bet, and it could be the one that gets Luxembourg talking.</p>
+      <div class="spec">
+        <div><h4>Palette</h4><div class="swatches"><i class="sw" style="background:#e9e3f7"><span>E9E3F7</span></i><i class="sw" style="background:#3b2f6b"><span>3B2F6B</span></i><i class="sw" style="background:#ffd166"><span>FFD166</span></i><i class="sw" style="background:#b9f0d8"><span>B9F0D8</span></i><i class="sw" style="background:#ff6b8a"><span>FF6B8A</span></i><i class="sw" style="background:#ff9f6e"><span>FF9F6E</span></i></div></div>
+        <div><h4>Type</h4><div class="type-sample"><span class="big" style="font-family:Fredoka,sans-serif;font-weight:600">This week</span><span class="small" style="font-family:Nunito,sans-serif;font-weight:700">Fredoka for headings, Nunito bold for text. Both round, both friendly.</span></div></div>
+        <div><h4>Motion &amp; depth</h4><ul><li>Spring physics on every tap: things squash and bounce back.</li><li>The location pin bobs; the logo blob slowly breathes.</li><li>Possible real 3D: a low-poly clay model of the commune hall as the hero, rotating slowly (Three.js, one asset).</li></ul></div>
+        <div><h4>Light / dark</h4><p>Dark mode is deep plum clay with the same pastel objects. Works well.</p></div>
+      </div>
+      <div class="fit"><span><b>Boldness</b> high</span><span><b>Phone fit</b> excellent</span><span><b>Build</b> medium; 3D hero optional</span><span><b>Risk</b> some will find it too cute for politics</span></div>
+    </div>
+    <div class="stage">
+      <div class="phone"><div class="scr m-clay">
+        <div class="sb"><span>09:41</span><span>●●● ᯤ ▮</span></div>
+        <div class="top"><span class="brand"><i class="blob"></i>Companion</span><span class="lang">EN</span></div>
+        <h2>This week</h2>
+        <p class="sub">Week 41 · sorted on your phone, nothing sent</p>
+        <div class="home"><i class="pin"></i><div><b>Esch-sur-Alzette</b><small>Following Démocratie and Voirie</small></div></div>
+        <ol>
+          <li><div class="ic" style="background:#ffd166">🛣️</div><div><div class="t">Réfection rues Brill et Spoo, crédit spécial</div><div class="w">Esch council · Friday 10 Oct</div></div></li>
+          <li><div class="ic" style="background:#b9f0d8">🗳️</div><div><div class="t">Convention avec l'Université sur l'Assemblée citoyenne</div><div class="w"><b>Your topic</b> · Friday 10 Oct</div></div></li>
+          <li><div class="ic" style="background:#cdd6ff">🏗️</div><div><div class="t">Financement des grands projets d'infrastructure</div><div class="w">Chamber · Wednesday 8 Oct</div></div></li>
+        </ol>
+        <nav><span class="on">This week</span><span>Check</span><span>Ideas</span></nav>
+      </div></div>
+      <p class="hint">hover a card to feel the spring</p>
+    </div>
+  </section>
+
+  <!-- ============ 05 LEDGER ============ -->
+  <section class="dir" id="ledger">
+    <div>
+      <p class="num">05</p>
+      <h2>Ledger</h2>
+      <p class="thesis">A verifiable public record, shown as one. Monospace everything, phosphor green and amber on near-black, faint scanlines, a content hash under every heading.</p>
+      <p class="why">The whole system is about verifiability: Booth boards, Provenance quotes, Door credentials. This look makes that visible without explaining it. Every file shows its snapshot hash and whether its quotes were found. It is the only direction that is <em>about</em> the architecture, and it will speak to the crypto and civic-tech crowd you need as early adopters.</p>
+      <div class="spec">
+        <div><h4>Palette</h4><div class="swatches"><i class="sw" style="background:#07090b"><span>07090B</span></i><i class="sw" style="background:#9be38f"><span>9BE38F</span></i><i class="sw" style="background:#e9b949"><span>E9B949</span></i><i class="sw" style="background:#7fa68c"><span>7FA68C</span></i><i class="sw" style="background:#f0f7ec"><span>F0F7EC</span></i></div></div>
+        <div><h4>Type</h4><div class="type-sample"><span class="big" style="font-family:'JetBrains Mono',monospace;font-weight:700">This_week</span><span class="small" style="font-family:'JetBrains Mono',monospace">JetBrains Mono only. Hierarchy comes from colour and size.</span></div></div>
+        <div><h4>Motion &amp; depth</h4><ul><li>Text types itself in on first open, then never again.</li><li>Blinking cursor on the prompt line; hover highlights a row like a selection.</li><li>Live: a soft green pulse when the snapshot is re-verified.</li></ul></div>
+        <div><h4>Light / dark</h4><p>Light mode is paper-white with ink-black mono and the same green and amber. Think a printed receipt.</p></div>
+      </div>
+      <div class="fit"><span><b>Boldness</b> high, niche</span><span><b>Phone fit</b> good, dense</span><span><b>Build</b> cheap</span><span><b>Risk</b> intimidating for the grandmother in Esch</span></div>
+    </div>
+    <div class="stage">
+      <div class="phone"><div class="scr m-led">
+        <div class="sb"><span>09:41</span><span>●●● ᯤ ▮</span></div>
+        <div class="top"><b>civic-companion</b><span>EN</span></div>
+        <div class="hd"><div class="k">// week 41 · 2026-10-06 → 2026-10-12</div><h2>this week <small>sorted locally</small></h2></div>
+        <div class="hash">snapshot <b>sha256:9f2e…c41a</b> · chd.lu + esch.lu · verified 09:40</div>
+        <div class="box"><div class="r"><span>where_you_live</span><b>Esch-sur-Alzette</b></div><div class="r"><span>topics</span><b>démocratie, voirie</b></div><div class="r"><span>sent_to_server</span><b>nothing</b></div></div>
+        <table>
+          <thead><tr><th>date</th><th>file</th><th>quotes</th></tr></thead>
+          <tbody>
+            <tr><td class="n">10-10</td><td class="t">Réfection rues Brill et Spoo (phase 1)<small>esch · point 7</small></td><td><span class="ok">found</span></td></tr>
+            <tr><td class="n">10-10</td><td class="t">Convention Uni.lu · Assemblée citoyenne<small>esch · point 4 · your topic</small></td><td><span class="ok">found</span></td></tr>
+            <tr><td class="n">10-08</td><td class="t">Financement des grands projets d'infrastructure<small>chamber · debate</small></td><td><span class="tp">3 / 4</span></td></tr>
+          </tbody>
+        </table>
+        <div class="prompt">&gt; check a claim </div>
+        <nav><span class="on">week</span><span>check</span><span>ideas</span></nav>
+      </div></div>
+      <p class="hint">hashes are illustrative</p>
+    </div>
+  </section>
+
+  <!-- ============ 06 STAMPED ============ -->
+  <section class="dir" id="stamped">
+    <div>
+      <p class="num">06</p>
+      <h2>Stamped</h2>
+      <p class="thesis">Civic paperwork made tactile. Kraft desk, cream forms, a typewriter face for data, a warm serif for titles, and real red ink stamps that slam on when a file is understood.</p>
+      <p class="why">Government is paper, forms, stamps and seals. Making that physical and a bit theatrical is funny, warm and unmistakably human. The stamp is also a perfect reward object: "COMPRIS" slammed across a file you finished the questions on. Fully skeuomorphic, which nobody is doing right now, so it will stand out.</p>
+      <div class="spec">
+        <div><h4>Palette</h4><div class="swatches"><i class="sw" style="background:#c9b58f"><span>C9B58F</span></i><i class="sw" style="background:#f7f1e3"><span>F7F1E3</span></i><i class="sw" style="background:#2b2622"><span>2B2622</span></i><i class="sw" style="background:#b8362b"><span>B8362B</span></i><i class="sw" style="background:#2a6b3f"><span>2A6B3F</span></i></div></div>
+        <div><h4>Type</h4><div class="type-sample"><span class="big" style="font-family:Fraunces,serif;font-weight:500">This week</span><span class="small" style="font-family:'Courier Prime',monospace">Fraunces for titles, Courier Prime for everything typed on the form.</span></div></div>
+        <div><h4>Motion &amp; depth</h4><ul><li>Stamps slam on with an overshoot; a tiny dust of ink noise masks each one.</li><li>Sheets lift and tilt a fraction when you touch them; perforated edges tear when you dismiss.</li><li>Paper grain is a tiny SVG noise, no images.</li></ul></div>
+        <div><h4>Light / dark</h4><p>Dark mode is a green desk lamp on dark wood with the same cream sheets. Very atmospheric.</p></div>
+      </div>
+      <div class="fit"><span><b>Boldness</b> high, warm</span><span><b>Phone fit</b> very good</span><span><b>Build</b> medium, lots of detail</span><span><b>Risk</b> cute wears off if the content is dry</span></div>
+    </div>
+    <div class="stage">
+      <div class="phone"><div class="scr m-stamp">
+        <div class="sb"><span>09:41</span><span>●●● ᯤ ▮</span></div>
+        <div class="top"><span class="brand">Civic Companion</span><span>EN</span></div>
+        <div class="sheet">
+          <div class="form"><span>FORM W-41</span><span>6 → 12 OCT 2026</span></div>
+          <h2>This week</h2>
+          <p class="sub">Files for where you live and the topics you follow. Sorted on this device.</p>
+          <div class="stamp">sorted<b>LOCAL</b>nothing sent</div>
+        </div>
+        <div class="field"><span>Where you live:</span><b>Esch-sur-Alzette</b></div>
+        <div class="field"><span>Topics:</span><b>Démocratie, Voirie</b></div>
+        <ol>
+          <li><div class="m">ESCH COUNCIL · POINT 7 · FRI 10 OCT</div><div class="t">Réfection rues Brill et Spoo (phase 1)</div><div class="seal g">COMPRIS</div><div class="w">You answered all 4 questions. Quotes found.</div></li>
+          <li><div class="m">ESCH COUNCIL · POINT 4 · FRI 10 OCT</div><div class="t">Convention Uni.lu, Assemblée citoyenne</div><div class="seal">YOUR TOPIC</div><div class="w">3 official documents attached.</div></li>
+          <li><div class="m">CHAMBER · DEBATE · WED 8 OCT</div><div class="t">Financement des grands projets d'infrastructure</div><div class="w">Plenary debate, no vote.</div></li>
+        </ol>
+        <nav><span class="on">This week</span><span>Check a claim</span><span>Ideas</span></nav>
+      </div></div>
+      <p class="hint">reload to see the stamp slam</p>
+    </div>
+  </section>
+
+  <!-- ============ 07 KINETIC ============ -->
+  <section class="dir" id="kinetic">
+    <div>
+      <p class="num">07</p>
+      <h2>Kinetic</h2>
+      <p class="thesis">Motion-first. Oversized typography that enters word by word, a slow rotating colour mesh, a ticker of what is on the agenda, rows that invert when you touch them.</p>
+      <p class="why">This is the "go crazy" direction. It treats the agenda like a festival line-up or a sports broadcast: urgent, big, alive. It fits a campaign moment, a launch, a young audience. It is the most distinctive and the most demanding to keep tasteful across hundreds of files.</p>
+      <div class="spec">
+        <div><h4>Palette</h4><div class="swatches"><i class="sw" style="background:#0b0b0f"><span>0B0B0F</span></i><i class="sw" style="background:#f4f1ff"><span>F4F1FF</span></i><i class="sw" style="background:#ffb347"><span>FFB347</span></i><i class="sw" style="background:#ff3d81"><span>FF3D81</span></i><i class="sw" style="background:#39e6c8"><span>39E6C8</span></i><i class="sw" style="background:#6b5bff"><span>6B5BFF</span></i></div></div>
+        <div><h4>Type</h4><div class="type-sample"><span class="big" style="font-family:Syne,sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:-0.05em">This week</span><span class="small" style="font-family:'DM Sans',sans-serif">Syne Extra Bold for display, DM Sans for text.</span></div></div>
+        <div><h4>Motion &amp; depth</h4><ul><li>Words rise in sequence on every screen; the mesh rotates for the whole session.</li><li>Ticker of the week's dates and bodies, always moving.</li><li>Rows flip to white on touch; the arrow travels. Transitions between screens are shared-element morphs.</li></ul></div>
+        <div><h4>Light / dark</h4><p>Light mode is white with the same mesh at low opacity and black type. Still kinetic.</p></div>
+      </div>
+      <div class="fit"><span><b>Boldness</b> maximum</span><span><b>Phone fit</b> good</span><span><b>Build</b> higher, motion system needed</span><span><b>Risk</b> tiring daily; needs a reduced-motion mode</span></div>
+    </div>
+    <div class="stage">
+      <div class="phone"><div class="scr m-kin">
+        <div class="mesh"></div><div class="veil"></div>
+        <div class="sb"><span>09:41</span><span>●●● ᯤ ▮</span></div>
+        <div class="top"><span class="brand">Companion</span><span class="lang">EN</span></div>
+        <div class="mq"><span>Week 41 · Esch council Fri 10 Oct · Chamber plenary Wed 8 Oct · 3 files for where you live · sorted on your phone · Week 41 · Esch council Fri 10 Oct · Chamber plenary Wed 8 Oct · 3 files for where you live · sorted on your phone · </span></div>
+        <div class="big"><span>This</span><span>week</span><span>Esch</span></div>
+        <div class="home"><span><b>Esch-sur-Alzette</b> <i>· Démocratie, Voirie</i></span><span>Change</span></div>
+        <ol>
+          <li><div><div class="t">Réfection rues Brill et Spoo (phase 1)</div><div class="w">Esch council · Fri 10 Oct</div></div><span class="arrow">→</span></li>
+          <li><div><div class="t">Convention Uni.lu, Assemblée citoyenne</div><div class="w">Your topic · Fri 10 Oct</div></div><span class="arrow">→</span></li>
+          <li><div><div class="t">Financement des grands projets d'infrastructure</div><div class="w">Chamber · Wed 8 Oct</div></div><span class="arrow">→</span></li>
+        </ol>
+        <nav><span class="on">Week</span><span>Check</span><span>Ideas</span></nav>
+      </div></div>
+      <p class="hint">hover the rows</p>
+    </div>
+  </section>
+
+  <!-- ============ COMPARE ============ -->
+  <section class="compare" id="compare">
+    <h2>Side by side</h2>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Direction</th><th>Feels like</th><th>Boldness</th><th>3D / motion</th><th>Build cost</th><th>Best for</th></tr></thead>
+        <tbody>
+          <tr><td><b>01 Affichage</b></td><td>a poster on the commune wall</td><td class="dots">●●●●○</td><td>press physics</td><td>low</td><td>a civic brand people share</td></tr>
+          <tr><td><b>02 Signal</b></td><td>a passport, a timetable</td><td class="dots">●●●○○</td><td>one counter</td><td>lowest</td><td>trust and authority</td></tr>
+          <tr><td><b>03 Glass Chamber</b></td><td>a spatial OS</td><td class="dots">●●●●○</td><td>true 3D tilt, blur</td><td>medium</td><td>"newest tech" positioning</td></tr>
+          <tr><td><b>04 Clay Commune</b></td><td>a toy town</td><td class="dots">●●●●○</td><td>springs, optional 3D hero</td><td>medium</td><td>fun first, young residents</td></tr>
+          <tr><td><b>05 Ledger</b></td><td>a verified record</td><td class="dots">●●●●○</td><td>typing, pulses</td><td>low</td><td>the verifiability story</td></tr>
+          <tr><td><b>06 Stamped</b></td><td>a desk at the commune</td><td class="dots">●●●●○</td><td>stamp slams, paper lift</td><td>medium</td><td>warmth, rewards, humour</td></tr>
+          <tr><td><b>07 Kinetic</b></td><td>a festival line-up</td><td class="dots">●●●●●</td><td>continuous</td><td>higher</td><td>launch and campaign moments</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="reco">
+      <h3>My recommendation</h3>
+      <p><b>Affichage</b> as the base, with the <b>Stamped</b> seals as the reward layer. It is the furthest from the AI default while staying readable for every resident, it is cheap to build with the tokens we already have, and the two share one world: public notices and official stamps. If you want the tech story front and centre instead, <b>Glass Chamber</b> is the one to pick, and it is the most spectacular on a phone.</p>
+      <p style="margin-top:0.6rem;color:var(--muted)">Mixes that also work: Signal + Ledger (serious and verifiable), Clay + Kinetic (maximum fun). Tell me a number, or two, and I'll apply it to the live app behind a flag so you can compare on your phone.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Glass: pointer tilt on the stack.
+  var scr = document.getElementById('glassScr'), stack = document.getElementById('glassStack');
+  if (scr && stack && !reduce) {
+    scr.addEventListener('pointermove', function (e) {
+      var r = scr.getBoundingClientRect();
+      var x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      stack.style.transform = 'rotateY(' + (x * 14) + 'deg) rotateX(' + (-y * 14) + 'deg)';
+    });
+    scr.addEventListener('pointerleave', function () { stack.style.transform = ''; });
+  }
+  // Signal: count the week numeral up on first view.
+  var n = document.querySelector('.m-swiss .wk b');
+  if (n && !reduce && 'IntersectionObserver' in window) {
+    var done = false;
+    new IntersectionObserver(function (es) {
+      if (done || !es[0].isIntersecting) return; done = true;
+      var target = 41, t0 = performance.now();
+      (function step(t) { var p = Math.min(1, (t - t0) / 900); n.textContent = Math.round(target * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); })(t0);
+    }).observe(n);
+  }
+})();
+</script>

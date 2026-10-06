@@ -1,0 +1,424 @@
+<title>Affichage Identity</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Public+Sans:ital,wght@0,400;0,600;0,800;1,400&family=JetBrains+Mono:wght@400;700&family=Archivo+Black&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: the page is itself a wall. Cream plaster, and every exhibit is a sheet pasted on it. Identity tokens are the app's future tokens: paper, ink, amber, navy, red. */
+:root {
+  --paper: #efe8d6; --paper-2: #f8f3e6; --ink: #121212; --amber: #f5a623; --navy: #1b2a4a; --red: #d8321f; --muted: #5d5a52; --wall: #e4dcc6;
+  --stencil: "Big Shoulders Display", "Archivo Black", Impact, sans-serif;
+  --display: "Big Shoulders Display", "Archivo Black", Impact, sans-serif;
+  --body: "Public Sans", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper: #1c1b18; --paper-2: #26241f; --ink: #efe8d6; --amber: #f5a623; --navy: #8fa6d6; --red: #ff5a45; --muted: #a39e90; --wall: #121110; color-scheme: dark; } }
+:root[data-theme="dark"] { --paper: #1c1b18; --paper-2: #26241f; --ink: #efe8d6; --amber: #f5a623; --navy: #8fa6d6; --red: #ff5a45; --muted: #a39e90; --wall: #121110; color-scheme: dark; }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--wall); color: var(--ink); font: 400 16px/1.55 var(--body); -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .5; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.75' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.wrap { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; padding-block: 2rem 5rem; padding-inline: 16px; }
+h1, h2, h3, h4 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.k { font-family: var(--mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.stencil { font-family: var(--stencil); font-weight: 800; text-transform: uppercase; letter-spacing: .01em; line-height: .9; }
+.disp { font-family: var(--display); font-weight: 900; text-transform: uppercase; letter-spacing: 0; line-height: .92; }
+
+/* a pasted sheet: the identity's core object. No black drop shadow; a second coloured sheet behind, slightly turned. */
+.sheet { position: relative; color: var(--ink); padding: 1.2rem 1.3rem; }
+.sheet::after { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--paper-2); border: 3px solid var(--ink); }
+.sheet::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--amber); border: 3px solid var(--ink); transform: translate(8px, 8px) rotate(var(--tilt, -.8deg)); }
+.sheet.navy::before { background: var(--navy); }
+.sheet.red::before { background: var(--red); }
+.sheet.plain::before { display: none; }
+.sheet.torn::after { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), 97% 100%, 93% calc(100% - 7px), 88% 100%, 83% calc(100% - 9px), 78% 100%, 72% calc(100% - 6px), 66% 100%, 60% calc(100% - 10px), 54% 100%, 48% calc(100% - 7px), 42% 100%, 36% calc(100% - 9px), 30% 100%, 24% calc(100% - 6px), 18% 100%, 12% calc(100% - 10px), 6% 100%, 0 calc(100% - 7px)); border-bottom: 0; }
+.tack { position: absolute; top: -9px; left: 50%; width: 18px; height: 18px; border-radius: 50%; background: var(--red); border: 3px solid var(--ink); transform: translateX(-50%); }
+.tack::after { content: ""; position: absolute; left: 4px; top: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--paper-2); }
+.staple { position: absolute; width: 22px; height: 7px; border: 2.5px solid var(--ink); border-bottom: 0; top: -2px; }
+.staple.l { left: 14px; transform: rotate(-6deg); } .staple.r { right: 14px; transform: rotate(5deg); }
+
+/* ---------- header ---------- */
+.hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 2.5rem; align-items: end; padding-block: 1rem 3rem; }
+.hero h1 { font-size: clamp(3.2rem, 9vw, 7rem); }
+.hero h1 span { display: block; }
+.hero h1 .amber { color: var(--amber); -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill; }
+.hero .lede { font-size: 1.1rem; max-width: 34rem; margin-top: 1.2rem; }
+.hero .lede b { font-weight: 800; }
+.mark { display: grid; gap: 1rem; justify-items: start; }
+.wordmark { display: inline-grid; grid-template-columns: auto auto; align-items: stretch; border: 3px solid var(--ink); background: var(--paper-2); }
+.wordmark .glyph { background: var(--ink); color: var(--amber); font-family: var(--stencil); font-weight: 900; font-size: 44px; line-height: 1; display: grid; place-items: center; padding: 6px 12px; }
+.wordmark .word { font-family: var(--stencil); font-weight: 800; font-size: 26px; line-height: .9; text-transform: uppercase; padding: 8px 14px; display: grid; align-content: center; }
+.wordmark .word small { display: block; font-family: var(--mono); font-size: 9px; letter-spacing: .14em; margin-top: 4px; text-transform: uppercase; color: var(--muted); }
+.appicon { width: 84px; height: 84px; border-radius: 20px; background: var(--amber); border: 3px solid var(--ink); display: grid; place-items: center; font-family: var(--stencil); font-weight: 900; font-size: 58px; color: var(--ink); position: relative; overflow: hidden; }
+.appicon::after { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 55%, rgb(0 0 0 / .12)); }
+
+/* ---------- nav ---------- */
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--wall); border-top: 3px solid var(--ink); border-bottom: 3px solid var(--ink); margin-inline: -16px; padding-inline: 16px; }
+.nav ol { list-style: none; margin: 0; padding: 0; display: flex; overflow-x: auto; scrollbar-width: none; }
+.nav li + li { border-left: 3px solid var(--ink); }
+.nav a { display: block; white-space: nowrap; text-decoration: none; color: inherit; padding: .55rem .9rem; font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: .9rem; letter-spacing: .02em; }
+.nav a:hover { background: var(--amber); }
+
+section.part { padding-block: 3.5rem; scroll-margin-top: 4rem; }
+.part > .k { margin-bottom: .4rem; }
+.part h2 { font-size: clamp(2.2rem, 5vw, 3.6rem); }
+.part .intro { font-size: 1.05rem; max-width: 36rem; margin-top: .8rem; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.6rem; margin-top: 1.8rem; align-items: start; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.4rem; margin-top: 1.8rem; align-items: start; }
+
+/* ---------- swaps table ---------- */
+.swaps { margin-top: 1.8rem; border: 3px solid var(--ink); background: var(--paper-2); }
+.swaps .row { display: grid; grid-template-columns: 1fr 1fr; }
+.swaps .row + .row { border-top: 3px solid var(--ink); }
+.swaps .row > div { padding: 1rem 1.1rem; }
+.swaps .row > div + div { border-left: 3px solid var(--ink); }
+.swaps .row .k { display: block; margin-bottom: .3rem; }
+.swaps .row.head { background: var(--ink); color: var(--paper); }
+.swaps .row.head .k { color: var(--amber); }
+.swaps .row.head div { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 1.1rem; }
+.swaps .demo { isolation: isolate; margin-top: .6rem; height: 64px; display: flex; align-items: center; gap: 10px; }
+.generic-card { width: 120px; height: 44px; background: #fff; border: 3px solid #111; box-shadow: 6px 6px 0 #111; border-radius: 6px; }
+.ours-card { width: 120px; height: 44px; position: relative; background: var(--paper-2); border: 3px solid var(--ink); }
+.ours-card::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--navy); border: 3px solid var(--ink); transform: translate(7px, 7px) rotate(-1.2deg); }
+.ours-card .staple { top: -4px; }
+
+/* ---------- palette ---------- */
+.pal { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; border: 3px solid var(--ink); margin-top: 1.8rem; }
+.pal div { aspect-ratio: 1 / 1.2; padding: .8rem; display: grid; align-content: end; gap: .1rem; }
+.pal div + div { border-left: 3px solid var(--ink); }
+.pal b { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 1.2rem; line-height: 1; }
+.pal span { font-family: var(--mono); font-size: .7rem; }
+.pal small { font-size: .78rem; line-height: 1.3; opacity: .85; }
+.material { isolation: isolate; margin-top: 1.4rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2rem; }
+.material .sheet { min-height: 130px; }
+.material .sheet h4 { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 1.2rem; }
+.material .sheet p { font-size: .9rem; margin-top: .3rem; }
+
+/* ---------- type ---------- */
+.type { margin-top: 1.8rem; display: grid; gap: 1.2rem; }
+.type .row { display: grid; grid-template-columns: 180px 1fr; gap: 1.5rem; align-items: baseline; border-top: 3px solid var(--ink); padding-top: 1rem; }
+.type .row .k { padding-top: .3rem; }
+.type .sample-stencil { font-size: clamp(3rem, 8vw, 6rem); }
+.type .sample-disp { font-size: clamp(2rem, 5vw, 3.2rem); }
+.type .sample-body { font-size: 1.1rem; max-width: 36rem; }
+.type .sample-mono { font-family: var(--mono); font-size: 1rem; }
+.type .note { font-size: .9rem; color: var(--muted); margin-top: .4rem; }
+
+/* ---------- motion lab ---------- */
+.lab { margin-top: 1.8rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.4rem; }
+.lab .cell { border: 3px solid var(--ink); background: var(--paper-2); display: grid; grid-template-rows: auto 1fr auto; min-height: 300px; }
+.lab .cell h4 { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 1.2rem; padding: .7rem .9rem; border-bottom: 3px solid var(--ink); display: flex; justify-content: space-between; align-items: center; }
+.lab .cell h4 .k { font-size: .62rem; }
+.lab .arena { position: relative; isolation: isolate; display: grid; place-items: center; padding: 1.4rem; overflow: hidden; background: var(--wall); }
+.lab .cell p { font-size: .88rem; padding: .7rem .9rem; border-top: 3px solid var(--ink); }
+.lab .cell p b { font-weight: 800; }
+.replay { font: inherit; font-family: var(--mono); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; border: 2px solid var(--ink); background: var(--amber); color: #121212; padding: .25rem .6rem; cursor: pointer; }
+.replay:active { transform: translate(2px, 2px); }
+.demo-sheet { width: 170px; padding: .8rem .9rem; font-size: .8rem; }
+.demo-sheet b { display: block; font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 1.1rem; line-height: 1; margin-bottom: .2rem; }
+/* 1 paste-up */
+@keyframes pasteup { 0% { transform: scale(1.08) rotate(-3deg); opacity: 0; } 60% { transform: scale(.985) rotate(.6deg); opacity: 1; } 100% { transform: none; opacity: 1; } }
+@keyframes roller { 0% { transform: translateX(-120%) skewX(-12deg); } 100% { transform: translateX(220%) skewX(-12deg); } }
+.play-paste .demo-sheet { animation: pasteup .7s cubic-bezier(.2, .9, .3, 1.2) both; }
+.play-paste .demo-sheet::after { content: ""; position: absolute; inset: 0; width: 40%; background: linear-gradient(90deg, transparent, rgb(255 255 255 / .55), transparent); animation: roller .55s .15s ease-out both; pointer-events: none; }
+/* 2 press */
+.press-btn { position: relative; font: inherit; font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 1.1rem; padding: .9rem 1.4rem; background: var(--paper-2); border: 3px solid var(--ink); cursor: pointer; color: var(--ink); }
+.press-btn::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--amber); border: 3px solid var(--ink); transform: translate(7px, 7px) rotate(-1deg); transition: transform .12s; }
+.press-btn:active, .press-btn.on { transform: translate(7px, 7px); background: var(--amber); }
+.press-btn:active::before, .press-btn.on::before { transform: none; }
+.press-btn .tack { opacity: 0; transition: opacity .1s .1s, transform .25s cubic-bezier(.2, 1.4, .4, 1); transform: translateX(-50%) scale(2); }
+.press-btn.on .tack { opacity: 1; transform: translateX(-50%) scale(1); }
+/* 3 peel */
+.peel-stack { position: relative; isolation: isolate; width: 170px; height: 150px; perspective: 700px; }
+.peel-stack .demo-sheet { position: absolute; inset: 0; margin: 0; }
+.peel-stack .under { background: var(--paper-2); }
+.peel-stack .over { transform-origin: 0 0; }
+@keyframes peel { 0% { transform: none; } 100% { transform: rotateY(-100deg) rotateX(18deg) translateY(10px); opacity: .6; } }
+.play-peel .over { animation: peel .8s cubic-bezier(.4, 0, .2, 1) both; }
+.play-peel .under { animation: pasteup .5s .35s cubic-bezier(.2, .9, .3, 1.2) both; }
+/* 4 tear */
+@keyframes tear { 0% { clip-path: inset(0 0 0 0); transform: none; } 100% { clip-path: inset(0 0 0 100%); transform: translateX(16px) rotate(2deg); opacity: 0; } }
+.play-tear .tear-sheet { animation: tear .5s cubic-bezier(.6, 0, .9, .4) both; }
+/* 5 flap */
+.flap { display: flex; gap: 6px; }
+.flap .digit { position: relative; width: 56px; height: 84px; background: var(--ink); color: var(--paper); font-family: var(--display); font-weight: 900; font-size: 68px; line-height: 84px; text-align: center; border: 3px solid var(--ink); overflow: hidden; }
+.flap .digit::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 3px; background: var(--wall); }
+.flap .digit span { display: block; }
+@keyframes flapdown { 0% { transform: rotateX(0); } 50% { transform: rotateX(-90deg); } 51% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
+.play-flap .digit span { animation: flapdown .45s ease-in-out both; }
+.play-flap .digit:nth-child(2) span { animation-delay: .12s; }
+/* 6 marching */
+.march { width: 170px; border: 3px dashed var(--ink); padding: .9rem; font-family: var(--mono); font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; background: repeating-linear-gradient(90deg, var(--ink) 0 10px, transparent 10px 20px) top / 200% 3px no-repeat, var(--paper-2); animation: march 1s linear infinite; }
+@keyframes march { to { background-position: -20px 0, 0 0; } }
+
+/* ---------- screens ---------- */
+.screens { margin-top: 1.8rem; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; justify-items: center; }
+.phone { width: 100%; max-width: 380px; border-radius: 42px; overflow: hidden; border: 8px solid #0b0b0d; box-shadow: 0 30px 80px rgb(0 0 0 / .35); background: #000; }
+.scr { height: 760px; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; background: #efe8d6; color: #121212; font: 400 14px/1.4 var(--body); position: relative; }
+.scr::-webkit-scrollbar { display: none; }
+.scr::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2400px; pointer-events: none; opacity: .6; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.75' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.scr .sb { display: flex; justify-content: space-between; font-size: 12px; padding: 12px 20px 0; font-weight: 600; }
+.scr .top { display: flex; justify-content: space-between; align-items: center; padding: 10px 18px 0; }
+.scr .wm { display: inline-grid; grid-template-columns: auto auto; border: 3px solid #121212; background: #f8f3e6; }
+.scr .wm i { background: #121212; color: #f5a623; font-family: var(--stencil); font-weight: 900; font-size: 20px; font-style: normal; display: grid; place-items: center; padding: 0 7px; }
+.scr .wm b { font-family: var(--stencil); font-weight: 800; font-size: 13px; text-transform: uppercase; padding: 4px 8px; line-height: 1; display: grid; align-content: center; }
+.scr .lang { border: 3px solid #121212; padding: 1px 8px; font-weight: 800; font-size: 12px; background: #f8f3e6; font-family: var(--display); }
+.scr .body { isolation: isolate; padding: 16px 18px 90px; display: grid; gap: 20px; }
+.ps { position: relative; padding: 12px 14px; animation: pasteup .7s cubic-bezier(.2, .9, .3, 1.2) both; }
+.ps::after { content: ""; position: absolute; inset: 0; z-index: -1; background: #f8f3e6; border: 3px solid #121212; }
+.ps::before { content: ""; position: absolute; inset: 0; z-index: -1; border: 3px solid #121212; background: var(--c, #f5a623); transform: translate(7px, 7px) rotate(var(--tilt, -.9deg)); }
+.ps.n { --c: #1b2a4a; } .ps.r { --c: #d8321f; } .ps.flat::before { display: none; }
+.ps .staple { border-color: #121212; }
+.scr .wk { display: flex; align-items: flex-end; gap: 10px; }
+.scr .wk .flap { gap: 4px; }
+.scr .wk .digit { width: 40px; height: 60px; font-size: 50px; line-height: 60px; border-color: #121212; background: #121212; color: #efe8d6; }
+.scr .wk .digit::after { background: #efe8d6; }
+.scr .wk span.l { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 12px; line-height: 1.1; padding-bottom: 4px; }
+.scr h2 { font-family: var(--stencil); font-weight: 800; text-transform: uppercase; font-size: 44px; line-height: .88; letter-spacing: .005em; }
+.scr .intro { font-size: 12.5px; margin-top: 8px; }
+.scr .where { display: flex; gap: 8px; flex-wrap: wrap; }
+.scr .where span { border: 3px solid #121212; padding: 5px 9px; font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 12px; background: #f5a623; }
+.scr .where span.n { background: #1b2a4a; color: #efe8d6; }
+.scr .gh { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 18px; display: flex; justify-content: space-between; align-items: baseline; border-bottom: 3px solid #121212; padding-bottom: 4px; }
+.scr .gh i { font-style: normal; font-family: var(--mono); font-size: 11px; }
+.scr .entries { display: grid; gap: 16px; }
+.scr .e .m { font-size: 10.5px; font-weight: 800; text-transform: uppercase; display: flex; justify-content: space-between; letter-spacing: .04em; }
+.scr .e .m em { font-style: normal; background: #d8321f; color: #f8f3e6; padding: 0 6px; }
+.scr .e .t { font-weight: 600; font-size: 14.5px; margin-top: 6px; line-height: 1.25; }
+.scr .e .w { font-size: 12px; margin-top: 8px; font-weight: 600; }
+.scr .e .w b { background: #f5a623; padding: 0 4px; }
+.scr nav { position: sticky; bottom: 0; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 3px solid #121212; background: #f8f3e6; }
+.scr nav span { padding: 13px 4px 17px; text-align: center; font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 12px; border-right: 3px solid #121212; }
+.scr nav span:last-child { border-right: 0; }
+.scr nav span.on { background: #121212; color: #f5a623; }
+/* file page bits */
+.scr .meta { display: flex; gap: 6px; font-size: 10.5px; font-weight: 800; text-transform: uppercase; flex-wrap: wrap; }
+.scr .meta span { border: 2px solid #121212; padding: 0 6px; }
+.scr .meta span.num { background: #d8321f; color: #f8f3e6; border-color: #d8321f; }
+.scr .title { font-family: var(--stencil); font-weight: 800; text-transform: uppercase; font-size: 26px; line-height: .92; margin-top: 8px; }
+.scr .summary { font-size: 12.5px; margin-top: 8px; border-left: 6px solid #f5a623; padding-left: 10px; }
+.scr .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-size: 12px; margin: 0; }
+.scr .facts dt { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; font-weight: 800; }
+.scr .facts dd { margin: 0; font-weight: 600; }
+.scr .track { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 11px; }
+.scr .track span { background: #f8f3e6; border: 3px solid #121212; padding: 8px 2px; text-align: center; }
+.scr .track span.done { background: #121212; color: #efe8d6; }
+.scr .track span.now { background: #f5a623; position: relative; }
+.scr .track span.now::after { content: ""; position: absolute; top: -9px; left: 50%; width: 14px; height: 14px; border-radius: 50%; background: #d8321f; border: 3px solid #121212; transform: translateX(-50%); }
+.scr .next b { display: block; font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 20px; line-height: 1; margin-top: 4px; }
+.scr .next { color: #efe8d6; }
+.scr .next::after { background: #1b2a4a; }
+.scr .next .k { color: #f5a623; }
+.scr .never { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 12px; text-align: center; padding: 6px; border-top: 3px solid #121212; border-bottom: 3px solid #121212; }
+.scr .h { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 18px; }
+.scr .cite { display: inline-grid; place-items: center; min-width: 16px; height: 16px; font-size: 10px; margin-left: 2px; vertical-align: 2px; background: #121212; color: #f5a623; font-weight: 800; }
+.scr .stand { isolation: isolate; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+.scr .stand button { position: relative; font: inherit; font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 12px; padding: 12px 4px; background: #f8f3e6; border: 3px solid #121212; cursor: pointer; color: #121212; }
+.scr .stand button::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #f5a623; border: 3px solid #121212; transform: translate(5px, 5px) rotate(-1deg); transition: transform .12s; }
+.scr .stand button.on { transform: translate(5px, 5px); background: #f5a623; }
+.scr .stand button.on::before { transform: none; }
+.scr .opts { display: grid; gap: 8px; margin-top: 8px; }
+.scr .opts span { border: 3px solid #121212; background: #f8f3e6; padding: 9px 12px; font-size: 12.5px; font-weight: 600; }
+.scr .opts span.ok { background: #121212; color: #f5a623; }
+.scr .quote { border-left: 6px solid #121212; padding-left: 10px; font-style: italic; font-size: 12.5px; margin-top: 8px; }
+.scr .understood { position: absolute; right: 10px; top: -12px; background: #f5a623; border: 3px solid #121212; font-family: var(--stencil); font-weight: 900; text-transform: uppercase; font-size: 13px; padding: 4px 8px; transform: rotate(4deg); }
+
+/* ---------- plan ---------- */
+.plan { margin-top: 1.8rem; display: grid; gap: 0; border: 3px solid var(--ink); background: var(--paper-2); }
+.plan div { display: grid; grid-template-columns: 56px 1fr; gap: 1rem; padding: 1rem 1.1rem; }
+.plan div + div { border-top: 3px solid var(--ink); }
+.plan b { font-family: var(--display); font-weight: 900; font-size: 1.6rem; line-height: 1; }
+.plan h4 { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 1.1rem; }
+.plan p { font-size: .92rem; margin-top: .2rem; }
+
+@media (max-width: 860px) {
+  .hero, .grid2, .grid3, .screens, .lab, .material { grid-template-columns: 1fr; }
+  .pal { grid-template-columns: repeat(5, 1fr); }
+  .pal div { padding: .4rem; } .pal b { font-size: .8rem; } .pal span, .pal small { display: none; }
+  .type .row { grid-template-columns: 1fr; gap: .4rem; }
+  .swaps .row { grid-template-columns: 1fr; } .swaps .row > div + div { border-left: 0; border-top: 3px solid var(--ink); }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <p class="k">Civic Companion · identity · 6 October 2026</p>
+      <h1 class="stencil"><span>Affichage,</span><span class="amber">made ours</span></h1>
+      <p class="lede">You have seen neo-brutalism before: white boxes, black offset shadows, a primary yellow. That is a template. <b>Ours is not boxes, it is paper.</b> Every element is a sheet pasted on a public wall: condensed poster headlines, a second coloured sheet behind instead of a shadow, staples and tacks, torn edges, and motion that pastes, presses, peels and tears. Below: the mark, the material, the type, the motion system, and both screens rebuilt in it.</p>
+    </div>
+    <div class="mark">
+      <div class="wordmark"><span class="glyph">§</span><span class="word">Civic<br>Companion<small>Lëtzebuerg · 2026</small></span></div>
+      <div class="appicon">§</div>
+      <p class="k">The § you already use, set in the poster face. Black tile, amber glyph. It reads at 16 px.</p>
+    </div>
+  </header>
+
+  <nav class="nav" aria-label="Sections"><ol>
+    <li><a href="#swaps">Not a template</a></li><li><a href="#material">Material</a></li><li><a href="#type">Type</a></li><li><a href="#motion">Motion</a></li><li><a href="#screens">Screens</a></li><li><a href="#plan">Build</a></li>
+  </ol></nav>
+
+  <section class="part" id="swaps">
+    <p class="k">01</p>
+    <h2 class="disp">Six swaps that make it ours</h2>
+    <p class="intro">Each one replaces a neo-brutal habit with something from the world of public notices. Together they change the feel completely while keeping the boldness you liked.</p>
+    <div class="swaps">
+      <div class="row head"><div><span class="k">Generic neo-brutalism</span>What you have seen</div><div><span class="k">Affichage</span>What we do</div></div>
+      <div class="row"><div><span class="k">Depth</span>A hard black drop shadow on every box.<div class="demo"><div class="generic-card"></div></div></div><div><span class="k">Depth</span>A second sheet in a brand colour behind, slightly turned, with a staple. Depth from paper layers, never from a shadow.<div class="demo"><div class="ours-card"><i class="staple l"></i><i class="staple r"></i></div></div></div></div>
+      <div class="row"><div><span class="k">Headlines</span>Archivo Black, Space Grotesk or Inter at 900. Smooth, digital.<div class="demo" style="font-family:'Archivo Black',sans-serif;font-size:1.6rem">THIS WEEK</div></div><div><span class="k">Headlines</span>Big Shoulders Display at 900: condensed poster capitals, like a hoarding headline. Open letterforms, so it stays easy to read for everyone, older residents included.<div class="demo stencil" style="font-size:2.2rem">This week</div></div></div>
+      <div class="row"><div><span class="k">Colour</span>Pure white boxes, primary yellow, pure red, royal blue.<div class="demo"><i style="width:36px;height:36px;background:#fff;border:3px solid #111"></i><i style="width:36px;height:36px;background:#ffd23f;border:3px solid #111"></i><i style="width:36px;height:36px;background:#4f8df0;border:3px solid #111"></i></div></div><div><span class="k">Colour</span>Cream paper and warm ink. Your existing amber and navy become the paste-up colours, so the brand you already have carries over. Red only for numbers and dates.<div class="demo"><i style="width:36px;height:36px;background:var(--paper-2);border:3px solid var(--ink)"></i><i style="width:36px;height:36px;background:var(--amber);border:3px solid var(--ink)"></i><i style="width:36px;height:36px;background:var(--navy);border:3px solid var(--ink)"></i><i style="width:36px;height:36px;background:var(--red);border:3px solid var(--ink)"></i></div></div></div>
+      <div class="row"><div><span class="k">Edges</span>Perfect rectangles, sometimes rounded.</div><div><span class="k">Edges</span>Header sheets are torn along the bottom; important sheets sit a degree off square; small things are held by a tack or two staples.</div></div>
+      <div class="row"><div><span class="k">Surface</span>Flat colour, no texture.</div><div><span class="k">Surface</span>Paper grain on every surface, a tiny vector noise, no images. Dark mode is the same wall at night: black plaster, cream ink.</div></div>
+      <div class="row"><div><span class="k">Motion</span>Hover lifts, click drops. That is all.</div><div><span class="k">Motion</span>A system with six verbs: paste, press, peel, tear, flap, march. Each has one job and one timing. See below.</div></div>
+    </div>
+  </section>
+
+  <section class="part" id="material">
+    <p class="k">02</p>
+    <h2 class="disp">Material and palette</h2>
+    <p class="intro">Five colours, five jobs. Nothing else appears in the app, and the three semantic grades (supported, unclear, contradicted) come from ink, amber and red so no new hue is needed.</p>
+    <div class="pal">
+      <div style="background:var(--paper-2);color:var(--ink)"><b>Paper</b><span>F8F3E6</span><small>every sheet</small></div>
+      <div style="background:var(--ink);color:var(--paper)"><b>Ink</b><span>121212</span><small>type, rules, chosen state</small></div>
+      <div style="background:var(--amber);color:#121212"><b>Amber</b><span>F5A623</span><small>yours: your place, your topic, your choice</small></div>
+      <div style="background:var(--navy);color:var(--paper)"><b>Navy</b><span>1B2A4A</span><small>official: next meeting, Chamber, council</small></div>
+      <div style="background:var(--red);color:var(--paper)"><b>Red</b><span>D8321F</span><small>numbers and dates only</small></div>
+    </div>
+    <div class="material">
+      <div class="sheet torn" style="--tilt:-1.2deg"><i class="tack"></i><h4>Torn sheet</h4><p>Header sheets tear along the bottom. The tear is a clip path, so it costs nothing and never repeats the same way twice.</p></div>
+      <div class="sheet navy"><i class="staple l"></i><i class="staple r"></i><h4>Stapled sheet</h4><p>A second sheet behind, turned under one degree. Navy for official things, amber for yours. Two staples hold it.</p></div>
+      <div class="sheet red" style="--tilt:1.4deg"><h4>Red backing</h4><p>Used once per screen at most: the thing with a date on it. Red is loud, so it is rationed.</p></div>
+    </div>
+  </section>
+
+  <section class="part" id="type">
+    <p class="k">03</p>
+    <h2 class="disp">Type</h2>
+    <p class="intro">Three faces, each with one job. The poster face is the signature; it appears in titles and labels, never in running text.</p>
+    <div class="type">
+      <div class="row"><span class="k">Signature · Big Shoulders Display 900</span><div><div class="stencil sample-stencil">This week</div><p class="note">Screen titles, the file title, the wordmark, the "understood" tag. Condensed, so long French titles fit on a phone, and open enough to read at a glance.</p></div></div>
+      <div class="row"><span class="k">Labels · Big Shoulders Display 700</span><div><div class="disp sample-disp">Where you live · Next on the agenda · Vote</div><p class="note">Section headings, buttons, tags, the stage track. Same family, lighter weight, so titles and labels sit together.</p></div></div>
+      <div class="row"><span class="k">Body · Public Sans 400/600</span><div><p class="sample-body">Files that affect where you live, and files on topics you follow, from the public list. The sorting happens on this device.</p><p class="note">Already in the app. Kept, so the explanations and the five languages stay as readable as today.</p></div></div>
+      <div class="row"><span class="k">Data · JetBrains Mono</span><div><p class="sample-mono">N° 8752 · 14 JUL 2026 · SHA256 9F2E…C41A</p><p class="note">References, dates in lists, the small provenance line.</p></div></div>
+    </div>
+  </section>
+
+  <section class="part" id="motion">
+    <p class="k">04</p>
+    <h2 class="disp">Motion: six verbs</h2>
+    <p class="intro">Every animation in the app is one of these six. Each has a fixed duration and easing, so the whole product moves like one material. Tap replay to see each.</p>
+    <div class="lab">
+      <div class="cell"><h4>Paste <button class="replay" data-play="play-paste" data-target="#lab1">Replay</button></h4><div class="arena" id="lab1"><div class="sheet demo-sheet"><i class="staple l"></i><i class="staple r"></i><b>Week 41</b>Pasted on, settles with a slight overshoot and a roller sweep.</div></div><p><b>When:</b> anything new appears: a screen, a list entry, the Companion's answer. <b>700 ms</b>, overshoot easing.</p></div>
+      <div class="cell"><h4>Press <button class="replay" data-play="toggle-on" data-target="#lab2 .press-btn">Replay</button></h4><div class="arena" id="lab2"><button class="press-btn" type="button"><i class="tack"></i>Against</button></div><p><b>When:</b> you choose: a stance, an answer, a topic. The sheet goes flat onto its backing and a tack lands. <b>120 ms</b>, linear.</p></div>
+      <div class="cell"><h4>Peel <button class="replay" data-play="play-peel" data-target="#lab3">Replay</button></h4><div class="arena" id="lab3"><div class="peel-stack"><div class="sheet demo-sheet under navy"><b>Week 42</b>The next sheet was already underneath.</div><div class="sheet demo-sheet over"><b>Week 41</b>Peels from the top left corner like a poster coming off.</div></div></div><p><b>When:</b> moving between screens or weeks. The old sheet peels, the new one was always under it. <b>800 ms</b>.</p></div>
+      <div class="cell"><h4>Tear <button class="replay" data-play="play-tear" data-target="#lab4">Replay</button></h4><div class="arena" id="lab4"><div class="sheet demo-sheet red tear-sheet"><b>Dismissed</b>Torn off sideways, gone.</div></div><p><b>When:</b> you dismiss or forget something: a claim, a topic, your saved place. Quick and final. <b>500 ms</b>, sharp easing.</p></div>
+      <div class="cell"><h4>Flap <button class="replay" data-play="play-flap" data-target="#lab5">Replay</button></h4><div class="arena" id="lab5"><div class="flap"><div class="digit"><span>4</span></div><div class="digit"><span>1</span></div></div></div><p><b>When:</b> a number changes: the week, a count, a score. A split-flap board from a station hall. <b>450 ms</b> per digit, staggered.</p></div>
+      <div class="cell"><h4>March <button class="replay" data-play="noop" data-target="#lab6">Live</button></h4><div class="arena" id="lab6"><div class="march">Reading the official documents…</div></div><p><b>When:</b> waiting. Marching ants along the cut line, like a sheet about to be trimmed. Replaces the fading pulse. <b>1 s</b> loop.</p></div>
+    </div>
+  </section>
+
+  <section class="part" id="screens">
+    <p class="k">05</p>
+    <h2 class="disp">Both screens, rebuilt</h2>
+    <p class="intro">"This week" and the file page in the final identity. Scroll inside the phones. Tap a stance to feel the press.</p>
+    <div class="screens">
+      <div class="phone"><div class="scr" id="s1">
+        <div class="sb"><span>09:41</span><span>●●● ᯤ ▮</span></div>
+        <div class="top"><span class="wm"><i>§</i><b>Civic<br>Companion</b></span><span class="lang">EN</span></div>
+        <div class="body">
+          <div class="ps torn-h flat" style="animation-delay:.05s">
+            <div class="wk"><div class="flap"><div class="digit"><span>4</span></div><div class="digit"><span>1</span></div></div><span class="l">Week<br>6 – 12 Oct</span></div>
+            <h2 style="margin-top:12px">This<br>week</h2>
+            <p class="intro">Files for where you live and the topics you follow. Sorted on this phone, nothing sent.</p>
+          </div>
+          <div class="where" style="animation:pasteup .7s .15s cubic-bezier(.2,.9,.3,1.2) both"><span>Esch-sur-Alzette</span><span class="n">2 topics</span></div>
+          <div class="ps" style="animation-delay:.25s"><i class="staple l"></i><i class="staple r"></i>
+            <div class="gh">Where you live <i>3 files</i></div>
+            <div class="entries" style="margin-top:12px">
+              <div class="e"><div class="m"><span>Esch · Point 7</span><em>10 Oct</em></div><div class="t">Réfection rues Brill et Spoo (phase 1), crédit spécial</div><div class="w">Council meets <b>Friday</b></div></div>
+              <div class="e"><div class="m"><span>Esch · Point 4</span><em>10 Oct</em></div><div class="t">Convention avec l'Université sur l'Assemblée citoyenne</div><div class="w"><b>Your topic</b> · Council meets Friday</div></div>
+              <div class="e"><div class="m"><span>Chamber · Debate</span><em>8 Oct</em></div><div class="t">Financement des grands projets d'infrastructure</div><div class="w">Plenary <b>Wednesday</b></div></div>
+            </div>
+          </div>
+          <div class="ps n" style="--tilt:1deg;animation-delay:.4s">
+            <div class="gh">Topics you follow <i>2 files</i></div>
+            <div class="entries" style="margin-top:12px">
+              <div class="e"><div class="m"><span>Chamber · Bill 8752</span><em>9 Oct</em></div><div class="t">Marchés des capitaux: abus de marché, indices, prospectus</div><div class="w">Finance committee <b>Thursday</b></div></div>
+            </div>
+          </div>
+        </div>
+        <nav><span class="on">This week</span><span>Check a claim</span><span>Ideas</span></nav>
+      </div></div>
+
+      <div class="phone"><div class="scr" id="s2">
+        <div class="sb"><span>09:41</span><span>●●● ᯤ ▮</span></div>
+        <div class="top"><span class="lang">← This week</span><span class="lang">EN</span></div>
+        <div class="body">
+          <div class="ps flat">
+            <div class="meta"><span>Chamber</span><span>Projet de loi</span><span class="num">N° 8752</span></div>
+            <h2 class="title">Rendre les marchés des capitaux plus attractifs</h2>
+            <p class="summary">Transposes the EU Listing Act into four Luxembourg laws so smaller companies can raise capital more easily on the exchange.</p>
+          </div>
+          <div class="ps" style="animation-delay:.1s"><i class="staple l"></i><i class="staple r"></i>
+            <dl class="facts"><div><dt>Proposed by</dt><dd>Minister of Finance</dd></div><div><dt>Committee</dt><dd>Finances et Budget</dd></div><div><dt>Filed on</dt><dd>14 Jul 2026</dd></div><div><dt>Status</dt><dd>Awaiting opinions</dd></div></dl>
+          </div>
+          <div class="track" style="animation:pasteup .7s .2s cubic-bezier(.2,.9,.3,1.2) both"><span class="done">Filed</span><span class="done">Committee</span><span class="now">Opinions</span><span>Vote</span></div>
+          <div class="ps r next" style="--tilt:1.2deg;animation-delay:.3s"><span class="k">Next on the agenda</span><b>Commission des Finances<br>Thu 9 Oct · 14:00</b></div>
+          <p class="never">The Companion never tells you how to vote</p>
+          <div class="ps flat" style="animation-delay:.4s">
+            <div class="h">What is this about?</div>
+            <p style="font-size:13px;margin-top:8px">The bill changes four laws so Luxembourg applies the EU Listing Act.<span class="cite">1</span> Smaller companies would need a shorter prospectus, and the threshold under which none is needed rises to €12 million.<span class="cite">1</span><span class="cite">3</span> The Council of State asks one clarification on sanctions.<span class="cite">2</span></p>
+          </div>
+          <div class="ps" style="animation-delay:.5s">
+            <div class="h">Where do you stand?</div>
+            <div class="stand"><button type="button">In favour</button><button type="button" class="on">Against</button><button type="button">Not sure</button></div>
+            <p style="font-size:11px;margin-top:12px;font-weight:600">Your answer stays on this device.</p>
+          </div>
+          <div class="ps n" style="--tilt:-1.3deg;animation-delay:.6s">
+            <span class="understood">Understood</span>
+            <div class="h">What does it actually say? <span style="font-family:var(--mono);font-size:11px;font-weight:400">2 / 4</span></div>
+            <p style="font-size:13px;margin-top:8px">Below what amount raised does a company need no prospectus at all?</p>
+            <div class="opts"><span>€5 million</span><span class="ok">€12 million ✓</span><span>€50 million</span></div>
+            <p class="quote">« Le seuil en dessous duquel aucun prospectus n'est requis est porté de 8 000 000 à 12 000 000 euros. » Art. 3</p>
+          </div>
+          <div class="ps flat" style="animation-delay:.7s">
+            <div class="h">Documents</div>
+            <div class="entries" style="margin-top:8px;font-size:12.5px;font-weight:600;gap:6px"><div>Projet de loi 8752 (texte déposé) · 14 Jul</div><div>Avis de la Chambre de Commerce · 3 Sep</div><div>Avis du Conseil d'État · 22 Sep</div></div>
+          </div>
+        </div>
+        <nav><span class="on">This week</span><span>Check a claim</span><span>Ideas</span></nav>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="part" id="plan">
+    <p class="k">06</p>
+    <h2 class="disp">How it lands in the app</h2>
+    <p class="intro">Behind a flag, so the current look stays live until you switch. Three small PRs, each checked on a phone at 375 px.</p>
+    <div class="plan">
+      <div><b>1</b><div><h4>Tokens and type</h4><p>New colour tokens (paper, ink, amber, navy, red), the three faces, the paper grain, light and dark. Nothing else changes yet, so this PR is safe and reviewable in minutes.</p></div></div>
+      <div><b>2</b><div><h4>Sheets and marks</h4><p>The pasted sheet replaces the card. Staple, tack, torn edge and the wordmark as small components. "This week" and the file page adopt them.</p></div></div>
+      <div><b>3</b><div><h4>Motion</h4><p>The six verbs as CSS keyframes with one shared timing file, applied to appear, choose, navigate, dismiss, count and wait. Reduced-motion turns them all off.</p></div></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  document.querySelectorAll('.replay').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var t = document.querySelector(btn.dataset.target), mode = btn.dataset.play;
+      if (!t || mode === 'noop') return;
+      if (mode === 'toggle-on') { t.classList.toggle('on'); return; }
+      t.classList.remove(mode); void t.offsetWidth; t.classList.add(mode);
+    });
+  });
+  document.getElementById('lab2').querySelector('.press-btn').addEventListener('click', function () { this.classList.toggle('on'); });
+  // first show of each lab
+  ['play-paste', 'play-peel', 'play-flap'].forEach(function (m, i) { var el = document.getElementById(['lab1', 'lab3', 'lab5'][i]); el && el.classList.add(m); });
+  document.querySelectorAll('.scr .stand button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      b.parentNode.querySelectorAll('button').forEach(function (x) { x.classList.remove('on'); }); b.classList.add('on');
+    });
+  });
+})();
+</script>
