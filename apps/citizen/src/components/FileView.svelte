@@ -18,6 +18,7 @@
     client,
     checker = null,
     today,
+    backLabel = t("back"),
     onback,
   }: {
     item: DocketItem;
@@ -27,6 +28,8 @@
     /** The claim checker (Provenance). Without it, the Companion checks claims itself (the shareable demo). */
     checker?: FactChecker | null;
     today: string;
+    /** Where the back button (phones) leads, in words: the full list unless opened from this week's list. */
+    backLabel?: string;
     onback: () => void;
   } = $props();
 
@@ -57,7 +60,7 @@
 </script>
 
 <article class="file">
-  <button class="back" onclick={onback}>← {t("back")}</button>
+  <button class="back" onclick={onback}>← {backLabel}</button>
 
   <header class="head">
     <p class="meta"><FileMeta {item} /></p>

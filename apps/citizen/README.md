@@ -2,6 +2,7 @@
 
 The resident-facing app for Luxembourg.
 
+- Opens on "This week": the files that affect where you live and the files on topics you follow, sorted on the device by `@democracy2/pulse`. Where you live and your topics stay in `localStorage`; every device downloads the same list, so the server never learns them.
 - Lists what the Chamber of Deputies has on its agenda, from the Docket snapshot.
 - Explains each file in Luxembourgish, French, German, English or Portuguese. Every sentence cites the official document it comes from.
 - Asks where you stand, keeps that answer on your device, and argues the other side using only arguments that official bodies made about the file.

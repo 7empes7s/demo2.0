@@ -22,6 +22,10 @@ Use one word per role, and use it everywhere: in the UI, the docs and the prompt
 | matches the text, the text says something else | correct, right, wrong, failed | An answer is judged only against the quoted passage. |
 | understood (a file) | passed, certified, badge, score | Shown when every answer matched the text once. Kept on the device only. |
 | the official text | source (in feedback), proof | The quoted passage under each answer. |
+| this week (the weekly list) | feed, inbox, timeline, for you, recommended | Pulse's view. It sorts the public list; it never ranks files by importance. |
+| where you live | jurisdiction, constituency, area, home (in the UI) | The commune, or the canton when Charter does not list the commune yet. |
+| topics you follow, your topic | interests, subscriptions, preferences | The theme or committee names exactly as the Chamber and Esch publish them. |
+| panel, drawn by lot | jury, lottery, sortition, judge | The future Lottery panels. Shown only as "not started yet". |
 | secure sign-in | Door, login, account, credential | What posting and supporting wait for. Name no product or protocol. |
 
-Never in the UI: recommend, should vote, best option, correct answer, wrong answer, streak, leaderboard, raw ids (`lu.chd.8739`, idea ids, jurisdiction ids), pseudonyms (`nym-…`, never shown at all), model names, except in the small provenance line.
+Never in the UI: recommend, should vote, best option, correct answer, wrong answer, streak, leaderboard, raw ids (`lu.chd.8739`, idea ids, jurisdiction ids, week ids), pseudonyms (`nym-…`, never shown at all), model names, except in the small provenance line.

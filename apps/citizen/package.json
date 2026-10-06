@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@democracy2/arena": "0.1.0",
-    "@democracy2/companion": "0.1.0"
+    "@democracy2/companion": "0.1.0",
+    "@democracy2/pulse": "0.1.0"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
