@@ -1,0 +1,637 @@
+<title>File Page, Seven Ways</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;600;800&family=Schibsted+Grotesk:wght@400;700;900&family=Sora:wght@300;400;600;700&family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800&family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Anton&family=Space+Mono:wght@400;700&family=Barlow+Condensed:ital,wght@0,500;0,700;1,800&family=Barlow:wght@400;600&display=swap">
+<style>
+/* Layout: same gallery wall as the first page. Text left, a scrollable phone right. The file page is the densest screen in the app, so every mock is the full page, top to bottom, inside the phone. */
+:root {
+  --bg: #15161a; --bg-2: #1c1e24; --fg: #ecebe6; --muted: #9b9a93; --line: #2c2f37; --accent: #e2b24a; --chip: #23262e;
+  --display: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif; --body: "Archivo", "Helvetica Neue", Arial, sans-serif; --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #f1efe9; --bg-2: #e8e5dc; --fg: #1a1b1f; --muted: #5f6066; --line: #d6d2c6; --accent: #9a6a0a; --chip: #e2dfd5; color-scheme: light; } }
+:root[data-theme="light"] { --bg: #f1efe9; --bg-2: #e8e5dc; --fg: #1a1b1f; --muted: #5f6066; --line: #d6d2c6; --accent: #9a6a0a; --chip: #e2dfd5; color-scheme: light; }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 16px/1.55 var(--body); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 2rem 4rem; padding-inline: 16px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; font-family: var(--display); }
+p { margin: 0; }
+.hero { padding-block: 1rem 2.5rem; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; }
+.hero h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1; font-weight: 900; letter-spacing: -0.03em; }
+.hero .lede { color: var(--muted); font-size: 1.05rem; max-width: 36rem; margin-top: 1rem; }
+.hero .lede b { color: var(--fg); font-weight: 600; }
+.kicker { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+.dense { background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 1rem; }
+.dense h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.6rem; }
+.dense ol { margin: 0; padding-left: 1.1rem; color: var(--muted); font-size: 0.88rem; display: grid; gap: 0.2rem; columns: 2; }
+.dense ol b { color: var(--fg); font-weight: 600; }
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); margin-inline: -16px; padding-inline: 16px; }
+.nav ol { list-style: none; margin: 0; padding: 0.6rem 0; display: flex; gap: 0.4rem; overflow-x: auto; scrollbar-width: none; }
+.nav a { display: inline-flex; gap: 0.45rem; align-items: center; white-space: nowrap; text-decoration: none; color: inherit; font-size: 0.82rem; font-weight: 600; padding: 0.4rem 0.8rem; border-radius: 999px; background: var(--chip); border: 1px solid var(--line); }
+.nav a i { font-style: normal; font-family: var(--mono); font-size: 0.7rem; color: var(--muted); }
+.nav a.new { border-color: var(--accent); }
+.dir { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 400px); gap: 2.5rem; padding-block: 3.5rem; border-bottom: 1px solid var(--line); align-items: start; scroll-margin-top: 4rem; }
+.dir .num { font-family: var(--mono); color: var(--muted); font-size: 0.8rem; }
+.dir .num b { color: var(--accent); font-weight: 500; }
+.dir h2 { font-size: clamp(1.9rem, 3.4vw, 2.6rem); font-weight: 900; letter-spacing: -0.02em; line-height: 1.05; margin-top: 0.35rem; }
+.dir .thesis { font-size: 1.1rem; margin-top: 0.8rem; max-width: 34rem; }
+.dir .why { color: var(--muted); margin-top: 0.8rem; max-width: 34rem; }
+.spec { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.5rem; margin-top: 1.6rem; }
+.spec h4 { margin: 0 0 0.4rem; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.spec p, .spec li { font-size: 0.92rem; }
+.spec ul { margin: 0; padding-left: 1rem; display: grid; gap: 0.25rem; }
+.swatches { display: flex; gap: 0.4rem; flex-wrap: wrap; padding-bottom: 1rem; }
+.sw { width: 44px; height: 44px; border-radius: 8px; border: 1px solid rgb(0 0 0 / 0.2); position: relative; }
+.sw span { position: absolute; left: 0; right: 0; top: 100%; font-family: var(--mono); font-size: 0.6rem; color: var(--muted); margin-top: 3px; text-align: center; }
+.fit { margin-top: 1.4rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.fit span { font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 6px; background: var(--chip); border: 1px solid var(--line); color: var(--muted); }
+.fit span b { color: var(--fg); font-weight: 600; }
+.stage { position: sticky; top: 4.5rem; display: grid; justify-items: center; gap: 0.8rem; }
+.phone { width: 100%; max-width: 380px; border-radius: 42px; overflow: hidden; border: 8px solid #0b0b0d; box-shadow: 0 30px 80px rgb(0 0 0 / 0.45), 0 0 0 1px rgb(255 255 255 / 0.08); background: #000; }
+.scr { height: 760px; overflow-y: auto; overflow-x: hidden; position: relative; scrollbar-width: none; font-size: 14px; line-height: 1.4; }
+.scr::-webkit-scrollbar { display: none; }
+.stage .hint { font-size: 0.78rem; color: var(--muted); font-family: var(--mono); text-align: center; }
+.closing { padding-block: 3rem; max-width: 46rem; }
+.closing h2 { font-size: 2rem; font-weight: 900; letter-spacing: -0.02em; }
+.closing p { margin-top: 0.8rem; }
+.closing .reco { margin-top: 1.4rem; padding: 1.4rem; border: 1px solid var(--accent); border-radius: 14px; background: color-mix(in srgb, var(--accent) 8%, var(--bg-2)); }
+@media (max-width: 860px) { .hero, .dir { grid-template-columns: 1fr; } .stage { position: static; } .spec { grid-template-columns: 1fr; } .dense ol { columns: 1; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* ===== shared file-page skeleton (class names only; each look paints them) ===== */
+.fp { min-height: 100%; }
+.fp .sb { display: flex; justify-content: space-between; font-size: 12px; padding: 12px 20px 0; opacity: 0.8; }
+.fp .top { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px 0; }
+.fp .body { padding: 0 18px 90px; display: grid; gap: 18px; }
+.fp .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-size: 12px; }
+.fp .facts dt { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.7; }
+.fp .facts dd { margin: 0; font-weight: 600; }
+.fp .track { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+.fp .cite { display: inline-grid; place-items: center; min-width: 16px; height: 16px; font-size: 10px; margin-left: 2px; vertical-align: 2px; }
+.fp .sources { display: grid; gap: 4px; font-size: 12px; }
+.fp .stand { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.fp .stand button { font: inherit; cursor: pointer; }
+.fp .opts { display: grid; gap: 8px; }
+.fp .quote { font-size: 12.5px; }
+.fp .docs, .fp .hist { display: grid; gap: 6px; font-size: 12.5px; }
+.fp .hist div { display: grid; grid-template-columns: 70px 1fr; gap: 8px; }
+.fp .h { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7; }
+.fp .nav { position: sticky; bottom: 0; display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; padding: 0; background: none; border: 0; backdrop-filter: none; }
+.fp .nav span { text-align: center; padding: 14px 4px 18px; font-size: 11px; }
+.fp .arg { font-size: 12.5px; }
+.fp .arg small { display: block; opacity: 0.7; font-size: 11px; margin-top: 4px; }
+
+/* ===================== A. AFFICHAGE, édition spéciale ===================== */
+.A { background: #f3efe4; color: #111; font-family: Archivo, Arial, sans-serif; }
+.A .sb { color: #111; opacity: 1; font-weight: 700; }
+.A .top .back { font-weight: 800; text-transform: uppercase; font-size: 12px; background: #111; color: #f3efe4; padding: 4px 8px; }
+.A .top .lang { border: 3px solid #111; padding: 1px 8px; font-weight: 800; font-size: 12px; background: #fff; box-shadow: 3px 3px 0 #111; }
+.A .meta { display: flex; gap: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; flex-wrap: wrap; }
+.A .meta span { border: 2px solid #111; padding: 1px 6px; }
+.A .meta span.n { background: #e63b2e; color: #fff; border-color: #e63b2e; }
+.A .title { font-family: "Archivo Black", Impact, sans-serif; font-size: 27px; line-height: 1; letter-spacing: -0.03em; text-transform: uppercase; }
+.A .summary { font-size: 13px; border-left: 6px solid #ffd23f; padding-left: 10px; }
+.A .facts { border: 3px solid #111; padding: 10px; background: #fff; box-shadow: 5px 5px 0 #111; }
+.A .facts dt { opacity: 1; font-weight: 800; }
+.A .track span { background: #fff; border: 3px solid #111; padding: 8px 4px; text-align: center; font-weight: 800; }
+.A .track span.done { background: #111; color: #f3efe4; }
+.A .track span.now { background: #ffd23f; box-shadow: 4px 4px 0 #111; transform: translate(-2px,-2px); }
+.A .next { border: 3px solid #111; background: #4f8df0; color: #fff; padding: 12px; box-shadow: 5px 5px 0 #111; font-weight: 700; }
+.A .next b { display: block; font-family: "Archivo Black", sans-serif; font-size: 22px; letter-spacing: -0.02em; line-height: 1; margin-top: 3px; text-transform: uppercase; }
+.A .never { font-size: 12px; font-weight: 800; text-transform: uppercase; text-align: center; padding: 6px; border-top: 3px solid #111; border-bottom: 3px solid #111; }
+.A .h { opacity: 1; font-family: "Archivo Black", sans-serif; font-size: 18px; letter-spacing: -0.02em; text-transform: uppercase; }
+.A .explain p { font-size: 13.5px; line-height: 1.45; }
+.A .cite { background: #111; color: #ffd23f; font-weight: 800; }
+.A .sources div b { background: #111; color: #ffd23f; padding: 0 5px; margin-right: 6px; font-weight: 800; }
+.A .stand button { border: 3px solid #111; background: #fff; padding: 12px 4px; font-weight: 800; text-transform: uppercase; font-size: 11px; box-shadow: 4px 4px 0 #111; transition: transform .1s, box-shadow .1s; }
+.A .stand button:active, .A .stand button.on { transform: translate(4px,4px); box-shadow: 0 0 0 #111; background: #ffd23f; }
+.A .arg { border: 3px solid #111; background: #fff; padding: 10px 12px; box-shadow: 5px 5px 0 #111; }
+.A .arg::before { content: "THE OTHER SIDE"; display: block; font-size: 10px; font-weight: 800; letter-spacing: .1em; color: #e63b2e; margin-bottom: 4px; }
+.A .claim { border: 3px solid #111; background: #fff; padding: 10px; font-size: 12.5px; font-style: italic; }
+.A .grade { background: #ffd23f; border: 3px solid #111; padding: 8px 10px; font-weight: 800; font-size: 12px; text-transform: uppercase; display: flex; gap: 8px; align-items: center; }
+.A .grade::before { content: ""; width: 14px; height: 14px; background: #111; flex: none; }
+.A .opts span { border: 3px solid #111; background: #fff; padding: 10px 12px; font-size: 12.5px; font-weight: 600; }
+.A .opts span.ok { background: #111; color: #ffd23f; }
+.A .quote { border-left: 6px solid #111; padding-left: 10px; font-style: italic; }
+.A .docs div, .A .hist div { border-bottom: 2px solid #111; padding-bottom: 6px; font-weight: 600; }
+.A .hist div span:first-child { font-weight: 800; }
+.A .nav { border-top: 3px solid #111; background: #fff; }
+.A .nav span { font-weight: 800; text-transform: uppercase; border-right: 3px solid #111; }
+.A .nav span:last-child { border-right: 0; }
+.A .nav span.on { background: #111; color: #ffd23f; }
+
+/* ===================== B. GLASS CHAMBER, deep ===================== */
+.B { background: #0a0f24; color: #fff; font-family: Sora, sans-serif; position: relative; perspective: 1000px; }
+.B .orb { position: fixed; border-radius: 50%; filter: blur(44px); opacity: .75; pointer-events: none; }
+.B .orbs { position: absolute; left: 0; right: 0; top: 0; height: 2400px; pointer-events: none; overflow: hidden; }
+.B .orbs i { position: absolute; border-radius: 50%; filter: blur(44px); opacity: .8; animation: drift 14s ease-in-out infinite alternate; }
+.B .orbs i:nth-child(1) { width: 260px; height: 260px; background: #ff9a3c; top: -60px; right: -60px; }
+.B .orbs i:nth-child(2) { width: 300px; height: 300px; background: #3d5afe; top: 420px; left: -140px; animation-delay: -6s; }
+.B .orbs i:nth-child(3) { width: 220px; height: 220px; background: #ff4ecd; top: 900px; right: -40px; animation-delay: -10s; opacity: .55; }
+@keyframes drift { to { transform: translate(30px, 50px) scale(1.15); } }
+.B .sb, .B .top, .B .body { position: relative; }
+.B .top { position: sticky; top: 0; z-index: 3; padding: 10px 14px; margin: 0 6px; }
+.B .top .back, .B .top .lang { font-size: 12px; padding: 6px 12px; border-radius: 999px; background: rgb(255 255 255 / .12); border: 1px solid rgb(255 255 255 / .25); backdrop-filter: blur(14px); }
+.B .body { transform-style: preserve-3d; transition: transform .25s ease-out; }
+.B .g { border-radius: 20px; padding: 14px 16px; background: linear-gradient(135deg, rgb(255 255 255 / .16), rgb(255 255 255 / .05)); border: 1px solid rgb(255 255 255 / .25); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); box-shadow: 0 20px 50px rgb(0 0 0 / .35), inset 0 1px 0 rgb(255 255 255 / .4); display: grid; gap: 10px; }
+.B .meta { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: rgb(255 255 255 / .7); display: flex; gap: 10px; }
+.B .meta .n { color: #ffcc70; }
+.B .title { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
+.B .summary { font-size: 12.5px; color: rgb(255 255 255 / .75); }
+.B .facts dd { font-weight: 500; }
+.B .track { gap: 0; position: relative; padding-top: 14px; }
+.B .track::before { content: ""; position: absolute; left: 12%; right: 12%; top: 5px; height: 2px; background: rgb(255 255 255 / .25); }
+.B .track span { text-align: center; position: relative; color: rgb(255 255 255 / .6); }
+.B .track span::before { content: ""; position: absolute; top: -13px; left: 50%; width: 10px; height: 10px; border-radius: 50%; transform: translateX(-50%); background: rgb(255 255 255 / .35); }
+.B .track span.done { color: #fff; }
+.B .track span.done::before { background: #fff; }
+.B .track span.now { color: #ffcc70; font-weight: 700; }
+.B .track span.now::before { background: #ffcc70; box-shadow: 0 0 0 5px rgb(255 204 112 / .3), 0 0 24px #ffcc70; animation: glow 2s ease-in-out infinite; }
+@keyframes glow { 50% { box-shadow: 0 0 0 8px rgb(255 204 112 / .15), 0 0 32px #ffcc70; } }
+.B .next { background: linear-gradient(135deg, rgb(255 204 112 / .35), rgb(255 154 60 / .15)); border-color: rgb(255 204 112 / .5); }
+.B .next b { display: block; font-size: 16px; font-weight: 600; }
+.B .never { font-size: 11px; text-align: center; color: rgb(255 255 255 / .6); }
+.B .h { color: rgb(255 255 255 / .6); }
+.B .explain p { font-size: 13px; line-height: 1.5; }
+.B .cite { border-radius: 999px; background: #ffcc70; color: #2b1a00; font-weight: 700; }
+.B .sources div b { color: #ffcc70; margin-right: 6px; }
+.B .stand button { border-radius: 14px; border: 1px solid rgb(255 255 255 / .3); background: rgb(255 255 255 / .08); color: #fff; padding: 12px 4px; font-size: 12px; backdrop-filter: blur(10px); transition: transform .2s, background .2s; }
+.B .stand button:hover { transform: translateY(-3px) translateZ(10px); }
+.B .stand button.on { background: #ffcc70; color: #2b1a00; font-weight: 600; }
+.B .arg { border-left: 2px solid #ffcc70; padding-left: 10px; }
+.B .claim { font-size: 12.5px; font-style: italic; color: rgb(255 255 255 / .85); }
+.B .grade { border-radius: 12px; padding: 8px 12px; background: rgb(232 197 71 / .25); border: 1px solid rgb(232 197 71 / .5); font-size: 12px; font-weight: 600; color: #ffe9a3; }
+.B .opts span { border-radius: 12px; padding: 10px 12px; font-size: 12.5px; border: 1px solid rgb(255 255 255 / .25); background: rgb(255 255 255 / .06); }
+.B .opts span.ok { background: rgb(76 195 138 / .3); border-color: #4cc38a; }
+.B .quote { color: rgb(255 255 255 / .8); font-style: italic; border-left: 2px solid rgb(255 255 255 / .4); padding-left: 10px; }
+.B .docs div { color: #ffcc70; }
+.B .hist div span:first-child { color: rgb(255 255 255 / .6); }
+.B .nav { margin: 0 14px 14px; border-radius: 999px; padding: 6px; background: rgb(255 255 255 / .1); border: 1px solid rgb(255 255 255 / .2); backdrop-filter: blur(18px); }
+.B .nav span { border-radius: 999px; padding: 10px 4px; }
+.B .nav span.on { background: rgb(255 255 255 / .2); font-weight: 600; }
+
+/* ===================== C. CLAY COMMUNE, deep ===================== */
+.C { background: #e9e3f7; color: #2d2a3e; font-family: Nunito, sans-serif; font-weight: 600; }
+.C .sb { color: #2d2a3e; }
+.C .top .back, .C .top .lang { font-weight: 800; font-size: 12px; padding: 6px 12px; border-radius: 999px; background: #fff; box-shadow: inset 2px 2px 5px rgb(255 255 255 / .9), 4px 6px 12px rgb(120 90 180 / .2); }
+.C .clay { border-radius: 24px; background: #fff; padding: 14px 16px; display: grid; gap: 10px; box-shadow: inset 3px 3px 8px #fff, inset -4px -4px 8px rgb(80 60 140 / .08), 8px 12px 22px rgb(120 90 180 / .18); }
+.C .meta { font-size: 11px; font-weight: 800; color: #6c6686; display: flex; gap: 8px; }
+.C .meta .n { color: #d94a6b; }
+.C .title { font-family: Fredoka, sans-serif; font-weight: 600; font-size: 24px; line-height: 1.1; color: #3b2f6b; }
+.C .summary { font-size: 12.5px; color: #4b4663; }
+.C .facts dt { color: #6c6686; opacity: 1; font-weight: 800; }
+.C .track { gap: 6px; }
+.C .track span { text-align: center; padding: 10px 2px; border-radius: 14px; background: #efeaf9; box-shadow: inset 3px 3px 6px rgb(80 60 140 / .1), inset -2px -2px 5px #fff; font-weight: 800; color: #9a93b8; }
+.C .track span.done { background: #b9f0d8; color: #2a6b4f; box-shadow: inset -4px -4px 8px rgb(0 0 0 / .08), inset 4px 4px 8px rgb(255 255 255 / .7); }
+.C .track span.now { background: #ffd166; color: #6b4a00; box-shadow: inset -4px -4px 8px rgb(0 0 0 / .1), inset 4px 4px 8px rgb(255 255 255 / .7), 0 6px 14px rgb(255 160 60 / .4); animation: bounce 2.2s ease-in-out infinite; }
+@keyframes bounce { 50% { transform: translateY(-4px); } }
+.C .next { background: #b9f0d8; }
+.C .next b { display: block; font-family: Fredoka, sans-serif; font-size: 17px; color: #1f5a40; }
+.C .never { font-size: 11.5px; text-align: center; color: #6c6686; font-weight: 800; }
+.C .h { color: #6c6686; opacity: 1; font-weight: 800; }
+.C .explain p { font-size: 13px; line-height: 1.5; }
+.C .cite { border-radius: 50%; background: #ff9f6e; color: #fff; font-weight: 800; box-shadow: inset -2px -2px 3px rgb(0 0 0 / .15); }
+.C .sources div b { color: #d94a6b; margin-right: 6px; }
+.C .stand button { border: 0; border-radius: 18px; padding: 14px 4px; font-weight: 800; font-size: 12px; color: #2d2a3e; box-shadow: inset 3px 3px 8px #fff, inset -4px -4px 8px rgb(80 60 140 / .1), 6px 8px 16px rgb(120 90 180 / .18); transition: transform .25s cubic-bezier(.34,1.56,.64,1); }
+.C .stand button:nth-child(1) { background: #b9f0d8; } .C .stand button:nth-child(2) { background: #ffc2cf; } .C .stand button:nth-child(3) { background: #efeaf9; }
+.C .stand button:hover { transform: scale(1.06) translateY(-3px); }
+.C .stand button.on { box-shadow: inset -4px -4px 8px rgb(0 0 0 / .12), inset 4px 4px 8px rgb(255 255 255 / .8); transform: scale(.96); }
+.C .arg { background: #efeaf9; border-radius: 16px; padding: 10px 12px; }
+.C .claim { font-size: 12.5px; font-style: italic; color: #4b4663; background: #efeaf9; border-radius: 14px; padding: 10px 12px; }
+.C .grade { background: #ffe8a3; border-radius: 14px; padding: 8px 12px; font-weight: 800; font-size: 12px; color: #6b4a00; box-shadow: inset -3px -3px 6px rgb(0 0 0 / .08), inset 3px 3px 6px #fff; }
+.C .opts span { border-radius: 16px; padding: 10px 12px; font-size: 12.5px; background: #efeaf9; box-shadow: inset 3px 3px 6px #fff, inset -3px -3px 6px rgb(80 60 140 / .08); }
+.C .opts span.ok { background: #b9f0d8; color: #1f5a40; font-weight: 800; }
+.C .quote { font-style: italic; color: #4b4663; border-left: 4px solid #ffd166; padding-left: 10px; border-radius: 2px; }
+.C .docs div { color: #3b2f6b; font-weight: 800; }
+.C .hist div span:first-child { color: #6c6686; }
+.C .nav { margin: 0 14px 14px; border-radius: 999px; padding: 6px; background: #fff; box-shadow: inset 3px 3px 8px #fff, inset -4px -4px 8px rgb(80 60 140 / .08), 8px 12px 22px rgb(120 90 180 / .18); }
+.C .nav span { border-radius: 999px; padding: 10px 4px; font-weight: 800; color: #6c6686; }
+.C .nav span.on { background: #ffd166; color: #2d2a3e; box-shadow: inset -3px -3px 6px rgb(0 0 0 / .1), inset 3px 3px 6px rgb(255 255 255 / .6); }
+
+/* ===================== D. KINETIC, deep ===================== */
+.D { background: #0b0b0f; color: #f4f1ff; font-family: "DM Sans", sans-serif; position: relative; }
+.D .mesh { position: absolute; left: -40%; right: -40%; top: -200px; height: 700px; background: conic-gradient(from 90deg, #ff3d81, #ffb347, #39e6c8, #6b5bff, #ff3d81); filter: blur(70px) saturate(1.2); opacity: .5; animation: spin 18s linear infinite; pointer-events: none; }
+@keyframes spin { to { transform: rotate(1turn); } }
+.D .veil { position: absolute; inset: 0; background: linear-gradient(180deg, rgb(11 11 15 / .2), rgb(11 11 15 / .9) 420px); pointer-events: none; }
+.D .sb, .D .top, .D .body, .D .mq { position: relative; }
+.D .top .back, .D .top .lang { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.D .top .lang { padding: 4px 10px; border-radius: 4px; background: #f4f1ff; color: #0b0b0f; }
+.D .mq { margin: 12px 0 0; overflow: hidden; white-space: nowrap; border-top: 1px solid rgb(255 255 255 / .2); border-bottom: 1px solid rgb(255 255 255 / .2); padding: 6px 0; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; }
+.D .mq span { display: inline-block; animation: marquee 18s linear infinite; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+.D .body { padding-top: 14px; gap: 22px; }
+.D .meta { font-family: Syne, sans-serif; font-weight: 800; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; display: flex; gap: 10px; }
+.D .meta .n { background: linear-gradient(90deg, #ffb347, #ff3d81); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.D .title { font-family: Syne, sans-serif; font-weight: 800; font-size: 30px; line-height: .95; letter-spacing: -0.04em; text-transform: uppercase; }
+.D .title span { display: block; animation: rise .9s cubic-bezier(.2,.9,.2,1) both; }
+.D .title span:nth-child(2) { animation-delay: .1s; color: transparent; -webkit-text-stroke: 1.2px #f4f1ff; }
+@keyframes rise { from { transform: translateY(30px); opacity: 0; } }
+.D .summary { font-size: 13px; color: rgb(255 255 255 / .75); }
+.D .facts { border-top: 1px solid rgb(255 255 255 / .2); padding-top: 10px; }
+.D .track { gap: 3px; }
+.D .track span { padding: 8px 2px 0; border-top: 4px solid rgb(255 255 255 / .2); font-weight: 700; }
+.D .track span.done { border-color: #f4f1ff; }
+.D .track span.now { border-image: repeating-linear-gradient(90deg, #ffb347 0 8px, #ff3d81 8px 16px) 4; animation: stripes 1s linear infinite; color: #ffb347; }
+@keyframes stripes { to { border-image-source: repeating-linear-gradient(90deg, #ff3d81 0 8px, #ffb347 8px 16px); } }
+.D .next { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.D .next .big { font-family: Syne, sans-serif; font-weight: 800; font-size: 46px; line-height: .9; letter-spacing: -0.05em; }
+.D .next .big small { display: block; font-size: 11px; letter-spacing: .1em; }
+.D .next b { font-weight: 700; display: block; }
+.D .never { font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; text-align: center; opacity: .6; }
+.D .h { font-family: Syne, sans-serif; font-weight: 800; font-size: 20px; letter-spacing: -0.03em; text-transform: uppercase; opacity: 1; }
+.D .h::before { content: attr(data-n) " "; color: #ffb347; }
+.D .explain p { font-size: 13.5px; line-height: 1.5; }
+.D .cite { background: #f4f1ff; color: #0b0b0f; font-weight: 700; }
+.D .sources div b { color: #ffb347; margin-right: 6px; }
+.D .stand button { background: none; border: 1px solid rgb(255 255 255 / .4); color: #f4f1ff; padding: 12px 4px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 10.5px; transition: all .2s; }
+.D .stand button:hover, .D .stand button.on { background: #f4f1ff; color: #0b0b0f; }
+.D .arg { border-left: 3px solid #ff3d81; padding-left: 10px; }
+.D .claim { font-size: 12.5px; font-style: italic; }
+.D .grade { background: #ffb347; color: #0b0b0f; padding: 8px 12px; font-weight: 700; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.D .opts span { border: 1px solid rgb(255 255 255 / .25); padding: 10px 12px; font-size: 12.5px; display: flex; justify-content: space-between; transition: all .2s; }
+.D .opts span:hover { background: #f4f1ff; color: #0b0b0f; }
+.D .opts span.ok { background: #39e6c8; color: #0b0b0f; border-color: #39e6c8; font-weight: 700; }
+.D .quote { border-left: 3px solid #39e6c8; padding-left: 10px; color: rgb(255 255 255 / .8); }
+.D .docs div, .D .hist div { border-bottom: 1px solid rgb(255 255 255 / .15); padding-bottom: 6px; }
+.D .hist div span:first-child { color: #ffb347; font-weight: 700; }
+.D .nav { border-top: 1px solid rgb(255 255 255 / .2); background: #0b0b0f; }
+.D .nav span { font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .6; }
+.D .nav span.on { opacity: 1; box-shadow: inset 0 2px 0 #ffb347; }
+
+/* ===================== E. RISO (surprise) ===================== */
+.E { background: #f4ecd8; color: #1a2a6c; font-family: "Space Mono", monospace; position: relative; }
+.E::before { content: ""; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.8' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E"); pointer-events: none; z-index: 5; height: 100%; min-height: 2000px; }
+.E .sb { color: #1a2a6c; }
+.E .top .back, .E .top .lang { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #ff4d8d; }
+.E .meta { font-size: 10.5px; text-transform: uppercase; display: flex; gap: 10px; color: #ff4d8d; }
+.E .title { font-family: Anton, Impact, sans-serif; font-size: 34px; line-height: .95; text-transform: uppercase; letter-spacing: .005em; color: #1a2a6c; position: relative; mix-blend-mode: multiply; }
+.E .title::before { content: attr(data-text); position: absolute; left: 2px; top: 2px; color: #ff4d8d; z-index: -1; mix-blend-mode: multiply; opacity: .9; }
+.E .summary { font-size: 12px; line-height: 1.5; }
+.E .facts dt { color: #ff4d8d; opacity: 1; }
+.E .track span { text-align: center; padding: 8px 2px; border: 2px solid #1a2a6c; font-weight: 700; mix-blend-mode: multiply; }
+.E .track span.done { background: #1a2a6c; color: #f4ecd8; }
+.E .track span.now { background: #ff4d8d; border-color: #ff4d8d; color: #1a2a6c; transform: translate(-2px, -2px); box-shadow: 3px 3px 0 #1a2a6c; }
+.E .next { background: radial-gradient(circle, #ff4d8d 1.3px, transparent 1.6px) 0 0 / 7px 7px; padding: 12px; border: 2px solid #1a2a6c; }
+.E .next > * { background: #f4ecd8; padding: 2px 6px; display: inline; box-decoration-break: clone; }
+.E .next b { font-family: Anton, sans-serif; font-size: 20px; text-transform: uppercase; letter-spacing: .01em; }
+.E .never { font-size: 10.5px; text-transform: uppercase; text-align: center; letter-spacing: .08em; border-top: 2px dashed #1a2a6c; border-bottom: 2px dashed #1a2a6c; padding: 6px; }
+.E .h { font-family: Anton, sans-serif; font-size: 20px; opacity: 1; letter-spacing: .01em; color: #ff4d8d; }
+.E .explain p { font-size: 12.5px; line-height: 1.55; }
+.E .cite { background: #ff4d8d; color: #f4ecd8; font-weight: 700; mix-blend-mode: multiply; }
+.E .sources div b { color: #ff4d8d; margin-right: 6px; }
+.E .stand button { border: 2px solid #1a2a6c; background: transparent; color: #1a2a6c; padding: 12px 4px; font-weight: 700; text-transform: uppercase; font-size: 10.5px; font-family: inherit; position: relative; }
+.E .stand button.on { background: #ff4d8d; border-color: #ff4d8d; box-shadow: 3px 3px 0 #1a2a6c; }
+.E .arg { border: 2px solid #ff4d8d; padding: 10px 12px; box-shadow: 4px 4px 0 #1a2a6c; background: #f4ecd8; }
+.E .claim { font-size: 12px; font-style: italic; border-left: 3px solid #ff4d8d; padding-left: 10px; }
+.E .grade { background: radial-gradient(circle, #1a2a6c 1.2px, transparent 1.5px) 0 0 / 6px 6px; padding: 8px 10px; font-weight: 700; font-size: 11px; text-transform: uppercase; }
+.E .grade span { background: #f4ecd8; padding: 1px 6px; }
+.E .opts span { border: 2px solid #1a2a6c; padding: 9px 12px; font-size: 12px; }
+.E .opts span.ok { background: #1a2a6c; color: #f4ecd8; }
+.E .quote { font-style: italic; border-left: 3px solid #1a2a6c; padding-left: 10px; }
+.E .docs div, .E .hist div { border-bottom: 2px dotted #1a2a6c; padding-bottom: 6px; }
+.E .hist div span:first-child { color: #ff4d8d; font-weight: 700; }
+.E .nav { border-top: 2px solid #1a2a6c; background: #f4ecd8; }
+.E .nav span { font-weight: 700; text-transform: uppercase; font-size: 10.5px; }
+.E .nav span.on { background: #ff4d8d; }
+
+/* ===================== F. HOLO (surprise) ===================== */
+.F { background: #07070c; color: #eef0ff; font-family: Sora, sans-serif; perspective: 1100px; }
+.F .sb { color: #eef0ff; }
+.F .top .back, .F .top .lang { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: rgb(238 240 255 / .7); }
+.F .card3d { margin: 6px 0 0; border-radius: 22px; padding: 18px; position: relative; overflow: hidden; background: #111120; border: 1px solid rgb(255 255 255 / .14); transform-style: preserve-3d; transition: transform .2s ease-out; box-shadow: 0 30px 60px rgb(0 0 0 / .6); display: grid; gap: 10px; }
+.F .card3d::before { content: ""; position: absolute; inset: -40%; background: conic-gradient(from var(--a, 0deg), #ff5ea8, #ffd36e, #7cf5d1, #7a8cff, #ff5ea8); opacity: .22; mix-blend-mode: screen; filter: blur(2px); pointer-events: none; transform: translate(var(--mx, 0), var(--my, 0)); }
+.F .card3d::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgb(255 255 255 / .35) 48%, transparent 60%); background-position: var(--sx, 0) 0; background-size: 250% 100%; mix-blend-mode: overlay; pointer-events: none; }
+.F .card3d > * { position: relative; }
+.F .meta { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: rgb(238 240 255 / .65); display: flex; gap: 10px; }
+.F .meta .n { color: #7cf5d1; }
+.F .title { font-size: 21px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
+.F .summary { font-size: 12px; color: rgb(238 240 255 / .7); }
+.F .facts { font-family: "JetBrains Mono", monospace; font-size: 11px; }
+.F .facts dt { letter-spacing: .1em; }
+.F .track { gap: 6px; }
+.F .track span { text-align: center; padding: 8px 2px; border-radius: 8px; border: 1px solid rgb(255 255 255 / .18); color: rgb(238 240 255 / .55); font-family: "JetBrains Mono", monospace; }
+.F .track span.done { background: rgb(255 255 255 / .08); color: #eef0ff; }
+.F .track span.now { border-color: transparent; background: linear-gradient(#111120, #111120) padding-box, linear-gradient(90deg, #ff5ea8, #ffd36e, #7cf5d1, #7a8cff) border-box; color: #fff; font-weight: 700; }
+.F .next { border-radius: 14px; padding: 12px 14px; background: rgb(124 245 209 / .08); border: 1px solid rgb(124 245 209 / .35); }
+.F .next b { display: block; color: #7cf5d1; }
+.F .never { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; text-align: center; color: rgb(238 240 255 / .5); }
+.F .h { color: rgb(238 240 255 / .55); font-family: "JetBrains Mono", monospace; }
+.F .explain p { font-size: 13px; line-height: 1.55; }
+.F .cite { border-radius: 4px; background: linear-gradient(135deg, #ff5ea8, #7a8cff); color: #fff; font-weight: 700; }
+.F .sources div b { color: #7cf5d1; margin-right: 6px; font-family: "JetBrains Mono", monospace; }
+.F .stand button { border-radius: 10px; border: 1px solid rgb(255 255 255 / .2); background: #111120; color: #eef0ff; padding: 12px 4px; font-size: 12px; position: relative; }
+.F .stand button.on { border-color: transparent; background: linear-gradient(#1a1a30, #1a1a30) padding-box, linear-gradient(90deg, #ff5ea8, #ffd36e, #7cf5d1, #7a8cff) border-box; font-weight: 600; }
+.F .arg { border-radius: 12px; background: #111120; border: 1px solid rgb(255 255 255 / .12); padding: 10px 12px; }
+.F .claim { font-size: 12.5px; font-style: italic; color: rgb(238 240 255 / .8); }
+.F .grade { border-radius: 10px; padding: 8px 12px; background: rgb(255 211 110 / .12); border: 1px solid rgb(255 211 110 / .45); color: #ffd36e; font-size: 12px; font-weight: 600; }
+.F .opts span { border-radius: 10px; padding: 10px 12px; font-size: 12.5px; border: 1px solid rgb(255 255 255 / .15); background: #111120; }
+.F .opts span.ok { border-color: #7cf5d1; color: #7cf5d1; }
+.F .quote { font-style: italic; color: rgb(238 240 255 / .75); border-left: 2px solid #7a8cff; padding-left: 10px; }
+.F .docs div { color: #7a8cff; }
+.F .hist div span:first-child { color: rgb(238 240 255 / .5); font-family: "JetBrains Mono", monospace; font-size: 11px; }
+.F .nav { background: #07070c; border-top: 1px solid rgb(255 255 255 / .12); }
+.F .nav span { letter-spacing: .08em; text-transform: uppercase; font-size: 10.5px; color: rgb(238 240 255 / .55); }
+.F .nav span.on { color: #fff; background: linear-gradient(90deg, #ff5ea8, #ffd36e, #7cf5d1, #7a8cff) bottom / 100% 2px no-repeat; }
+
+/* ===================== G. BROADCAST (surprise) ===================== */
+.G { background: #0d1b2a; color: #fff; font-family: Barlow, sans-serif; position: relative; }
+.G .sb { color: #fff; }
+.G .top { background: linear-gradient(90deg, #e63b2e, #e63b2e 60%, transparent); padding: 8px 14px; margin-top: 8px; }
+.G .top .back, .G .top .lang { font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-style: italic; text-transform: uppercase; font-size: 14px; letter-spacing: .02em; }
+.G .live { position: sticky; top: 0; z-index: 4; display: flex; justify-content: space-between; font-family: "Barlow Condensed", sans-serif; font-weight: 700; text-transform: uppercase; font-size: 12px; background: #0d1b2a; padding: 6px 18px; border-bottom: 2px solid #e63b2e; }
+.G .live b { color: #e63b2e; }
+.G .live b::before { content: "●"; margin-right: 5px; animation: blink 1.2s steps(1) infinite; }
+@keyframes blink { 50% { opacity: .2; } }
+.G .body { padding-top: 14px; }
+.G .meta { font-family: "Barlow Condensed", sans-serif; font-weight: 700; text-transform: uppercase; font-size: 12px; display: flex; gap: 0; }
+.G .meta span { padding: 2px 8px; background: #1f3650; }
+.G .meta span.n { background: #ffd23f; color: #0d1b2a; }
+.G .title { font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-style: italic; text-transform: uppercase; font-size: 32px; line-height: .92; letter-spacing: -0.01em; }
+.G .lower { background: #fff; color: #0d1b2a; padding: 10px 12px; font-size: 12.5px; border-left: 8px solid #ffd23f; transform: skewX(-6deg); margin-left: 6px; }
+.G .lower > * { transform: skewX(6deg); }
+.G .facts { background: #1f3650; padding: 10px; font-size: 12px; }
+.G .facts dt { color: #ffd23f; opacity: 1; font-family: "Barlow Condensed", sans-serif; font-weight: 700; }
+.G .track { gap: 2px; font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 12px; }
+.G .track span { text-align: center; padding: 10px 2px; background: #1f3650; color: rgb(255 255 255 / .55); }
+.G .track span.done { background: #2d4d70; color: #fff; }
+.G .track span.now { background: #ffd23f; color: #0d1b2a; }
+.G .score { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; background: #fff; color: #0d1b2a; font-family: "Barlow Condensed", sans-serif; font-weight: 800; text-transform: uppercase; }
+.G .score .big { font-size: 42px; padding: 6px 14px; line-height: 1; }
+.G .score .vs { background: #e63b2e; color: #fff; align-self: stretch; display: grid; place-items: center; padding: 0 10px; font-style: italic; }
+.G .score small { display: block; font-size: 10px; font-weight: 700; letter-spacing: .08em; opacity: .7; }
+.G .next { background: #e63b2e; padding: 10px 12px; font-family: "Barlow Condensed", sans-serif; font-weight: 700; text-transform: uppercase; font-size: 14px; display: flex; justify-content: space-between; }
+.G .never { font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em; text-align: center; color: rgb(255 255 255 / .6); font-weight: 600; }
+.G .h { font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-style: italic; font-size: 20px; text-transform: uppercase; opacity: 1; letter-spacing: 0; }
+.G .h::after { content: ""; display: block; height: 3px; width: 44px; background: #ffd23f; margin-top: 2px; }
+.G .explain p { font-size: 13px; line-height: 1.5; }
+.G .cite { background: #ffd23f; color: #0d1b2a; font-weight: 800; }
+.G .sources div b { color: #ffd23f; margin-right: 6px; font-weight: 800; }
+.G .stand button { border: 0; background: #1f3650; color: #fff; padding: 12px 4px; font-family: "Barlow Condensed", sans-serif; font-weight: 800; text-transform: uppercase; font-size: 14px; font-style: italic; transition: background .15s; }
+.G .stand button:hover { background: #2d4d70; }
+.G .stand button.on { background: #ffd23f; color: #0d1b2a; }
+.G .arg { background: #1f3650; padding: 10px 12px; border-left: 4px solid #e63b2e; }
+.G .claim { font-size: 12.5px; font-style: italic; }
+.G .grade { background: #ffd23f; color: #0d1b2a; padding: 6px 12px; font-family: "Barlow Condensed", sans-serif; font-weight: 800; text-transform: uppercase; font-size: 14px; }
+.G .opts span { background: #1f3650; padding: 10px 12px; font-size: 12.5px; }
+.G .opts span.ok { background: #4cc38a; color: #0d1b2a; font-weight: 600; }
+.G .quote { border-left: 4px solid #ffd23f; padding-left: 10px; color: rgb(255 255 255 / .85); }
+.G .docs div, .G .hist div { border-bottom: 1px solid #1f3650; padding-bottom: 6px; }
+.G .hist div span:first-child { font-family: "Barlow Condensed", sans-serif; font-weight: 700; color: #ffd23f; }
+.G .nav { background: #0d1b2a; border-top: 2px solid #e63b2e; }
+.G .nav span { font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-style: italic; text-transform: uppercase; font-size: 13px; color: rgb(255 255 255 / .6); }
+.G .nav span.on { color: #ffd23f; }
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <p class="kicker">Civic Companion · round two · 6 October 2026</p>
+      <h1>The file page, seven ways</h1>
+      <p class="lede">You picked <b>Affichage, Glass Chamber, Clay Commune and Kinetic</b>. Here each one is pushed further and shown on the app's densest screen, the file page, with every section in place. Then three new cousins I think you'll like. <b>Scroll inside each phone.</b> Hover or tap the stand buttons, the answers and the cards.</p>
+    </div>
+    <aside class="dense">
+      <h3>What the file page has to hold</h3>
+      <ol>
+        <li><b>Meta and title</b> (long, French)</li>
+        <li>Summary and <b>six facts</b></li>
+        <li><b>Stage track</b>, Filed to Vote</li>
+        <li><b>Next on the agenda</b></li>
+        <li>"Never tells you how to vote"</li>
+        <li><b>Explanation</b> with citations</li>
+        <li>Official documents cited</li>
+        <li><b>Where do you stand</b></li>
+        <li>Test your view</li>
+        <li><b>Claim check</b> with grade</li>
+        <li><b>Questions</b> with the quoted text</li>
+        <li>Documents and history</li>
+      </ol>
+    </aside>
+  </header>
+
+  <nav class="nav" aria-label="Directions">
+    <ol>
+      <li><a href="#a"><i>01</i> Affichage</a></li>
+      <li><a href="#b"><i>03</i> Glass Chamber</a></li>
+      <li><a href="#c"><i>04</i> Clay Commune</a></li>
+      <li><a href="#d"><i>07</i> Kinetic</a></li>
+      <li><a href="#e" class="new"><i>08</i> Riso</a></li>
+      <li><a href="#f" class="new"><i>09</i> Holo</a></li>
+      <li><a href="#g" class="new"><i>10</i> Broadcast</a></li>
+      <li><a href="#end"><i>··</i> Verdict</a></li>
+    </ol>
+  </nav>
+
+  <section class="dir" id="a">
+    <div>
+      <p class="num">01 · pushed further</p>
+      <h2>Affichage</h2>
+      <p class="thesis">Every section is a separate notice pinned to the board. Black rules, hard shadows, yellow for what is yours, blue for what is next, red for the file number.</p>
+      <p class="why">Pushed: the title is now set in uppercase display caps like a poster headline, the stage track is four physical blocks and the current one lifts, citation numbers are black tiles, and the stand buttons press down into the board when chosen. Dense content stays readable because every block has a hard edge and nothing floats.</p>
+      <div class="spec">
+        <div><h4>Palette</h4><div class="swatches"><i class="sw" style="background:#f3efe4"><span>F3EFE4</span></i><i class="sw" style="background:#111"><span>111111</span></i><i class="sw" style="background:#ffd23f"><span>FFD23F</span></i><i class="sw" style="background:#e63b2e"><span>E63B2E</span></i><i class="sw" style="background:#4f8df0"><span>4F8DF0</span></i></div></div>
+        <div><h4>New motion ideas</h4><ul><li>Opening a file: the list card tears off the board and becomes the page header.</li><li>Choosing a stance: the button sinks with a thunk and a yellow highlighter sweep.</li><li>Questions: a correct answer stamps a black tile; a miss shakes the option once.</li></ul></div>
+      </div>
+      <div class="fit"><span><b>Dense content</b> excellent</span><span><b>Build</b> CSS only</span></div>
+    </div>
+    <div class="stage"><div class="phone"><div class="scr fp A" data-look="A"></div></div><p class="hint">scroll inside the phone · tap a stance</p></div>
+  </section>
+
+  <section class="dir" id="b">
+    <div>
+      <p class="num">03 · pushed further</p>
+      <h2>Glass Chamber</h2>
+      <p class="thesis">Each section is a glass pane in a stack with real depth. The stage track is a lit rail where the current step glows. Move your pointer and the whole page tilts.</p>
+      <p class="why">Pushed: a sticky frosted header, three slow light orbs that drift the whole length of the page, and "Next on the agenda" tinted warm so the eye goes there first. Glass handles density well because the blur separates panes from the background without borders. On a phone the tilt comes from the gyroscope.</p>
+      <div class="spec">
+        <div><h4>Palette</h4><div class="swatches"><i class="sw" style="background:#0a0f24"><span>0A0F24</span></i><i class="sw" style="background:#3d5afe"><span>3D5AFE</span></i><i class="sw" style="background:#ff9a3c"><span>FF9A3C</span></i><i class="sw" style="background:#ffcc70"><span>FFCC70</span></i><i class="sw" style="background:#ff4ecd"><span>FF4ECD</span></i></div></div>
+        <div><h4>New motion ideas</h4><ul><li>Panes slide in from depth as you scroll, with the parallax tied to Z.</li><li>The Companion's explanation writes itself onto the glass, cited sentences lighting up one by one.</li><li>Grades: the whole pane tints green, amber or red for a second.</li></ul></div>
+      </div>
+      <div class="fit"><span><b>Dense content</b> very good</span><span><b>Build</b> medium, watch blur cost</span></div>
+    </div>
+    <div class="stage"><div class="phone"><div class="scr fp B" data-look="B" id="tiltB"></div></div><p class="hint">move the pointer to tilt · scroll inside</p></div>
+  </section>
+
+  <section class="dir" id="c">
+    <div>
+      <p class="num">04 · pushed further</p>
+      <h2>Clay Commune</h2>
+      <p class="thesis">Moulded clay sections, a stage track made of four soft beads where the current one bounces, and three stance buttons in three clay colours that squash when pressed.</p>
+      <p class="why">Pushed: the file page becomes a stack of soft objects you can almost pick up. Mint for what is settled, yellow for what is now, pink for what is at stake. Dense French legal text works here because the type is round and warm, and every section has generous radius and inner light.</p>
+      <div class="spec">
+        <div><h4>Palette</h4><div class="swatches"><i class="sw" style="background:#e9e3f7"><span>E9E3F7</span></i><i class="sw" style="background:#3b2f6b"><span>3B2F6B</span></i><i class="sw" style="background:#ffd166"><span>FFD166</span></i><i class="sw" style="background:#b9f0d8"><span>B9F0D8</span></i><i class="sw" style="background:#ffc2cf"><span>FFC2CF</span></i><i class="sw" style="background:#ff9f6e"><span>FF9F6E</span></i></div></div>
+        <div><h4>New motion ideas</h4><ul><li>Everything has spring physics: sections wobble into place as they scroll in.</li><li>The "understood" state is a clay medal that drops onto the title and jiggles.</li><li>Optional: a low-poly clay Chamber building rotating behind the header (Three.js).</li></ul></div>
+      </div>
+      <div class="fit"><span><b>Dense content</b> good</span><span><b>Build</b> medium</span></div>
+    </div>
+    <div class="stage"><div class="phone"><div class="scr fp C" data-look="C"></div></div><p class="hint">press a stance · scroll inside</p></div>
+  </section>
+
+  <section class="dir" id="d">
+    <div>
+      <p class="num">07 · pushed further</p>
+      <h2>Kinetic</h2>
+      <p class="thesis">Numbered sections in Syne caps, a ticker that never stops, striped progress on the current stage, and a huge date for the next meeting. Rows and answers invert to white on touch.</p>
+      <p class="why">Pushed: the page reads like a broadcast rundown. The title rises in two lines, one solid and one outlined. Section headings carry their number in orange, so the long page is scannable at speed. Density is handled by rhythm: big, small, big, small.</p>
+      <div class="spec">
+        <div><h4>Palette</h4><div class="swatches"><i class="sw" style="background:#0b0b0f"><span>0B0B0F</span></i><i class="sw" style="background:#f4f1ff"><span>F4F1FF</span></i><i class="sw" style="background:#ffb347"><span>FFB347</span></i><i class="sw" style="background:#ff3d81"><span>FF3D81</span></i><i class="sw" style="background:#39e6c8"><span>39E6C8</span></i></div></div>
+        <div><h4>New motion ideas</h4><ul><li>Every heading rises as it enters; every number counts up.</li><li>The mesh behind the header shifts hue with the stage: cool when filed, hot near the vote.</li><li>Shared-element transition: the list row stretches into the title.</li></ul></div>
+      </div>
+      <div class="fit"><span><b>Dense content</b> good</span><span><b>Build</b> higher</span></div>
+    </div>
+    <div class="stage"><div class="phone"><div class="scr fp D" data-look="D"></div></div><p class="hint">hover the answers · scroll inside</p></div>
+  </section>
+
+  <section class="dir" id="e">
+    <div>
+      <p class="num"><b>08 · new</b> · cousin of Affichage</p>
+      <h2>Riso</h2>
+      <p class="thesis">Two-ink risograph print: fluorescent pink and deep blue on cream, slightly out of register, with halftone dots and paper grain. Anton for headlines, Space Mono for everything typed.</p>
+      <p class="why">Where Affichage is a notice board, Riso is the zine someone printed at the youth centre. It has the same honesty and boldness but adds craft and a wink. Misregistration (the pink ghost behind the title) and dot screens are things no AI template does, so it is instantly human. Luxembourg's design scene loves this look.</p>
+      <div class="spec">
+        <div><h4>Palette</h4><div class="swatches"><i class="sw" style="background:#f4ecd8"><span>F4ECD8</span></i><i class="sw" style="background:#1a2a6c"><span>1A2A6C</span></i><i class="sw" style="background:#ff4d8d"><span>FF4D8D</span></i></div></div>
+        <div><h4>Motion ideas</h4><ul><li>Pages print: content appears top to bottom with a roller sweep.</li><li>The pink layer shifts a pixel on scroll, like a real misprint.</li><li>Stances are stamped with an ink splat.</li></ul></div>
+      </div>
+      <div class="fit"><span><b>Dense content</b> very good</span><span><b>Build</b> cheap</span><span><b>Risk</b> two inks limit semantic colour (grades need a third)</span></div>
+    </div>
+    <div class="stage"><div class="phone"><div class="scr fp E" data-look="E"></div></div><p class="hint">look at the title's pink ghost · scroll inside</p></div>
+  </section>
+
+  <section class="dir" id="f">
+    <div>
+      <p class="num"><b>09 · new</b> · cousin of Glass Chamber</p>
+      <h2>Holo</h2>
+      <p class="thesis">A trading-card holographic foil. The header is a 3D card that tilts and its rainbow sheen follows your finger. Everything else is matte black with gradient hairlines.</p>
+      <p class="why">Glass is airy; Holo is precious. A file becomes a collectible: when a resident understands it, the card gets a foil finish. It is the most premium of the set, works beautifully on OLED phones, and gives the Arena a reason to exist beyond quizzing: collect the files that matter where you live.</p>
+      <div class="spec">
+        <div><h4>Palette</h4><div class="swatches"><i class="sw" style="background:#07070c"><span>07070C</span></i><i class="sw" style="background:#ff5ea8"><span>FF5EA8</span></i><i class="sw" style="background:#ffd36e"><span>FFD36E</span></i><i class="sw" style="background:#7cf5d1"><span>7CF5D1</span></i><i class="sw" style="background:#7a8cff"><span>7A8CFF</span></i></div></div>
+        <div><h4>Motion ideas</h4><ul><li>Card tilt on gyroscope; sheen tracks the light direction.</li><li>Understood files flip to reveal the foil back.</li><li>Gradient hairlines travel along their length when a section loads.</li></ul></div>
+      </div>
+      <div class="fit"><span><b>Dense content</b> good</span><span><b>Build</b> medium</span><span><b>Risk</b> gaming look may undercut seriousness</span></div>
+    </div>
+    <div class="stage"><div class="phone"><div class="scr fp F" data-look="F" id="tiltF"></div></div><p class="hint">move the pointer over the top card · scroll inside</p></div>
+  </section>
+
+  <section class="dir" id="g">
+    <div>
+      <p class="num"><b>10 · new</b> · cousin of Kinetic</p>
+      <h2>Broadcast</h2>
+      <p class="thesis">Live sports graphics for politics. A red LIVE bar, skewed lower-thirds, a scoreboard for the stage, condensed italic caps. The Chamber as a match you follow.</p>
+      <p class="why">Kinetic is a festival; Broadcast is match day. It fits the loop you described: weekly matters, panels, decision week, published KPIs. Scores, standings and fixtures are the natural language for that. Everyone in Luxembourg already reads this visual grammar from RTL and football, so it needs no learning.</p>
+      <div class="spec">
+        <div><h4>Palette</h4><div class="swatches"><i class="sw" style="background:#0d1b2a"><span>0D1B2A</span></i><i class="sw" style="background:#1f3650"><span>1F3650</span></i><i class="sw" style="background:#e63b2e"><span>E63B2E</span></i><i class="sw" style="background:#ffd23f"><span>FFD23F</span></i><i class="sw" style="background:#fff"><span>FFFFFF</span></i></div></div>
+        <div><h4>Motion ideas</h4><ul><li>Lower-thirds slide in from the left and snap.</li><li>Council votes animate like a scoreboard flipping.</li><li>A "kick-off" countdown to the next meeting.</li></ul></div>
+      </div>
+      <div class="fit"><span><b>Dense content</b> excellent, built for it</span><span><b>Build</b> medium</span><span><b>Risk</b> treats politics as sport; check against the vocabulary rules</span></div>
+    </div>
+    <div class="stage"><div class="phone"><div class="scr fp G" data-look="G"></div></div><p class="hint">scroll inside the phone</p></div>
+  </section>
+
+  <section class="closing" id="end">
+    <h2>Verdict on the dense page</h2>
+    <p>Of your four, <b>Affichage</b> and <b>Glass Chamber</b> carry the dense page best: hard edges and frosted panes both give twelve sections a clear order. Clay stays charming but needs the sections trimmed. Kinetic is the hardest to keep legible when there is this much text; it wants a reduced mode for long files.</p>
+    <div class="reco">
+      <p><b>If I had to ship one tomorrow:</b> Affichage, with Riso's pink misregistration on the headers as the signature detail. Cheapest to build, boldest on a phone, and unmistakably not a template.</p>
+      <p style="margin-top:.6rem"><b>If you want the wow:</b> Glass Chamber for the structure with Holo's foil card as the reward for understood files.</p>
+      <p style="margin-top:.6rem;color:var(--muted)">Say which one, or which pair, and I will apply it to the live app behind a flag so you can compare on your phone.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var looks = {
+    A: { back: '← This week', deco: '' },
+    B: { back: '← Back', deco: '<div class="orbs"><i></i><i></i><i></i></div>' },
+    C: { back: '← This week', deco: '' },
+    D: { back: 'Back', deco: '<div class="mesh"></div><div class="veil"></div>' },
+    E: { back: '← Back', deco: '' },
+    F: { back: '← Back', deco: '' },
+    G: { back: '← Back', deco: '' }
+  };
+  var title = 'Rendre les marchés des capitaux plus attractifs: modification des lois sur les abus de marché, les indices de référence et les prospectus';
+  function html(L) {
+    var l = looks[L];
+    var card = L === 'B' ? 'g' : L === 'C' ? 'clay' : '';
+    var sec = function (cls, inner) { return '<section class="' + cls + (card ? ' ' + card : '') + '">' + inner + '</section>'; };
+    var head =
+      '<div class="meta"><span>Chamber</span><span>Projet de loi</span><span class="n">N° 8752</span></div>' +
+      (L === 'D' ? '<h2 class="title"><span>Marchés des</span><span>capitaux</span></h2><p class="summary">' + title + '</p>'
+      : L === 'G' ? '<h2 class="title">Marchés des capitaux: la loi 8752</h2><div class="lower"><p>' + title + '</p></div>'
+      : '<h2 class="title"' + (L === 'E' ? ' data-text="' + title.slice(0, 44) + '…"' : '') + '>' + (L === 'E' ? title.slice(0, 44) + '…' : title) + '</h2>' +
+        '<p class="summary">Transposes EU regulation 2024/2809 (the Listing Act) into four Luxembourg laws so that smaller companies can raise capital more easily on the stock exchange.</p>') +
+      '<dl class="facts"><div><dt>Proposed by</dt><dd>Minister of Finance</dd></div><div><dt>Committee</dt><dd>Finances et Budget</dd></div><div><dt>Filed on</dt><dd>14 Jul 2026</dd></div><div><dt>Reference</dt><dd>8752</dd></div><div><dt>Theme</dt><dd>Finances</dd></div><div><dt>Status</dt><dd>Awaiting opinions</dd></div></dl>' +
+      '<div class="track"><span class="done">Filed</span><span class="done">Committee</span><span class="now">Opinions</span><span>Vote</span></div>';
+    var next = L === 'D'
+      ? '<div class="next"><div class="big">09<small>October</small></div><div><span class="h" data-n="">Next on the agenda</span><b>Commission des Finances et du Budget</b><span>14:00 · Chamber, room 2</span></div></div>'
+      : L === 'G'
+      ? '<div class="score"><div><span class="big">4</span><small>Opinions in</small></div><div class="vs">vs</div><div style="text-align:right"><span class="big">2</span><small>Still awaited</small></div></div><div class="next"><span>Next: Commission des Finances</span><span>Thu 9 Oct · 14:00</span></div>'
+      : '<div class="next' + (card ? ' ' + card : '') + '"><span class="h">Next on the agenda</span><b>Commission des Finances et du Budget</b><span>Thursday 9 October 2026 at 14:00</span></div>';
+    var explain = sec('explain',
+      '<span class="h" data-n="01">What is this about?</span>' +
+      '<p>The bill changes four laws so that Luxembourg applies the EU Listing Act from 5 June 2026.<span class="cite">1</span> Smaller companies would need a shorter prospectus to list shares, and the threshold under which no prospectus is needed rises to €12 million.<span class="cite">1</span><span class="cite">3</span> The Council of State asks for one clarification on how the CSSF will sanction late disclosures.<span class="cite">2</span></p>' +
+      '<span class="h">Official documents cited</span><div class="sources"><div><b>1</b>Projet de loi 8752, exposé des motifs</div><div><b>2</b>Avis du Conseil d\'État, 22 Sep 2026</div><div><b>3</b>Avis de la Chambre de Commerce, 3 Sep 2026</div></div>');
+    var stand = sec('standsec',
+      '<span class="h" data-n="02">Where do you stand, before reading more?</span>' +
+      '<div class="stand"><button>In favour</button><button class="on">Against</button><button>Not sure</button></div>' +
+      '<span class="h">Test your view</span>' +
+      '<div class="arg">You are against. The Chamber of Commerce argues the opposite: a shorter prospectus "lowers the cost of listing by around 30% for a company raising under €50 million", which it says keeps growth companies in Luxembourg rather than Amsterdam.<small>Chambre de Commerce, avis of 3 Sep 2026 · open the document</small></div>');
+    var check = sec('checksec',
+      '<span class="h" data-n="03">Heard something about it?</span>' +
+      '<div class="claim">"This bill lets companies hide risks from small investors."</div>' +
+      '<div class="grade"><span>Unclear, or not in the documents</span></div>' +
+      '<p class="quote">The documents shorten the prospectus but keep the risk-factor section mandatory. Whether that hides risk is a matter of judgement, so no grade is given either way.</p>');
+    var arena = sec('arenasec',
+      '<span class="h" data-n="04">What does it actually say? · Question 2 of 4</span>' +
+      '<p style="font-size:13px">Under the bill, below what amount raised does a company need no prospectus at all?</p>' +
+      '<div class="opts"><span>€5 million</span><span class="ok">€12 million ✓</span><span>€50 million</span></div>' +
+      '<span class="h">The official text</span><p class="quote">« Le seuil en dessous duquel aucun prospectus n\'est requis est porté de 8 000 000 à 12 000 000 euros. » Art. 3, projet de loi 8752</p>');
+    var docs = sec('docsec',
+      '<span class="h" data-n="05">Documents</span><div class="docs"><div>Projet de loi 8752 (texte déposé) · 14 Jul 2026</div><div>Avis de la Chambre de Commerce · 3 Sep 2026</div><div>Avis du Conseil d\'État · 22 Sep 2026</div></div>' +
+      '<span class="h">History</span><div class="hist"><div><span>14 Jul</span><span>Déposé par le Ministre des Finances</span></div><div><span>3 Sep</span><span>Avis de la Chambre de Commerce</span></div><div><span>22 Sep</span><span>Avis du Conseil d\'État · 1 opposition formelle</span></div></div>');
+    return l.deco +
+      '<div class="sb"><span>09:41</span><span>●●● ᯤ ▮</span></div>' +
+      (L === 'G' ? '<div class="live"><b>Live</b><span>Chamber · Week 41</span></div>' : '') +
+      '<div class="top"><span class="back">' + l.back + '</span><span class="lang">EN</span></div>' +
+      (L === 'D' ? '<div class="mq"><span>Projet de loi 8752 · Commission des Finances Thu 9 Oct 14:00 · 3 opinions in · Council of State: 1 formal objection · Projet de loi 8752 · Commission des Finances Thu 9 Oct 14:00 · 3 opinions in · Council of State: 1 formal objection · </span></div>' : '') +
+      '<div class="body">' +
+        (L === 'F' ? '<div class="card3d" id="holoCard">' + head + '</div>' : card ? '<section class="' + card + '">' + head + '</section>' : head) +
+        next +
+        '<p class="never">The Companion never tells you how to vote.</p>' +
+        explain + stand + check + arena + docs +
+      '</div>' +
+      '<nav class="nav"><span class="on">This week</span><span>Check a claim</span><span>Ideas</span></nav>';
+  }
+  document.querySelectorAll('.fp[data-look]').forEach(function (el) {
+    el.innerHTML = html(el.dataset.look);
+    el.querySelectorAll('.stand button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        el.querySelectorAll('.stand button').forEach(function (x) { x.classList.remove('on'); });
+        b.classList.add('on');
+      });
+    });
+  });
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) return;
+  // Glass: tilt the whole body.
+  var B = document.getElementById('tiltB');
+  if (B) {
+    var body = B.querySelector('.body');
+    B.addEventListener('pointermove', function (e) {
+      var r = B.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      body.style.transform = 'rotateY(' + (x * 8) + 'deg) rotateX(' + (-y * 6) + 'deg)';
+    });
+    B.addEventListener('pointerleave', function () { body.style.transform = ''; });
+  }
+  // Holo: tilt the top card and move the sheen.
+  var F = document.getElementById('tiltF');
+  if (F) {
+    var card = F.querySelector('#holoCard');
+    F.addEventListener('pointermove', function (e) {
+      var r = card.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      card.style.transform = 'rotateY(' + (x * 18) + 'deg) rotateX(' + (-y * 14) + 'deg)';
+      card.style.setProperty('--a', (x * 180 + 90) + 'deg');
+      card.style.setProperty('--mx', (x * 60) + 'px'); card.style.setProperty('--my', (y * 60) + 'px');
+      card.style.setProperty('--sx', ((x + .5) * 100) + '%');
+    });
+    F.addEventListener('pointerleave', function () { card.style.transform = ''; });
+  }
+})();
+</script>
