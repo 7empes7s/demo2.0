@@ -1,0 +1,24 @@
+{
+  "name": "@democracy2/pulse",
+  "version": "0.1.0",
+  "description": "Pulse: the resident's weekly list, built on the device from the public file list. The server never learns what a resident cares about.",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./charter": "./src/charter.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@democracy2/charter": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

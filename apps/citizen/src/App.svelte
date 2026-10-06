@@ -6,7 +6,10 @@
   import FactCheck from "./components/FactCheck.svelte";
   import FileView from "./components/FileView.svelte";
   import Ideas from "./components/Ideas.svelte";
+  import Week from "./components/Week.svelte";
   import { LocalClient, RemoteClient, RemoteFactChecker, RemoteIdeas, type CompanionClient, type FactChecker, type IdeasReader } from "./lib/client.ts";
+  import { weekAt } from "@democracy2/pulse";
+
   import { loadSnapshot, luxembourgToday, placeOf, routeOf, sitesOf } from "./lib/data.ts";
   import { LANG_LABELS } from "./lib/i18n.ts";
   import { prefs } from "./lib/prefs.ts";
@@ -24,9 +27,16 @@
   let route = $state(readRoute());
   let theme = $state<"light" | "dark" | null>(prefs.theme());
   let online = $state(navigator.onLine);
-  const today = luxembourgToday();
+  const now = new Date();
+  const today = luxembourgToday(now);
+  /** This week's list (Pulse), built on this device. */
+  const week = weekAt(now);
   const CHECK_ROUTE = "check";
   const IDEAS_ROUTE = "ideas";
+  /** `#files`: the full list on a phone. With no route the app opens on this week's list. */
+  const FILES_ROUTE = "files";
+  /** Where a file's back button leads: the full list, or this week's list when opened from there. */
+  let backTo = $state<string | null>(FILES_ROUTE);
 
   const selected = $derived<DocketItem | null>(
     snapshot && route ? (snapshot.items.find((i) => routeOf(i) === route) ?? null) : null,
@@ -36,6 +46,9 @@
   const checking = $derived(route === CHECK_ROUTE && !!checker && !selected);
   /** `#ideas`: the ideas residents posted, read only. */
   const readingIdeas = $derived(route === IDEAS_ROUTE && !!ideasReader && !selected);
+
+  /** The full list on its own (phones). On a wide screen it is always beside the other views. */
+  const listing = $derived(route === FILES_ROUTE && !selected);
 
   /** Once Esch files are in the snapshot, the headings name both bodies. */
   const both = $derived(!!snapshot?.items.some((i) => placeOf(i) === "esch"));
@@ -61,6 +74,14 @@
     applyTheme(theme);
   }
 
+  /** Open a file from the full list or from this week's list; its back button returns there. */
+  function openFile(from: string | null) {
+    return (target: string) => {
+      backTo = from;
+      return open(target);
+    };
+  }
+
   async function open(target: string | null) {
     if (target) location.hash = target;
     else history.pushState(null, "", location.pathname + location.search);
@@ -68,7 +89,8 @@
     window.scrollTo({ top: 0 });
     // Move focus to what just appeared, so keyboard and screen-reader users land on it.
     await tick();
-    document.getElementById(target ? "file-title" : "list-title")?.focus({ preventScroll: true });
+    const focus = target === FILES_ROUTE ? "list-title" : target ? "file-title" : "week-title";
+    document.getElementById(focus)?.focus({ preventScroll: true });
   }
 
   onMount(() => {
@@ -110,7 +132,7 @@
   });
 </script>
 
-<div class="shell" class:has-file={!!selected || checking || readingIdeas}>
+<div class="shell" class:has-file={!listing}>
   <header class="top">
     <button class="brand" onclick={() => open(null)}>
       <span class="mark" aria-hidden="true">§</span>
@@ -145,39 +167,45 @@
         <div class="intro">
           <h1 class="serif" id="list-title" tabindex="-1">{t(both ? "agenda_title_both" : "agenda_title")}</h1>
           <p class="muted">{t(both ? "tagline_both" : "tagline")}</p>
-          {#if checker}
-            <div class="page-links">
+          <div class="page-links">
+            <button class="btn check-open" aria-current={!selected && !checking && !readingIdeas && !listing ? "page" : undefined} onclick={() => open(null)}>{t("week_open")}</button>
+            {#if checker}
               <button class="btn check-open" aria-current={checking ? "page" : undefined} onclick={() => open(CHECK_ROUTE)}>{t("check_open")}</button>
-              {#if ideasReader}
-                <button class="btn check-open" aria-current={readingIdeas ? "page" : undefined} onclick={() => open(IDEAS_ROUTE)}>{t("ideas_open")}</button>
-              {/if}
-            </div>
-          {/if}
+            {/if}
+            {#if ideasReader}
+              <button class="btn check-open" aria-current={readingIdeas ? "page" : undefined} onclick={() => open(IDEAS_ROUTE)}>{t("ideas_open")}</button>
+            {/if}
+          </div>
         </div>
-        <FileList items={snapshot.items} {today} selected={selected ? routeOf(selected) : null} onopen={open} />
+        <FileList items={snapshot.items} {today} selected={selected ? routeOf(selected) : null} onopen={openFile(FILES_ROUTE)} />
         <p class="muted source-note">{t("data_note", { sites: sitesOf(snapshot), date: date(snapshot.generated_at) })}</p>
       </aside>
       <main class="detail-pane">
         {#if selected}
-          <FileView item={selected} items={snapshot.items} {client} {checker} {today} onback={() => open(null)} />
+          <FileView
+            item={selected}
+            items={snapshot.items}
+            {client}
+            {checker}
+            {today}
+            backLabel={t(backTo === FILES_ROUTE ? "back" : "week_open")}
+            onback={() => open(backTo)}
+          />
         {:else if checking && checker}
           <article class="check-page">
-            <button class="back" onclick={() => open(null)}>← {t("back")}</button>
+            <button class="back" onclick={() => open(FILES_ROUTE)}>← {t("back")}</button>
             <h2 class="serif" id="file-title" tabindex="-1">{t("check_open")}</h2>
             <FactCheck {checker} standalone />
             <p class="muted small">{t("never_recommend")}</p>
           </article>
         {:else if readingIdeas && ideasReader}
           <article class="check-page">
-            <button class="back" onclick={() => open(null)}>← {t("back")}</button>
+            <button class="back" onclick={() => open(FILES_ROUTE)}>← {t("back")}</button>
             <h2 class="serif" id="file-title" tabindex="-1">{t("ideas_open")}</h2>
             <Ideas reader={ideasReader} />
           </article>
         {:else}
-          <div class="empty">
-            <p class="serif">{t("pick_file")}</p>
-            <p class="muted">{t("never_recommend")}</p>
-          </div>
+          <Week items={snapshot.items} {week} onopen={openFile(null)} onall={() => open(FILES_ROUTE)} />
         {/if}
       </main>
     </div>
@@ -274,7 +302,6 @@
     cursor: pointer;
   }
   .detail-pane { min-width: 0; }
-  .empty { display: none; }
   .loading, .notice { margin-top: 24px; }
 
   /* Phone: one pane at a time. */
@@ -287,17 +314,5 @@
     .shell.has-file .list-pane, .shell:not(.has-file) .detail-pane { display: block; }
     .back { display: none; }
     .list-pane { position: sticky; top: 76px; align-self: start; max-height: calc(100vh - 92px); overflow-y: auto; padding-right: 8px; }
-    .empty {
-      display: grid;
-      gap: 8px;
-      place-content: center;
-      text-align: center;
-      min-height: 50vh;
-      border: 1px dashed var(--line);
-      border-radius: var(--radius);
-      padding: 32px;
-    }
-    .empty .serif { font-size: 1.6rem; margin: 0; }
-    .empty p { margin: 0; }
   }
 </style>

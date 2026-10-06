@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { pulseCharter } from "@democracy2/pulse/charter";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { defineConfig, type Plugin } from "vite";
 import { viteSingleFile } from "vite-plugin-singlefile";
@@ -53,6 +54,8 @@ function pwa(): Plugin {
 // `vite build` makes the PWA served by the Companion server.
 // `vite build --mode single` makes one self-contained HTML file (the shareable demo).
 export default defineConfig(({ mode }) => ({
+  // Charter's places and weekly budget for Pulse, read at build time: the same for every device.
+  define: { __PULSE_CHARTER__: JSON.stringify(pulseCharter()) },
   plugins: [svelte(), ...(mode === "single" ? [viteSingleFile()] : [pwa()])],
   publicDir: mode === "single" ? false : "public",
   build: { outDir: mode === "single" ? "dist-single" : "dist" },
