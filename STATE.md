@@ -2,6 +2,13 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-06: Phase 2 Door acceptance tests
+
+- Done: Sybil test `modules/door/tests/acceptance.rs`. 1,000 full enrolments (fresh holder secret each, shuffled), with 100 duplicates of 80 people (some via another provider, a new address or a flipped adult flag), issue exactly 900 credentials, and all 100 refusals are `AlreadyEnrolled`. Person id spellings (spaces, zero-width, fullwidth, Arabic-Indic digits, digit dropped or added, grouped, prefixed, wrong case) are refused as `InvalidAttribute`, never a second credential. About 20 s in check.sh.
+- Done: unlinkability harness `modules/door/tests/unlinkability.rs`. 200 enrolees by Charter population, 365 presentations in 15 Agora contexts. The attacker gets all of Door's enrolment data and every presentation in full. Byte-match: 0 matches. `rid`: 0. Proof-byte reuse: 0. Equal pseudonyms across contexts: 0. Every linking rate is within chance (uniform within the disclosed area) plus 4.5 sd. A planted leak is caught at 365/365. About 15 s. The Agora pytest checks that Agora's database and logs keep the nym and no other part of a presentation. Report: `spec/door/unlinkability.md`.
+- Found: anonymity is bounded by the enrolled adults per area. In the harness, Vianden canton got 2 of 200, so its actions were 1-in-2 attributable. Timing (Agora's `created_at` against enrolment time) and network metadata are not tested; they are for the human red team, listed in the report.
+- Next: human red-team report (timing, network logs on Mulinux and Cloudflare, small areas, content); a minimum enrolled count per area before Agora accepts actions there; all communes in the Charter data from STATEC.
+
 ## 2026-10-06: Agora writes need Door
 
 - Done: `d2-door serve` (Rust, standard library only, loopback `:8092`): `POST /presentations/verify` `{presentation, context, challenge, epoch, require}` -> `{pseudonym, nym, disclosed, epoch}` or `{error, code}`; issuer keys from one file per epoch; the caller names the one epoch it accepts. Head 8 KiB, body 64 KiB, 5 s per request, 32 connections, `Transfer-Encoding` refused; the no-panic sweep now covers raw HTTP input and every body field. `d2-door dev-world` / `present` (mock provider) make real credentials and presentations for tests. Agora `DoorNyms`: `GET /challenge` (32 bytes, 120 s, single use), posts and upvotes take a presentation for `agora:<jurisdiction>`, `adult` must be true, the disclosed path must start with the idea's Charter path (`Charter.jurisdiction_path`, new in the Python binding), raw ids refused with `DOOR_URL`, Door down -> writes `503`, reads fine. `test_door.py` runs Agora against a real `d2-door serve` with Rust-made presentations.
