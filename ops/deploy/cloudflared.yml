@@ -7,6 +7,8 @@
 #   cloudflared tunnel route dns cracia cracia.techinsiderbytes.com
 #   install this file as /etc/cloudflared/cracia.yml with the tunnel id filled in
 #   cloudflared service install --config /etc/cloudflared/cracia.yml  (or a cloudflared@cracia unit)
+#
+# The service port must match PORT in /etc/civic/companion.env (publish-cloudflare.sh reads it).
 tunnel: TUNNEL_ID
 credentials-file: /etc/cloudflared/TUNNEL_ID.json
 ingress:

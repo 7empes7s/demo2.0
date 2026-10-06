@@ -1,5 +1,6 @@
 # Merge into the host Caddyfile when Caddy terminates TLS itself. With the Cloudflare tunnel
-# (cloudflared.yml) Caddy is not needed for this site.
+# (cloudflared.yml) Caddy is not needed for this site. The upstream port must match PORT in
+# /etc/civic/companion.env (Mulinux: 8788; see "Mulinux notes" in README.md).
 cracia.techinsiderbytes.com {
 	encode zstd gzip
 	reverse_proxy 127.0.0.1:8787
