@@ -13,7 +13,7 @@ The contracts modules share. Nothing else is shared.
 | `tests/` | Checks every schema and example; run by `tools/check.sh` |
 
 The data model behind these files is `docs/architecture/03-data-model.md`. Examples are synthetic; they never describe real bills or people.
-Intentional extensions of that doc: `SourceItem.type` adds `petition`, `question`, `debate` and `other`; `Grade` evidence requires a `url` the reader can open (`source_document_id` is optional); `SymmetryReport` adds an optional free-form `details` object.
+Intentional extensions of that doc: `SourceItem.type` adds `petition`, `question`, `debate` and `other`; `Grade` evidence requires a `url` the reader can open (`source_document_id` is optional); `SymmetryReport` adds an optional free-form `details` object. `Idea` adds `title{lang}`, `scope_tier` and `charter_version` (the tier Scope computed and the Charter it used), and `upvote_count` is `null` while hidden.
 
 ## Versioning
 

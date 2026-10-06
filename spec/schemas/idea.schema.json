@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://democracy2.dev/spec/idea.schema.json",
+  "title": "Idea",
+  "description": "An idea on the Agora queue, as Agora serves it. Owned by Agora. The tier comes from the Charter's Scope rules applied to jurisdiction_id and topic_ids, never from the proposer.",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$", "description": "ULID." },
+    "jurisdiction_id": { "type": "string", "minLength": 1 },
+    "topic_ids": {
+      "type": "array",
+      "maxItems": 8,
+      "items": { "type": "string", "pattern": "^[a-z0-9_]{1,32}(\\.[a-z0-9_]{1,32}){0,5}$" },
+      "uniqueItems": true
+    },
+    "title": { "$ref": "localized-text.schema.json" },
+    "text": { "$ref": "localized-text.schema.json" },
+    "proposer_nym": {
+      "description": "The proposer's pseudonym inside Agora, never a person.",
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "scope_tier": { "enum": ["national", "regional", "local", "minor"] },
+    "charter_version": {
+      "description": "The Charter version the tier was computed under.",
+      "type": "string",
+      "minLength": 1
+    },
+    "upvote_count": {
+      "description": "Upvotes so far; null while the count is hidden (Charter agora.upvote_hidden_hours after created_at).",
+      "type": ["integer", "null"],
+      "minimum": 0
+    }
+  },
+  "required": [
+    "id",
+    "jurisdiction_id",
+    "topic_ids",
+    "title",
+    "text",
+    "proposer_nym",
+    "created_at",
+    "scope_tier",
+    "charter_version",
+    "upvote_count"
+  ],
+  "additionalProperties": false
+}

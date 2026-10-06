@@ -2,6 +2,12 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-06: Phase 2, Agora v1
+
+- Done: `modules/agora` (`d2_agora`, AGPL): ideas (jurisdiction, topics, title and text in up to five languages), tier from Charter Scope stored with the Charter version, any extra field such as `scope_tier` refused (`unknown_field`), append-only SQLite (triggers refuse UPDATE and DELETE), one upvote per (idea, nym) (`409 duplicate_upvote`), queue ranked by tier queue priority, then visible upvotes, then `created_at`, then id; counts hidden and not ranked for Charter `agora.upvote_hidden_hours`. HTTP API on loopback (`:8091`, 64 KiB body, 10 s body timeout), CLI `d2-agora serve`. `spec/schemas/idea.schema.json`, `upvote.schema.json`. Empty by default; tests use synthetic data only.
+- Gap: identity is the `NymSource` interface with `OpaqueNyms` (the caller's opaque id is the nym) until Door exists, so one upvote per human is not enforced yet; keep it on loopback.
+- Next: Record entries on promotion (`matter.created`, `matter.tier`), `POST /ideas/{id}/promote`, `ProposerRecord`, Door-backed `NymSource`, citizen app view, systemd unit.
+
 ## 2026-10-06: Claim check with Provenance in the citizen app
 
 - Done: Companion `POST /api/factcheck` proxies to Provenance over HTTP (`PROVENANCE_URL`, default `http://127.0.0.1:8090`), validates every grade against `spec/schemas/grade.schema.json` (502 if invalid, 503 if unreachable, 413 over 500 characters or 4 KiB, no model key needed). Citizen app: "Heard something about it?" on each file and a "Check a claim" page (`#check`), grade + plain reason + evidence links, "no document mentions this" and "checker unavailable" states, five languages, component tests in jsdom. `ops/deploy/civic-provenance.service` (loopback, `PartOf=civic-companion.service`). The checker is optional and does not gate deploys: the Companion `/healthz` reports `provenance: true|false`. "No record" only on Provenance's `no_record` / `unknown_context` codes; any other upstream error is 503 and logged.
