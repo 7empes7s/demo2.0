@@ -1,0 +1,32 @@
+[Unit]
+Description=Civic Provenance: grades claims against the Docket snapshot for the citizen app
+After=network-online.target
+Wants=network-online.target
+# The deployer restarts only civic-companion.service; PartOf makes a deploy (and a stop or a
+# restart of the Companion) restart this service too, so both run the same release.
+PartOf=civic-companion.service
+
+[Service]
+User=civic
+Group=civic
+WorkingDirectory=/opt/civic/current
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+# Same uv locations as civic-docket.service. Provenance is stdlib only, so the first sync is quick.
+Environment=UV_PROJECT_ENVIRONMENT=/opt/civic/shared/venv UV_CACHE_DIR=/opt/civic/shared/uv-cache UV_PYTHON_INSTALL_DIR=/opt/civic/shared/python
+# Loopback only: only the Companion server calls it (PROVENANCE_URL in companion.env).
+ExecStart=/usr/bin/env uv run --frozen --no-dev --package d2-provenance d2-provenance serve --docket /opt/civic/shared/lu-chd.json --host 127.0.0.1 --port 8090
+Restart=on-failure
+RestartSec=3
+# Hardening: read-only system, no new privileges, private /tmp. uv may write only its own
+# environment and cache. The install creates these directories; if one is missing the unit fails
+# at start with a clear error instead of uv failing on a read-only file system.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+ReadOnlyPaths=/opt/civic
+ReadWritePaths=/opt/civic/shared/venv /opt/civic/shared/uv-cache /opt/civic/shared/python
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target civic-companion.service

@@ -3,8 +3,9 @@
   import { onMount, tick } from "svelte";
 
   import FileList from "./components/FileList.svelte";
+  import FactCheck from "./components/FactCheck.svelte";
   import FileView from "./components/FileView.svelte";
-  import { LocalClient, RemoteClient, type CompanionClient } from "./lib/client.ts";
+  import { LocalClient, RemoteClient, RemoteFactChecker, type CompanionClient, type FactChecker } from "./lib/client.ts";
   import { loadSnapshot, luxembourgToday, placeOf, routeOf, sitesOf } from "./lib/data.ts";
   import { LANG_LABELS } from "./lib/i18n.ts";
   import { prefs } from "./lib/prefs.ts";
@@ -15,14 +16,20 @@
   let loadError = $state(false);
   /** undefined while we look for a model, null when there is none. */
   let client = $state<CompanionClient | null | undefined>(undefined);
+  /** The claim checker, on the served app only: the shareable demo has no Provenance service. */
+  let checker = $state<FactChecker | null>(null);
   let route = $state(readRoute());
   let theme = $state<"light" | "dark" | null>(prefs.theme());
   let online = $state(navigator.onLine);
   const today = luxembourgToday();
+  const CHECK_ROUTE = "check";
 
   const selected = $derived<DocketItem | null>(
     snapshot && route ? (snapshot.items.find((i) => routeOf(i) === route) ?? null) : null,
   );
+
+  /** `#check`: the claim checker on its own page. */
+  const checking = $derived(route === CHECK_ROUTE && !!checker && !selected);
 
   /** Once Esch files are in the snapshot, the headings name both bodies. */
   const both = $derived(!!snapshot?.items.some((i) => placeOf(i) === "esch"));
@@ -78,6 +85,7 @@
         client = new LocalClient(new SampleProvider(sample));
         return;
       }
+      checker = new RemoteFactChecker();
       try {
         const health = (await (await fetch("healthz")).json()) as { companion?: boolean };
         client = health.companion ? new RemoteClient() : null;
@@ -95,7 +103,7 @@
   });
 </script>
 
-<div class="shell" class:has-file={!!selected}>
+<div class="shell" class:has-file={!!selected || checking}>
   <header class="top">
     <button class="brand" onclick={() => open(null)}>
       <span class="mark" aria-hidden="true">§</span>
@@ -130,13 +138,23 @@
         <div class="intro">
           <h1 class="serif" id="list-title" tabindex="-1">{t(both ? "agenda_title_both" : "agenda_title")}</h1>
           <p class="muted">{t(both ? "tagline_both" : "tagline")}</p>
+          {#if checker}
+            <button class="btn check-open" aria-current={checking ? "page" : undefined} onclick={() => open(CHECK_ROUTE)}>{t("check_open")}</button>
+          {/if}
         </div>
         <FileList items={snapshot.items} {today} selected={selected ? routeOf(selected) : null} onopen={open} />
         <p class="muted source-note">{t("data_note", { sites: sitesOf(snapshot), date: date(snapshot.generated_at) })}</p>
       </aside>
       <main class="detail-pane">
         {#if selected}
-          <FileView item={selected} {client} {today} onback={() => open(null)} />
+          <FileView item={selected} {client} {checker} {today} onback={() => open(null)} />
+        {:else if checking && checker}
+          <article class="check-page">
+            <button class="back" onclick={() => open(null)}>← {t("back")}</button>
+            <h2 class="serif" id="file-title" tabindex="-1">{t("check_open")}</h2>
+            <FactCheck {checker} standalone />
+            <p class="muted small">{t("never_recommend")}</p>
+          </article>
         {:else}
           <div class="empty">
             <p class="serif">{t("pick_file")}</p>
@@ -222,6 +240,21 @@
   .intro h1 { font-size: clamp(1.9rem, 5vw, 2.4rem); line-height: 1.1; }
   .intro p { margin: 0; }
   .source-note { font-size: 0.82rem; margin-top: 16px; }
+  .check-open { justify-self: start; margin-top: 8px; }
+  .check-open[aria-current="page"] { border-color: var(--accent); background: var(--surface-2); }
+  .check-page { display: grid; gap: 16px; padding-top: 4px; }
+  .check-page h2 { font-size: clamp(1.6rem, 4.2vw, 2.3rem); line-height: 1.15; margin: 0; }
+  .check-page h2:focus { outline: none; }
+  .check-page .small { font-size: 0.88rem; margin: 0; }
+  .back {
+    justify-self: start;
+    background: none;
+    border: 0;
+    padding: 4px 0;
+    color: var(--accent-fg);
+    font-weight: 600;
+    cursor: pointer;
+  }
   .detail-pane { min-width: 0; }
   .empty { display: none; }
   .loading, .notice { margin-top: 24px; }
@@ -234,6 +267,7 @@
   @media (min-width: 960px) {
     .layout { grid-template-columns: minmax(320px, 400px) minmax(0, 1fr); gap: 40px; }
     .shell.has-file .list-pane, .shell:not(.has-file) .detail-pane { display: block; }
+    .back { display: none; }
     .list-pane { position: sticky; top: 76px; align-self: start; max-height: calc(100vh - 92px); overflow-y: auto; padding-right: 8px; }
     .empty {
       display: grid;
