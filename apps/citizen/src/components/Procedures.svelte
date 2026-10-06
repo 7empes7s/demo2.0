@@ -291,6 +291,12 @@
   .track.dated li { grid-template-columns: 14px minmax(0, 1fr); grid-template-rows: auto auto; gap: 2px 10px; font-size: 0.95rem; }
   .track.dated .pip { grid-row: 1 / 3; height: auto; width: 10px; }
   .track.dated .when { grid-column: 2; }
+  /* Phone: four stage names side by side would wrap mid-word, so the track turns into rows there. */
+  @media (max-width: 599px) {
+    .track:not(.dated) { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+    .track:not(.dated) li { grid-template-columns: 14px minmax(0, 1fr); align-items: center; gap: 0 10px; font-size: 0.9rem; }
+    .track:not(.dated) .pip { width: 10px; height: 10px; }
+  }
 
   .detail { display: grid; gap: 14px; }
   .back { justify-self: start; background: none; border: 0; padding: 4px 0; color: var(--fg); font-weight: 600; cursor: pointer; }
