@@ -33,12 +33,19 @@
     failure = null;
     result = null;
     try {
-      result = await checker.check(text, item);
+      const answer = await checker.check(text, item);
+      if (claim.trim() === text) result = answer; // the claim was edited meanwhile: not its answer
     } catch (err) {
-      failure = failureKey(err);
+      if (claim.trim() === text) failure = failureKey(err);
     } finally {
       busy = false;
     }
+  }
+
+  /** A verdict belongs to the claim it answered: editing the claim clears it. */
+  function edited() {
+    result = null;
+    failure = null;
   }
 
   const graded = $derived(result?.result === "graded" ? result.grade : null);
@@ -53,6 +60,7 @@
   <form onsubmit={check}>
     <textarea
       bind:value={claim}
+      oninput={edited}
       rows={standalone ? 4 : 2}
       maxlength={MAX_CLAIM}
       placeholder={t("check_placeholder")}
@@ -74,7 +82,7 @@
       <ul class="evidence">
         {#each graded.evidence as ev, i (i)}
           <li>
-            <q lang="fr">{ev.excerpt}</q>
+            <q>{ev.excerpt}</q>
             {#if safeUrl(ev.url)}
               <a class="small" href={safeUrl(ev.url)} target="_blank" rel="noopener">{t("check_document")} ↗</a>
             {/if}

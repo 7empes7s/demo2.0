@@ -18,13 +18,14 @@ ExecStart=/usr/bin/env uv run --frozen --no-dev --package d2-provenance d2-prove
 Restart=on-failure
 RestartSec=3
 # Hardening: read-only system, no new privileges, private /tmp. uv may write only its own
-# environment and cache (the "-" lets the unit start before civic-docket has created them).
+# environment and cache. The install creates these directories; if one is missing the unit fails
+# at start with a clear error instead of uv failing on a read-only file system.
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=read-only
 PrivateTmp=true
 ReadOnlyPaths=/opt/civic
-ReadWritePaths=-/opt/civic/shared/venv -/opt/civic/shared/uv-cache -/opt/civic/shared/python
+ReadWritePaths=/opt/civic/shared/venv /opt/civic/shared/uv-cache /opt/civic/shared/python
 MemoryMax=512M
 
 [Install]

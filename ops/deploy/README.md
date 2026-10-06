@@ -20,7 +20,9 @@ One service, `civic-companion`, serves three things from one Node process: the c
 # Node 22 and uv must be on /usr/local/bin or /usr/bin (systemd units do not see ~/.local/bin),
 # plus git, curl and jq. Nothing heavy is built here (the app build takes about 1 s).
 useradd --system --home /opt/civic --shell /usr/sbin/nologin civic
-mkdir -p /opt/civic/shared /etc/civic
+# uv's environment, cache and Python live in shared/ (civic-docket and civic-provenance use them;
+# civic-provenance may write only there, so they must exist before its first start).
+mkdir -p /opt/civic/shared/{venv,uv-cache,python} /etc/civic
 # An empty snapshot so the first release can start before Docket has run.
 echo '{"schema":"d2.docket.snapshot/2","generated_at":"1970-01-01T00:00:00Z","sources":[],"items":[],"meetings":[],"errors":[]}' > /opt/civic/shared/lu-chd.json
 chown -R civic: /opt/civic
@@ -34,7 +36,7 @@ install -m 600 ops/deploy/companion.env.example /etc/civic/companion.env # then 
 systemctl daemon-reload
 systemctl enable civic-provenance.service      # started with the Companion from now on
 systemctl start app-deploy@civic.service       # first release; wait until it logs "live"
-curl -s 127.0.0.1:8787/healthz                 # {"ok":true,"items":0,...}
+curl -s 127.0.0.1:8787/healthz                 # {"ok":true,"items":0,...,"provenance":true}
 systemctl start civic-docket.service           # first real snapshot (needs /opt/civic/current); restarts both services
 curl -s 127.0.0.1:8090/healthz                 # {"ok": true, "items": N, "sentences": M}
 systemctl enable --now app-deploy@civic.timer civic-docket.timer
@@ -46,4 +48,6 @@ The service starts even without `ANTHROPIC_API_KEY`. It then serves the app and 
 
 ## Health
 
-`GET /healthz` returns `{"ok":true,"items":N,"companion":true|false}`. Provenance's `GET 127.0.0.1:8090/healthz` returns `{"ok": true, "items": N, "sentences": M}`. The deployer checks both (`HEALTH_URLS`) and requires five healthy checks in a row before a release counts as live.
+`GET /healthz` returns `{"ok":true,"items":N,"companion":true|false,"provenance":true|false}`. The deployer checks it (`HEALTH_URLS`) and requires five healthy checks in a row before a release counts as live.
+
+The claim checker is optional and does not gate deploys. `provenance` says whether `civic-provenance` answered its own `/healthz` (checked at most every 30 s, waiting at most 1 s); `false` never fails the Companion's health check, and the app then says the checker is unavailable. To see why it is down: `curl -s 127.0.0.1:8090/healthz` (`{"ok": true, "items": N, "sentences": M}`) and `journalctl -u civic-provenance`.

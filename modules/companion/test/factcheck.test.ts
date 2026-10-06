@@ -1,10 +1,10 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
 
 import { gradeClaim, gradeProblems, isGrade, MAX_CLAIM } from "../src/factcheck.ts";
 import { createCompanionServer } from "../src/server.ts";
-import { ITEM } from "./fixtures.ts";
+import { FakeProvider, ITEM } from "./fixtures.ts";
 
 /** A grade as Provenance's `match` checker returns it. */
 const GRADE = {
@@ -90,6 +90,22 @@ describe("grade schema check", () => {
     ];
     for (const value of bad) expect(gradeProblems(JSON.parse(JSON.stringify(value) ?? "null")), JSON.stringify(value)).not.toEqual([]);
   });
+
+  it("does not let keys named like Object built-ins past additionalProperties", () => {
+    for (const key of ["constructor", "__proto__", "toString", "hasOwnProperty", "valueOf"]) {
+      // JSON.parse makes "__proto__" an own key, as an upstream answer would.
+      const top = JSON.parse(JSON.stringify(GRADE).replace(/^\{/, `{"${key}":{"x":1},`));
+      expect(gradeProblems(top), key).toContain(`grade.${key}: not allowed`);
+      const inEvidence = JSON.parse(JSON.stringify(GRADE).replace('"url":', `"${key}":"z","url":`));
+      expect(gradeProblems(inEvidence), key).toContain(`grade.evidence[0].${key}: not allowed`);
+    }
+  });
+
+  it("does not count an inherited key as a required one", () => {
+    const { model_version: _, ...rest } = GRADE;
+    const proto = Object.assign(Object.create({ model_version: "m" }), rest);
+    expect(gradeProblems(proto)).toContain("grade.model_version: missing");
+  });
 });
 
 describe("gradeClaim", () => {
@@ -97,6 +113,14 @@ describe("gradeClaim", () => {
     const prov = await fakeProvenance((_, res) => json(res, 200, GRADE));
     expect(await gradeClaim(prov.url + "/", "Déposé le 15 mai 2026", "lu.chd.8752")).toEqual({ result: "graded", grade: GRADE });
     expect(prov.seen).toEqual([{ path: "/claims/grade", text: "Déposé le 15 mai 2026", context: "lu.chd.8752" }]);
+  });
+
+  it("reports a body that stalls after the headers as unavailable, not as an invalid answer", async () => {
+    const prov = await fakeProvenance((_, res) => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.write('{"claim_id":');
+    });
+    await expect(gradeClaim(prov.url, "x", undefined, { timeoutMs: 100 })).rejects.toThrow(/timed out while sending/);
   });
 
   it("times out instead of waiting forever", async () => {
@@ -123,10 +147,62 @@ describe("POST /api/factcheck", () => {
   });
 
   it("says when no record mentions the claim, without a grade", async () => {
-    const prov = await fakeProvenance((_, res) => json(res, 404, { error: "no record mentions this claim" }));
+    const prov = await fakeProvenance((_, res) => json(res, 404, { error: "no record mentions this claim", code: "no_record" }));
     const res = await (await companion(prov.url))({ text: "Les licornes votent à Esch" });
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ result: "no_record" });
+  });
+
+  it("treats any other 404 as unavailable, never as no record, and logs it", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      for (const answer of [{ error: "not found" }, { error: "no record mentions this claim" }, "<html>404</html>", { code: "unknown_context" }]) {
+        const prov = await fakeProvenance((_, res) => json(res, 404, answer));
+        const res = await (await companion(prov.url))({ text: "Le projet de loi 8752" });
+        expect(res.status, JSON.stringify(answer)).toBe(503);
+        expect(await res.json()).toEqual({ error: "the claim checker is unavailable" });
+      }
+      expect(log).toHaveBeenCalledWith(expect.stringMatching(/^factcheck: provenance answered 404.*\(claim of 21 characters\)$/));
+      expect(log.mock.calls.flat().join("\n")).not.toContain("Le projet de loi");
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  it("answers no record when Provenance does not hold the file, and unavailable on other 4xx and 5xx", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const stale = await fakeProvenance((_, res) => json(res, 400, { error: "unknown context 'lu.chd.8752': no such record", code: "unknown_context" }));
+      const res = await (await companion(stale.url))({ text: "Déposé le 15 mai 2026", item_id: ITEM.id });
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ result: "no_record" });
+
+      const bad = await fakeProvenance((_, res) => json(res, 400, { error: "claim text is empty" }));
+      expect((await (await companion(bad.url))({ text: "x" })).status).toBe(503);
+      const failing = await fakeProvenance((_, res) => json(res, 502, { error: "x" }));
+      expect((await (await companion(failing.url))({ text: "x" })).status).toBe(503);
+      expect(log.mock.calls.map((c) => c[0])).toEqual([
+        "factcheck: provenance answered 400 (claim of 1 characters)",
+        "factcheck: provenance answered 502 (claim of 1 characters)",
+      ]);
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  it("answers 503 when the body stalls after the headers", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const prov = await fakeProvenance((_, res) => {
+        res.writeHead(200, { "content-type": "application/json" });
+        res.write("{");
+      });
+      const res = await (await companion(prov.url, { provenanceTimeoutMs: 100 }))({ text: "x" });
+      expect(res.status).toBe(503);
+      expect(log).toHaveBeenCalledWith("factcheck: provenance timed out while sending its answer (claim of 1 characters)");
+    } finally {
+      log.mockRestore();
+    }
   });
 
   it("refuses a schema-invalid answer instead of showing it", async () => {
@@ -141,6 +217,8 @@ describe("POST /api/factcheck", () => {
   });
 
   it("answers 503 when the checker is unreachable, failing or not configured", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    onTestFinished(() => log.mockRestore());
     const dead = await companion(await deadUrl());
     expect((await dead({ text: "Déposé le 15 mai 2026" })).status).toBe(503);
 
@@ -174,11 +252,65 @@ describe("POST /api/factcheck", () => {
     expect(prov.seen).toHaveLength(0);
   });
 
-  it("is rate limited like the other routes", async () => {
+  it("is rate limited per client", async () => {
     const prov = await fakeProvenance((_, res) => json(res, 200, GRADE));
-    const post = await companion(prov.url, { ratePerMinute: 2 });
+    const post = await companion(prov.url, { factcheckPerMinute: 2 });
     const codes = [];
     for (let i = 0; i < 3; i++) codes.push((await post({ text: `c${i}` })).status);
     expect(codes).toEqual([200, 200, 429]);
+  });
+
+  it("has its own rate-limit bucket, apart from the model routes", async () => {
+    const prov = await fakeProvenance((_, res) => json(res, 200, GRADE));
+    const answer = JSON.stringify({ grade: "yellow", explanation: "e", evidence: [] });
+    const snapshot = { schema: "d2.docket.snapshot/1", generated_at: "2026-02-01T00:00:00Z", items: [ITEM] };
+    const server = createCompanionServer({ provider: new FakeProvider([answer, answer]), snapshot, provenanceUrl: prov.url, ratePerMinute: 1, factcheckPerMinute: 1 });
+    const base = await listen(server);
+    const post = (path: string, body: unknown) => fetch(base + path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    const codes = [];
+    codes.push((await post("/api/claim", { item_id: ITEM.id, claim: "c0" })).status);
+    codes.push((await post("/api/factcheck", { text: "c1" })).status);
+    codes.push((await post("/api/claim", { item_id: ITEM.id, claim: "c2" })).status);
+    codes.push((await post("/api/factcheck", { text: "c3" })).status);
+    expect(codes).toEqual([200, 200, 429, 429]);
+  });
+});
+
+describe("GET /healthz", () => {
+  const health = async (provenanceUrl: string | undefined) => {
+    const snapshot = { schema: "d2.docket.snapshot/1", generated_at: "2026-02-01T00:00:00Z", items: [ITEM] };
+    const base = await listen(createCompanionServer({ provider: null, snapshot, provenanceUrl }));
+    return async () => {
+      const res = await fetch(base + "/healthz");
+      expect(res.status).toBe(200);
+      return ((await res.json()) as { provenance: unknown }).provenance;
+    };
+  };
+
+  it("reports whether Provenance is up, caches it, and never fails on it", async () => {
+    let calls = 0;
+    const up = createServer((req, res) => {
+      calls++;
+      json(res, req.url === "/healthz" ? 200 : 404, { ok: true, items: 1, sentences: 2 });
+    });
+    const check = await health(await listen(up));
+    expect(await check()).toBe(true);
+    expect(await check()).toBe(true);
+    expect(calls).toBe(1);
+
+    expect(await (await health(await deadUrl()))()).toBe(false);
+    expect(await (await health(undefined))()).toBe(false);
+    const notOk = createServer((_, res) => json(res, 200, { ok: false }));
+    expect(await (await health(await listen(notOk)))()).toBe(false);
+    const wrong = createServer((_, res) => json(res, 404, { error: "not found" }));
+    expect(await (await health(await listen(wrong)))()).toBe(false);
+  });
+
+  it("waits at most about a second for a hung Provenance", async () => {
+    const hung = createServer(() => {});
+    const check = await health(await listen(hung));
+    const started = Date.now();
+    expect(await check()).toBe(false);
+    expect(Date.now() - started).toBeLessThan(3_000);
   });
 });

@@ -1,8 +1,9 @@
 """A minimal stdlib HTTP API.
 
 POST /claims/grade   {text, context?}  -> 200 Grade (spec/schemas/grade.schema.json)
-                                        -> 404 {error} when no record mentions the claim
-                                        -> 400 {error} on bad input or an unknown context
+                                        -> 404 {error, code: "no_record"}: no record mentions it
+                                        -> 400 {error, code: "unknown_context"}: unknown context
+                                        -> 400 {error} on other bad input
                                         -> 408 {error} when the body does not arrive in time
 GET  /checkers                         -> {checkers: [{checker_id, model_version, method, corpus}]}
 GET  /healthz                          -> {ok, items, sentences}
@@ -14,7 +15,7 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
-from .grader import Grader, NoRecord
+from .grader import Grader, NoRecord, UnknownContext
 
 MAX_BODY = 16 * 1024
 TIMEOUT = 10.0  # seconds a client may take to send its request
@@ -81,7 +82,11 @@ def make_server(
             try:
                 return self._json(200, grader.grade(body["text"], context))
             except NoRecord:
-                return self._json(404, {"error": "no record mentions this claim"})
+                return self._json(
+                    404, {"error": "no record mentions this claim", "code": "no_record"}
+                )
+            except UnknownContext as exc:
+                return self._json(400, {"error": str(exc), "code": "unknown_context"})
             except ValueError as exc:
                 return self._json(400, {"error": str(exc)})
 

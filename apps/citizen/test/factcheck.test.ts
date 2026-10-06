@@ -76,6 +76,46 @@ describe("FactCheck component", () => {
     expect(target.querySelector("[data-state=busy]")).toBeNull();
   });
 
+  it("clears the verdict when the claim is edited", async () => {
+    const { target } = await submit(new FakeChecker(async () => ({ result: "graded", grade: grade("red") })));
+    expect(target.querySelector("[data-state=graded]")).not.toBeNull();
+    // Excerpts can be French, German or Luxembourgish, and items carry no language: no lang.
+    expect(target.querySelector("q")?.hasAttribute("lang")).toBe(false);
+    const box = target.querySelector("textarea")!;
+    box.value = "Déposé le 16 mai 2026";
+    box.dispatchEvent(new Event("input", { bubbles: true }));
+    flushSync();
+    expect(target.querySelector("[data-state=graded]")).toBeNull();
+    expect(target.querySelector(".status")?.textContent?.trim()).toBe("");
+
+    // Same for "no record" and failures.
+    for (const answer of [async () => ({ result: "no_record" }) as const, () => Promise.reject(new CompanionFailure("unavailable"))]) {
+      unmount(app!);
+      document.body.innerHTML = "";
+      const { target: t2 } = await submit(new FakeChecker(answer as () => Promise<FactCheckResult>));
+      expect(t2.querySelector("[data-state=none], [data-state=failure]")).not.toBeNull();
+      const box2 = t2.querySelector("textarea")!;
+      box2.value = "autre chose";
+      box2.dispatchEvent(new Event("input", { bubbles: true }));
+      flushSync();
+      expect(t2.querySelector("[data-state=none], [data-state=failure]")).toBeNull();
+    }
+  });
+
+  it("does not show an answer under a claim edited while it was being checked", async () => {
+    let release!: (r: FactCheckResult) => void;
+    const checker = new FakeChecker(() => new Promise((r) => (release = r)));
+    const { target } = await submit(checker);
+    const box = target.querySelector("textarea")!;
+    box.value = "Déposé le 16 mai 2026";
+    box.dispatchEvent(new Event("input", { bubbles: true }));
+    release({ result: "graded", grade: grade("green") });
+    await new Promise((r) => setTimeout(r, 0));
+    flushSync();
+    expect(target.querySelector("[data-state=graded]")).toBeNull();
+    expect(target.querySelector("[data-state=busy]")).toBeNull();
+  });
+
   it("never links evidence that is not a web address", async () => {
     const checker = new FakeChecker(async () => ({ result: "graded", grade: grade("green", "javascript:alert(1)") }));
     const { target } = await submit(checker);

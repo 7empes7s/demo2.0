@@ -30,7 +30,7 @@ Exit codes: `0` ok, `1` eval below its bar, `2` bad input, `3` no record mention
 
 | Route | Body | Answer |
 |---|---|---|
-| `POST /claims/grade` | `{"text": "...", "context": "lu.chd.8752"}` (`context` optional: the Docket item the claim is about) | `200` a `Grade` (`spec/schemas/grade.schema.json`): `claim_id`, `checker_id`, `grade`, `evidence[]` (`url`, `source_document_id`, `excerpt`, `locator`), `model_version`. `404` no record mentions the claim. `400` bad input or a `context` that is not in the records, `408` body not sent within 10 s, `413` body over 16 KiB. |
+| `POST /claims/grade` | `{"text": "...", "context": "lu.chd.8752"}` (`context` optional: the Docket item the claim is about) | `200` a `Grade` (`spec/schemas/grade.schema.json`): `claim_id`, `checker_id`, `grade`, `evidence[]` (`url`, `source_document_id`, `excerpt`, `locator`), `model_version`. `404` `{"error", "code": "no_record"}` no record mentions the claim (any other 404, such as a wrong path, has no `code`). `400` bad input, or `{"error", "code": "unknown_context"}` for a `context` that is not in the records, `408` body not sent within 10 s, `413` body over 16 KiB. |
 | `GET /checkers` | | `{"checkers": [{checker_id, model_version, method, corpus}]}` |
 | `GET /healthz` | | `{ok, items, sentences}` |
 

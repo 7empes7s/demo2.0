@@ -424,7 +424,12 @@ def test_http_api(api):
     jsonschema.validate(g, schema("grade"))
     status, g = api("/claims/grade", {"text": "Le projet de loi 0001 a été déposé le 15/01/2026"})
     assert status == 200 and g["grade"] == "green"
-    assert api("/claims/grade", {"text": "La Lune est faite de fromage"})[0] == 404
+    assert api("/claims/grade", {"text": "La Lune est faite de fromage"}) == (
+        404,
+        {"error": "no record mentions this claim", "code": "no_record"},
+    )
+    # a wrong path is a plain 404, never mistaken for "no record"
+    assert api("/claims/nope", {"text": "x"}) == (404, {"error": "not found"})
     assert api("/claims/grade", {"text": 3})[0] == 400
     assert api("/claims/grade", {"text": "x", "context": 3})[0] == 400
     assert api("/claims/grade", raw=b"not json")[0] == 400
@@ -435,6 +440,8 @@ def test_http_api(api):
     assert status == 200 and body["ok"] and body["items"] == 2
     status, body = api("/claims/grade", {"text": "x", "context": "lu.chd.9999"})
     assert status == 400 and "unknown context" in body["error"]
+    assert body["code"] == "unknown_context"
+    assert "code" not in api("/claims/grade", {"text": 3})[1]
     # deep nesting under the size limit is bad input, not a crash
     assert api("/claims/grade", raw=b"[" * 8000 + b"]" * 8000)[0] == 400
 

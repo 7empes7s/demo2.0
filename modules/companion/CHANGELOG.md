@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- `POST /api/factcheck` proxies a claim (and optionally its file) to the Provenance service (`PROVENANCE_URL`, default `http://127.0.0.1:8090`) and returns its grade only after it passes `spec/schemas/grade.schema.json`. Unreachable or failing: 503; invalid answer: 502; no record: `{result: "no_record"}`; claims over 500 characters or bodies over 4 KiB: 413. Works without a model key. Exports `gradeClaim`, `gradeProblems`, `isGrade` and the `Grade` types.
+- `POST /api/factcheck` proxies a claim (and optionally its file) to the Provenance service (`PROVENANCE_URL`, default `http://127.0.0.1:8090`) and returns its grade only after it passes `spec/schemas/grade.schema.json`. Unreachable or failing: 503; invalid answer: 502; no record (only Provenance's `no_record` / `unknown_context` codes; any other 404 is 503): `{result: "no_record"}`; own rate-limit bucket; `/healthz` reports `provenance: true|false`; claims over 500 characters or bodies over 4 KiB: 413. Works without a model key. Exports `gradeClaim`, `gradeProblems`, `isGrade` and the `Grade` types.
 
 - The server sends `Cache-Control: no-cache` for HTML pages, `sw.js` and `manifest.webmanifest`, so an installed citizen app picks up new versions.
 - `readSnapshot` reads Docket snapshot/1 and /2 into the /2 shape (a `sources` list) and refuses other schemas; the server uses it at start-up.

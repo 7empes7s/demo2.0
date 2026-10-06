@@ -16,5 +16,6 @@
 - Digits of any script, invisible characters and English contractions are read as shown; a word
   mixing alphabets is yellow.
 - The API times out a body that does not arrive (408) and answers deep JSON nesting with 400.
+- API errors carry a machine-readable `code`: `no_record` (404) and `unknown_context` (400).
 - Seed labelled sets: 49 claims on recorded Docket pages, 45 on synthetic bills, 34 of them
   adversarial. Red precision 100% and no false green on both.

@@ -46,6 +46,8 @@ export interface ServerOptions {
   staticDir?: string;
   /** Requests per client per minute on the model-backed routes. */
   ratePerMinute?: number;
+  /** Claim checks per client per minute (default 20). Their own bucket: they cost no model tokens. */
+  factcheckPerMinute?: number;
   /** Reverse proxies in front of the server. 0 (default) ignores X-Forwarded-For entirely. */
   trustProxy?: number;
   /** Base URL of the Provenance service. Without it /api/factcheck answers 503. */
@@ -124,6 +126,8 @@ export function createCompanionServer(opts: ServerOptions) {
   const cache = new Map<string, Promise<unknown>>();
   const hits = new Map<string, number[]>();
   const limit = opts.ratePerMinute ?? 20;
+  const factcheckHits = new Map<string, number[]>();
+  const factcheckLimit = opts.factcheckPerMinute ?? 20;
   const staticRoot = opts.staticDir ? resolve(opts.staticDir) : undefined;
   const trustProxy = opts.trustProxy ?? 0;
   // The snapshot can be megabytes of document text: serialise it once, not per request.
@@ -152,17 +156,17 @@ export function createCompanionServer(opts: ServerOptions) {
     return chain[chain.length - trustProxy] ?? chain[0] ?? socket;
   };
 
-  const throttle = (req: IncomingMessage) => {
+  const throttle = (req: IncomingMessage, bucket = hits, max = limit) => {
     const who = clientOf(req);
     const now = Date.now();
-    const recent = (hits.get(who) ?? []).filter((t) => now - t < 60_000);
-    if (recent.length >= limit) throw new HttpError(429, "too many requests, try again in a minute");
+    const recent = (bucket.get(who) ?? []).filter((t) => now - t < 60_000);
+    if (recent.length >= max) throw new HttpError(429, "too many requests, try again in a minute");
     recent.push(now);
-    if (!hits.has(who) && hits.size >= MAX_CLIENTS) {
-      for (const [key, times] of hits) if (times.every((t) => now - t >= 60_000)) hits.delete(key);
-      if (hits.size >= MAX_CLIENTS) hits.clear();
+    if (!bucket.has(who) && bucket.size >= MAX_CLIENTS) {
+      for (const [key, times] of bucket) if (times.every((t) => now - t >= 60_000)) bucket.delete(key);
+      if (bucket.size >= MAX_CLIENTS) bucket.clear();
     }
-    hits.set(who, recent);
+    bucket.set(who, recent);
   };
 
   const item = (body: Record<string, unknown>): DocketItem => {
@@ -199,18 +203,42 @@ export function createCompanionServer(opts: ServerOptions) {
     if ([...text].length > MAX_CLAIM) throw new HttpError(413, `claim is longer than ${MAX_CLAIM} characters`);
     const context = body.item_id === undefined || body.item_id === null ? undefined : item(body).id;
     if (!opts.provenanceUrl) throw new HttpError(503, "the claim checker is not configured on this server");
-    throttle(req);
+    throttle(req, factcheckHits, factcheckLimit);
     try {
       return await gradeClaim(opts.provenanceUrl, text, context, { timeoutMs: opts.provenanceTimeoutMs });
     } catch (e) {
-      if (e instanceof CheckerUnavailable) throw new HttpError(503, "the claim checker is unavailable");
+      // Logs say what went wrong upstream, never what the resident wrote (only its length).
+      if (e instanceof CheckerUnavailable) {
+        console.error(`factcheck: ${e.message} (claim of ${[...text].length} characters)`);
+        throw new HttpError(503, "the claim checker is unavailable");
+      }
       if (e instanceof CheckerInvalid) {
-        console.error(e.message);
+        console.error(`factcheck: ${e.message} (claim of ${[...text].length} characters)`);
         throw new HttpError(502, "the claim checker gave an answer that could not be read");
       }
       throw e;
     }
   }
+
+  /**
+   * Whether Provenance answers its /healthz, for the Companion's /healthz. Cached for 30 s, waits
+   * at most 1 s, and never fails: the claim checker is optional and the app shows "unavailable".
+   */
+  let provenanceSeen: { ok: boolean; at: number } | null = null;
+  let provenanceProbe: Promise<boolean> | null = null;
+  const provenanceUp = (): Promise<boolean> => {
+    if (!opts.provenanceUrl) return Promise.resolve(false);
+    if (provenanceSeen && Date.now() - provenanceSeen.at < 30_000) return Promise.resolve(provenanceSeen.ok);
+    provenanceProbe ??= fetch(`${opts.provenanceUrl.replace(/\/+$/, "")}/healthz`, { signal: AbortSignal.timeout(1_000) })
+      .then(async (res) => res.ok && ((await res.json()) as { ok?: unknown })?.ok === true)
+      .catch(() => false)
+      .then((ok) => {
+        provenanceSeen = { ok, at: Date.now() };
+        provenanceProbe = null;
+        return ok;
+      });
+    return provenanceProbe;
+  };
 
   async function api(path: string, body: Record<string, unknown>, req: IncomingMessage): Promise<unknown> {
     if (!opts.provider) throw new HttpError(503, "the Companion is not configured on this server");
@@ -271,7 +299,7 @@ export function createCompanionServer(opts: ServerOptions) {
   return createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", "http://localhost");
     try {
-      if (url.pathname === "/healthz") return send(res, 200, { ok: true, items: items.size, companion: !!opts.provider });
+      if (url.pathname === "/healthz") return send(res, 200, { ok: true, items: items.size, companion: !!opts.provider, provenance: await provenanceUp() });
       if (url.pathname === "/data/snapshot.json") {
         if (req.headers["if-none-match"] === snapshotTag) {
           res.writeHead(304, { etag: snapshotTag });
