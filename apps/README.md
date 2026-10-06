@@ -1,3 +1,3 @@
 # apps
 
-Clients: `citizen/` (SvelteKit PWA) and `console/` (operator, panel and reviewer screens).
+Clients: `citizen/` (SvelteKit PWA), `portal/` (the staff portals over Desk: operator, admin and audit, served under `/portal/`) and `console/` (operator, panel and reviewer screens).
