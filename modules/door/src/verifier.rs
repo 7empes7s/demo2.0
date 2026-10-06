@@ -79,7 +79,7 @@ pub fn verify(
     }
     let proof = PoKSignature::<BBSplus<Suite>>::from_bytes(&proof_bytes)
         .map_err(|e| malformed("proof", e.to_string()))?;
-    let pseudonym = BBSplusPseudonym::from_bytes(&presentation.pseudonym.point_bytes())
+    let pseudonym = BBSplusPseudonym::from_bytes(presentation.pseudonym.point_bytes())
         .map_err(|e| malformed("pseudonym", e.to_string()))?;
 
     proof

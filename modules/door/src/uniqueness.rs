@@ -22,7 +22,6 @@ const KEY_INFO: &[u8] = b"d2.door.uniqueness/1";
 
 /// The OPRF key `K` and the operations Door runs with it.
 pub struct UniquenessKey {
-    seed: [u8; 32],
     server: OprfServer<Ristretto255>,
 }
 
@@ -39,12 +38,7 @@ impl UniquenessKey {
     pub fn from_seed(seed: [u8; 32]) -> Self {
         let server = OprfServer::<Ristretto255>::new_from_seed(&seed, KEY_INFO)
             .expect("ristretto255 OPRF key derivation cannot fail for a 32-byte seed");
-        Self { seed, server }
-    }
-
-    /// The seed this key was derived from. Secret.
-    pub fn seed(&self) -> &[u8; 32] {
-        &self.seed
+        Self { server }
     }
 
     /// `u = OPRF_K(person_id)`: 64 bytes (SHA-512 output of the ristretto255 suite), hex.

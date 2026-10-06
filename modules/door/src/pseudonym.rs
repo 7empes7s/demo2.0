@@ -11,30 +11,28 @@ use sha2::{Digest, Sha256};
 use std::fmt;
 
 /// A per-context pseudonym: the compressed G1 point from the BBS pseudonym proof.
+///
+/// Serialised as lowercase hex of exactly 48 bytes. Deserialising validates that form, so a
+/// [`Pseudonym`] always holds 48 bytes and has exactly one text spelling.
 #[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(transparent)]
+#[serde(try_from = "String", into = "String")]
 pub struct Pseudonym {
-    /// Lowercase hex of the 48-byte compressed point.
-    point: String,
+    /// The 48-byte compressed point.
+    point: [u8; 48],
 }
 
 impl Pseudonym {
     /// Wrap the compressed point bytes.
     pub fn from_point_bytes(bytes: &[u8]) -> Result<Self, String> {
-        if bytes.len() != 48 {
-            return Err(format!(
-                "pseudonym point must be 48 bytes, got {}",
-                bytes.len()
-            ));
-        }
-        Ok(Self {
-            point: hex::encode(bytes),
-        })
+        let point: [u8; 48] = bytes
+            .try_into()
+            .map_err(|_| format!("pseudonym point must be 48 bytes, got {}", bytes.len()))?;
+        Ok(Self { point })
     }
 
-    /// Parse the hex form.
+    /// Parse the hex form: lowercase hex of exactly 48 bytes, nothing else.
     pub fn from_hex(hex_point: &str) -> Result<Self, String> {
-        let bytes = hex::decode(hex_point).map_err(|e| e.to_string())?;
+        let bytes = hex::decode(hex_point).map_err(|e| format!("pseudonym: {e}"))?;
         if hex::encode(&bytes) != hex_point {
             return Err("pseudonym hex must be lowercase".to_string());
         }
@@ -42,13 +40,13 @@ impl Pseudonym {
     }
 
     /// The compressed point, 48 bytes.
-    pub fn point_bytes(&self) -> Vec<u8> {
-        hex::decode(&self.point).expect("pseudonym holds valid hex")
+    pub fn point_bytes(&self) -> &[u8; 48] {
+        &self.point
     }
 
     /// Lowercase hex of the point.
-    pub fn as_hex(&self) -> &str {
-        &self.point
+    pub fn as_hex(&self) -> String {
+        hex::encode(self.point)
     }
 
     /// Short text form for the modules that consume pseudonyms:
@@ -56,10 +54,24 @@ impl Pseudonym {
     /// This is the shape Agora's `KeyedNyms` stand-in already produces, so the modules that
     /// store nyms need no schema change when Door replaces it.
     pub fn nym(&self) -> String {
-        let digest = Sha256::digest(self.point_bytes());
+        let digest = Sha256::digest(self.point);
         let mut text = base32_lower(&digest);
         text.truncate(26);
         format!("nym-{text}")
+    }
+}
+
+impl TryFrom<String> for Pseudonym {
+    type Error = String;
+
+    fn try_from(hex_point: String) -> Result<Self, String> {
+        Self::from_hex(&hex_point)
+    }
+}
+
+impl From<Pseudonym> for String {
+    fn from(p: Pseudonym) -> String {
+        p.as_hex()
     }
 }
 
@@ -120,8 +132,34 @@ mod tests {
         assert!(nym[4..]
             .bytes()
             .all(|b| b.is_ascii_lowercase() || (b'2'..=b'7').contains(&b)));
-        assert_eq!(Pseudonym::from_hex(p.as_hex()).unwrap(), p);
+        assert_eq!(Pseudonym::from_hex(&p.as_hex()).unwrap(), p);
         assert!(Pseudonym::from_point_bytes(&[0u8; 47]).is_err());
         assert!(Pseudonym::from_hex(&"0A".repeat(48)).is_err());
+    }
+
+    #[test]
+    fn deserialising_validates() {
+        let p = Pseudonym::from_point_bytes(&[7u8; 48]).unwrap();
+        let json = serde_json::to_string(&p).unwrap();
+        assert_eq!(json, format!("\"{}\"", "07".repeat(48)));
+        assert_eq!(serde_json::from_str::<Pseudonym>(&json).unwrap(), p);
+        for bad in [
+            String::new(),
+            "zz".into(),
+            "ab".into(),
+            "0A".into(),
+            "abc".into(),
+            "ab".repeat(47),
+            "ab".repeat(49),
+            "AB".repeat(48),
+            "0A".repeat(48),
+            format!("{}g", "a".repeat(95)),
+        ] {
+            let json = serde_json::to_string(&bad).unwrap();
+            assert!(
+                serde_json::from_str::<Pseudonym>(&json).is_err(),
+                "{bad:?} parsed"
+            );
+        }
     }
 }

@@ -29,6 +29,14 @@ pub enum EnrolError {
     Signing(String),
 }
 
+/// [`crate::Issuer::add_epoch`] was given a key for an epoch that already has one.
+#[derive(Debug, Error, PartialEq, Eq)]
+#[error("epoch {epoch} already has an issuer key")]
+pub struct EpochExists {
+    /// The epoch.
+    pub epoch: u32,
+}
+
 /// Why the holder could not finalise a credential or build a presentation.
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum HolderError {

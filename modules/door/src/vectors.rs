@@ -127,6 +127,21 @@ pub struct PresentationCase {
     pub expect: Expect,
 }
 
+/// A presentation, as JSON, that must be refused when it is parsed, before `verify` runs.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UnparseableCase {
+    /// Case name.
+    pub name: String,
+    /// What the case shows.
+    pub note: String,
+    /// The presentation as received.
+    pub presentation: serde_json::Value,
+    /// The field that is malformed.
+    pub field: String,
+    /// Error code: always `malformed`.
+    pub error: String,
+}
+
 /// The vectors file.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Vectors {
@@ -156,6 +171,8 @@ pub struct Vectors {
     pub pseudonyms: Vec<PseudonymCase>,
     /// Recorded presentations, passing and failing.
     pub presentations: Vec<PresentationCase>,
+    /// Presentations that must not even parse.
+    pub unparseable: Vec<UnparseableCase>,
 }
 
 fn seed(label: &str) -> [u8; 32] {
@@ -184,12 +201,14 @@ pub fn generate() -> Result<Vectors, String> {
     let provider = MockIdProvider::demo();
     let mut issuer = Issuer::new(UniquenessKey::from_seed(seed("oprf")), MemoryStore::new());
     for epoch in [1u32, 2] {
-        issuer.add_epoch(IssuerSecret::from_seed(
-            epoch,
-            VALID_FROM,
-            VALID_TO,
-            &seed("issuer"),
-        ));
+        issuer
+            .add_epoch(IssuerSecret::from_seed(
+                epoch,
+                VALID_FROM,
+                VALID_TO,
+                &seed("issuer"),
+            ))
+            .map_err(|e| e.to_string())?;
     }
     let issuer_keys = issuer.issuer_keys();
     let key1 = issuer_keys[0].clone();
@@ -280,7 +299,7 @@ pub fn generate() -> Result<Vectors, String> {
             pseudonyms.push(PseudonymCase {
                 holder: holder.into(),
                 context: context.into(),
-                pseudonym: p.pseudonym.as_hex().to_string(),
+                pseudonym: p.pseudonym.as_hex(),
                 nym: p.pseudonym.nym(),
             });
         }
@@ -525,6 +544,43 @@ pub fn generate() -> Result<Vectors, String> {
         err("invalid_proof"),
     ));
 
+    // Must-not-parse cases: a valid presentation with only the pseudonym field broken.
+    let mut unparseable = Vec::new();
+    let a1_json = serde_json::to_value(&a1).map_err(|e| e.to_string())?;
+    let a1_nym = a1.pseudonym.as_hex();
+    for (name, note, value) in [
+        (
+            "pseudonym_short",
+            "A one-byte pseudonym: refused at parsing, never reaches the BBS library.",
+            "ab".to_string(),
+        ),
+        (
+            "pseudonym_not_hex",
+            "A pseudonym that is not hex.",
+            "zz".to_string(),
+        ),
+        (
+            "pseudonym_uppercase",
+            "The right pseudonym in uppercase hex: one point has one spelling only.",
+            a1_nym.to_uppercase(),
+        ),
+        (
+            "pseudonym_47_bytes",
+            "A pseudonym one byte short of a compressed G1 point.",
+            a1_nym[..94].to_string(),
+        ),
+    ] {
+        let mut presentation = a1_json.clone();
+        presentation["pseudonym"] = serde_json::Value::String(value);
+        unparseable.push(UnparseableCase {
+            name: name.into(),
+            note: note.into(),
+            presentation,
+            field: "pseudonym".into(),
+            error: "malformed".into(),
+        });
+    }
+
     let vectors = Vectors {
         schema: SCHEMA.into(),
         generated_by: format!(
@@ -551,6 +607,7 @@ pub fn generate() -> Result<Vectors, String> {
         credentials,
         pseudonyms,
         presentations: cases,
+        unparseable,
     };
     check(&vectors)?;
     Ok(vectors)
@@ -590,12 +647,14 @@ pub fn check(v: &Vectors) -> Result<usize, String> {
         let provider = MockIdProvider::demo();
         let mut issuer = Issuer::new(UniquenessKey::from_seed(oprf_seed), MemoryStore::new());
         let e = v.second_enrolment.epoch;
-        issuer.add_epoch(IssuerSecret::from_seed(
-            e,
-            VALID_FROM,
-            VALID_TO,
-            &issuer_seed,
-        ));
+        issuer
+            .add_epoch(IssuerSecret::from_seed(
+                e,
+                VALID_FROM,
+                VALID_TO,
+                &issuer_seed,
+            ))
+            .map_err(|e| e.to_string())?;
         for (i, token) in [
             &v.second_enrolment.first_token,
             &v.second_enrolment.second_token,
@@ -686,6 +745,16 @@ pub fn check(v: &Vectors) -> Result<usize, String> {
                     case.name
                 ));
             }
+        }
+        checks += 1;
+    }
+
+    // Unparseable presentations are refused when parsed, naming the broken field.
+    for case in &v.unparseable {
+        match serde_json::from_value::<Presentation>(case.presentation.clone()) {
+            Ok(_) => return Err(format!("{}: parsed, expected {}", case.name, case.error)),
+            Err(e) if case.error == "malformed" && e.to_string().contains(&case.field) => {}
+            Err(e) => return Err(format!("{}: refused for another reason: {e}", case.name)),
         }
         checks += 1;
     }

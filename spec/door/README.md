@@ -88,7 +88,7 @@ In this order, stopping at the first failure:
 | `context` equals the verifier's context | `context_mismatch` |
 | `challenge` equals the challenge the verifier issued | `challenge_mismatch` |
 | `disclosed` covers what the verifier requires | `missing_disclosure` |
-| key, disclosed messages, proof length and pseudonym decode | `malformed` |
+| key (exactly 96 bytes), disclosed messages, proof length and pseudonym (lowercase hex, exactly 48 bytes; checked when the JSON is parsed) decode | `malformed` |
 | `ProofVerifyWithNym(pk, proof, header, ph, pseudonym, context, 1, L = 7, disclosed messages and indexes)` | `invalid_proof` |
 
 On success the verifier learns the pseudonym and the disclosed attributes, nothing else.
@@ -106,6 +106,8 @@ On success the verifier learns the pseudonym and the disclosed attributes, nothi
 | `credentials` | the three demo credentials with the seeds they came from (randomised: recorded and re-verified) |
 | `pseudonyms` | each credential's pseudonym in three contexts; deterministic given the credential |
 | `presentations` | 18 cases: 5 that verify (with the exact `disclosed` result) and 13 that must fail with the named error: wrong epoch key, forged epoch, another issuer's key, tampered adult, tampered jurisdiction, replay to another context (plain and forged), replay against another challenge (plain and forged), missing disclosure, swapped pseudonym, truncated proof, flipped proof bit |
+
+| `unparseable` | 4 presentations, as JSON, that must be refused when parsed (error `malformed`, naming `field`): a valid presentation with the pseudonym replaced by 1 byte of hex, non-hex, uppercase hex, and 47 bytes |
 
 Regenerate only when the format changes: `cargo run -p d2-door -- vectors --out spec/door/vectors.json`.
 Check: `cargo run -p d2-door -- check spec/door/vectors.json`.

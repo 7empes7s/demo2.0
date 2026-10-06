@@ -53,13 +53,26 @@ fn regenerated_vectors_match_committed_deterministic_parts() {
             .collect::<Vec<_>>()
     };
     assert_eq!(shape(&fresh), shape(&committed));
-    let pseudonym_shape = |v: &Vectors| {
-        v.pseudonyms
+    // Pseudonyms are deterministic (the holder secret and Door's entropy come from the public
+    // seeds), so they are pinned by value, not only by shape.
+    assert_eq!(fresh.pseudonyms, committed.pseudonyms);
+    // The must-not-parse cases: everything but the randomised proof is deterministic.
+    let unparseable = |v: &Vectors| {
+        v.unparseable
             .iter()
-            .map(|p| (p.holder.clone(), p.context.clone()))
+            .map(|c| {
+                (
+                    c.name.clone(),
+                    c.note.clone(),
+                    c.presentation["pseudonym"].clone(),
+                    c.field.clone(),
+                    c.error.clone(),
+                )
+            })
             .collect::<Vec<_>>()
     };
-    assert_eq!(pseudonym_shape(&fresh), pseudonym_shape(&committed));
+    assert_eq!(unparseable(&fresh), unparseable(&committed));
+    assert_eq!(committed.unparseable.len(), 4);
     // The committed file is the pretty JSON of its own parse (no hand edits that drift).
     let text = std::fs::read_to_string(vectors_path()).unwrap();
     assert_eq!(

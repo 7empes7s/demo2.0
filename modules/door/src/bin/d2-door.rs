@@ -54,7 +54,8 @@ fn demo() -> Result<(), String> {
         "2026-01-01T00:00:00Z",
         "2026-12-31T23:59:59Z",
         &mut OsRng,
-    ));
+    ))
+    .map_err(|e| e.to_string())?;
     let key = door.issuer_key(1).unwrap().clone();
     println!("issuer key, epoch 1: {}...", &key.bbs_public_key[..32]);
 

@@ -1,7 +1,7 @@
 //! Door's side: issuer keys per epoch, the uniqueness check and blind issuance.
 
 use crate::attributes::Attributes;
-use crate::error::EnrolError;
+use crate::error::{EnrolError, EpochExists};
 use crate::identity::IdentityAssertion;
 use crate::uniqueness::{UniquenessEntry, UniquenessKey, UniquenessStore};
 use crate::{Suite, COMMITMENT_LEN, CREDENTIAL_HEADER, NYM_SECRETS, SUITE_ID};
@@ -14,6 +14,9 @@ use zkryptium::keys::pair::KeyPair;
 use zkryptium::schemes::algorithms::BBSplus;
 use zkryptium::schemes::generics::BlindSignature;
 use zkryptium::utils::util::bbsplus_utils::hash_to_scalar;
+
+/// Byte length of a BBS public key: one compressed G2 point.
+pub const BBS_PUBLIC_KEY_LEN: usize = 96;
 
 /// The public part of an epoch's issuer key (03-data-model `IssuerKey`). Published on Record.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -37,6 +40,14 @@ impl IssuerKey {
             return Err(format!("unsupported ciphersuite {:?}", self.ciphersuite));
         }
         let bytes = hex::decode(&self.bbs_public_key).map_err(|e| e.to_string())?;
+        // The BBS library indexes into the key without checking its length; refuse anything
+        // but a 96-byte compressed G2 point before it gets there.
+        if bytes.len() != BBS_PUBLIC_KEY_LEN {
+            return Err(format!(
+                "bbs_public_key must be {BBS_PUBLIC_KEY_LEN} bytes, got {}",
+                bytes.len()
+            ));
+        }
         BBSplusPublicKey::from_bytes(&bytes).map_err(|e| e.to_string())
     }
 }
@@ -125,9 +136,16 @@ impl<S: UniquenessStore> Issuer<S> {
         }
     }
 
-    /// Add an epoch's key. Replaces a key for the same epoch.
-    pub fn add_epoch(&mut self, secret: IssuerSecret) {
-        self.epochs.insert(secret.epoch(), secret);
+    /// Add an epoch's key. Refuses an epoch that already has a key: replacing it would
+    /// invalidate every credential already issued in that epoch while the uniqueness store
+    /// still refuses those people a new one.
+    pub fn add_epoch(&mut self, secret: IssuerSecret) -> Result<(), EpochExists> {
+        let epoch = secret.epoch();
+        if self.epochs.contains_key(&epoch) {
+            return Err(EpochExists { epoch });
+        }
+        self.epochs.insert(epoch, secret);
+        Ok(())
     }
 
     /// The public issuer keys, oldest epoch first (`GET /issuer-keys`).
@@ -150,8 +168,9 @@ impl<S: UniquenessStore> Issuer<S> {
         self.oprf.uniqueness_key(person_id)
     }
 
-    /// Enrol: check uniqueness, then blind-sign the holder's commitment together with the
-    /// coarse attributes (02-protocols section 1, steps 3 to 6). `commitment` is the holder's
+    /// Enrol: check the person id is canonical ([`IdentityAssertion::check_person_id`]), check
+    /// uniqueness, then blind-sign the holder's commitment together with the coarse attributes
+    /// (02-protocols section 1, steps 3 to 6). `commitment` is the holder's
     /// `commitment_with_proof` bytes. Fresh randomness for the revocation handle and Door's
     /// pseudonym entropy comes from `rng`.
     pub fn enrol<R: RngCore + CryptoRng>(
@@ -198,6 +217,9 @@ impl<S: UniquenessStore> Issuer<S> {
         };
         let messages = attributes
             .messages()
+            .map_err(EnrolError::InvalidAttribute)?;
+        assertion
+            .check_person_id()
             .map_err(EnrolError::InvalidAttribute)?;
 
         // Step 3 and 4: uniqueness.

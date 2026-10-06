@@ -40,7 +40,7 @@ pub mod vectors;
 pub mod verifier;
 
 pub use attributes::{Attributes, Disclosed, Disclosure, JURISDICTION_LEVELS};
-pub use error::{EnrolError, HolderError, VerifyError};
+pub use error::{EnrolError, EpochExists, HolderError, VerifyError};
 pub use holder::{Credential, Holder, Presentation};
 pub use identity::{IdentityAssertion, IdentityError, IdentityProvider, MockIdProvider};
 pub use issuer::{Issuance, Issuer, IssuerKey, IssuerSecret};
