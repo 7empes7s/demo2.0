@@ -159,7 +159,7 @@
       </aside>
       <main class="detail-pane">
         {#if selected}
-          <FileView item={selected} {client} {checker} {today} onback={() => open(null)} />
+          <FileView item={selected} items={snapshot.items} {client} {checker} {today} onback={() => open(null)} />
         {:else if checking && checker}
           <article class="check-page">
             <button class="back" onclick={() => open(null)}>← {t("back")}</button>

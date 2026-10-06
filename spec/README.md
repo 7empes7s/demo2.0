@@ -13,7 +13,7 @@ The contracts modules share. Nothing else is shared.
 | `tests/` | Checks every schema and example; run by `tools/check.sh` |
 
 The data model behind these files is `docs/architecture/03-data-model.md`. Examples are synthetic; they never describe real bills or people.
-Intentional extensions of that doc: `SourceItem.type` adds `petition`, `question`, `debate` and `other`; `Grade` evidence requires a `url` the reader can open (`source_document_id` is optional); `SymmetryReport` adds an optional free-form `details` object. `Argument` adds optional `kind` (`argument`, `position`, `proposal`), `attribution` and `source_url`. `Idea` adds `title{lang}`, `scope_tier` and `charter_version` (the tier Scope computed and the Charter it used), and `upvote_count` is `null` while hidden.
+Intentional extensions of that doc: `SourceItem.type` adds `petition`, `question`, `debate` and `other`; `Grade` evidence requires a `url` the reader can open (`source_document_id` is optional); `SymmetryReport` adds an optional free-form `details` object. `Argument` adds optional `kind` (`argument`, `position`, `proposal`), `attribution` and `source_url`. `Idea` adds `title{lang}`, `scope_tier` and `charter_version` (the tier Scope computed and the Charter it used), and `upvote_count` is `null` while hidden. `Quiz` is the v1 form of `QuizPool`: one quiz per Docket item (`item_id`, not `briefing_id`), each question says its `origin` (`seed` or `rules`) and `generator`, carries `evidence` (field, word-for-word quote, link) instead of a bare `correct`, and has no `signoffs` or `published_after_vote` yet.
 
 ## Versioning
 

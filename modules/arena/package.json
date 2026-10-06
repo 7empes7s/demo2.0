@@ -1,0 +1,21 @@
+{
+  "name": "@democracy2/arena",
+  "version": "0.1.0",
+  "description": "Arena comprehension checks: short quizzes on what an official text says, every answer quoted from the source.",
+  "license": "SEE LICENSE IN LICENSE",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run",
+    "check-seed": "node --experimental-strip-types src/cli.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  }
+}
