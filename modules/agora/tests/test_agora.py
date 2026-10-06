@@ -5,6 +5,7 @@ import random
 import socket
 import sqlite3
 import threading
+import time
 import urllib.error
 import urllib.request
 from datetime import UTC, datetime, timedelta
@@ -12,7 +13,16 @@ from pathlib import Path
 
 import d2_charter
 import pytest
-from d2_agora import LIMITS, Agora, AgoraError, DuplicateUpvote, UnknownIdea, rank_key
+from d2_agora import (
+    LIMITS,
+    Agora,
+    AgoraError,
+    DuplicateUpvote,
+    KeyedNyms,
+    MissingKey,
+    UnknownIdea,
+    rank_key,
+)
 from d2_agora.__main__ import main
 from d2_agora.server import MAX_BODY, make_server
 from jsonschema import Draft202012Validator, FormatChecker
@@ -32,6 +42,7 @@ CITY = "lu-commune-luxembourg"  # regional
 COUNTRY = "lu"  # national
 DISTRICT = "synthetic-district-1"  # minor: a test-only place with 500 people
 T0 = datetime(2026, 10, 6, 9, 0, tzinfo=UTC)
+NYMS = KeyedNyms(b"synthetic-test-key-not-a-secret-0123456789")  # injected; no key file in git
 
 
 def who(n: int) -> str:
@@ -67,7 +78,7 @@ def agora(clock):
             }
         ]
     )
-    a = Agora(charter=charter, now=clock)
+    a = Agora(charter=charter, nyms=NYMS, now=clock)
     yield a
     a.close()
 
@@ -134,7 +145,30 @@ def test_stored_ideas_and_upvotes_cannot_be_rewritten(agora):
     ):
         with pytest.raises(sqlite3.DatabaseError, match="append-only"):
             agora._db.execute(sql)
+    # REPLACE deletes the old row without firing DELETE triggers; the INSERT triggers stop it.
+    stored = agora._db.execute("SELECT * FROM ideas").fetchone()
+    vote = agora._db.execute("SELECT * FROM upvotes").fetchone()
+    wider = (*stored[:1], "lu", *stored[2:7], "national", *stored[8:])
+    for verb in ("INSERT OR REPLACE INTO", "REPLACE INTO", "INSERT OR IGNORE INTO"):
+        with pytest.raises(sqlite3.DatabaseError, match="append-only"):
+            agora._db.execute(f"{verb} ideas VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", wider)
+        with pytest.raises(sqlite3.DatabaseError, match="append-only"):
+            agora._db.execute(f"{verb} upvotes VALUES (?, ?, ?)", (*vote[:2], "2099"))
+    assert agora._db.execute("SELECT * FROM ideas").fetchall() == [stored]
+    assert agora._db.execute("SELECT * FROM upvotes").fetchall() == [vote]
     assert agora.idea(idea["id"])["scope_tier"] == "local"
+
+
+def test_known_gap_a_proposer_can_widen_the_jurisdiction_to_raise_the_tier(agora):
+    # KNOWN v1 GAP, pinned on purpose (README "Not done yet", STATE.md): the proposer picks the
+    # jurisdiction, so a commune matter filed under "lu" is stored as national and jumps the
+    # queue. Closing it needs Door eligibility (the proposer's area) or a ScopeChallenge. When
+    # that lands this test must change to expect a refusal or a challenge.
+    commune_matter = {**body(ESCH), "title": {"en": "Synthetic commune bench repair"}}
+    honest = agora.post_idea(commune_matter)
+    widened = agora.post_idea({**commune_matter, "jurisdiction_id": COUNTRY})
+    assert (honest["scope_tier"], widened["scope_tier"]) == ("local", "national")
+    assert [i["id"] for i in agora.queue([ESCH, COUNTRY])] == [widened["id"], honest["id"]]
 
 
 # --- ranking ----------------------------------------------------------------------------------
@@ -242,6 +276,70 @@ def test_upvoting_an_unknown_idea(agora):
         agora.upvote("0" * 26, who(1))
 
 
+def test_the_published_nym_is_derived_per_area_not_the_participant(agora):
+    p = who(1)
+    esch = [agora.post_idea(body(ESCH, 1)) for _ in range(2)]
+    country = agora.post_idea(body(COUNTRY, 1))
+    nyms = {i["proposer_nym"] for i in esch}
+    assert len(nyms) == 1  # stable within an area
+    assert country["proposer_nym"] not in nyms  # not linkable across areas
+    for idea in (*esch, country):
+        assert idea["proposer_nym"] != p and p not in idea["proposer_nym"]
+        assert not list(IDEA_SCHEMA.iter_errors(idea))
+    assert p not in json.dumps(agora.queue())
+    assert agora._db.execute(
+        "SELECT COUNT(*) FROM ideas WHERE proposer_nym = ?", (p,)
+    ).fetchone() == (0,)
+    # The nym depends on the key too: another server key gives other nyms.
+    other = KeyedNyms(b"another-synthetic-test-key-0123456789")
+    assert other.nym(p, f"agora:{ESCH}") != NYMS.nym(p, f"agora:{ESCH}")
+
+
+def test_one_upvote_per_participant_holds_with_derived_nyms(agora):
+    # Enforced on the derived nym of the idea's own area: an idea has one area, so one
+    # participant has exactly one nym per idea.
+    esch = agora.post_idea(body(ESCH, 1))
+    country = agora.post_idea(body(COUNTRY, 2))
+    for idea in (esch, country):
+        agora.upvote(idea["id"], who(10))
+        with pytest.raises(DuplicateUpvote):
+            agora.upvote(idea["id"], who(10))
+    assert agora._db.execute("SELECT COUNT(*) FROM upvotes").fetchone() == (2,)
+
+
+def test_there_is_no_default_nym_key(monkeypatch, tmp_path):
+    with pytest.raises(TypeError):
+        Agora()  # nyms is required
+    for bad in (b"", b"x" * 31, "a" * 64):
+        with pytest.raises(MissingKey):
+            KeyedNyms(bad)
+    monkeypatch.delenv("AGORA_NYM_KEY_FILE", raising=False)
+    with pytest.raises(MissingKey):
+        KeyedNyms.from_env()
+    monkeypatch.setenv("AGORA_NYM_KEY_FILE", str(tmp_path / "missing"))
+    with pytest.raises(MissingKey):
+        KeyedNyms.from_env()
+    key = tmp_path / "nym.key"
+    key.write_bytes(b"k" * 32 + b"\n")
+    monkeypatch.setenv("AGORA_NYM_KEY_FILE", str(key))
+    assert KeyedNyms.from_env().nym(who(1), "c") == KeyedNyms(b"k" * 32).nym(who(1), "c")
+
+
+def test_cli_refuses_to_start_without_a_nym_key(tmp_path, monkeypatch, capsys):
+    monkeypatch.delenv("AGORA_NYM_KEY_FILE", raising=False)
+    assert main(["serve", "--db", str(tmp_path / "agora.db"), "--port", "0"]) == 2
+    assert "nym key" in capsys.readouterr().err
+    short = tmp_path / "short.key"
+    short.write_bytes(b"too short")
+    args = ["serve", "--db", str(tmp_path / "agora.db"), "--nym-key-file", str(short)]
+    assert main(args) == 2
+
+
+def test_a_tz_naive_clock_is_refused_at_construction():
+    with pytest.raises(TypeError, match="timezone-aware"):
+        Agora(nyms=NYMS, now=lambda: datetime(2026, 10, 6, 9, 0))
+
+
 @pytest.mark.parametrize(
     "participant", ["short", "someone@example.org", "+352 000 000 000", "a" * 129, 12345, None]
 )
@@ -269,7 +367,13 @@ def test_participant_must_be_an_opaque_id(agora, participant):
         ({"title": "Synthetic"}, "invalid_field"),
         ({"title": {"en": "two\nlines"}}, "invalid_field"),
         ({"text": {"en": "bell\x07"}}, "invalid_field"),
-        ({"text": {"en": "flip‮me"}}, "invalid_field"),
+        ({"text": {"en": "flip\u202eme"}}, "invalid_field"),
+        ({"text": {"en": "a\ud800b"}}, "invalid_field"),  # lone surrogate
+        ({"title": {"en": "lone \udfff"}}, "invalid_field"),
+        ({"title": {"en": "line\u2028separator"}}, "invalid_field"),
+        ({"title": {"en": "para\u2029separator"}}, "invalid_field"),
+        ({"title": {"en": "zero\u200bwidth"}}, "invalid_field"),
+        ({"title": {"en": "word\u2060joiner"}}, "invalid_field"),
         ({"jurisdiction_id": 3}, "invalid_field"),
         ({"jurisdiction_id": "LU COMMUNE"}, "invalid_field"),
     ],
@@ -294,6 +398,17 @@ def test_limits_are_inclusive_and_text_is_trimmed(agora):
     assert set(idea["text"]) == {"fr", "lb"}
 
 
+def test_text_is_nfc_normalised(agora):
+    # "e" + combining acute is stored as one character, so it counts once against the limit.
+    decomposed = "Caf" + "e\u0301" * LIMITS["title_chars"]
+    idea = agora.post_idea({**body(ESCH), "title": {"fr": decomposed[: LIMITS["title_chars"]]}})
+    assert "\u0301" not in idea["title"]["fr"]
+    idea = agora.post_idea({**body(ESCH), "text": {"fr": "Caf" + "e\u0301"}})
+    assert idea["text"]["fr"] == "Caf\u00e9"
+    title = "x" * (LIMITS["title_chars"] - 1) + "e\u0301"  # 201 code points in, 200 stored
+    assert len(agora.post_idea({**body(ESCH), "title": {"en": title}})["title"]["en"]) == 200
+
+
 def test_queue_limits(agora):
     with pytest.raises(AgoraError):
         agora.queue([f"j{i}" for i in range(LIMITS["queue_jurisdictions"] + 1)])
@@ -304,17 +419,17 @@ def test_queue_limits(agora):
 
 
 def test_an_empty_agora_has_an_empty_queue(tmp_path):
-    a = Agora(tmp_path / "agora.db")
+    a = Agora(tmp_path / "agora.db", nyms=NYMS)
     assert a.queue() == [] and a.count() == 0
     a.close()
 
 
 def test_ideas_survive_a_restart(tmp_path):
-    a = Agora(tmp_path / "agora.db")
+    a = Agora(tmp_path / "agora.db", nyms=NYMS)
     idea = a.post_idea(body(ESCH))
     a.upvote(idea["id"], who(2))
     a.close()
-    b = Agora(tmp_path / "agora.db")
+    b = Agora(tmp_path / "agora.db", nyms=NYMS)
     assert b.idea(idea["id"])["title"] == idea["title"]
     with pytest.raises(DuplicateUpvote):
         b.upvote(idea["id"], who(2))
@@ -377,6 +492,8 @@ def test_http_api(api, clock):
     assert api(f"/queue?jurisdiction={CITY}")[1]["ideas"] == []
     assert len(api("/queue?limit=1")[1]["ideas"]) == 1
     assert api("/queue?limit=abc")[0] == 400
+    assert api("/queue?limit=%C2%B2")[1]["code"] == "invalid_field"  # "²" is a digit, not ASCII
+    assert api("/queue?limit=%EF%BC%95")[0] == 400  # full-width 5
     assert api("/queue?limit=0")[0] == 400
     assert api(f"/ideas/{local['id']}")[1]["upvote_count"] == 2
     assert api(f"/ideas/{'0' * 26}") == (
@@ -397,12 +514,47 @@ def test_http_api_refuses_relabelling_and_bad_scope(api):
 
 def test_http_api_input_limits(api):
     assert api("/ideas", raw=b"x" * (MAX_BODY + 1))[0] == 413
+    lone = json.dumps(body(ESCH)).replace("A synthetic", "\\ud800 synthetic")
+    assert "\\ud800" in lone
+    assert api("/ideas", raw=lone) == (
+        400,
+        {"error": "text.en has control characters", "code": "invalid_field"},
+    )
     assert api("/ideas", raw=b"not json")[0] == 400
     assert api("/ideas", raw=b"[" * 8000 + b"]" * 8000)[0] == 400
     assert api("/ideas", [1, 2])[1]["code"] == "invalid_body"
     status, err = api("/ideas", {**body(ESCH), "title": {"en": "x" * 201}})
     assert (status, err["code"]) == (400, "too_long")
     assert api("/healthz")[1]["ideas"] == 0
+
+
+def test_a_maximum_length_escaped_post_fits(api):
+    # Every field at its limit, every character astral and sent as an escaped surrogate pair
+    # (12 bytes each), as json.dumps / JSON.stringify-with-escaping would send it.
+    def longest(n):
+        return {lang: "\U0001f333" * n for lang in ("lb", "fr", "de", "en", "pt")}
+
+    post = {
+        "participant": "p" * 128,
+        "jurisdiction_id": ESCH,
+        "topic_ids": [".".join(f"{i}{'t' * 31}" for _ in range(6))[: 32 * 6 + 5] for i in range(8)],
+        "title": longest(LIMITS["title_chars"]),
+        "text": longest(LIMITS["text_chars"]),
+    }
+    raw = json.dumps(post, ensure_ascii=True)
+    assert 21_000 * 12 < len(raw) <= MAX_BODY
+    status, idea = api("/ideas", raw=raw)
+    assert status == 201 and idea["text"]["pt"] == "\U0001f333" * LIMITS["text_chars"]
+
+
+def test_http_api_hides_internal_errors(api, agora, monkeypatch):
+    def boom(*_a, **_k):
+        raise RuntimeError("secret path /var/lib/agora.db and SQL")
+
+    monkeypatch.setattr(agora, "queue", boom)
+    monkeypatch.setattr(agora, "post_idea", boom)
+    assert api("/queue") == (500, {"error": "internal error", "code": "internal"})
+    assert api("/ideas", body(ESCH)) == (500, {"error": "internal error", "code": "internal"})
 
 
 def test_http_api_needs_a_length_and_times_out_a_slow_body(agora):
@@ -420,6 +572,57 @@ def test_http_api_needs_a_length_and_times_out_a_slow_body(agora):
         server.server_close()
 
 
+def test_a_slow_drip_body_gets_408_within_the_total_deadline(agora):
+    # One byte every 0.2 s never trips a per-recv timeout of 1 s; the 1 s total deadline does.
+    server = make_server(agora, port=0, timeout=1.0)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        with socket.create_connection(server.server_address, timeout=10) as conn:
+            conn.sendall(b"POST /ideas HTTP/1.1\r\nHost: x\r\nContent-Length: 1000\r\n\r\n")
+            start = time.monotonic()
+            conn.setblocking(False)
+            reply = b""
+            while not reply and time.monotonic() - start < 8:
+                try:
+                    conn.sendall(b" ")
+                except OSError:
+                    pass
+                time.sleep(0.2)
+                try:
+                    reply = conn.recv(4096)
+                except BlockingIOError:
+                    pass
+            assert reply.startswith(b"HTTP/1.0 408")
+            assert time.monotonic() - start < 3
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_connections_beyond_the_cap_get_503(agora):
+    server = make_server(agora, port=0, timeout=5.0, max_connections=1)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        with socket.create_connection(server.server_address, timeout=5) as held:
+            held.sendall(b"POST /ideas HTTP/1.1\r\nHost: x\r\nContent-Length: 100\r\n\r\n")
+            time.sleep(0.3)  # the only slot is now busy reading this body
+            with socket.create_connection(server.server_address, timeout=5) as extra:
+                extra.sendall(b"GET /healthz HTTP/1.1\r\nHost: x\r\n\r\n")
+                reply = extra.recv(4096)
+                assert reply.startswith(b"HTTP/1.0 503") and b'"busy"' in reply
+        deadline = time.monotonic() + 5
+        while True:  # the slot comes back once the held connection ends
+            with socket.create_connection(server.server_address, timeout=5) as conn:
+                conn.sendall(b"GET /healthz HTTP/1.1\r\nHost: x\r\n\r\n")
+                if conn.recv(4096).startswith(b"HTTP/1.0 200"):
+                    break
+            assert time.monotonic() < deadline
+            time.sleep(0.1)
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
 def test_server_binds_loopback_by_default(agora):
     server = make_server(agora, port=0)
     try:
@@ -429,5 +632,6 @@ def test_server_binds_loopback_by_default(agora):
 
 
 def test_cli_reports_a_database_it_cannot_open(tmp_path, capsys):
-    assert main(["serve", "--db", str(tmp_path / "missing-dir" / "agora.db"), "--port", "0"]) == 2
+    db = str(tmp_path / "missing-dir" / "agora.db")
+    assert main(["serve", "--db", db, "--port", "0", "--dev-insecure-key"]) == 2
     assert "d2-agora" in capsys.readouterr().err

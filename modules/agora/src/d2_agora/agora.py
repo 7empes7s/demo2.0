@@ -3,7 +3,10 @@
 Rules (docs/architecture/01-modules.md section 11, Phase 2 criteria in 00-overview.md section 7):
 - An idea's tier comes from Scope (d2_charter) applied to its jurisdiction and topics. The request
   cannot carry a tier: any field outside the documented ones is rejected, and nothing can change
-  an idea after it is stored (database triggers refuse UPDATE and DELETE).
+  an idea after it is stored (database triggers refuse UPDATE, DELETE and an INSERT that would
+  replace a stored row).
+- Known v1 gap: the proposer picks the jurisdiction, so a commune matter filed under a wider one
+  (say `lu`) gets that wider tier. Closing it needs Door eligibility or a ScopeChallenge.
 - One upvote per (idea, nym). A second one is refused, not merged.
 - Upvote counts stay hidden for Charter `agora.upvote_hidden_hours` after an idea is posted.
   While hidden the count is null and the idea ranks as if it had none, so its position does not
@@ -18,6 +21,7 @@ import os
 import re
 import sqlite3
 import threading
+import unicodedata
 from collections.abc import Callable, Iterable, Mapping
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -26,7 +30,7 @@ from typing import Any
 import d2_charter
 from d2_charter import CharterError
 
-from .identity import InvalidParticipant, NymSource, OpaqueNyms
+from .identity import InvalidParticipant, NymSource
 
 LANGS = ("lb", "fr", "de", "en", "pt")
 LIMITS = {
@@ -39,8 +43,11 @@ LIMITS = {
 IDEA_FIELDS = {"participant", "jurisdiction_id", "topic_ids", "title", "text"}
 _TOPIC = re.compile(r"[a-z0-9_]{1,32}(\.[a-z0-9_]{1,32}){0,5}")
 _JURISDICTION = re.compile(r"[a-z0-9-]{1,64}")
-# C0 controls except tab and newline, DEL, C1 controls, and bidi overrides that can disguise text.
-_BAD_CHARS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f-\x9f‪-‮⁦-⁩]")
+# C0 controls except tab and newline, DEL, C1 controls, bidi overrides that can disguise text,
+# and lone surrogates (they cannot be stored as UTF-8).
+_BAD_CHARS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069\ud800-\udfff]")
+# Also refused in one-line fields: tab, newline, line and paragraph separators, zero-width chars.
+_BAD_ONE_LINE = re.compile(r"[\t\n\u2028\u2029\u200b-\u200d\u2060\ufeff]")
 _CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 
 SCHEMA = """
@@ -68,6 +75,14 @@ CREATE TRIGGER IF NOT EXISTS ideas_append_only_d BEFORE DELETE ON ideas
 CREATE TRIGGER IF NOT EXISTS upvotes_append_only_u BEFORE UPDATE ON upvotes
   BEGIN SELECT RAISE(ABORT, 'agora is append-only'); END;
 CREATE TRIGGER IF NOT EXISTS upvotes_append_only_d BEFORE DELETE ON upvotes
+  BEGIN SELECT RAISE(ABORT, 'agora is append-only'); END;
+-- INSERT OR REPLACE / REPLACE INTO delete the old row without firing DELETE triggers (unless
+-- recursive_triggers is on), so refuse any insert whose key is already stored.
+CREATE TRIGGER IF NOT EXISTS ideas_append_only_i BEFORE INSERT ON ideas
+  WHEN EXISTS (SELECT 1 FROM ideas WHERE id = NEW.id)
+  BEGIN SELECT RAISE(ABORT, 'agora is append-only'); END;
+CREATE TRIGGER IF NOT EXISTS upvotes_append_only_i BEFORE INSERT ON upvotes
+  WHEN EXISTS (SELECT 1 FROM upvotes WHERE idea_id = NEW.idea_id AND voter_nym = NEW.voter_nym)
   BEGIN SELECT RAISE(ABORT, 'agora is append-only'); END;
 """
 
@@ -125,10 +140,11 @@ def _localized(value: Any, field: str, max_chars: int, multiline: bool) -> dict[
         if not isinstance(text, str) or not text.strip():
             raise AgoraError("invalid_field", f"{field}.{lang} must be non-empty text")
         text = text.strip()
+        if _BAD_CHARS.search(text) or (not multiline and _BAD_ONE_LINE.search(text)):
+            raise AgoraError("invalid_field", f"{field}.{lang} has control characters")
+        text = unicodedata.normalize("NFC", text)
         if len(text) > max_chars:
             raise AgoraError("too_long", f"{field}.{lang} is over {max_chars} characters")
-        if _BAD_CHARS.search(text) or (not multiline and ("\n" in text or "\t" in text)):
-            raise AgoraError("invalid_field", f"{field}.{lang} has control characters")
         out[lang] = text
     return out
 
@@ -138,12 +154,16 @@ class Agora:
         self,
         path: str | Path = ":memory:",
         charter: d2_charter.Charter | None = None,
-        nyms: NymSource | None = None,
+        *,
+        nyms: NymSource,
         now: Callable[[], datetime] = _now,
     ) -> None:
+        """`nyms` is required: there is no default key (see identity.py). `now` must return
+        timezone-aware datetimes."""
         self.charter = charter or d2_charter.load()
-        self.nyms = nyms or OpaqueNyms()
-        self.now = now
+        self.nyms = nyms
+        self._now = now
+        self.now()  # a tz-naive clock fails here, not on the first read
         self.hidden = timedelta(hours=self.charter.param("agora.upvote_hidden_hours"))
         self.priority = {
             t: self.charter.param(f"tiers.{t}.queue_priority") for t in d2_charter.TIERS
@@ -152,6 +172,12 @@ class Agora:
         self._db = sqlite3.connect(str(path), check_same_thread=False, isolation_level=None)
         self._db.execute("PRAGMA foreign_keys = ON")
         self._db.executescript(SCHEMA)
+
+    def now(self) -> datetime:
+        t = self._now()
+        if not isinstance(t, datetime) or t.utcoffset() is None:
+            raise TypeError("Agora's clock must return timezone-aware datetimes (e.g. UTC)")
+        return t
 
     def close(self) -> None:
         self._db.close()
