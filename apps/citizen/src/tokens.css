@@ -67,6 +67,85 @@
   --shadow: 0 1px 0 rgb(27 42 74 / 0.06), 0 8px 24px rgb(27 42 74 / 0.08);
 }
 
+/*
+ * Affichage, behind the look flag (`data-look="affichage"` on <html>, see src/lib/look.ts and
+ * docs/design/README.md). Paper sheets on a wall: paper, ink, amber (yours), navy (official), red
+ * (numbers, dates and alarms). Paper first; the dark mode is the same wall at night. The existing
+ * token names are kept so every component picks the look up unchanged. No drop shadows, no radius.
+ * This block is tokens and type only; sheets, marks and motion follow in their own changes.
+ */
+:root[data-look="affichage"] {
+  color-scheme: light;
+  --bg: #efe8d6;
+  --surface: #f8f3e6;
+  --surface-2: #e4dcc6;
+  --line: #121212;
+  --fg: #121212;
+  --muted: #5d5a52;
+  --accent: #f5a623;
+  --accent-fg: #121212;
+  --accent-ink: #121212;
+  --green: #1f6b45;
+  --green-bg: #e3eedf;
+  --yellow: #6b4a00;
+  --yellow-bg: #fbe3b0;
+  --red: #d8321f;
+  --red-bg: #f9d9d3;
+  --focus: #d8321f;
+  --shadow: none;
+
+  --serif: "Big Shoulders Display", "Archivo Black", Impact, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius: 0;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-look="affichage"]:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121110;
+    --surface: #1c1b18;
+    --surface-2: #26241f;
+    --line: #efe8d6;
+    --fg: #efe8d6;
+    --muted: #a39e90;
+    --accent: #f5a623;
+    --accent-fg: #f5a623;
+    --accent-ink: #121212;
+    --green: #7fd6a4;
+    --green-bg: #16352a;
+    --yellow: #f5a623;
+    --yellow-bg: #3b3415;
+    --red: #ff5a45;
+    --red-bg: #45201c;
+    --focus: #f5a623;
+    --shadow: none;
+  }
+}
+:root[data-look="affichage"][data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121110;
+  --surface: #1c1b18;
+  --surface-2: #26241f;
+  --line: #efe8d6;
+  --fg: #efe8d6;
+  --muted: #a39e90;
+  --accent: #f5a623;
+  --accent-fg: #f5a623;
+  --accent-ink: #121212;
+  --green: #7fd6a4;
+  --green-bg: #16352a;
+  --yellow: #f5a623;
+  --yellow-bg: #3b3415;
+  --red: #ff5a45;
+  --red-bg: #45201c;
+  --focus: #f5a623;
+  --shadow: none;
+}
+/* Type: titles and labels in Big Shoulders Display, heavy and upper case; body stays Public Sans. */
+[data-look="affichage"] .serif { font-weight: 900; text-transform: uppercase; line-height: 0.95; letter-spacing: 0; }
+[data-look="affichage"] .label { font-family: var(--serif); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.02em; color: var(--fg); }
+[data-look="affichage"] .btn { font-family: var(--serif); font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.02em; }
+[data-look="affichage"] a { text-decoration-thickness: 2px; }
+
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; }
 body {

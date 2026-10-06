@@ -26,6 +26,14 @@ uv run d2-provenance serve --docket path/to/lu-chd.json   # the claim checker on
 - `npm run build` produces `dist/`, which the Companion server serves (`STATIC_DIR=apps/citizen/dist`). The browser sends only an item id. The server builds every prompt and holds the API key.
 - `npm run build:single`, then `node scripts/embed.mjs <snapshot.json>`, produces one self-contained HTML file with the snapshot inside. Pass `--fragment` to get the version for a claude.ai artifact. That version runs the Companion core in the page, uses the viewer's own Claude as the model (the `sample` capability), and needs no server or key.
 
+## Looks
+
+The app is moving to the Affichage identity (paper sheets on a public wall; the decision and its pages are in `docs/design/`). It lands behind a per-device flag, in three steps: tokens and type (done), sheets and marks, motion.
+
+- Open the app with `?look=affichage` in the address to turn it on; the device remembers it (`d2.look`). `?look=default` turns it off. The flag is applied before the first paint as `data-look` on `<html>`.
+- `src/tokens.css` keeps one set of token names; the Affichage block remaps them, so components need no change to pick the look up. Paper first, with a dark mode.
+- Titles (`.serif`), labels and buttons switch to Big Shoulders Display; data to JetBrains Mono; body text stays Public Sans.
+
 ## Install and offline
 
 The served build (`dist/`) can be installed to a phone's home screen and opens offline.
