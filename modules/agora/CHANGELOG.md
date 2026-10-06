@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Test (Phase 2 unlinkability, Agora's side): after real Door-backed posts and upvotes, the database and log records hold the nym and no run of any proof, pseudonym point or challenge, and no disclosed path.
 - `DoorNyms`: posts and upvotes take a Door presentation (context `agora:<jurisdiction>`) checked by the Door verifier service (`DOOR_URL`, one accepted epoch `DOOR_EPOCH`); the nym is Door's per-context pseudonym. Requires `adult` true and a disclosed jurisdiction path that starts with the idea's, so nobody files or upvotes outside the areas their credential names. Raw participant ids are refused when Door is configured. Door unreachable or answering nonsense: writes fail closed with `503 door_unavailable`, reads are unaffected.
 - `GET /challenge`: one-time challenges (32 bytes, 120 s, single use) so a presentation cannot be replayed.
 - `403` for refused presentations (`not_adult`, `jurisdiction_not_covered`, and Door's `context_mismatch`, `challenge_mismatch`, `epoch_mismatch`, `missing_disclosure`, `invalid_proof`); `/healthz` reports `identity`.
