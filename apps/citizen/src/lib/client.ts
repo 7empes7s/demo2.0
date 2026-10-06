@@ -16,11 +16,15 @@ import {
   type Depth,
   type DocketItem,
   type Explanation,
+  type FactCheckResult,
   type Lang,
   type Position,
   type Provider,
   type Source,
+  gradeProblems,
 } from "@democracy2/companion";
+
+import { CompanionFailure } from "./errors.ts";
 
 export interface ArgumentSet {
   arguments: Argument[];
@@ -95,5 +99,43 @@ export class LocalClient implements CompanionClient {
   }
   claim(item: DocketItem, lang: Lang, claim: string) {
     return checkClaim(this.provider, item, { lang, claim: claim.slice(0, 500) });
+  }
+}
+
+/** Checks a claim against the official documents (the Provenance service, through the Companion server). */
+export interface FactChecker {
+  check(text: string, item?: DocketItem): Promise<FactCheckResult>;
+}
+
+/**
+ * Calls the Companion server's /api/factcheck. Fails with "unavailable" when the checker is down
+ * or answers anything that is not a valid grade: the app then says so and shows no grade.
+ */
+export class RemoteFactChecker implements FactChecker {
+  private readonly base: string;
+  constructor(base = "") {
+    this.base = base;
+  }
+
+  async check(text: string, item?: DocketItem): Promise<FactCheckResult> {
+    let res: Response;
+    try {
+      res = await fetch(`${this.base}/api/factcheck`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(item ? { text, item_id: item.id } : { text }),
+      });
+    } catch {
+      throw new CompanionFailure("unavailable");
+    }
+    if (res.status === 429) throw new CompanionFailure("busy");
+    if (res.status === 413) throw new CompanionFailure("too_long");
+    if (res.status === 502 || res.status === 503 || res.status === 504) throw new CompanionFailure("unavailable");
+    if (!res.ok) throw new Error(`factcheck: ${res.status}`);
+    const body = (await res.json().catch(() => null)) as FactCheckResult | null;
+    if (body?.result === "no_record") return body;
+    // Checked again here: a grade is shown only when it matches the schema.
+    if (body?.result === "graded" && gradeProblems(body.grade).length === 0) return body;
+    throw new CompanionFailure("unavailable");
   }
 }

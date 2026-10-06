@@ -12,6 +12,8 @@
  *   HOST               interface to listen on (default 127.0.0.1)
  *   TRUST_PROXY        number of reverse proxies in front (default 0); only then is
  *                      X-Forwarded-For used to tell clients apart
+ *   PROVENANCE_URL     the Provenance service that grades claims for /api/factcheck
+ *                      (default http://127.0.0.1:8090, its `serve` default)
  */
 
 import { createHash } from "node:crypto";
@@ -20,6 +22,7 @@ import { readFile, stat } from "node:fs/promises";
 import { basename, extname, join, normalize, resolve, sep } from "node:path";
 
 import { challenge, checkClaim, explain, extractArguments } from "./companion.ts";
+import { CheckerInvalid, CheckerUnavailable, gradeClaim, MAX_CLAIM } from "./factcheck.ts";
 import { AnthropicProvider, type Provider } from "./provider.ts";
 import { readSnapshot } from "./snapshot.ts";
 import { LANGS, type ChatMessage, type Depth, type DocketItem, type DocketSnapshot, type Lang, type Position } from "./types.ts";
@@ -45,7 +48,14 @@ export interface ServerOptions {
   ratePerMinute?: number;
   /** Reverse proxies in front of the server. 0 (default) ignores X-Forwarded-For entirely. */
   trustProxy?: number;
+  /** Base URL of the Provenance service. Without it /api/factcheck answers 503. */
+  provenanceUrl?: string;
+  /** How long to wait for Provenance, in ms (default 8000). */
+  provenanceTimeoutMs?: number;
 }
+
+/** Largest /api/factcheck body: a claim of MAX_CLAIM characters plus an item id fits easily. */
+const FACTCHECK_BODY = 4_096;
 
 /** Most clients tracked by the rate limiter before old entries are dropped. */
 const MAX_CLIENTS = 10_000;
@@ -177,6 +187,31 @@ export function createCompanionServer(opts: ServerOptions) {
     });
   };
 
+  /**
+   * Proxies a claim to Provenance. Needs no model: it works with or without ANTHROPIC_API_KEY.
+   * 200 {result: "graded", grade} | {result: "no_record"}; 503 when Provenance is unreachable;
+   * 502 when it answers something that is not a valid grade. Never a grade it did not give.
+   */
+  async function factcheck(req: IncomingMessage): Promise<unknown> {
+    const body = await readBody(req, FACTCHECK_BODY);
+    const text = typeof body.text === "string" ? body.text.trim() : "";
+    if (!text) throw new HttpError(400, "claim is empty");
+    if ([...text].length > MAX_CLAIM) throw new HttpError(413, `claim is longer than ${MAX_CLAIM} characters`);
+    const context = body.item_id === undefined || body.item_id === null ? undefined : item(body).id;
+    if (!opts.provenanceUrl) throw new HttpError(503, "the claim checker is not configured on this server");
+    throttle(req);
+    try {
+      return await gradeClaim(opts.provenanceUrl, text, context, { timeoutMs: opts.provenanceTimeoutMs });
+    } catch (e) {
+      if (e instanceof CheckerUnavailable) throw new HttpError(503, "the claim checker is unavailable");
+      if (e instanceof CheckerInvalid) {
+        console.error(e.message);
+        throw new HttpError(502, "the claim checker gave an answer that could not be read");
+      }
+      throw e;
+    }
+  }
+
   async function api(path: string, body: Record<string, unknown>, req: IncomingMessage): Promise<unknown> {
     if (!opts.provider) throw new HttpError(503, "the Companion is not configured on this server");
     const provider = opts.provider;
@@ -247,6 +282,7 @@ export function createCompanionServer(opts: ServerOptions) {
       }
       if (url.pathname.startsWith("/api/")) {
         if (req.method !== "POST") throw new HttpError(405, "use POST");
+        if (url.pathname === "/api/factcheck") return send(res, 200, await factcheck(req));
         return send(res, 200, await api(url.pathname, await readBody(req), req));
       }
       await serveStatic(url.pathname, res);
@@ -266,7 +302,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const port = Number(process.env.PORT ?? 8787);
   const trustProxy = Number(process.env.TRUST_PROXY ?? 0) || 0;
   const host = process.env.HOST || "127.0.0.1";
-  createCompanionServer({ provider, snapshot, staticDir: process.env.STATIC_DIR, trustProxy }).listen(port, host, () =>
+  const provenanceUrl = process.env.PROVENANCE_URL || "http://127.0.0.1:8090";
+  createCompanionServer({ provider, snapshot, staticDir: process.env.STATIC_DIR, trustProxy, provenanceUrl }).listen(port, host, () =>
     console.log(`companion listening on ${host}:${port}`),
   );
 }
