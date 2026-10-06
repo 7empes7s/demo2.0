@@ -2,6 +2,13 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-06: Booth independent verifier (Python)
+
+- Done: `modules/booth-verify` (`d2-booth-verify`, Apache-2.0, Python), written from `spec/booth/README.md` and `vectors.json` only (Rust source and tests not read). Pure Python ristretto255 (RFC 9496), Keccak-f[1600], STROBE-128 and Merlin; Ed25519 via PyNaCl. CLI prints the tally or `fail: <code>`; exit 0, 1, 2. Ballot proofs checked on all cores first.
+- Evidence: vectors board gives `[3,1,2]`, guardians 1 and 3; all 29 must-fail boards fail with the recorded code. Rust `d2-booth demo` board: same tally as Rust (`[7,7,6]`). 10,000 voters + 100 re-votes (built by `testgen` from the spec, 20,112 entries, 31.9 MB): Rust `d2-booth verify` exit 0 in 6.0 s; this verifier exit 0 in 102 s on 4 cores; both `[3333,3334,3333]`, equal to the script. CI runs a 24-voter generated board.
+- Found: the Rust CLI cannot write a large board (`demo` is fixed at 20 voters; the 10k test keeps its board in memory), so the 10k board is not Rust-made. Ten spec gaps (check order inside a ballot, order-before-shape, `params` vs `malformed`, unknown kind, Ed25519 key strictness, empty round, tally check order, unstated uniqueness rules, no CLI spec), listed in the module README; all resolved by reading, all vectors agree.
+- Next: `d2-booth demo --voters N` (or an export from the 10k test) so a Rust-made 10k board can be checked; tighten the spec on the gaps.
+
 ## 2026-10-06: Booth v1 protocol core (non-binding, unaudited)
 
 - Review fixes (PR #31): ballot replay closed. A copy of a voter's coerced ballot appended after its re-vote used to verify and be counted; ballots now carry a signed `ballot_seq` (bound into the bit and sum proof transcripts) that must strictly increase per pseudonym, and exact copies of an accepted ballot are refused (`ballot_replay`). Canonical JSON refuses null, booleans and negative integers; `d2-booth verify` refuses duplicate JSON keys. Vectors regenerated (29 must-fail cases, new `copy` mutation). Lesson: `lessons/2026-10-06-booth-ballot-replay.md`. Merged origin/main.
