@@ -90,6 +90,16 @@ describe("buildQuiz", () => {
     expect(groundingProblems(quiz, changed)).toEqual([]);
   });
 
+  it("keeps only the first of two seed questions with the same id", () => {
+    const seed = structuredClone(SEED);
+    const [q] = seed.items["lu.esch.42063"];
+    seed.items["lu.esch.42063"] = [q, structuredClone(q)];
+    const quiz = buildQuiz(get("lu.esch.42063"), ITEMS, seed)!;
+    const ids = quiz.questions.map((x) => x.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(quizProblems(quiz)).toEqual([]);
+  });
+
   it("drops a malformed seed question", () => {
     const seed = structuredClone(SEED);
     seed.items["lu.esch.42052"][0].answer = "z";

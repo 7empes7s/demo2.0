@@ -110,7 +110,7 @@
           <li><span>{party === "null" || !party ? "—" : party}</span><span class="muted">{tally(counts)}</span></li>
         {/each}
       </ul>
-      {#if votes.members.length}
+      {#if votes.members?.length}
         <details>
           <summary>{t("votes_members")}</summary>
           <ul class="parties">

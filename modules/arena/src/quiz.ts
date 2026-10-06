@@ -28,8 +28,12 @@ export function usable(item: SourceItem, q: Question): boolean {
  * Null when fewer than 3 questions remain: no quiz is better than a thin one.
  */
 export function buildQuiz(item: SourceItem, all: SourceItem[], seed: SeedSet = SEED): Quiz | null {
-  const seeded = (Object.hasOwn(seed.items, item.id) ? seed.items[item.id] : []).filter((q) => usable(item, q));
-  const taken = new Set(seeded.map((q) => q.id));
+  const taken = new Set<string>();
+  const seeded = (Object.hasOwn(seed.items, item.id) ? seed.items[item.id] : []).filter((q) => {
+    if (taken.has(q.id) || !usable(item, q)) return false; // the first of two same-id seeds wins
+    taken.add(q.id);
+    return true;
+  });
   const ruled = ruleQuestions(item, all).filter((q) => !taken.has(q.id) && usable(item, q));
   const questions = [...seeded, ...ruled].slice(0, MAX_QUESTIONS);
   if (questions.length < MIN_QUESTIONS) return null;
