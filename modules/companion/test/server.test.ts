@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { ModelError, type Provider } from "../src/provider.ts";
 import { createCompanionServer } from "../src/server.ts";
 import { ESCH_CONSULTATION, ESCH_POINT, FakeProvider, ITEM } from "./fixtures.ts";
 
@@ -29,7 +30,7 @@ const explainAnswer = JSON.stringify({
 describe("companion server", () => {
   it("reports health and serves the snapshot without a model", async () => {
     const { base, post } = await start();
-    expect(await (await fetch(base + "/healthz")).json()).toEqual({ ok: true, items: 1, companion: false, provenance: false, agora: false });
+    expect(await (await fetch(base + "/healthz")).json()).toEqual({ ok: true, items: 1, companion: false, model: null, provenance: false, agora: false });
     expect((await (await fetch(base + "/data/snapshot.json")).json()).items[0].id).toBe(ITEM.id);
     expect((await post("/api/explain", { item_id: ITEM.id })).status).toBe(503);
   });
@@ -71,10 +72,42 @@ describe("companion server", () => {
     expect(codes).toEqual([200, 200, 429]);
   });
 
+  it("reports the model's kind and name in /healthz, never a key", async () => {
+    const { base } = await start({ provider: new FakeProvider([]) });
+    const health = await (await fetch(base + "/healthz")).json();
+    expect(health.companion).toBe(true);
+    expect(health.model).toEqual({ kind: "fake", name: "fake-1" });
+  });
+
+  it("answers 502 when the model refuses or writes prose instead of JSON", async () => {
+    const provider = new FakeProvider(["I'm sorry, I can't help with that.", "Sure! Here is the explanation you asked for, in plain prose."]);
+    const { post } = await start({ provider });
+    const refused = await post("/api/claim", { item_id: ITEM.id, claim: "x" });
+    expect(refused.status).toBe(502);
+    expect(await refused.json()).toEqual({ error: "the model gave an answer that could not be read" });
+    const prose = await post("/api/explain", { item_id: ITEM.id });
+    expect(prose.status).toBe(502);
+    expect(provider.requests).toHaveLength(2);
+  });
+
+  it("answers 502 when the model cannot be reached", async () => {
+    const provider: Provider = {
+      model: "down-1",
+      kind: "openai",
+      complete: async () => {
+        throw new ModelError("model call failed: 503 overloaded", 503);
+      },
+    };
+    const { post } = await start({ provider });
+    const res = await post("/api/claim", { item_id: ITEM.id, claim: "x" });
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ error: "the model did not answer" });
+  });
+
   it("does not retry a failed argument extraction in a loop", async () => {
     const provider = new FakeProvider(["not json"]);
     const { post } = await start({ provider });
-    expect((await post("/api/arguments", { item_id: ITEM.id })).status).toBe(500);
+    expect((await post("/api/arguments", { item_id: ITEM.id })).status).toBe(502);
     expect((await post("/api/arguments", { item_id: ITEM.id })).status).toBe(503);
     expect(provider.requests).toHaveLength(1);
   });
@@ -89,7 +122,7 @@ describe("companion server", () => {
       errors: [],
     };
     const two = await start({ snapshot: v2 });
-    expect(await (await fetch(two.base + "/healthz")).json()).toEqual({ ok: true, items: 3, companion: false, provenance: false, agora: false });
+    expect(await (await fetch(two.base + "/healthz")).json()).toEqual({ ok: true, items: 3, companion: false, model: null, provenance: false, agora: false });
     expect((await (await fetch(two.base + "/data/snapshot.json")).json()).items[1].votes.counts).toEqual({ Oui: 11, Non: 8 });
 
     const one = await start({ snapshot: { ...snapshot, source: { name: "Chambre des Députés" } } as typeof snapshot });

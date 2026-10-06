@@ -179,12 +179,57 @@ export function verifySentence(
   return { text: raw.text.trim(), sources: cited, quote, verified: cited.length > 0 && quoteIsIn(quote, cited, sources) };
 }
 
-/** Parse the first JSON object in a model answer (models sometimes wrap it in prose or fences). */
+/** The model's answer held no JSON object the Companion could read. The server turns it into a 502. */
+export class ModelAnswerError extends Error {}
+
+/** Every `{...}` in the text whose braces balance outside of strings, earliest start first. */
+function* objectCandidates(text: string): Generator<string> {
+  const starts: number[] = [];
+  for (let i = 0; i < text.length; i++) if (text[i] === "{") starts.push(i);
+  for (const start of starts) {
+    let depth = 0;
+    let inString = false;
+    for (let i = start; i < text.length; i++) {
+      const c = text[i];
+      if (inString) {
+        if (c === "\\") i++;
+        else if (c === '"') inString = false;
+      } else if (c === '"') inString = true;
+      else if (c === "{") depth++;
+      else if (c === "}" && --depth === 0) {
+        yield text.slice(start, i + 1);
+        break;
+      }
+    }
+  }
+}
+
+/**
+ * Reads the JSON object out of a model answer. Models wrap JSON in prose, in ``` fences or in
+ * <think> blocks, so this takes the fenced block when there is one and otherwise the first
+ * balanced `{...}` that parses to an object. Anything else (a refusal, a list, plain text) is a
+ * ModelAnswerError, never a crash further down.
+ */
 export function parseJson<T>(answer: string): T {
-  const fenced = answer.match(/```(?:json)?\s*([\s\S]*?)```/);
-  const body = fenced ? fenced[1] : answer;
-  const start = body.indexOf("{");
-  const end = body.lastIndexOf("}");
-  if (start < 0 || end <= start) throw new Error("the model did not return JSON");
-  return JSON.parse(body.slice(start, end + 1)) as T;
+  const text = String(answer ?? "").replace(/<think>[\s\S]*?<\/think>/gi, "");
+  const fenced = [...text.matchAll(/```(?:json)?\s*([\s\S]*?)```/gi)].map((m) => m[1]);
+  for (const body of [...fenced, text]) {
+    // A whole answer that is JSON but not an object (a list, a bare value) is refused, not mined.
+    try {
+      const whole: unknown = JSON.parse(body.trim());
+      if (whole && typeof whole === "object" && !Array.isArray(whole)) return whole as T;
+      throw new ModelAnswerError("the model returned JSON that is not an object");
+    } catch (e) {
+      if (e instanceof ModelAnswerError) throw e;
+    }
+    for (const candidate of objectCandidates(body)) {
+      try {
+        const value: unknown = JSON.parse(candidate);
+        if (value && typeof value === "object" && !Array.isArray(value)) return value as T;
+      } catch {
+        // not this one; try the next balanced object
+      }
+    }
+  }
+  throw new ModelAnswerError("the model did not return JSON");
 }

@@ -4,8 +4,14 @@
  * server builds the prompt. What a resident types (a claim, the conversation so far) reaches
  * the model only as quoted, size-capped data, and every model-backed route is rate limited.
  *
- *   ANTHROPIC_API_KEY  required for the API routes
- *   COMPANION_MODEL    default claude-sonnet-5-5
+ *   LLM_PROVIDER       openai | anthropic (default: openai when LLM_BASE_URL is set, anthropic
+ *                      when only ANTHROPIC_API_KEY is set, none otherwise: the model routes then 503)
+ *   LLM_BASE_URL       OpenAI-compatible base URL, such as http://127.0.0.1:11434/v1 (Ollama)
+ *   LLM_API_KEY        Bearer token for that URL (optional: local servers need none)
+ *   LLM_MODEL          model name (required with openai)
+ *   LLM_TIMEOUT_MS     one model attempt's wait (default 120000)
+ *   ANTHROPIC_API_KEY  the Anthropic path, kept for the bridge period
+ *   COMPANION_MODEL    older name for the Anthropic model; LLM_MODEL wins
  *   SNAPSHOT           path to the Docket snapshot JSON (default data/lu-chd.json)
  *   COMMONS_URL        Commons API base URL (optional); the devil's advocate draws from it first
  *   STATIC_DIR         built app to serve (optional)
@@ -30,9 +36,9 @@ import { challenge, checkClaim, explain, extractArguments } from "./companion.ts
 import { CheckerInvalid, CheckerUnavailable, gradeClaim, MAX_CLAIM } from "./factcheck.ts";
 import { AgoraInvalid, AgoraUnavailable, DEFAULT_IDEAS, type IdeasPage, JURISDICTION, MAX_IDEAS, MAX_JURISDICTIONS, readQueue } from "./ideas.ts";
 import { MAX_SMALL_BYTES, readJson, UPSTREAM } from "./upstream.ts";
-import { AnthropicProvider, type Provider } from "./provider.ts";
+import { ModelError, type Provider, providerFromEnv } from "./provider.ts";
 import { readSnapshot } from "./snapshot.ts";
-import { buildSources } from "./sources.ts";
+import { buildSources, ModelAnswerError } from "./sources.ts";
 import { LANGS, type ChatMessage, type Depth, type DocketItem, type DocketSnapshot, type Lang, type Position } from "./types.ts";
 
 const MIME: Record<string, string> = {
@@ -227,7 +233,7 @@ export function createCompanionServer(opts: ServerOptions) {
   };
 
   /**
-   * Proxies a claim to Provenance. Needs no model: it works with or without ANTHROPIC_API_KEY.
+   * Proxies a claim to Provenance. Needs no model: it works with or without one configured.
    * 200 {result: "graded", grade} | {result: "no_record"}; 503 when Provenance is unreachable;
    * 502 when it answers something that is not a valid grade. Never a grade it did not give.
    */
@@ -411,7 +417,8 @@ export function createCompanionServer(opts: ServerOptions) {
     try {
       if (url.pathname === "/healthz") {
         const [provenance, agora] = await Promise.all([provenanceUp(), agoraUp()]);
-        return send(res, 200, { ok: true, items: items.size, companion: !!opts.provider, provenance, agora });
+        const model = opts.provider ? { kind: opts.provider.kind ?? "unknown", name: opts.provider.model } : null;
+        return send(res, 200, { ok: true, items: items.size, companion: !!opts.provider, model, provenance, agora });
       }
       if (url.pathname === "/data/snapshot.json") {
         if (req.headers["if-none-match"] === snapshotTag) {
@@ -435,6 +442,11 @@ export function createCompanionServer(opts: ServerOptions) {
       }
       await serveStatic(url.pathname, res);
     } catch (e) {
+      if (e instanceof ModelAnswerError || e instanceof ModelError) {
+        // The model's fault, not ours: a refusal, prose instead of JSON, a timeout or an upstream error.
+        console.error(`model: ${e.message}`);
+        return send(res, 502, { error: e instanceof ModelError ? "the model did not answer" : "the model gave an answer that could not be read" });
+      }
       const status = e instanceof HttpError ? e.status : 500;
       if (status === 500) console.error(e);
       send(res, status, { error: e instanceof HttpError ? e.message : "something went wrong" }, e instanceof HttpError ? e.headers : {});
@@ -444,9 +456,10 @@ export function createCompanionServer(opts: ServerOptions) {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const snapshot = readSnapshot(JSON.parse(await readFile(process.env.SNAPSHOT ?? "data/lu-chd.json", "utf8")));
-  const key = process.env.ANTHROPIC_API_KEY;
-  const provider = key ? new AnthropicProvider(key, process.env.COMPANION_MODEL || undefined) : null;
-  if (!provider) console.warn("ANTHROPIC_API_KEY is not set: serving the app and data, Companion routes return 503");
+  const chosen = providerFromEnv(process.env);
+  const provider = chosen?.provider ?? null;
+  if (chosen) console.log(`companion model: ${chosen.provider.kind} ${chosen.provider.model} at ${chosen.endpoint}`);
+  else console.warn("no model configured (LLM_BASE_URL or ANTHROPIC_API_KEY): serving the app and data, Companion routes return 503");
   const port = Number(process.env.PORT ?? 8787);
   const trustProxy = Number(process.env.TRUST_PROXY ?? 0) || 0;
   const host = process.env.HOST || "127.0.0.1";

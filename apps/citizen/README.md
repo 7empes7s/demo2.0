@@ -17,7 +17,7 @@ The app never tells anyone how to vote. See `VOCABULARY.md` for the words it use
 ```sh
 npm install                      # from the repo root
 npm run dev -w @democracy2/citizen   # Vite on :5173, proxies /api and /data to :8787
-SNAPSHOT=path/to/lu-chd.json ANTHROPIC_API_KEY=… npm run serve -w @democracy2/companion
+SNAPSHOT=path/to/lu-chd.json LLM_BASE_URL=http://127.0.0.1:11434/v1 LLM_MODEL=qwen3:8b npm run serve -w @democracy2/companion
 uv run d2-provenance serve --docket path/to/lu-chd.json   # the claim checker on :8090 (optional)
 ```
 

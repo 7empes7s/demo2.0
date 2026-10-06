@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { challenge, checkClaim, explain, extractArguments } from "../src/companion.ts";
-import { buildSources, normalise, parseJson, quoteIsIn, renderSources } from "../src/sources.ts";
+import { buildSources, ModelAnswerError, normalise, parseJson, quoteIsIn, renderSources } from "../src/sources.ts";
 import { argumentsSystem, explainSystem, fileKind } from "../src/prompts.ts";
 import { ESCH_CONSULTATION, ESCH_POINT, FakeProvider, ITEM } from "./fixtures.ts";
 
@@ -52,7 +52,22 @@ describe("sources", () => {
   it("parses JSON wrapped in prose or fences", () => {
     expect(parseJson<{ a: number }>('Sure! ```json\n{"a": 1}\n```')).toEqual({ a: 1 });
     expect(parseJson<{ a: number }>('Here: {"a": 2} done')).toEqual({ a: 2 });
-    expect(() => parseJson("no json here")).toThrow();
+    expect(() => parseJson("no json here")).toThrow(ModelAnswerError);
+  });
+
+  it("reads JSON from smaller-model habits: think blocks, braces in prose, fences without a tag, nested fences", () => {
+    expect(parseJson<{ a: number }>('<think>\nthe user wants {"a": 0}? no\n</think>\n{"a": 1}')).toEqual({ a: 1 });
+    expect(parseJson<{ a: number }>('Note {not json} first.\n{"a": 2, "s": "with } brace \\" quote"}')).toEqual({ a: 2, s: 'with } brace " quote' });
+    expect(parseJson<{ a: number }>("```\n{\"a\": 3}\n```")).toEqual({ a: 3 });
+    expect(parseJson<{ a: string }>("```json\n{\"a\": \"```\"}\n```\nThen more {\"b\": 1}")).toEqual({ a: "```" });
+  });
+
+  it("refuses answers that are not a JSON object: refusals, lists, bare values", () => {
+    expect(() => parseJson("I'm sorry, I can't help with that request.")).toThrow(ModelAnswerError);
+    expect(() => parseJson('[{"a": 1}]')).toThrow(ModelAnswerError);
+    expect(() => parseJson("null")).toThrow(ModelAnswerError);
+    expect(() => parseJson("{ unbalanced")).toThrow(ModelAnswerError);
+    expect(() => parseJson("")).toThrow(ModelAnswerError);
   });
 });
 
@@ -83,7 +98,7 @@ describe("explain", () => {
     expect(ghost.sources).toEqual([]);
     expect(link.verified).toBe(false);
     expect(out.verified_share).toBeCloseTo(1 / 2);
-    expect(out.provenance).toMatchObject({ model: "fake-1", item_id: ITEM.id, prompt_version: "companion-prompts/3" });
+    expect(out.provenance).toMatchObject({ model: "fake-1", item_id: ITEM.id, prompt_version: "companion-prompts/4" });
     expect(provider.requests[0].system).toContain("in English");
     expect(provider.requests[0].system).toContain("never recommend how to vote");
   });
