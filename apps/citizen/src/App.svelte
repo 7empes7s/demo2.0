@@ -2,15 +2,20 @@
   import { LANGS, type DocketItem, type DocketSnapshot, type Lang } from "@democracy2/companion";
   import { onMount, tick } from "svelte";
 
+  import DeskIdeas from "./components/DeskIdeas.svelte";
+  import Feedback from "./components/Feedback.svelte";
   import FileList from "./components/FileList.svelte";
   import FactCheck from "./components/FactCheck.svelte";
   import FileView from "./components/FileView.svelte";
   import Ideas from "./components/Ideas.svelte";
+  import Procedures from "./components/Procedures.svelte";
+  import Votes from "./components/Votes.svelte";
   import Week from "./components/Week.svelte";
   import { LocalClient, RemoteClient, RemoteFactChecker, RemoteIdeas, type CompanionClient, type FactChecker, type IdeasReader } from "./lib/client.ts";
   import { weekAt } from "@democracy2/pulse";
 
   import { loadSnapshot, luxembourgToday, placeOf, routeOf, sitesOf } from "./lib/data.ts";
+  import { RemoteDesk, type About, type DeskClient } from "./lib/desk.ts";
   import { LANG_LABELS } from "./lib/i18n.ts";
   import { peel } from "./lib/look.ts";
   import { prefs } from "./lib/prefs.ts";
@@ -25,6 +30,10 @@
   let checker = $state<FactChecker | null>(null);
   /** The ideas list (Agora, read only), on the served app only, like the claim checker. */
   let ideasReader = $state<IdeasReader | null>(null);
+  /** The commune's desk (procedures, ideas, feedback, votes), when the served app's healthz says it is up. */
+  let desk = $state<DeskClient | null>(null);
+  /** What a feedback message is about, when the form was opened from a procedure or an idea. */
+  let feedbackAbout = $state<{ about: About; title: string } | null>(null);
   let route = $state(readRoute());
   let theme = $state<"light" | "dark" | null>(prefs.theme());
   let online = $state(navigator.onLine);
@@ -34,6 +43,9 @@
   const week = weekAt(now);
   const CHECK_ROUTE = "check";
   const IDEAS_ROUTE = "ideas";
+  const PROCEDURES_ROUTE = "procedures";
+  const FEEDBACK_ROUTE = "feedback";
+  const VOTES_ROUTE = "votes";
   /** `#files`: the full list on a phone. With no route the app opens on this week's list. */
   const FILES_ROUTE = "files";
   /** Where a file's back button leads: the full list, or this week's list when opened from there. */
@@ -45,11 +57,19 @@
 
   /** `#check`: the claim checker on its own page. */
   const checking = $derived(route === CHECK_ROUTE && !!checker && !selected);
-  /** `#ideas`: the ideas residents posted, read only. */
-  const readingIdeas = $derived(route === IDEAS_ROUTE && !!ideasReader && !selected);
+  /** `#ideas`: the ideas residents posted, on the commune's desk when it is up, else Agora's read-only list. */
+  const readingIdeas = $derived(route === IDEAS_ROUTE && (!!desk || !!ideasReader) && !selected);
+  /** The desk's own pages: `#procedures`, `#feedback`, `#votes`. */
+  const deskPage = $derived(desk && !selected && (route === PROCEDURES_ROUTE || route === FEEDBACK_ROUTE || route === VOTES_ROUTE) ? route : null);
 
   /** The full list on its own (phones). On a wide screen it is always beside the other views. */
   const listing = $derived(route === FILES_ROUTE && !selected);
+
+  /** From a procedure or an idea to the feedback form, with the message's subject filled in. */
+  function sendFeedbackAbout(about: About, title: string) {
+    feedbackAbout = { about, title };
+    open(FEEDBACK_ROUTE);
+  }
 
   /** Once Esch files are in the snapshot, the headings name both bodies. */
   const both = $derived(!!snapshot?.items.some((i) => placeOf(i) === "esch"));
@@ -123,8 +143,9 @@
       checker = new RemoteFactChecker();
       ideasReader = new RemoteIdeas();
       try {
-        const health = (await (await fetch("healthz")).json()) as { companion?: boolean };
+        const health = (await (await fetch("healthz")).json()) as { companion?: boolean; desk?: boolean };
         client = health.companion ? new RemoteClient() : null;
+        desk = health.desk === true ? new RemoteDesk() : null;
       } catch {
         client = null;
       }
@@ -175,12 +196,19 @@
           <h1 class="serif" id="list-title" tabindex="-1">{t(both ? "agenda_title_both" : "agenda_title")}</h1>
           <p class="muted">{t(both ? "tagline_both" : "tagline")}</p>
           <div class="page-links">
-            <button class="btn check-open" aria-current={!selected && !checking && !readingIdeas && !listing ? "page" : undefined} onclick={() => open(null)}>{t("week_open")}</button>
+            <button class="btn check-open" aria-current={!selected && !checking && !readingIdeas && !deskPage && !listing ? "page" : undefined} onclick={() => open(null)}>{t("week_open")}</button>
             {#if checker}
               <button class="btn check-open" aria-current={checking ? "page" : undefined} onclick={() => open(CHECK_ROUTE)}>{t("check_open")}</button>
             {/if}
-            {#if ideasReader}
+            {#if desk}
+              <button class="btn check-open" aria-current={deskPage === PROCEDURES_ROUTE ? "page" : undefined} onclick={() => open(PROCEDURES_ROUTE)}>{t("procedures_open")}</button>
+            {/if}
+            {#if ideasReader || desk}
               <button class="btn check-open" aria-current={readingIdeas ? "page" : undefined} onclick={() => open(IDEAS_ROUTE)}>{t("ideas_open")}</button>
+            {/if}
+            {#if desk}
+              <button class="btn check-open" aria-current={deskPage === VOTES_ROUTE ? "page" : undefined} onclick={() => open(VOTES_ROUTE)}>{t("votes_open")}</button>
+              <button class="btn check-open" aria-current={deskPage === FEEDBACK_ROUTE ? "page" : undefined} onclick={() => { feedbackAbout = null; open(FEEDBACK_ROUTE); }}>{t("feedback_open")}</button>
             {/if}
           </div>
         </div>
@@ -205,11 +233,29 @@
             <FactCheck {checker} standalone />
             <p class="muted small">{t("never_recommend")}</p>
           </article>
+        {:else if readingIdeas && desk}
+          <article class="check-page">
+            <button class="back" onclick={() => open(FILES_ROUTE)}>← {t("back")}</button>
+            <h2 class="serif" id="file-title" tabindex="-1">{t("ideas_open")}</h2>
+            <DeskIdeas client={desk} onfeedback={sendFeedbackAbout} />
+          </article>
         {:else if readingIdeas && ideasReader}
           <article class="check-page">
             <button class="back" onclick={() => open(FILES_ROUTE)}>← {t("back")}</button>
             <h2 class="serif" id="file-title" tabindex="-1">{t("ideas_open")}</h2>
             <Ideas reader={ideasReader} />
+          </article>
+        {:else if deskPage && desk}
+          <article class="check-page">
+            <button class="back" onclick={() => open(FILES_ROUTE)}>← {t("back")}</button>
+            <h2 class="serif" id="file-title" tabindex="-1">{t(deskPage === PROCEDURES_ROUTE ? "procedures_open" : deskPage === VOTES_ROUTE ? "votes_open" : "feedback_open")}</h2>
+            {#if deskPage === PROCEDURES_ROUTE}
+              <Procedures client={desk} onfeedback={sendFeedbackAbout} />
+            {:else if deskPage === VOTES_ROUTE}
+              <Votes client={desk} />
+            {:else}
+              <Feedback client={desk} about={feedbackAbout} onclearabout={() => (feedbackAbout = null)} />
+            {/if}
           </article>
         {:else}
           <Week items={snapshot.items} {week} onopen={openFile(null)} onall={() => open(FILES_ROUTE)} />

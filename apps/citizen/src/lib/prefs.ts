@@ -27,4 +27,7 @@ export const prefs = {
   /** A resident's stance stays on their device and is never sent anywhere on its own. */
   stance: (itemId: string) => read(`d2.stance.${itemId}`) as Position | null,
   setStance: (itemId: string, stance: Position | null) => write(`d2.stance.${itemId}`, stance),
+  /** The token the commune's desk gave for an enrolment code. It names no one and goes only to the desk. */
+  deskToken: () => read("d2.desk.token"),
+  setDeskToken: (token: string | null) => write("d2.desk.token", token),
 };
