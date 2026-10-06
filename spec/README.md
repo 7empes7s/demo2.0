@@ -8,6 +8,7 @@ The contracts modules share. Nothing else is shared.
 | `examples/<name>/` | One or more valid examples per schema, and invalid ones named `invalid-*.json` |
 | `record-types.json` | The entry types Record accepts |
 | `record/` | Record's log format (entries, tree, checkpoints, proofs) and the test vectors every implementation must pass |
+| `lottery/` | Lottery's draw format (pool root, commitment, drand beacon check, draw algorithm), recorded drand beacons and draw vectors |
 | `openapi/` | API contracts (when they land) |
 | `tests/` | Checks every schema and example; run by `tools/check.sh` |
 
