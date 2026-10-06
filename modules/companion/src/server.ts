@@ -4,8 +4,12 @@
  * server builds the prompt. What a resident types (a claim, the conversation so far) reaches
  * the model only as quoted, size-capped data, and every model-backed route is rate limited.
  *
- *   ANTHROPIC_API_KEY  required for the API routes
- *   COMPANION_MODEL    default claude-sonnet-5-5
+ *   AI_BASE_URL        any OpenAI-compatible chat endpoint, up to /v1 (Ollama, vLLM, llama.cpp,
+ *                      Groq, OpenRouter, …); with AI_MODEL (required) and AI_API_KEY (if the
+ *                      endpoint wants one), AI_HEADERS ("Name: value; …"), AI_TIMEOUT_MS
+ *   ANTHROPIC_API_KEY  used only when AI_BASE_URL is not set (COMPANION_MODEL names the model)
+ *   AI_LOG             file that gets one JSON line per model call (sizes, hashes, timing; never
+ *                      resident text), for the audit view. Optional.
  *   SNAPSHOT           path to the Docket snapshot JSON (default data/lu-chd.json)
  *   COMMONS_URL        Commons API base URL (optional); the devil's advocate draws from it first
  *   STATIC_DIR         built app to serve (optional)
@@ -30,7 +34,7 @@ import { challenge, checkClaim, explain, extractArguments } from "./companion.ts
 import { CheckerInvalid, CheckerUnavailable, gradeClaim, MAX_CLAIM } from "./factcheck.ts";
 import { AgoraInvalid, AgoraUnavailable, DEFAULT_IDEAS, type IdeasPage, JURISDICTION, MAX_IDEAS, MAX_JURISDICTIONS, readQueue } from "./ideas.ts";
 import { MAX_SMALL_BYTES, readJson, UPSTREAM } from "./upstream.ts";
-import { AnthropicProvider, type Provider } from "./provider.ts";
+import { LoggingProvider, type Provider, type ProviderInfo, providerFromEnv } from "./provider.ts";
 import { readSnapshot } from "./snapshot.ts";
 import { buildSources } from "./sources.ts";
 import { LANGS, type ChatMessage, type Depth, type DocketItem, type DocketSnapshot, type Lang, type Position } from "./types.ts";
@@ -50,6 +54,8 @@ const REVALIDATE = new Set(["sw.js", "manifest.webmanifest"]);
 
 export interface ServerOptions {
   provider: Provider | null;
+  /** What /healthz says about the model (kind and name only). Default: derived from `provider`. */
+  providerInfo?: ProviderInfo;
   snapshot: DocketSnapshot;
   /** Where the devil's advocate finds real arguments first. Without it, only the file's documents are used. */
   commons?: CommonsClient | null;
@@ -227,7 +233,7 @@ export function createCompanionServer(opts: ServerOptions) {
   };
 
   /**
-   * Proxies a claim to Provenance. Needs no model: it works with or without ANTHROPIC_API_KEY.
+   * Proxies a claim to Provenance. Needs no model: it works whether or not a model is configured.
    * 200 {result: "graded", grade} | {result: "no_record"}; 503 when Provenance is unreachable;
    * 502 when it answers something that is not a valid grade. Never a grade it did not give.
    */
@@ -411,7 +417,8 @@ export function createCompanionServer(opts: ServerOptions) {
     try {
       if (url.pathname === "/healthz") {
         const [provenance, agora] = await Promise.all([provenanceUp(), agoraUp()]);
-        return send(res, 200, { ok: true, items: items.size, companion: !!opts.provider, provenance, agora });
+        const ai = opts.providerInfo ?? { kind: opts.provider ? "openai-compatible" : "none", model: opts.provider?.model ?? null };
+        return send(res, 200, { ok: true, items: items.size, companion: !!opts.provider, ai, provenance, agora });
       }
       if (url.pathname === "/data/snapshot.json") {
         if (req.headers["if-none-match"] === snapshotTag) {
@@ -444,16 +451,17 @@ export function createCompanionServer(opts: ServerOptions) {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const snapshot = readSnapshot(JSON.parse(await readFile(process.env.SNAPSHOT ?? "data/lu-chd.json", "utf8")));
-  const key = process.env.ANTHROPIC_API_KEY;
-  const provider = key ? new AnthropicProvider(key, process.env.COMPANION_MODEL || undefined) : null;
-  if (!provider) console.warn("ANTHROPIC_API_KEY is not set: serving the app and data, Companion routes return 503");
+  const picked = providerFromEnv();
+  const provider = picked.provider ? new LoggingProvider(picked.provider, { file: process.env.AI_LOG || undefined }) : null;
+  if (!provider) console.warn("no model configured (set AI_BASE_URL and AI_MODEL): serving the app and data, Companion routes return 503");
+  else console.log(`model: ${picked.info.kind} ${picked.info.model}`);
   const port = Number(process.env.PORT ?? 8787);
   const trustProxy = Number(process.env.TRUST_PROXY ?? 0) || 0;
   const host = process.env.HOST || "127.0.0.1";
   const commons = process.env.COMMONS_URL ? new HttpCommons(process.env.COMMONS_URL) : null;
   const provenanceUrl = process.env.PROVENANCE_URL || "http://127.0.0.1:8090";
   const agoraUrl = process.env.AGORA_URL || "http://127.0.0.1:8091";
-  createCompanionServer({ provider, snapshot, commons, staticDir: process.env.STATIC_DIR, trustProxy, provenanceUrl, agoraUrl }).listen(port, host, () =>
+  createCompanionServer({ provider, providerInfo: picked.info, snapshot, commons, staticDir: process.env.STATIC_DIR, trustProxy, provenanceUrl, agoraUrl }).listen(port, host, () =>
     console.log(`companion listening on ${host}:${port}`),
   );
 }

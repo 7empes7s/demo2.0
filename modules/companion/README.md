@@ -14,8 +14,21 @@ Prompts are versioned (`PROMPT_VERSION`) and every answer records the prompt ver
 ## Server
 
 ```
-SNAPSHOT=data/lu-chd.json ANTHROPIC_API_KEY=... STATIC_DIR=apps/citizen/dist npm run serve -w @democracy2/companion
+SNAPSHOT=data/lu-chd.json AI_BASE_URL=http://127.0.0.1:11434/v1 AI_MODEL=qwen2.5:7b-instruct STATIC_DIR=apps/citizen/dist npm run serve -w @democracy2/companion
 ```
+
+### The model
+
+The Companion talks to a model through one interface (`Provider`, `src/provider.ts`) and ships two implementations, neither a vendor SDK:
+
+| Provider | Selected by | Talks to |
+|---|---|---|
+| `OpenAICompatibleProvider` (default) | `AI_BASE_URL` + `AI_MODEL`, optional `AI_API_KEY`, `AI_HEADERS`, `AI_TIMEOUT_MS` | `POST {AI_BASE_URL}/chat/completions`: Ollama, vLLM, llama.cpp, LM Studio, Groq, OpenRouter, Mistral, Together, and the hosted vendors' compatible endpoints. Local servers need no key. |
+| `AnthropicProvider` | `ANTHROPIC_API_KEY` (+ `COMPANION_MODEL`), only when `AI_BASE_URL` is empty | Anthropic's Messages API |
+
+`providerFromEnv()` makes the choice; `/healthz` reports `ai: {kind, model}` (never the address or the key). `LoggingProvider` wraps whichever is chosen and keeps a record of every call: purpose (`explain`, `arguments`, `challenge`, `claim`), model, SHA-256 of the system prompt, sizes, timing and outcome, the last 500 in memory and one JSON line per call appended to `AI_LOG` when set. No resident text and no answer text is ever recorded. The provider's `listModels()` reads the endpoint's `/models`, for an operator checking a new endpoint.
+
+The same `Provider` interface is what the in-page demo implements with the viewer's own model, so the Companion core (prompts, quote checks, grading rules) never knows which model it runs on.
 
 Set `COMMONS_URL` to a Commons API (`d2-commons serve`) to draw the other side from it. One process serves the app, `/data/snapshot.json`, `/healthz` and `POST /api/{explain,arguments,challenge,claim}`. The browser names an item; the server builds the prompt, so the key can't be used as a general model proxy. Model calls are rate limited per client and explanations are cached.
 

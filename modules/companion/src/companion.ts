@@ -49,6 +49,7 @@ export async function explain(
 ): Promise<Explanation> {
   const sources = buildSources(item, opts.lang);
   const answer = await provider.complete({
+    purpose: "explain",
     system: explainSystem(opts.lang, opts.depth, item),
     messages: [sourceMessage(sources, "Explain this file.")],
     maxTokens: opts.depth === "deep" ? 4000 : 2500,
@@ -98,6 +99,7 @@ export async function extractArguments(
 ): Promise<{ arguments: Argument[]; sources: Source[]; dropped: number; provenance: Provenance }> {
   const sources = buildSources(item, "fr");
   const answer = await provider.complete({
+    purpose: "arguments",
     system: argumentsSystem(item),
     messages: [sourceMessage(sources, "List the arguments.")],
     maxTokens: 3000,
@@ -216,6 +218,7 @@ export async function challenge(
     ),
   ];
   const answer = await provider.complete({
+    purpose: "challenge",
     system: challengeSystem(opts.lang, opts.position, list, enough),
     messages,
     maxTokens: 1200,
@@ -289,6 +292,7 @@ export async function checkClaim(
 ): Promise<ClaimCheck> {
   const sources = buildSources(item, opts.lang);
   const answer = await provider.complete({
+    purpose: "claim",
     system: claimSystem(opts.lang),
     messages: [sourceMessage(sources, `Claim to check: <claim>${fence(opts.claim)}</claim>`)],
     maxTokens: 1200,

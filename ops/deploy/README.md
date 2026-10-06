@@ -34,7 +34,7 @@ cp brain/templates/deploy/app-deploy@.* /etc/systemd/system/
 # This repo's units and settings
 cp ops/deploy/civic-*.service ops/deploy/civic-docket.timer /etc/systemd/system/
 install -m 600 ops/deploy/deploy.env.example /etc/civic/deploy.env       # then fill GH_TOKEN
-install -m 600 ops/deploy/companion.env.example /etc/civic/companion.env # then fill ANTHROPIC_API_KEY
+install -m 600 ops/deploy/companion.env.example /etc/civic/companion.env # then fill AI_BASE_URL, AI_MODEL (and AI_API_KEY if the endpoint wants one)
 systemctl daemon-reload
 systemctl enable civic-provenance.service civic-agora.service civic-commons.service  # started with the Companion from now on
 systemctl start app-deploy@civic.service       # first release; wait until it logs "live"
@@ -48,11 +48,11 @@ systemctl enable --now app-deploy@civic.timer civic-docket.timer
 ops/deploy/publish-cloudflare.sh       # tunnel + DNS for cracia.techinsiderbytes.com (reads PORT from companion.env)
 ```
 
-The service starts even without `ANTHROPIC_API_KEY`. It then serves the app and the data, and the Companion routes answer 503. The app shows that the explainer is switched off. Claim checking needs no key: it works whenever `civic-provenance` is up. When it is down, `/api/factcheck` answers 503 and the app says the checker is unavailable. It never shows a grade Provenance did not give, and a grade that does not match `spec/schemas/grade.schema.json` is refused (502).
+The model is any OpenAI-compatible endpoint named by `AI_BASE_URL` and `AI_MODEL` in `companion.env` (Ollama or vLLM on the box, a free tier, a gateway; `ANTHROPIC_API_KEY` is used only when `AI_BASE_URL` is empty). The service starts even without a model. It then serves the app and the data, and the Companion routes answer 503. The app shows that the explainer is switched off. Claim checking needs no key: it works whenever `civic-provenance` is up. When it is down, `/api/factcheck` answers 503 and the app says the checker is unavailable. It never shows a grade Provenance did not give, and a grade that does not match `spec/schemas/grade.schema.json` is refused (502).
 
 ## Health
 
-`GET /healthz` returns `{"ok":true,"items":N,"companion":true|false,"provenance":true|false,"agora":true|false}`. The deployer checks it (`HEALTH_URLS`) and requires five healthy checks in a row before a release counts as live.
+`GET /healthz` returns `{"ok":true,"items":N,"companion":true|false,"ai":{"kind":"openai-compatible"|"anthropic"|"none","model":"…"|null},"provenance":true|false,"agora":true|false}`. The deployer checks it (`HEALTH_URLS`) and requires five healthy checks in a row before a release counts as live.
 
 The claim checker is optional and does not gate deploys. `provenance` says whether `civic-provenance` answered its own `/healthz` (checked at most every 30 s, waiting at most 1 s); `false` never fails the Companion's health check, and the app then says the checker is unavailable. To see why it is down: `curl -s 127.0.0.1:8090/healthz` (`{"ok": true, "items": N, "sentences": M}`) and `journalctl -u civic-provenance`.
 
