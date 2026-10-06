@@ -5,7 +5,8 @@
   import FileList from "./components/FileList.svelte";
   import FactCheck from "./components/FactCheck.svelte";
   import FileView from "./components/FileView.svelte";
-  import { LocalClient, RemoteClient, RemoteFactChecker, type CompanionClient, type FactChecker } from "./lib/client.ts";
+  import Ideas from "./components/Ideas.svelte";
+  import { LocalClient, RemoteClient, RemoteFactChecker, RemoteIdeas, type CompanionClient, type FactChecker, type IdeasReader } from "./lib/client.ts";
   import { loadSnapshot, luxembourgToday, placeOf, routeOf, sitesOf } from "./lib/data.ts";
   import { LANG_LABELS } from "./lib/i18n.ts";
   import { prefs } from "./lib/prefs.ts";
@@ -18,11 +19,14 @@
   let client = $state<CompanionClient | null | undefined>(undefined);
   /** The claim checker, on the served app only: the shareable demo has no Provenance service. */
   let checker = $state<FactChecker | null>(null);
+  /** The ideas list (Agora, read only), on the served app only, like the claim checker. */
+  let ideasReader = $state<IdeasReader | null>(null);
   let route = $state(readRoute());
   let theme = $state<"light" | "dark" | null>(prefs.theme());
   let online = $state(navigator.onLine);
   const today = luxembourgToday();
   const CHECK_ROUTE = "check";
+  const IDEAS_ROUTE = "ideas";
 
   const selected = $derived<DocketItem | null>(
     snapshot && route ? (snapshot.items.find((i) => routeOf(i) === route) ?? null) : null,
@@ -30,6 +34,8 @@
 
   /** `#check`: the claim checker on its own page. */
   const checking = $derived(route === CHECK_ROUTE && !!checker && !selected);
+  /** `#ideas`: the ideas residents posted, read only. */
+  const readingIdeas = $derived(route === IDEAS_ROUTE && !!ideasReader && !selected);
 
   /** Once Esch files are in the snapshot, the headings name both bodies. */
   const both = $derived(!!snapshot?.items.some((i) => placeOf(i) === "esch"));
@@ -86,6 +92,7 @@
         return;
       }
       checker = new RemoteFactChecker();
+      ideasReader = new RemoteIdeas();
       try {
         const health = (await (await fetch("healthz")).json()) as { companion?: boolean };
         client = health.companion ? new RemoteClient() : null;
@@ -103,7 +110,7 @@
   });
 </script>
 
-<div class="shell" class:has-file={!!selected || checking}>
+<div class="shell" class:has-file={!!selected || checking || readingIdeas}>
   <header class="top">
     <button class="brand" onclick={() => open(null)}>
       <span class="mark" aria-hidden="true">§</span>
@@ -139,7 +146,12 @@
           <h1 class="serif" id="list-title" tabindex="-1">{t(both ? "agenda_title_both" : "agenda_title")}</h1>
           <p class="muted">{t(both ? "tagline_both" : "tagline")}</p>
           {#if checker}
-            <button class="btn check-open" aria-current={checking ? "page" : undefined} onclick={() => open(CHECK_ROUTE)}>{t("check_open")}</button>
+            <div class="page-links">
+              <button class="btn check-open" aria-current={checking ? "page" : undefined} onclick={() => open(CHECK_ROUTE)}>{t("check_open")}</button>
+              {#if ideasReader}
+                <button class="btn check-open" aria-current={readingIdeas ? "page" : undefined} onclick={() => open(IDEAS_ROUTE)}>{t("ideas_open")}</button>
+              {/if}
+            </div>
           {/if}
         </div>
         <FileList items={snapshot.items} {today} selected={selected ? routeOf(selected) : null} onopen={open} />
@@ -154,6 +166,12 @@
             <h2 class="serif" id="file-title" tabindex="-1">{t("check_open")}</h2>
             <FactCheck {checker} standalone />
             <p class="muted small">{t("never_recommend")}</p>
+          </article>
+        {:else if readingIdeas && ideasReader}
+          <article class="check-page">
+            <button class="back" onclick={() => open(null)}>← {t("back")}</button>
+            <h2 class="serif" id="file-title" tabindex="-1">{t("ideas_open")}</h2>
+            <Ideas reader={ideasReader} />
           </article>
         {:else}
           <div class="empty">
@@ -240,7 +258,7 @@
   .intro h1 { font-size: clamp(1.9rem, 5vw, 2.4rem); line-height: 1.1; }
   .intro p { margin: 0; }
   .source-note { font-size: 0.82rem; margin-top: 16px; }
-  .check-open { justify-self: start; margin-top: 8px; }
+  .page-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
   .check-open[aria-current="page"] { border-color: var(--accent); background: var(--surface-2); }
   .check-page { display: grid; gap: 16px; padding-top: 4px; }
   .check-page h2 { font-size: clamp(1.6rem, 4.2vw, 2.3rem); line-height: 1.15; margin: 0; }

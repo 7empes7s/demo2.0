@@ -17,11 +17,13 @@ import {
   type DocketItem,
   type Explanation,
   type FactCheckResult,
+  type IdeasPage,
   type Lang,
   type Position,
   type Provider,
   type Source,
   gradeProblems,
+  ideasPageProblems,
 } from "@democracy2/companion";
 
 import { CompanionFailure } from "./errors.ts";
@@ -155,5 +157,39 @@ export class RemoteFactChecker implements FactChecker {
     // Checked again here: a grade is shown only when it matches the schema.
     if (body?.result === "graded" && gradeProblems(body.grade).length === 0) return body;
     throw new CompanionFailure("unavailable");
+  }
+}
+
+/** Reads the ideas residents posted on Agora (read only: posting and supporting are not open yet). */
+export interface IdeasReader {
+  list(): Promise<IdeasPage>;
+}
+
+/** Ideas the app asks for at once. */
+export const IDEAS_PAGE = 50;
+
+/**
+ * Calls the Companion server's GET /api/ideas. Fails with "unavailable" when Agora is down or
+ * answers anything that is not a valid list: the app then says so and shows no ideas.
+ */
+export class RemoteIdeas implements IdeasReader {
+  private readonly base: string;
+  constructor(base = "") {
+    this.base = base;
+  }
+
+  async list(): Promise<IdeasPage> {
+    let res: Response;
+    try {
+      res = await fetch(`${this.base}/api/ideas?limit=${IDEAS_PAGE}`);
+    } catch {
+      throw new CompanionFailure("unavailable");
+    }
+    if (res.status === 429) throw new CompanionFailure("busy");
+    if (!res.ok) throw new CompanionFailure("unavailable");
+    const body = (await res.json().catch(() => null)) as unknown;
+    // Checked again here: an idea is shown only when it matches the schema and carries no pseudonym.
+    if (ideasPageProblems(body, IDEAS_PAGE).length) throw new CompanionFailure("unavailable");
+    return body as IdeasPage;
   }
 }

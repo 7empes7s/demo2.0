@@ -15,6 +15,9 @@
  *                      X-Forwarded-For used to tell clients apart
  *   PROVENANCE_URL     the Provenance service that grades claims for /api/factcheck
  *                      (default http://127.0.0.1:8090, its `serve` default)
+ *   AGORA_URL          the Agora service whose queue GET /api/ideas reads
+ *                      (default http://127.0.0.1:8091, its `serve` default). Read only: posting
+ *                      and supporting ideas are never proxied until secure sign-in exists.
  */
 
 import { createHash } from "node:crypto";
@@ -25,6 +28,7 @@ import { basename, extname, join, normalize, resolve, sep } from "node:path";
 import { type CommonsArgument, type CommonsClient, commonsSuffices, HttpCommons } from "./commons.ts";
 import { challenge, checkClaim, explain, extractArguments } from "./companion.ts";
 import { CheckerInvalid, CheckerUnavailable, gradeClaim, MAX_CLAIM } from "./factcheck.ts";
+import { AgoraInvalid, AgoraUnavailable, DEFAULT_IDEAS, JURISDICTION, MAX_IDEAS, MAX_JURISDICTIONS, readQueue } from "./ideas.ts";
 import { AnthropicProvider, type Provider } from "./provider.ts";
 import { readSnapshot } from "./snapshot.ts";
 import { buildSources } from "./sources.ts";
@@ -61,6 +65,12 @@ export interface ServerOptions {
   provenanceUrl?: string;
   /** How long to wait for Provenance, in ms (default 8000). */
   provenanceTimeoutMs?: number;
+  /** Base URL of the Agora service. Without it /api/ideas answers 503. */
+  agoraUrl?: string;
+  /** How long to wait for Agora's whole answer, in ms (default 3000). */
+  agoraTimeoutMs?: number;
+  /** Ideas-list reads per client per minute (default 60). Their own bucket: they cost no model tokens. */
+  ideasPerMinute?: number;
 }
 
 /** Largest /api/factcheck body: a claim of MAX_CLAIM characters plus an item id fits easily. */
@@ -73,9 +83,11 @@ const FAILURE_TTL_MS = 60_000;
 
 class HttpError extends Error {
   readonly status: number;
-  constructor(status: number, message: string) {
+  readonly headers: Record<string, string>;
+  constructor(status: number, message: string, headers: Record<string, string> = {}) {
     super(message);
     this.status = status;
+    this.headers = headers;
   }
 }
 
@@ -96,8 +108,8 @@ async function readBody(req: IncomingMessage, limit = 32_000): Promise<Record<st
   }
 }
 
-function send(res: ServerResponse, status: number, body: unknown) {
-  res.writeHead(status, { "content-type": "application/json", "cache-control": "no-store" });
+function send(res: ServerResponse, status: number, body: unknown, headers: Record<string, string> = {}) {
+  res.writeHead(status, { ...headers, "content-type": "application/json", "cache-control": "no-store" });
   res.end(JSON.stringify(body));
 }
 
@@ -135,6 +147,8 @@ export function createCompanionServer(opts: ServerOptions) {
   const limit = opts.ratePerMinute ?? 20;
   const factcheckHits = new Map<string, number[]>();
   const factcheckLimit = opts.factcheckPerMinute ?? 20;
+  const ideasHits = new Map<string, number[]>();
+  const ideasLimit = opts.ideasPerMinute ?? 60;
   const staticRoot = opts.staticDir ? resolve(opts.staticDir) : undefined;
   const trustProxy = opts.trustProxy ?? 0;
   // The snapshot can be megabytes of document text: serialise it once, not per request.
@@ -239,24 +253,63 @@ export function createCompanionServer(opts: ServerOptions) {
   }
 
   /**
-   * Whether Provenance answers its /healthz, for the Companion's /healthz. Cached for 30 s, waits
-   * at most 1 s, and never fails: the claim checker is optional and the app shows "unavailable".
+   * Whether an optional service answers its /healthz, for the Companion's /healthz. Cached for
+   * 30 s, waits at most 1 s, and never fails: the claim checker and the ideas list are optional,
+   * and the app says "unavailable" when one is down.
    */
-  let provenanceSeen: { ok: boolean; at: number } | null = null;
-  let provenanceProbe: Promise<boolean> | null = null;
-  const provenanceUp = (): Promise<boolean> => {
-    if (!opts.provenanceUrl) return Promise.resolve(false);
-    if (provenanceSeen && Date.now() - provenanceSeen.at < 30_000) return Promise.resolve(provenanceSeen.ok);
-    provenanceProbe ??= fetch(`${opts.provenanceUrl.replace(/\/+$/, "")}/healthz`, { signal: AbortSignal.timeout(1_000) })
-      .then(async (res) => res.ok && ((await res.json()) as { ok?: unknown })?.ok === true)
-      .catch(() => false)
-      .then((ok) => {
-        provenanceSeen = { ok, at: Date.now() };
-        provenanceProbe = null;
-        return ok;
-      });
-    return provenanceProbe;
+  const healthProbe = (base: string | undefined) => {
+    let seen: { ok: boolean; at: number } | null = null;
+    let probe: Promise<boolean> | null = null;
+    return (): Promise<boolean> => {
+      if (!base) return Promise.resolve(false);
+      if (seen && Date.now() - seen.at < 30_000) return Promise.resolve(seen.ok);
+      probe ??= fetch(`${base.replace(/\/+$/, "")}/healthz`, { signal: AbortSignal.timeout(1_000) })
+        .then(async (res) => res.ok && ((await res.json()) as { ok?: unknown })?.ok === true)
+        .catch(() => false)
+        .then((ok) => {
+          seen = { ok, at: Date.now() };
+          probe = null;
+          return ok;
+        });
+      return probe;
+    };
   };
+  const provenanceUp = healthProbe(opts.provenanceUrl);
+  const agoraUp = healthProbe(opts.agoraUrl);
+
+  /**
+   * GET /api/ideas?jurisdiction=<id>&jurisdiction=<id>&limit=<n>: Agora's queue, read only.
+   * 200 {charter_version, ideas} without proposer pseudonyms; 400 on a bad query; 503 when Agora
+   * is unreachable, slow or failing; 502 when it answers something that is not a valid queue.
+   */
+  async function ideas(req: IncomingMessage, url: URL): Promise<unknown> {
+    for (const key of url.searchParams.keys()) {
+      if (key !== "jurisdiction" && key !== "limit") throw new HttpError(400, `unknown parameter ${key.slice(0, 40)}`);
+    }
+    const limits = url.searchParams.getAll("limit");
+    if (limits.length > 1) throw new HttpError(400, "give limit once");
+    if (limits.length && !/^[1-9][0-9]{0,2}$/.test(limits[0])) throw new HttpError(400, `limit must be a whole number from 1 to ${MAX_IDEAS}`);
+    const limit = limits.length ? Number(limits[0]) : DEFAULT_IDEAS;
+    if (limit > MAX_IDEAS) throw new HttpError(400, `limit must be a whole number from 1 to ${MAX_IDEAS}`);
+    const jurisdictions = [...new Set(url.searchParams.getAll("jurisdiction"))];
+    if (jurisdictions.some((j) => !JURISDICTION.test(j))) throw new HttpError(400, "jurisdiction must be a jurisdiction id");
+    if (jurisdictions.length > MAX_JURISDICTIONS) throw new HttpError(400, `at most ${MAX_JURISDICTIONS} jurisdictions`);
+    if (!opts.agoraUrl) throw new HttpError(503, "the ideas list is not configured on this server");
+    throttle(req, ideasHits, ideasLimit);
+    try {
+      return await readQueue(opts.agoraUrl, { jurisdictions, limit }, { timeoutMs: opts.agoraTimeoutMs });
+    } catch (e) {
+      if (e instanceof AgoraUnavailable) {
+        console.error(`ideas: ${e.message}`);
+        throw new HttpError(503, "the ideas list is unavailable");
+      }
+      if (e instanceof AgoraInvalid) {
+        console.error(`ideas: ${e.message}`);
+        throw new HttpError(502, "the ideas list gave an answer that could not be read");
+      }
+      throw e;
+    }
+  }
 
   async function api(path: string, body: Record<string, unknown>, req: IncomingMessage): Promise<unknown> {
     if (!opts.provider) throw new HttpError(503, "the Companion is not configured on this server");
@@ -331,7 +384,7 @@ export function createCompanionServer(opts: ServerOptions) {
   return createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", "http://localhost");
     try {
-      if (url.pathname === "/healthz") return send(res, 200, { ok: true, items: items.size, companion: !!opts.provider, provenance: await provenanceUp() });
+      if (url.pathname === "/healthz") return send(res, 200, { ok: true, items: items.size, companion: !!opts.provider, provenance: await provenanceUp(), agora: await agoraUp() });
       if (url.pathname === "/data/snapshot.json") {
         if (req.headers["if-none-match"] === snapshotTag) {
           res.writeHead(304, { etag: snapshotTag });
@@ -339,6 +392,13 @@ export function createCompanionServer(opts: ServerOptions) {
         }
         res.writeHead(200, { "content-type": "application/json", etag: snapshotTag, "cache-control": "public, max-age=300" });
         return res.end(snapshotBody);
+      }
+      if (url.pathname === "/api/ideas" || url.pathname.startsWith("/api/ideas/")) {
+        // Read only. Posting and supporting ideas stay off until secure sign-in (Door) exists:
+        // Agora's stand-in identity lets anyone who reaches it invent participants.
+        if (req.method !== "GET") throw new HttpError(405, "posting and supporting ideas is not open yet", { allow: "GET" });
+        if (url.pathname !== "/api/ideas") throw new HttpError(404, "not found");
+        return send(res, 200, await ideas(req, url));
       }
       if (url.pathname.startsWith("/api/")) {
         if (req.method !== "POST") throw new HttpError(405, "use POST");
@@ -349,7 +409,7 @@ export function createCompanionServer(opts: ServerOptions) {
     } catch (e) {
       const status = e instanceof HttpError ? e.status : 500;
       if (status === 500) console.error(e);
-      send(res, status, { error: e instanceof HttpError ? e.message : "something went wrong" });
+      send(res, status, { error: e instanceof HttpError ? e.message : "something went wrong" }, e instanceof HttpError ? e.headers : {});
     }
   });
 }
@@ -364,7 +424,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const host = process.env.HOST || "127.0.0.1";
   const commons = process.env.COMMONS_URL ? new HttpCommons(process.env.COMMONS_URL) : null;
   const provenanceUrl = process.env.PROVENANCE_URL || "http://127.0.0.1:8090";
-  createCompanionServer({ provider, snapshot, commons, staticDir: process.env.STATIC_DIR, trustProxy, provenanceUrl }).listen(port, host, () =>
+  const agoraUrl = process.env.AGORA_URL || "http://127.0.0.1:8091";
+  createCompanionServer({ provider, snapshot, commons, staticDir: process.env.STATIC_DIR, trustProxy, provenanceUrl, agoraUrl }).listen(port, host, () =>
     console.log(`companion listening on ${host}:${port}`),
   );
 }

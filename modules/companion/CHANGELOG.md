@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `GET /api/ideas` reads the Agora queue (`AGORA_URL`, default `http://127.0.0.1:8091`), read only. Every idea is checked against `spec/schemas/idea.schema.json` and the answer against the queue shape (502 if invalid), proposer pseudonyms are dropped, Agora unreachable, failing or slower than 3 s is 503, a bad `limit` or `jurisdiction` or an unknown parameter is 400 before Agora is called, and every other method on `/api/ideas*` is 405 and never forwarded. Own rate-limit bucket (`ideasPerMinute`, default 60); `/healthz` reports `agora: true|false` and never fails on it. Exports `readQueue`, `ideaProblems`, `queueProblems`, `ideasPageProblems` and the `Idea`, `PublicIdea`, `IdeasPage` types.
+- The JSON Schema checker moved to `schema.ts` and is shared by grades and ideas. It now knows `maxItems`, `uniqueItems`, `minimum`, `minProperties`, `format: date-time` and `$ref` to `localized-text.schema.json`; any other keyword still fails closed.
 - The devil's advocate draws the other side from Commons first, over HTTP (`COMMONS_URL`,
   `GET /matters/{id}/arguments`). Each turn returns `shown`: the arguments it rests on, each
   with its origin (`commons`, `document` or `model`) and a source link. When Commons has at
