@@ -106,6 +106,17 @@ const en = {
   vote_none: "No vote recorded",
   fact_when: "When",
   offline: "You're offline. This is the list saved on this device. The Companion needs a connection.",
+  check_open: "Check a claim",
+  check_intro: "Paste something you heard about a file of the Chamber or the Esch-sur-Alzette council. It is compared with the official documents.",
+  check_reason_green: "An official document says this.",
+  check_reason_yellow: "The documents neither confirm nor contradict it, they disagree, or it is a matter of opinion.",
+  check_reason_red: "An official document says something different.",
+  check_none: "No official document mentions this, so it gets no grade.",
+  check_unavailable: "The claim checker is unavailable right now, so nothing was graded. Try again later.",
+  check_too_long: "That claim is too long. Keep it under 500 characters.",
+  check_note: "The grade says what the documents say, not whether it is true in the world.",
+  check_document: "Official document",
+  tech_details: "Technical details",
 };
 
 export type Key = keyof typeof en;
@@ -215,6 +226,17 @@ const fr: Dict = {
   vote_none: "Aucun vote enregistré",
   fact_when: "Calendrier",
   offline: "Vous êtes hors ligne. Voici la liste enregistrée sur cet appareil. Le Compagnon a besoin d'une connexion.",
+  check_open: "Vérifier une affirmation",
+  check_intro: "Collez ce que vous avez entendu sur un dossier de la Chambre ou du conseil d'Esch-sur-Alzette. C'est comparé aux documents officiels.",
+  check_reason_green: "Un document officiel le dit.",
+  check_reason_yellow: "Les documents ne le confirment ni ne le contredisent, ils divergent, ou c'est une question d'opinion.",
+  check_reason_red: "Un document officiel dit autre chose.",
+  check_none: "Aucun document officiel n'en parle, donc pas de note.",
+  check_unavailable: "Le vérificateur n'est pas disponible pour l'instant, rien n'a été noté. Réessayez plus tard.",
+  check_too_long: "Cette affirmation est trop longue. Restez sous 500 caractères.",
+  check_note: "La note dit ce que disent les documents, pas si c'est vrai dans le monde.",
+  check_document: "Document officiel",
+  tech_details: "Détails techniques",
 };
 
 const de: Dict = {
@@ -321,6 +343,17 @@ const de: Dict = {
   vote_none: "Keine Stimme erfasst",
   fact_when: "Zeitraum",
   offline: "Sie sind offline. Das ist die auf diesem Gerät gespeicherte Liste. Der Begleiter braucht eine Verbindung.",
+  check_open: "Eine Behauptung prüfen",
+  check_intro: "Fügen Sie ein, was Sie über eine Akte der Abgeordnetenkammer oder des Gemeinderats Esch-sur-Alzette gehört haben. Es wird mit den offiziellen Dokumenten verglichen.",
+  check_reason_green: "Ein offizielles Dokument sagt das.",
+  check_reason_yellow: "Die Dokumente bestätigen es weder noch widersprechen sie, sie sind uneinig, oder es ist eine Meinungsfrage.",
+  check_reason_red: "Ein offizielles Dokument sagt etwas anderes.",
+  check_none: "Kein offizielles Dokument erwähnt das, daher gibt es keine Bewertung.",
+  check_unavailable: "Die Prüfung ist gerade nicht verfügbar, es wurde nichts bewertet. Versuchen Sie es später.",
+  check_too_long: "Diese Behauptung ist zu lang. Bleiben Sie unter 500 Zeichen.",
+  check_note: "Die Bewertung sagt, was in den Dokumenten steht, nicht ob es in der Welt stimmt.",
+  check_document: "Offizielles Dokument",
+  tech_details: "Technische Details",
 };
 
 const lb: Dict = {
@@ -427,6 +460,17 @@ const lb: Dict = {
   vote_none: "Keng Stëmm erfaasst",
   fact_when: "Zäitraum",
   offline: "Dir sidd offline. Dat ass d'Lëscht, déi op dësem Apparat gespäichert ass. De Begleeder brauch eng Verbindung.",
+  check_open: "Eng Behaaptung préiwen",
+  check_intro: "Fügt an, wat Dir iwwer en Dossier vun der Chamber oder vum Gemengerot Esch-sur-Alzette héieren hutt. Et gëtt mat den offiziellen Dokumenter verglach.",
+  check_reason_green: "En offiziellt Dokument seet dat.",
+  check_reason_yellow: "D'Dokumenter bestätegen et net a widderleeën et net, si sinn sech net eens, oder et ass eng Meenungsfro.",
+  check_reason_red: "En offiziellt Dokument seet eppes anescht.",
+  check_none: "Keen offiziellt Dokument schwätzt dovun, dofir gëtt et keng Bewäertung.",
+  check_unavailable: "D'Préiwung ass grad net disponibel, et gouf näischt bewäert. Probéiert et méi spéit.",
+  check_too_long: "Dës Behaaptung ass ze laang. Bleift ënner 500 Zeechen.",
+  check_note: "D'Bewäertung seet, wat an den Dokumenter steet, net ob et an der Welt stëmmt.",
+  check_document: "Offiziellt Dokument",
+  tech_details: "Technesch Detailer",
 };
 
 const pt: Dict = {
@@ -533,6 +577,17 @@ const pt: Dict = {
   vote_none: "Nenhum voto registado",
   fact_when: "Calendário",
   offline: "Está sem ligação. Esta é a lista guardada neste aparelho. O Companheiro precisa de ligação.",
+  check_open: "Verificar uma afirmação",
+  check_intro: "Cole o que ouviu sobre um processo da Câmara dos Deputados ou do conselho de Esch-sur-Alzette. É comparado com os documentos oficiais.",
+  check_reason_green: "Um documento oficial diz isto.",
+  check_reason_yellow: "Os documentos não o confirmam nem o contradizem, divergem, ou é uma questão de opinião.",
+  check_reason_red: "Um documento oficial diz outra coisa.",
+  check_none: "Nenhum documento oficial fala disto, por isso não há avaliação.",
+  check_unavailable: "O verificador não está disponível de momento, nada foi avaliado. Tente mais tarde.",
+  check_too_long: "Esta afirmação é demasiado longa. Fique abaixo de 500 caracteres.",
+  check_note: "A avaliação diz o que dizem os documentos, não se é verdade no mundo.",
+  check_document: "Documento oficial",
+  tech_details: "Detalhes técnicos",
 };
 
 export const DICTS: Record<Lang, Dict> = { en, fr, de, lb, pt };

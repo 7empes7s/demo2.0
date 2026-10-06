@@ -1,21 +1,30 @@
 <script lang="ts">
   import type { DocketItem } from "@democracy2/companion";
 
-  import type { CompanionClient } from "../lib/client.ts";
+  import type { CompanionClient, FactChecker } from "../lib/client.ts";
   import { historyOf, kindOf, lastMeeting, nextMeeting, safeUrl, stageOf, statusOf, titleOf, voteKey } from "../lib/data.ts";
   import { date, t, ui } from "../lib/ui.svelte.ts";
   import Challenge from "./Challenge.svelte";
   import ClaimCheck from "./ClaimCheck.svelte";
   import Explain from "./Explain.svelte";
+  import FactCheck from "./FactCheck.svelte";
   import FileMeta from "./FileMeta.svelte";
   import StageTrack from "./StageTrack.svelte";
 
   let {
     item,
     client,
+    checker = null,
     today,
     onback,
-  }: { item: DocketItem; client: CompanionClient | null | undefined; today: string; onback: () => void } = $props();
+  }: {
+    item: DocketItem;
+    client: CompanionClient | null | undefined;
+    /** The claim checker (Provenance). Without it, the Companion checks claims itself (the shareable demo). */
+    checker?: FactChecker | null;
+    today: string;
+    onback: () => void;
+  } = $props();
 
   const kind = $derived(kindOf(item));
   const meeting = $derived(nextMeeting(item, today));
@@ -132,10 +141,14 @@
     {#key item.id}
       <Explain {item} {client} />
       <Challenge {item} {client} />
-      <ClaimCheck {item} {client} />
+      {#if !checker}<ClaimCheck {item} {client} />{/if}
     {/key}
   {:else}
     <p class="card muted">{t("ai_unavailable")}</p>
+  {/if}
+
+  {#if checker}
+    {#key item.id}<FactCheck {item} {checker} />{/key}
   {/if}
 
   <section aria-labelledby="docs-h">
