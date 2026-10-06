@@ -38,5 +38,5 @@ of concept or a publication.
 
 Landed in `apps/citizen` on 2026-10-06 in three PRs behind a flag (tokens and type #34,
 sheets and marks #35, motion #36), then made the only look with the flag removed and a
-night mode (navy wall, paper sheets) in the PR after. The app's `src/tokens.css` is now the
+dark mode (lights off: near-black wall, charcoal sheets, amber for what matters) after that. The app's `src/tokens.css` is now the
 source of the material; this folder stays the record of the decision.

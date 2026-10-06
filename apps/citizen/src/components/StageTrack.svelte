@@ -26,7 +26,7 @@
   }
   li { display: grid; gap: 6px; font-size: 0.78rem; color: var(--muted); }
   .pip { height: 6px; border: 2px solid var(--line); background: var(--surface); }
-  li.done .pip { background: var(--line); }
+  li.done .pip { background: var(--fg); }
   li.now .pip { background: var(--accent); }
   li.now .name { color: var(--fg); font-weight: 600; }
   .compact li { gap: 0; }

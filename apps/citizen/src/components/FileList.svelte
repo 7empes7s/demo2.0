@@ -113,7 +113,7 @@
     text-overflow: ellipsis;
   }
   .seg:last-child { border-right: 0; }
-  .seg[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .seg[aria-pressed="true"] { background: var(--pressed-bg); color: var(--pressed-fg); }
   .group { display: grid; gap: 8px; }
   .group + .group { margin-top: 20px; }
   .place { margin: 0; display: flex; gap: 8px; align-items: baseline; }
@@ -146,7 +146,7 @@
     margin-left: auto;
     flex: none;
     padding: 0 6px;
-    border: 2px solid var(--line);
+    border: 2px solid var(--accent-line);
     background: var(--accent);
     color: var(--accent-ink);
     font: 700 0.75rem/1.5 var(--serif);
