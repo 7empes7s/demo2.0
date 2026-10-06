@@ -183,3 +183,34 @@ def test_jurisdiction_path_refuses_a_non_string(bad):
     # An empty path would cover every jurisdiction (levels[:0] == []), so never return one.
     with pytest.raises(TypeError):
         Charter().jurisdiction_path(bad)
+
+
+def _provenance_null(data):
+    data["provenance"] = None
+
+
+def _basis_null_on_first_right(data):
+    data["protected_rights"][0]["basis"] = None
+
+
+def _source_not_a_mapping(data):
+    data["provenance"]["door.epoch_months"]["source"] = "constitution"
+
+
+@pytest.mark.parametrize(
+    ("change", "key"),
+    [
+        (_provenance_null, "door.epoch_months"),
+        (_basis_null_on_first_right, "protected_rights.life_and_bodily_integrity"),
+        (_source_not_a_mapping, "door.epoch_months"),
+    ],
+)
+def test_malformed_provenance_is_unknown_key_like_the_ts_binding(tmp_path, change, key):
+    """A file the schema would reject still answers unknown_key, never another exception."""
+    charter = _charter_with(tmp_path, change)()
+    with pytest.raises(CharterError) as err:
+        charter.basis(key)
+    assert err.value.code == "unknown_key"
+    with pytest.raises(CharterError) as err:
+        charter.source(key)
+    assert err.value.code == "unknown_key"

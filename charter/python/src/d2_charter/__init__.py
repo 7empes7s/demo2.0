@@ -104,13 +104,20 @@ class Charter:
         prefix = "protected_rights."
         if key.startswith(prefix):
             right_id = key[len(prefix) :]
-            for right in self._data["protected_rights"]:
-                if right.get("id") == right_id and "basis" in right and "source" in right:
-                    return right
+            entry: Any = next(
+                (r for r in self._data["protected_rights"] if r.get("id") == right_id), None
+            )
         else:
-            entry = self._data.get("provenance", {}).get(key)
-            if isinstance(entry, dict) and "basis" in entry and "source" in entry:
-                return entry
+            provenance = self._data.get("provenance")
+            entry = provenance.get(key) if isinstance(provenance, dict) else None
+        # Same shape test as the TypeScript binding: a string basis and a mapping source, or
+        # unknown_key. A malformed file never raises anything else.
+        if (
+            isinstance(entry, dict)
+            and isinstance(entry.get("basis"), str)
+            and isinstance(entry.get("source"), dict)
+        ):
+            return entry
         raise CharterError("unknown_key", f"no Charter provenance for {key!r}")
 
     def affected_population(self, matter: Any) -> int:
