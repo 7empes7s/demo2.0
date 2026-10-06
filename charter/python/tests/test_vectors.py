@@ -4,17 +4,18 @@ import json
 
 import pytest
 import yaml
-from d2_charter import CHARTER_ROOT, Charter, CharterError, is_protected, param
+from d2_charter import CHARTER_ROOT, Charter, CharterError, basis, is_protected, param, source
 
 VECTORS = CHARTER_ROOT / "vectors"
 TIER = json.loads((VECTORS / "tier.json").read_text())
 PROTECTED = json.loads((VECTORS / "protected.json").read_text())
 PARAM = json.loads((VECTORS / "param.json").read_text())
+PROVENANCE = json.loads((VECTORS / "provenance.json").read_text())
 CHARTER = Charter(extra_jurisdictions=TIER["extra_jurisdictions"])
 
 
 def test_vectors_match_this_charter_version():
-    for doc in (TIER, PROTECTED, PARAM):
+    for doc in (TIER, PROTECTED, PARAM, PROVENANCE):
         assert doc["charter_version"] == CHARTER.version
 
 
@@ -47,6 +48,25 @@ def test_param(case):
         assert err.value.code == case["expect_error"]
         return
     assert param(case["key"], case.get("version")) == case["expect"]
+
+
+@pytest.mark.parametrize("case", PROVENANCE["cases"], ids=lambda c: c["key"])
+def test_source_and_basis(case):
+    if "expect_error" in case:
+        with pytest.raises(CharterError) as err:
+            source(case["key"])
+        assert err.value.code == case["expect_error"]
+        with pytest.raises(CharterError) as err:
+            basis(case["key"])
+        assert err.value.code == case["expect_error"]
+        return
+    assert source(case["key"]) == case["expect"]["source"]
+    assert basis(case["key"]) == case["expect"]["basis"]
+
+
+def test_source_returns_a_copy():
+    source("charter_change.majority")["status"] = "verified"
+    assert source("charter_change.majority")["status"] == "to_verify"
 
 
 def test_param_returns_a_copy():

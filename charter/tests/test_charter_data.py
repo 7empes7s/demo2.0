@@ -35,6 +35,11 @@ def test_charter_matches_schema():
         lambda d: d["scope"]["thresholds"][3].update(min_population=1),
         lambda d: d["delegation"].update(cap_share_of_electorate=1.5),
         lambda d: d.update(surprise=1),
+        lambda d: d["protected_rights"][0].pop("source"),
+        lambda d: d["protected_rights"][0].update(basis="whim"),
+        lambda d: d["provenance"]["door.epoch_months"]["source"].update(status="maybe"),
+        lambda d: d["provenance"]["charter_change.majority"]["source"].update(status="verified"),
+        lambda d: d["provenance"].update({"door": {"basis": "project", "source": {}}}),
     ],
     ids=[
         "no-protected-rights",
@@ -43,6 +48,11 @@ def test_charter_matches_schema():
         "minor-not-zero",
         "cap-over-one",
         "unknown-section",
+        "right-without-source",
+        "unknown-basis",
+        "unknown-source-status",
+        "verified-without-article",
+        "provenance-key-not-dotted",
     ],
 )
 def test_schema_rejects_broken_charters(mutate):
@@ -72,6 +82,106 @@ def test_every_placeholder_is_marked_for_a_decision():
         assert line.endswith(" # placeholder: decision needed"), line
 
 
+# Rules read as one value: `param` returns them whole and provenance names them whole.
+COMPOUND_RULES = {"scope.thresholds", "charter_change.majority"} | {
+    f"tiers.{t}.review_panel" for t in ("national", "regional", "local", "minor")
+}
+# Not rules: metadata, the pointer to the reference data, and the provenance sections themselves.
+NOT_RULES = {"version", "scope.population_source", "protected_rights", "sources", "provenance"}
+
+
+def rule_keys(node, prefix=""):
+    """Every dotted key of a rule in charter.yaml, in file order."""
+    keys = []
+    for name, value in node.items():
+        key = f"{prefix}{name}"
+        if key in NOT_RULES:
+            continue
+        if isinstance(value, dict) and key not in COMPOUND_RULES:
+            keys.extend(rule_keys(value, key + "."))
+        else:
+            keys.append(key)
+    return keys
+
+
+def test_every_rule_has_provenance_and_nothing_else_does():
+    rules = rule_keys(DATA)
+    assert len(rules) >= 40
+    assert set(DATA["provenance"]) == set(rules)
+
+
+def test_every_placeholder_has_provenance():
+    # A placeholder line is `  <name>: <value> # placeholder: decision needed` inside a section.
+    # Map each to its dotted key by indentation and check a provenance entry names it.
+    lines = (CHARTER / "charter.yaml").read_text().splitlines()
+    stack: list[tuple[int, str]] = []
+    placeholders = []
+    for line in lines:
+        stripped = line.lstrip()
+        if not stripped or stripped.startswith("#") or stripped.startswith("- "):
+            continue
+        indent = len(line) - len(stripped)
+        name = stripped.split(":", 1)[0]
+        while stack and stack[-1][0] >= indent:
+            stack.pop()
+        stack.append((indent, name))
+        if "# placeholder: decision needed" in line:
+            placeholders.append(".".join(n for _, n in stack))
+    assert placeholders
+    assert "vote_budget.matters_per_week" in placeholders
+    for key in placeholders:
+        key = next((c for c in COMPOUND_RULES if key.startswith(c + ".")), key)
+        assert key in DATA["provenance"], key
+    # The list-shaped thresholds carry placeholders too; their provenance is the whole list.
+    threshold_lines = [
+        line for line in lines if "min_population:" in line and "placeholder" in line
+    ]
+    assert len(threshold_lines) == 3 and "scope.thresholds" in DATA["provenance"]
+
+
+def every_source():
+    for key, entry in DATA["provenance"].items():
+        yield key, entry["basis"], entry["source"]
+    for right in DATA["protected_rights"]:
+        yield f"protected_rights.{right['id']}", right["basis"], right["source"]
+
+
+def test_sources_are_well_formed():
+    statuses = {"verified", "to_verify", "none"}
+    for key, basis, src in every_source():
+        citations = [src, *src.get("cross_references", [])]
+        for c in citations:
+            assert c["instrument"] in DATA["sources"], (key, c["instrument"])
+            assert c["status"] in statuses, key
+            if c["status"] == "verified":
+                assert c.get("article"), f"{key}: verified without an article"
+            if c["status"] == "to_verify":
+                assert c.get("article") or c.get("chapter") or c.get("right"), key
+        # A legal basis cites a legal instrument; a project rule cites the project's own docs.
+        if basis in ("constitution", "law"):
+            assert src["instrument"] != "d2_architecture", key
+            assert src["status"] != "none", key
+        else:
+            assert src["instrument"] == "d2_architecture", key
+            assert src["status"] == "none", key
+    used = {
+        c["instrument"] for _, _, s in every_source() for c in [s, *s.get("cross_references", [])]
+    }
+    assert used == set(DATA["sources"])
+
+
+def test_constitution_is_the_source_for_protected_rights():
+    for right in DATA["protected_rights"]:
+        if right["id"] == "anonymity_of_participation":
+            assert right["basis"] == "project"
+            continue
+        assert right["basis"] == "constitution", right["id"]
+        assert right["source"]["instrument"] == "lu_constitution_2023", right["id"]
+    assert DATA["sources"]["lu_constitution_2023"]["consulted"] is False, (
+        "flip to_verify entries to verified in the same change that marks the text consulted"
+    )
+
+
 def test_jurisdictions_match_spec_schema():
     registry = Registry().with_resources(
         (s["$id"], Resource.from_contents(s))
@@ -85,6 +195,8 @@ def test_jurisdictions_match_spec_schema():
 
 def test_reference_data_is_consistent():
     assert LU["source"].startswith("STATEC")
+    assert LU["population_source"] == {"name": "STATEC", "status": "to_verify"}
+    assert LU["verified_against_source"] is False
     assert LU["reference_date"] == "2024-01-01"
     assert "refreshed from STATEC" in LU["note"]
     assert len(BY_ID) == len(LU["jurisdictions"])

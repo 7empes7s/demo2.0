@@ -4,8 +4,9 @@ The rules of the game as versioned data (`charter.yaml`) and the Scope library t
 
 | Path | What lives there |
 |---|---|
-| `charter.yaml` | Every tunable rule, version `0.1.0` |
+| `charter.yaml` | Every tunable rule, version `0.3.0`, each with its `basis` and `source` |
 | `charter.schema.json` | JSON Schema (draft 2020-12) for `charter.yaml`; `tests/` validates it |
+| `CONSTITUTION.md` | How each rule ties to the Luxembourg Constitution: method, every rule with its basis and status, the Legilux lookups still open |
 | `data/lu-jurisdictions.json` | Luxembourg reference data: country, 12 cantons, the capital and Esch-sur-Alzette, with populations |
 | `vectors/*.json` | Shared test vectors every binding must pass |
 | `python/` | `d2_charter`, the Python binding (uv workspace member) |
@@ -13,13 +14,15 @@ The rules of the game as versioned data (`charter.yaml`) and the Scope library t
 
 ## API
 
-Both bindings expose the same three calls (TypeScript also has the camelCase `isProtected`):
+Both bindings expose the same five calls (TypeScript also has the camelCase `isProtected`):
 
 | Call | Returns |
 |---|---|
 | `tier(matter)` | `national`, `regional`, `local` or `minor` |
 | `param(key, version?)` | The value at a dotted key, such as `tiers.local.review_panel`; a `version` other than the loaded one is an error |
 | `is_protected(matter)` | `true` when no vote may decide the matter |
+| `source(key)` | Where the rule at a dotted key comes from: `{instrument, status, article \| chapter \| right, note, cross_references}`; `protected_rights.<id>` for a protected right |
+| `basis(key)` | `constitution`, `law` or `project`: who decides the rule. The Charter may not override a `constitution` rule |
 
 Also `affected_population(matter)` (`affectedPopulation` in TypeScript), and a `Charter` class for a different root directory or extra jurisdictions such as districts inside a commune. Errors carry a `code` that the vectors name: `invalid_matter`, `unknown_jurisdiction`, `no_population`, `duplicate_jurisdiction`, `unknown_key`, `unknown_version`, `invalid_charter`.
 
@@ -43,7 +46,19 @@ tier({ jurisdiction_id: "lu-commune-esch-sur-alzette", topic_ids: ["parks"] }); 
 - On load, both bindings reject a file without `version`, `scope`, `tiers` or `protected_rights`, or with a review panel whose `min` is above its `max`, with `invalid_charter`. The full schema check runs in CI only.
 - A matter is protected when any topic equals a `protected_rights` topic or sits under it (`rights.expression.press` is under `rights.expression`; `rights.expressionism` is not).
 
+## Where the rules come from
+
+Decision of 2026-10-06: for the Luxembourg version, the Charter is the Luxembourg Constitution (revised text in force since 1 July 2023). Every rule carries a `basis` and a `source`, in the `provenance` section of `charter.yaml` for scalar rules and inline for protected rights, and `CONSTITUTION.md` lists them all. Two kinds of rule live side by side:
+
+- **Constitution-bound** (`basis: constitution`, also `law`): the eight protected rights that restate constitutional rights, `charter_change.majority` and `charter_change.quorum_share_of_electorate` (they must mirror the Constitution's revision procedure), and `eligibility.outsiders` (the electoral law). The Charter restates these; no vote inside this system changes them.
+- **Project-chosen** (`basis: project`): everything else, from `scope.thresholds` to `vote_budget.matters_per_week`, sourced to `docs/architecture/`. A `charter_change` vote may change them.
+
+A source's `status` is `verified` only once the official text was read for this repo. Today every legal citation is `to_verify`: the 2023 text is not in the repo and no article number is guessed. `CONSTITUTION.md` has the checklist of Legilux lookups that flip them.
+
 ## Known gaps in v0
+
+- **No citation is verified yet.** All 11 legal citations (8 protected rights, the two `charter_change` rules, `eligibility.outsiders`) are `to_verify`: they name a chapter or the right in words, not a 2023 article number. A Scout research request for the official Legilux text is open in `7empes7s/brain`; `CONSTITUTION.md` lists what to read for each entry. Until it lands, the protected-rights list is a conservative reading, not a transcription of the Constitution.
+- **The Charter's own rights list may be incomplete.** The chapter on rights and freedoms likely guarantees more than the eight rights listed (for example education, property, the right to work or to housing). Which of those a vote may never touch is a decision for Marouane once the text is read.
 
 - **Scope uses the jurisdiction only, not the topic.** The architecture says Scope computes affected population "from jurisdiction and topic". v0 ignores topics for the tier, so a national subject (say a national tax rate) filed under a commune comes out `local`. Since the proposer picks the jurisdiction, this is a way to shrink a matter's tier. A `ScopeChallenge` v1 only narrows and never raises a tier, so this stays open until topics widen scope or a widening challenge is designed. Open question for Marouane: which topics, if any, always count as national.
 - **The proposer can also widen the jurisdiction.** Scope trusts the jurisdiction it is given, so a commune matter filed under `lu` comes out `national`. Charter cannot tell; the fix sits with the caller. Agora with Door binds the jurisdiction to the proposer's credential, so nobody files outside the areas they live in, and a resident who files under an area containing their own (Esch under `lu`) can be contested with a `ScopeChallenge` (Agora, see `modules/agora/README.md`, Scope challenges): a Lottery panel of `scope_challenge.panel_size` decides within `scope_challenge.decision_days`, and when it narrows, `tier` is recomputed for the narrower jurisdiction. Closed in Agora; the inflated tier holds while a challenge is open, and in an area with too few participants for a panel.
@@ -51,11 +66,11 @@ tier({ jurisdiction_id: "lu-commune-esch-sur-alzette", topic_ids: ["parks"] }); 
 
 ## Placeholders
 
-Values the docs give no number for carry `# placeholder: decision needed` in `charter.yaml`. They are conservative defaults, not decisions. The population figures are also provisional: see `note` in `data/lu-jurisdictions.json`, and refresh them from STATEC before any binding use.
+Values the docs give no number for carry `# placeholder: decision needed` in `charter.yaml`. They are conservative defaults, not decisions, and all of them are `basis: project`. The population figures are also provisional: `population_source` in `data/lu-jurisdictions.json` is `{name: STATEC, status: to_verify}` (see its `note`); refresh them from STATEC before any binding use.
 
 ## Changing the Charter
 
-Edit `charter.yaml`, bump `version`, and update `vectors/` (including `charter.parsed.json`) in the same change. Regenerate the pinned JSON with:
+Edit `charter.yaml`, bump `version`, give every new rule a `provenance` entry (`tests/` fails otherwise), and update `vectors/` (including `charter.parsed.json`) and the table in `CONSTITUTION.md` in the same change. Regenerate the pinned JSON with:
 
 ```sh
 uv run python -c 'import json, yaml; print(json.dumps(yaml.safe_load(open("charter/charter.yaml")), indent=2, ensure_ascii=False))' > charter/vectors/charter.parsed.json

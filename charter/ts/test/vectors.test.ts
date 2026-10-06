@@ -6,7 +6,16 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parse, stringify } from "yaml";
 
-import { CHARTER_ROOT, Charter, CharterError, is_protected, isProtected, param } from "../src/index.ts";
+import {
+  basis,
+  CHARTER_ROOT,
+  Charter,
+  CharterError,
+  is_protected,
+  isProtected,
+  param,
+  source,
+} from "../src/index.ts";
 
 interface Case {
   name?: string;
@@ -27,6 +36,7 @@ const vectors = (name: string): VectorFile =>
 const TIER = vectors("tier");
 const PROTECTED = vectors("protected");
 const PARAM = vectors("param");
+const PROVENANCE = vectors("provenance");
 const charter = new Charter(CHARTER_ROOT, TIER.extra_jurisdictions);
 
 function errorCode(fn: () => unknown): string {
@@ -40,7 +50,7 @@ function errorCode(fn: () => unknown): string {
 }
 
 it("vectors match this Charter version", () => {
-  for (const v of [TIER, PROTECTED, PARAM]) expect(v.charter_version).toBe(charter.version);
+  for (const v of [TIER, PROTECTED, PARAM, PROVENANCE]) expect(v.charter_version).toBe(charter.version);
 });
 
 describe("tier", () => {
@@ -78,6 +88,25 @@ describe("param", () => {
   it("returns a copy", () => {
     (param("tiers.national.review_panel") as { min: number }).min = 1;
     expect(param("tiers.national.review_panel.min")).toBe(50);
+  });
+});
+
+describe("source and basis", () => {
+  it.each(PROVENANCE.cases.map((c) => [c.key, c] as const))("%s", (_, c) => {
+    const key = c.key as string;
+    if (c.expect_error) {
+      expect(errorCode(() => source(key))).toBe(c.expect_error);
+      expect(errorCode(() => basis(key))).toBe(c.expect_error);
+      return;
+    }
+    const want = c.expect as { basis: string; source: unknown };
+    expect(source(key)).toEqual(want.source);
+    expect(basis(key)).toBe(want.basis);
+  });
+
+  it("returns a copy", () => {
+    source("charter_change.majority").status = "verified";
+    expect(source("charter_change.majority").status).toBe("to_verify");
   });
 });
 
