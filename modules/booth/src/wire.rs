@@ -124,6 +124,10 @@ pub struct Ballot {
     pub nym: String,
     /// The voter's round key (as signed up), hex.
     pub voter_key: String,
+    /// The voter's own counter, signed and bound into every proof: must be greater than the
+    /// `ballot_seq` of the pseudonym's previous accepted ballot, so an earlier (for example
+    /// coerced) ballot cannot be replayed after a re-vote.
+    pub ballot_seq: u64,
     /// One ciphertext per option; exactly one encrypts 1.
     pub choices: Vec<Ciphertext>,
     /// One 0-or-1 proof per option.

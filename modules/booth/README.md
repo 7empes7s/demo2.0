@@ -48,8 +48,14 @@ What it costs is receipt-freeness, next.
 
 Achieved:
 
-- A ballot's bytes do not say whether it is a first vote or a re-vote: same shape, same size,
-  fresh randomness (tested).
+- A ballot's ciphertexts and proofs do not say whether it is a first vote or a re-vote: same
+  shape, fresh randomness (tested). Its signed `ballot_seq` does (2 means a second ballot, and
+  the decimal length can grow past 9), which adds nothing to what the repeated pseudonym already
+  shows (below).
+- An earlier ballot cannot be put back: every ballot carries a per-pseudonym `ballot_seq`,
+  signed and bound into its proofs, that must strictly increase, and an exact copy of an accepted
+  ballot is refused, so nobody who can append to the board can replay the coerced ballot after
+  the re-vote (`ballot_replay`, tested in `tests/flow.rs` and the vectors).
 - Only the last valid ballot per pseudonym counts; a coerced vote followed by a private re-vote
   gives the same counts as if the coercion never happened (tested, `tests/acceptance.rs`).
 - Nobody can decrypt any single ballot, so a coercer cannot learn the re-vote's content from the
@@ -104,7 +110,8 @@ complaint round (a bad share aborts the setup, `BadShare`).
 the parameters (2 to 64 options, `1 <= k <= n <= 64`, id charset); every guardian's commitment
 count and proof of knowledge, in index order; that `round.key` equals what the commitments
 derive to; every sign-up (pseudonym shape, Ed25519 key, no duplicates); every ballot (round id,
-pseudonym signed up with that very key, shape, signature, every 0-or-1 proof, the sum proof);
+pseudonym signed up with that very key, shape, signature, every 0-or-1 proof, the sum proof,
+then not a copy of an accepted ballot and a `ballot_seq` above the pseudonym's previous one);
 that nothing comes after `round.close` but partial decryptions and one tally; every partial
 decryption (guardian in range, not twice, one share per option, each proof against the real
 aggregate of the last valid ballots); the tally (counts sum to counted, sign-up and counted

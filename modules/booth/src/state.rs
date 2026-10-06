@@ -21,7 +21,7 @@ use crate::wire::{
 use curve25519_dalek::ristretto::RistrettoPoint;
 use curve25519_dalek::traits::Identity;
 use ed25519_dalek::VerifyingKey;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 /// Ballot checks done ahead of the sequential replay, by entry sequence number: the key the
 /// check used and its result. The replay uses an item only when the key it would use is the
@@ -79,6 +79,10 @@ pub struct State {
     signups: BTreeMap<String, VerifyingKey>,
     /// Ciphertexts of the last valid ballot per pseudonym.
     last: BTreeMap<String, Vec<(RistrettoPoint, RistrettoPoint)>>,
+    /// `ballot_seq` of the last accepted ballot per pseudonym.
+    last_seq: BTreeMap<String, u64>,
+    /// Signed digests of every accepted ballot (exact copies are refused).
+    digests: HashSet<[u8; 32]>,
     ballots: u64,
     partials: BTreeMap<u32, Vec<RistrettoPoint>>,
     tally: Option<Tally>,
@@ -101,6 +105,8 @@ impl State {
             guardian_keys: Vec::new(),
             signups: BTreeMap::new(),
             last: BTreeMap::new(),
+            last_seq: BTreeMap::new(),
+            digests: HashSet::new(),
             ballots: 0,
             partials: BTreeMap::new(),
             tally: None,
@@ -325,6 +331,20 @@ impl State {
             Some((used, result)) if used == key => result.clone()?,
             _ => check_ballot(&b, round, key)?,
         };
+        // Replays: an exact copy of an accepted ballot (whatever its signature bytes), or a
+        // `ballot_seq` that does not move forward, would let anyone who can append to the
+        // board reinstate an earlier (coerced) ballot after the re-vote.
+        if self.digests.contains(&checked.digest) {
+            return Err(BoothError::BallotReplay(checked.nym));
+        }
+        if let Some(&prev) = self.last_seq.get(&checked.nym) {
+            if checked.ballot_seq <= prev {
+                return Err(BoothError::BallotReplay(checked.nym));
+            }
+        }
+        self.digests.insert(checked.digest);
+        self.last_seq
+            .insert(checked.nym.clone(), checked.ballot_seq);
         self.last.insert(checked.nym, checked.choices);
         self.ballots += 1;
         Ok(())

@@ -33,7 +33,8 @@ fn main() -> ExitCode {
 
 fn verify(path: &str) -> Result<(), String> {
     let text = std::fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))?;
-    let board: Board = serde_json::from_str(&text).map_err(|e| format!("{path}: {e}"))?;
+    let board: Board = d2_booth::board::parse_board(&text)
+        .map_err(|e| format!("{path}: invalid ({}): {e}", e.code()))?;
     let tally = verify_board(&board).map_err(|e| format!("{path}: invalid ({}): {e}", e.code()))?;
     let state = d2_booth::replay(&board).map_err(|e| e.to_string())?;
     let params = state.params().ok_or("no params")?;

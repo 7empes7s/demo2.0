@@ -16,6 +16,7 @@ use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use merlin::Transcript;
 use rand::{CryptoRng, RngCore};
 use sha2::{Digest, Sha256};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 /// Domain separator of the signed ballot digest.
 pub const BALLOT_DOMAIN: &[u8] = b"d2.booth.ballot/1";
@@ -31,10 +32,12 @@ pub struct RoundPublic {
     pub options: usize,
 }
 
-/// A voter: its pseudonym for the round and its round signing key.
+/// A voter: its pseudonym for the round, its round signing key and the `ballot_seq` its next
+/// ballot will carry (from 1, strictly increasing; see `check_ballot` and the state machine).
 pub struct Voter {
     nym: String,
     key: SigningKey,
+    next_seq: AtomicU64,
 }
 
 impl Voter {
@@ -43,6 +46,7 @@ impl Voter {
         Self {
             nym: nym.to_string(),
             key: SigningKey::generate(rng),
+            next_seq: AtomicU64::new(1),
         }
     }
 
@@ -59,11 +63,31 @@ impl Voter {
         }
     }
 
-    /// Encrypt a vote for option `choice` and sign it.
+    /// Encrypt a vote for option `choice` and sign it, with the voter's next `ballot_seq`.
     pub fn ballot<R: RngCore + CryptoRng>(
         &self,
         round: &RoundPublic,
         choice: usize,
+        rng: &mut R,
+    ) -> Result<Ballot, BoothError> {
+        if choice >= round.options {
+            return Err(BoothError::Malformed(format!(
+                "choice {choice} of {} options",
+                round.options
+            )));
+        }
+        let seq = self.next_seq.fetch_add(1, Ordering::Relaxed);
+        self.ballot_with_seq(round, choice, seq, rng)
+    }
+
+    /// `ballot` with an explicit `ballot_seq` (a voter restoring its counter, or tests that
+    /// need a stale one). The board only accepts a ballot whose `ballot_seq` is greater than
+    /// that of the pseudonym's previous accepted ballot.
+    pub fn ballot_with_seq<R: RngCore + CryptoRng>(
+        &self,
+        round: &RoundPublic,
+        choice: usize,
+        ballot_seq: u64,
         rng: &mut R,
     ) -> Result<Ballot, BoothError> {
         if choice >= round.options {
@@ -86,7 +110,15 @@ impl Voter {
             r_sum += r;
             a_sum += a;
             b_sum += b;
-            let mut t = bit_transcript(&round.round_id, &self.nym, opt as u64, k, &a, &b);
+            let mut t = bit_transcript(
+                &round.round_id,
+                &self.nym,
+                ballot_seq,
+                opt as u64,
+                k,
+                &a,
+                &b,
+            );
             bit_proofs.push(prove_bit(&mut t, k, &a, &b, &r, bit, rng));
             choices.push(Ciphertext {
                 a: point_hex(&a),
@@ -94,12 +126,13 @@ impl Voter {
             });
         }
         // The sum (A, B − G) is a DH pair under (G, K) with witness Σr.
-        let mut t = sum_transcript(&round.round_id, &self.nym, k, &a_sum, &b_sum);
+        let mut t = sum_transcript(&round.round_id, &self.nym, ballot_seq, k, &a_sum, &b_sum);
         let sum_proof = ChaumPedersen::prove(&mut t, &g(), k, &r_sum, rng);
         let mut ballot = Ballot {
             round_id: round.round_id.clone(),
             nym: self.nym.clone(),
             voter_key: hex::encode(self.key.verifying_key().as_bytes()),
+            ballot_seq,
             choices,
             bit_proofs,
             sum_proof,
@@ -114,6 +147,7 @@ impl Voter {
 fn bit_transcript(
     round_id: &str,
     nym: &str,
+    ballot_seq: u64,
     option: u64,
     k: &RistrettoPoint,
     a: &RistrettoPoint,
@@ -121,6 +155,7 @@ fn bit_transcript(
 ) -> Transcript {
     let mut t = transcript(b"bit", round_id);
     t.append_message(b"nym", nym.as_bytes());
+    append_u64(&mut t, b"ballot_seq", ballot_seq);
     append_u64(&mut t, b"option", option);
     append_point(&mut t, b"joint_key", k);
     append_point(&mut t, b"a", a);
@@ -131,12 +166,14 @@ fn bit_transcript(
 fn sum_transcript(
     round_id: &str,
     nym: &str,
+    ballot_seq: u64,
     k: &RistrettoPoint,
     a_sum: &RistrettoPoint,
     b_sum: &RistrettoPoint,
 ) -> Transcript {
     let mut t = transcript(b"sum", round_id);
     t.append_message(b"nym", nym.as_bytes());
+    append_u64(&mut t, b"ballot_seq", ballot_seq);
     append_point(&mut t, b"joint_key", k);
     append_point(&mut t, b"a_sum", a_sum);
     append_point(&mut t, b"b_sum", b_sum);
@@ -254,13 +291,17 @@ pub fn voter_key(text: &str) -> Result<VerifyingKey, BoothError> {
 pub struct CheckedBallot {
     /// Pseudonym.
     pub nym: String,
+    /// The signed per-pseudonym counter.
+    pub ballot_seq: u64,
+    /// The signed digest (`ballot_digest`), which does not cover the signature.
+    pub digest: [u8; 32],
     /// `(a, b)` per option.
     pub choices: Vec<(RistrettoPoint, RistrettoPoint)>,
 }
 
 /// Check a ballot against the round: round id, pseudonym shape, the registered key, shape,
-/// signature, every bit proof and the sum proof. Says nothing about sign-up or ordering; the
-/// state machine does that.
+/// signature, every bit proof and the sum proof. Says nothing about sign-up, ordering,
+/// `ballot_seq` or replays; the state machine does that.
 pub fn check_ballot(
     ballot: &Ballot,
     round: &RoundPublic,
@@ -297,18 +338,35 @@ pub fn check_ballot(
     for (opt, (ct, proof)) in ballot.choices.iter().zip(&ballot.bit_proofs).enumerate() {
         let a = point(&format!("choice {opt} a"), &ct.a)?;
         let b = point(&format!("choice {opt} b"), &ct.b)?;
-        let mut t = bit_transcript(&round.round_id, &ballot.nym, opt as u64, k, &a, &b);
+        let mut t = bit_transcript(
+            &round.round_id,
+            &ballot.nym,
+            ballot.ballot_seq,
+            opt as u64,
+            k,
+            &a,
+            &b,
+        );
         verify_bit(&mut t, k, &a, &b, proof)?;
         a_sum += a;
         b_sum += b;
         choices.push((a, b));
     }
-    let mut t = sum_transcript(&round.round_id, &ballot.nym, k, &a_sum, &b_sum);
+    let mut t = sum_transcript(
+        &round.round_id,
+        &ballot.nym,
+        ballot.ballot_seq,
+        k,
+        &a_sum,
+        &b_sum,
+    );
     ballot
         .sum_proof
         .verify(&mut t, &g(), k, &a_sum, &(b_sum - g()))?;
     Ok(CheckedBallot {
         nym: ballot.nym.clone(),
+        ballot_seq: ballot.ballot_seq,
+        digest,
         choices,
     })
 }
@@ -345,6 +403,13 @@ mod tests {
 
         let mut t = ballot.clone();
         t.choices.swap(0, 1);
+        assert_eq!(
+            check_ballot(&t, &round, &key),
+            Err(BoothError::BadSignature)
+        );
+
+        let mut t = ballot.clone();
+        t.ballot_seq += 1;
         assert_eq!(
             check_ballot(&t, &round, &key),
             Err(BoothError::BadSignature)

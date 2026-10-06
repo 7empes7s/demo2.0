@@ -2,14 +2,18 @@
 //!
 //! Entry hash: `SHA-256("d2.booth.entry/1" || 0x00 || seq as 8 bytes big-endian || prev (32
 //! bytes) || kind || 0x00 || canonical JSON of payload)`. `prev` of entry 0 is 32 zero bytes.
-//! Canonical JSON: object keys sorted by byte value, no whitespace, integers only (no floats),
-//! strings escaped as serde_json does (`"`, `\`, control characters; everything else raw UTF-8).
+//! Canonical JSON: object keys sorted by byte value, no whitespace, unsigned integers only (no
+//! floats, negatives, booleans or null), strings escaped as serde_json does (`"`, `\`, control
+//! characters; everything else raw UTF-8). Board files with a duplicate object key are refused
+//! by `parse_board` before anything is hashed.
 
 use crate::error::BoothError;
 use crate::wire::BOARD_SCHEMA;
-use serde::{Deserialize, Serialize};
+use serde::de::{self, MapAccess, SeqAccess, Visitor};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
+use std::collections::HashSet;
 
 /// Domain separator of entry hashes.
 pub const ENTRY_DOMAIN: &[u8] = b"d2.booth.entry/1";
@@ -118,7 +122,67 @@ pub fn entry_hash(seq: u64, prev: &str, kind: &str, payload: &Value) -> Result<S
     Ok(hex::encode(h.finalize()))
 }
 
-/// Canonical JSON of a value: sorted keys, compact, integers only.
+/// Parse a board file, refusing JSON with a duplicate object key anywhere (a plain parse keeps
+/// the last value silently, so two readers could disagree on what was hashed).
+pub fn parse_board(text: &str) -> Result<Board, BoothError> {
+    serde_json::from_str::<NoDuplicateKeys>(text)
+        .map_err(|e| BoothError::Malformed(format!("board JSON: {e}")))?;
+    serde_json::from_str(text).map_err(|e| BoothError::Malformed(format!("board JSON: {e}")))
+}
+
+/// Walks any JSON value and fails on the first object with a repeated key.
+struct NoDuplicateKeys;
+
+impl<'de> Deserialize<'de> for NoDuplicateKeys {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        d.deserialize_any(NoDuplicateKeysVisitor)
+    }
+}
+
+struct NoDuplicateKeysVisitor;
+
+impl<'de> Visitor<'de> for NoDuplicateKeysVisitor {
+    type Value = NoDuplicateKeys;
+
+    fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.write_str("any JSON value")
+    }
+    fn visit_bool<E>(self, _: bool) -> Result<Self::Value, E> {
+        Ok(NoDuplicateKeys)
+    }
+    fn visit_i64<E>(self, _: i64) -> Result<Self::Value, E> {
+        Ok(NoDuplicateKeys)
+    }
+    fn visit_u64<E>(self, _: u64) -> Result<Self::Value, E> {
+        Ok(NoDuplicateKeys)
+    }
+    fn visit_f64<E>(self, _: f64) -> Result<Self::Value, E> {
+        Ok(NoDuplicateKeys)
+    }
+    fn visit_str<E>(self, _: &str) -> Result<Self::Value, E> {
+        Ok(NoDuplicateKeys)
+    }
+    fn visit_unit<E>(self) -> Result<Self::Value, E> {
+        Ok(NoDuplicateKeys)
+    }
+    fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
+        while seq.next_element::<NoDuplicateKeys>()?.is_some() {}
+        Ok(NoDuplicateKeys)
+    }
+    fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<Self::Value, A::Error> {
+        let mut keys = HashSet::new();
+        while let Some(key) = map.next_key::<String>()? {
+            if !keys.insert(key.clone()) {
+                return Err(de::Error::custom(format!("duplicate key {key:?}")));
+            }
+            map.next_value::<NoDuplicateKeys>()?;
+        }
+        Ok(NoDuplicateKeys)
+    }
+}
+
+/// Canonical JSON of a value: sorted keys, compact, unsigned integers, strings, arrays and
+/// objects only.
 pub fn canonical(v: &Value) -> Result<String, BoothError> {
     let mut out = String::new();
     write_canonical(v, &mut out)?;
@@ -127,19 +191,19 @@ pub fn canonical(v: &Value) -> Result<String, BoothError> {
 
 fn write_canonical(v: &Value, out: &mut String) -> Result<(), BoothError> {
     match v {
-        Value::Null => out.push_str("null"),
-        Value::Bool(b) => out.push_str(if *b { "true" } else { "false" }),
-        Value::Number(n) => {
-            if let Some(u) = n.as_u64() {
-                out.push_str(&u.to_string());
-            } else if let Some(i) = n.as_i64() {
-                out.push_str(&i.to_string());
-            } else {
-                return Err(BoothError::Malformed(
-                    "canonical JSON has no floats".to_string(),
-                ));
-            }
+        Value::Null | Value::Bool(_) => {
+            return Err(BoothError::Malformed(
+                "canonical JSON has no null or booleans".to_string(),
+            ))
         }
+        Value::Number(n) => match n.as_u64() {
+            Some(u) => out.push_str(&u.to_string()),
+            None => {
+                return Err(BoothError::Malformed(
+                    "canonical JSON has unsigned integers only".to_string(),
+                ))
+            }
+        },
         Value::String(s) => out
             .push_str(&serde_json::to_string(s).map_err(|e| BoothError::Malformed(e.to_string()))?),
         Value::Array(items) => {
@@ -185,16 +249,43 @@ mod tests {
 
     #[test]
     fn canonical_sorts_keys_and_is_compact() {
-        let v = json!({"b": [1, 2, {"z": "x\"y", "a": null}], "a": true});
+        let v = json!({"b": [1, 2, {"z": "x\"y", "a": "q"}], "a": 18446744073709551615u64});
         assert_eq!(
             canonical(&v).unwrap(),
-            r#"{"a":true,"b":[1,2,{"a":null,"z":"x\"y"}]}"#
+            r#"{"a":18446744073709551615,"b":[1,2,{"a":"q","z":"x\"y"}]}"#
         );
     }
 
     #[test]
-    fn canonical_refuses_floats() {
-        assert!(canonical(&json!({"x": 1.5})).is_err());
+    fn canonical_refuses_what_payloads_never_hold() {
+        for v in [
+            json!({"x": 1.5}),
+            json!({"x": -1}),
+            json!({"x": null}),
+            json!({"x": [true]}),
+            json!(false),
+        ] {
+            assert!(canonical(&v).is_err(), "{v}");
+        }
+    }
+
+    #[test]
+    fn duplicate_keys_are_refused_before_hashing() {
+        let mut b = Board::new();
+        b.append("a", &json!({"x": 1})).unwrap();
+        let text = serde_json::to_string(&b).unwrap();
+        assert_eq!(parse_board(&text).unwrap(), b);
+        let dup = text.replace(r#"{"x":1}"#, r#"{"x":2,"x":1}"#);
+        assert_ne!(dup, text);
+        // A plain parse keeps the last value and the chain still verifies; parse_board refuses.
+        let plain: Board = serde_json::from_str(&dup).unwrap();
+        plain.verify_chain().unwrap();
+        assert!(matches!(parse_board(&dup), Err(BoothError::Malformed(_))));
+        let dup_top = text.replacen(r#""schema""#, r#""schema":"x","schema""#, 1);
+        assert!(matches!(
+            parse_board(&dup_top),
+            Err(BoothError::Malformed(_))
+        ));
     }
 
     #[test]

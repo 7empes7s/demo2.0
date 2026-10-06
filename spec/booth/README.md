@@ -47,7 +47,10 @@ merlin semantics, for implementers without the library: `Transcript::new(label)`
 - **Canonical JSON**: object keys sorted by byte value, no whitespace, numbers are integers
   only (no floats, no exponent), strings escaped as serde_json does (`"` → `\"`, `\` → `\\`,
   U+0008/9/A/C/D → `\b \t \n \f \r`, other control characters → `\u00XX` lowercase hex, everything
-  else raw UTF-8). Payloads contain only strings, unsigned integers, arrays and objects.
+  else raw UTF-8). Payloads contain only strings, unsigned integers (up to 2^64 − 1), arrays
+  and objects; `null`, `true`/`false`, negative numbers and floats make the board `malformed`.
+- A board file with a repeated key in any JSON object is `malformed` (refused before anything is
+  hashed: parsers disagree on which value wins).
 - Unknown fields anywhere in an entry or payload make the board invalid.
 - Any invalid entry makes the whole board invalid. A verifier never skips an entry.
 
@@ -112,7 +115,7 @@ One per pseudonym; a second is `duplicate_signup`. The pseudonym is Door's for t
 ### 3.5 `ballot`
 
 ```json
-{ "round_id": "booth:test-round-1", "nym": "nym-a", "voter_key": "<as signed up>",
+{ "round_id": "booth:test-round-1", "nym": "nym-a", "voter_key": "<as signed up>", "ballot_seq": 1,
   "choices": [ { "a": "<r_0·G>", "b": "<r_0·K + m_0·G>" }, ... one per option ... ],
   "bit_proofs": [ { "commit_0_1": "..", "commit_0_2": "..", "commit_1_1": "..", "commit_1_2": "..",
                     "challenge_0": "..", "response_0": "..", "response_1": ".." }, ... one per option ... ],
@@ -130,9 +133,18 @@ Checks, in order:
 3. For every option `j`, the bit proof (section 4.2) over `(a_j, b_j)`.
 4. The sum proof (section 4.3): with `A = Σ_j a_j`, `B = Σ_j b_j`, Chaum-Pedersen that
    `(A, B − G) = R·(G, K)`.
+5. Replay: the ballot's `digest` (step 2) is not the digest of a ballot already accepted on this
+   board, and its `ballot_seq` is greater than the `ballot_seq` of the pseudonym's previous
+   accepted ballot (any value for its first); otherwise `ballot_replay`.
+
+`ballot_seq` is an unsigned integer the voter's client keeps per pseudonym (this implementation
+starts at 1 and adds 1 per ballot; gaps are allowed). It is covered by the signature and bound
+into every proof transcript, so it cannot be changed without the voter's key. Without it, anyone
+who can append to the board could copy a voter's earlier (coerced) ballot after the re-vote and
+"last counts" would reinstate it.
 
 Only the **last** valid ballot of a pseudonym counts. Every ballot of a round has the same
-shape and size.
+shape; its size differs only in the decimal length of `ballot_seq`.
 
 ### 3.6 `round.close`
 
@@ -183,7 +195,8 @@ Statement: `(P, Q) = x·(G_1, G_2)`. Prover: `w` random, `commit_1 = w·G_1`,
 
 ### 4.2 Bit proof (0 or 1)
 
-Transcript `T("bit")`, then `append_message("nym", nym)`, `append_u64("option", j)`,
+Transcript `T("bit")`, then `append_message("nym", nym)`, `append_u64("ballot_seq", s)`,
+`append_u64("option", j)`,
 `append_point("joint_key", K)`, `append_point("a", a)`, `append_point("b", b)`, then the four
 commitments under `commit_0_1`, `commit_0_2`, `commit_1_1`, `commit_1_2`;
 `c = challenge("challenge")`; `challenge_1 = c − challenge_0`. Verify all four:
@@ -197,7 +210,8 @@ response_1·K == commit_1_2 + challenge_1·(b − G)
 
 ### 4.3 Sum proof
 
-Transcript `T("sum")`, `append_message("nym", nym)`, `append_point("joint_key", K)`,
+Transcript `T("sum")`, `append_message("nym", nym)`, `append_u64("ballot_seq", s)`,
+`append_point("joint_key", K)`,
 `append_point("a_sum", A)`, `append_point("b_sum", B)`, then Chaum-Pedersen (4.1) with
 `(G_1, G_2) = (G, K)` and `(P, Q) = (A, B − G)`.
 
@@ -212,8 +226,9 @@ Transcript `T("decrypt")`, `append_u64("guardian", i)`, `append_u64("option", j)
 
 A verifier reports one of: `chain_broken`, `malformed` (shape, hex, charset, unknown field,
 derived key mismatch, tally bookkeeping), `params`, `out_of_order`, `proof_failed`,
-`bad_signature`, `duplicate_signup`, `not_signed_up`, `below_threshold`, `tally_mismatch`,
-`no_tally`. The must-fail vectors name the code each mutation must produce; where two checks
+`bad_signature`, `duplicate_signup`, `not_signed_up`, `ballot_replay` (a copy of an accepted
+ballot, or a `ballot_seq` not above the pseudonym's previous one), `below_threshold`,
+`tally_mismatch`, `no_tally`. The must-fail vectors name the code each mutation must produce; where two checks
 could both fail, the order in section 3 decides.
 
 ## 6. `vectors.json`
@@ -238,6 +253,8 @@ A mutation is one of:
 - `{"op":"remove","seq":S}`: drop entry `S`, renumber and rehash the rest.
 - `{"op":"truncate","len":N}`: keep the first `N` entries.
 - `{"op":"duplicate","seq":S}`: insert a copy of entry `S` after it, renumber and rehash.
+- `{"op":"copy","seq":S,"after":A}`: insert a copy of entry `S` right after entry `A`
+  (`A >= S`), renumber and rehash (a replay by anyone who can append).
 
 An independent verifier passes when it returns the recorded tally for `board` and the
 recorded error code for every mutated board. Regenerate with

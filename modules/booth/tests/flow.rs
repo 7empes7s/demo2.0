@@ -210,3 +210,75 @@ fn the_verifier_is_strict_about_order_and_shape() {
     b.schema = "other".to_string();
     assert!(matches!(verify_board(&b), Err(BoothError::Malformed(_))));
 }
+
+#[test]
+fn a_coerced_ballot_replayed_after_the_re_vote_is_refused() {
+    // Review finding on PR #31: anyone who can append to the board copied a voter's first
+    // (coerced) ballot after its re-vote, rehashed, and "last counts" reinstated it.
+    let mut rng = StdRng::seed_from_u64(14);
+    let p = params("booth:replay", &["yes", "no"], 2, 2);
+    let (commitments, keys) = run_dkg(&p.round_id, 2, 2, &mut rng).unwrap();
+    let mut round = Round::open(&p, &commitments).unwrap();
+    let public = round.state().round_public().unwrap().clone();
+    let alice = Voter::new("alice", &mut rng);
+    let bob = Voter::new("bob", &mut rng);
+    round.signup(&alice.signup()).unwrap();
+    round.signup(&bob.signup()).unwrap();
+    let coerced = alice.ballot(&public, 0, &mut rng).unwrap();
+    round.cast(&coerced).unwrap();
+    let coerced_seq = round.board().entries.len() as u64 - 1;
+    round
+        .cast(&bob.ballot(&public, 1, &mut rng).unwrap())
+        .unwrap();
+    let re_vote = alice.ballot(&public, 1, &mut rng).unwrap();
+    assert!(re_vote.ballot_seq > coerced.ballot_seq);
+    round.cast(&re_vote).unwrap();
+    let re_vote_seq = round.board().entries.len() as u64 - 1;
+
+    // The operator refuses the replay, and an equal or lower counter signed by the voter.
+    let before = round.board().entries.len();
+    assert_eq!(
+        round.cast(&coerced),
+        Err(BoothError::BallotReplay("alice".to_string()))
+    );
+    for stale in [coerced.ballot_seq, re_vote.ballot_seq] {
+        let b = alice.ballot_with_seq(&public, 0, stale, &mut rng).unwrap();
+        assert_eq!(
+            round.cast(&b),
+            Err(BoothError::BallotReplay("alice".to_string()))
+        );
+    }
+    assert_eq!(round.board().entries.len(), before);
+
+    // The honest board: only the re-vote counts.
+    round.close().unwrap();
+    let aggregates = round.state().aggregates();
+    for key in &keys {
+        round
+            .add_partial(&key.partial_decryption(&p.round_id, &aggregates, &mut rng))
+            .unwrap();
+    }
+    let tally = round.tally(&[1, 2]).unwrap();
+    assert_eq!(tally.counts, vec![0, 2]);
+    assert_eq!(verify_board(round.board()).unwrap(), tally);
+
+    // The reviewer's attack on the published board: copy the coerced ballot entry right after
+    // the re-vote and rehash the chain. The verifier now fails the board at the copy.
+    let attacked = d2_booth::vectors::mutate(
+        round.board(),
+        &d2_booth::vectors::Mutation::Copy {
+            seq: coerced_seq,
+            after: re_vote_seq,
+        },
+    )
+    .unwrap();
+    attacked.verify_chain().unwrap();
+    assert_eq!(
+        verify_board(&attacked),
+        Err(BoothError::BallotReplay("alice".to_string()))
+    );
+    // Same through the JSON a verifier reads.
+    let text = serde_json::to_string(&attacked).unwrap();
+    let parsed = d2_booth::board::parse_board(&text).unwrap();
+    assert_eq!(verify_board(&parsed).unwrap_err().code(), "ballot_replay");
+}

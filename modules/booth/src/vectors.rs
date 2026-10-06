@@ -4,7 +4,7 @@
 //! show this implementation agrees with itself over time and give an independent verifier a
 //! board to check; they say nothing about interoperability with other implementations.
 
-use crate::ballot::Voter;
+use crate::ballot::{RoundPublic, Voter};
 use crate::board::Board;
 use crate::error::BoothError;
 use crate::group::point;
@@ -105,6 +105,14 @@ pub enum Mutation {
         /// Entry index.
         seq: u64,
     },
+    /// Insert a copy of entry `seq` right after entry `after` (`after >= seq`) and rehash, as
+    /// anyone who can append to the board would replay an old entry.
+    Copy {
+        /// Entry to copy.
+        seq: u64,
+        /// The copy goes right after this entry.
+        after: u64,
+    },
 }
 
 /// The vectors file.
@@ -140,6 +148,7 @@ impl BoothError {
             BoothError::BadShare { .. } => "bad_share",
             BoothError::DuplicateSignup(_) => "duplicate_signup",
             BoothError::NotSignedUp(_) => "not_signed_up",
+            BoothError::BallotReplay(_) => "ballot_replay",
             BoothError::BelowThreshold { .. } => "below_threshold",
             BoothError::TallyMismatch(_) => "tally_mismatch",
             BoothError::NoTally => "no_tally",
@@ -169,6 +178,22 @@ fn script() -> Script {
 
 /// Run the script with the seed: the board and its tally.
 pub fn run(script: &Script, seed: [u8; 32]) -> Result<(Board, Tally), BoothError> {
+    let (board, tally, _) = run_keeping_voters(script, seed)?;
+    Ok((board, tally))
+}
+
+/// What `run` leaves behind besides the board: the voters (with their keys and counters),
+/// the round's public data and the generator, so more ballots can be made deterministically.
+struct Leftovers {
+    voters: Vec<Voter>,
+    public: RoundPublic,
+    rng: ChaCha20Rng,
+}
+
+fn run_keeping_voters(
+    script: &Script,
+    seed: [u8; 32],
+) -> Result<(Board, Tally, Leftovers), BoothError> {
     let mut rng = ChaCha20Rng::from_seed(seed);
     let params = RoundParams {
         schema: ROUND_SCHEMA.to_string(),
@@ -215,7 +240,12 @@ pub fn run(script: &Script, seed: [u8; 32]) -> Result<(Board, Tally), BoothError
         round.add_partial(&key.partial_decryption(&script.round_id, &aggregates, &mut rng))?;
     }
     let tally = round.tally(&script.decrypting_guardians)?;
-    Ok((round.board().clone(), tally))
+    let left = Leftovers {
+        voters,
+        public,
+        rng,
+    };
+    Ok((round.board().clone(), tally, left))
 }
 
 /// Apply a mutation to a copy of the board.
@@ -267,6 +297,15 @@ pub fn mutate(board: &Board, m: &Mutation) -> Result<Board, String> {
             b.entries.insert(i + 1, copy);
             Some(i + 1)
         }
+        Mutation::Copy { seq, after } => {
+            let (i, at) = (*seq as usize, *after as usize);
+            if at < i || at >= b.entries.len() {
+                return Err("after out of range".to_string());
+            }
+            let copy = b.entries[i].clone();
+            b.entries.insert(at + 1, copy);
+            Some(at + 1)
+        }
     };
     if let Some(from) = rehash_from {
         let mut prev = if from == 0 {
@@ -294,11 +333,22 @@ fn set(seq: u64, pointer: &str, value: Value, rehash: bool) -> Mutation {
     }
 }
 
-fn must_fail_cases(board: &Board) -> Result<Vec<MustFail>, BoothError> {
+fn must_fail_cases(board: &Board, left: &mut Leftovers) -> Result<Vec<MustFail>, BoothError> {
     // Entry layout of the script: 0 params, 1-3 guardians, 4 key, 5-10 signups, 11-16 first
-    // ballots (nym-a..nym-f), 17-18 re-votes (nym-c, nym-e), 19 third vote (nym-e), 20 close,
-    // 21-22 partials (guardians 1 and 3), 23 tally.
+    // ballots (nym-a..nym-f, ballot_seq 1), 17-18 re-votes (nym-c, nym-e, ballot_seq 2), 19
+    // third vote (nym-e, ballot_seq 3), 20 close, 21-22 partials (guardians 1 and 3), 23 tally.
     let e = |seq: usize| &board.entries[seq];
+    // Ballots the voters really signed, with a stale `ballot_seq`: nym-c's re-vote carrying
+    // the same counter as its first ballot, and nym-e's third vote carrying 1 after 2.
+    let nym_c = &left.voters[2];
+    let nym_e = &left.voters[4];
+    let equal_seq = nym_c.ballot_with_seq(&left.public, 2, 1, &mut left.rng)?;
+    let lower_seq = nym_e.ballot_with_seq(&left.public, 0, 1, &mut left.rng)?;
+    let as_value = |b: &crate::wire::Ballot| {
+        serde_json::to_value(b).map_err(|e| BoothError::Malformed(e.to_string()))
+    };
+    let equal_seq = as_value(&equal_seq)?;
+    let lower_seq = as_value(&lower_seq)?;
     let ballot_12 = e(12).payload.clone();
     let partial_21 = e(21).payload.clone();
     let tally_counts = e(23).payload["counts"].clone();
@@ -342,6 +392,36 @@ fn must_fail_cases(board: &Board) -> Result<Vec<MustFail>, BoothError> {
             "A ballot says it belongs to another round.",
             set(11, "/payload/round_id", Value::String("booth:other".to_string()), true),
             "malformed",
+        ),
+        case(
+            "ballot_replayed_after_re_vote",
+            "nym-c's first (coerced) ballot is copied, unchanged and validly signed, after its re-vote; its ballot_seq does not move forward, so the replay is refused instead of reinstating the coerced vote.",
+            Mutation::Copy { seq: 13, after: 17 },
+            "ballot_replay",
+        ),
+        case(
+            "ballot_duplicated",
+            "A ballot is published twice in a row; the second is an exact copy of an accepted one.",
+            Mutation::Duplicate { seq: 13 },
+            "ballot_replay",
+        ),
+        case(
+            "ballot_seq_equal",
+            "nym-c's re-vote is replaced by one nym-c signed with the same ballot_seq as its first ballot.",
+            set(17, "/payload", equal_seq, true),
+            "ballot_replay",
+        ),
+        case(
+            "ballot_seq_decreasing",
+            "nym-e's third ballot is replaced by one nym-e signed with ballot_seq 1, after its ballot_seq 2.",
+            set(19, "/payload", lower_seq, true),
+            "ballot_replay",
+        ),
+        case(
+            "ballot_seq_edited",
+            "An operator raises a ballot's ballot_seq and rehashes; the signature no longer verifies.",
+            set(11, "/payload/ballot_seq", Value::from(7), true),
+            "bad_signature",
         ),
         case(
             "duplicate_signup",
@@ -434,7 +514,7 @@ fn must_fail_cases(board: &Board) -> Result<Vec<MustFail>, BoothError> {
         case(
             "ballot_payload_edited_unsigned_field",
             "An extra field is added to a ballot; unknown fields are refused.",
-            set(11, "/payload/extra", Value::Bool(true), true),
+            set(11, "/payload/extra", Value::String("x".to_string()), true),
             "malformed",
         ),
         case(
@@ -473,8 +553,8 @@ fn must_fail_cases(board: &Board) -> Result<Vec<MustFail>, BoothError> {
 /// Generate the vectors.
 pub fn generate() -> Result<Vectors, BoothError> {
     let script = script();
-    let (board, tally) = run(&script, SEED)?;
-    let must_fail = must_fail_cases(&board)?;
+    let (board, tally, mut left) = run_keeping_voters(&script, SEED)?;
+    let must_fail = must_fail_cases(&board, &mut left)?;
     Ok(Vectors {
         schema: SCHEMA.to_string(),
         generated_by: GENERATED_BY.to_string(),
@@ -484,7 +564,7 @@ pub fn generate() -> Result<Vectors, BoothError> {
             encryption: "exponential ElGamal: (a, b) = (r*G, r*K + m*G)".to_string(),
             proofs: "Chaum-Pedersen and disjunctive Chaum-Pedersen, Fiat-Shamir over merlin 3 transcripts (STROBE-128), protocol label d2.booth/1".to_string(),
             key_generation: "joint Feldman VSS (Pedersen 1991), k-of-n, Schnorr proof of the constant term, Lagrange at zero".to_string(),
-            signatures: "Ed25519 (RFC 8032) over SHA-256(\"d2.booth.ballot/1\" || 0x00 || canonical JSON of the ballot with signature \"\")".to_string(),
+            signatures: "Ed25519 (RFC 8032) over SHA-256(\"d2.booth.ballot/1\" || 0x00 || canonical JSON of the ballot with signature \"\"); ballot_seq strictly increasing per pseudonym, exact copies refused".to_string(),
             board: "SHA-256(\"d2.booth.entry/1\" || 0x00 || seq be64 || prev || kind || 0x00 || canonical JSON payload); canonical = sorted keys, compact, integers only".to_string(),
         },
         script,

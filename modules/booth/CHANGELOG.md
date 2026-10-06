@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Fix (review of PR #31): a voter's earlier (coerced) ballot could be replayed after its re-vote and "last counts" reinstated it. Ballots now carry a signed `ballot_seq` that is bound into the bit and sum proof transcripts and must strictly increase per pseudonym; exact copies of an accepted ballot (same signed digest) are refused too. New error code `ballot_replay`; `Voter::ballot_with_seq`.
+- Canonical JSON refuses null, booleans and negative integers (spec section 2 already excluded them); `board::parse_board` refuses board files with a duplicate object key, and `d2-booth verify` uses it.
+- Vectors: new `copy` mutation; must-fail cases for a replayed ballot, a duplicated ballot, an equal and a decreasing `ballot_seq` (both really signed) and an edited `ballot_seq` (29 cases).
+
 ## 0.1.0
 
 - Protocol core of Booth (02-protocols section 2) as a homomorphic tally with threshold guardians, the document's "alternative considered"; unaudited, non-binding. Receipt-freeness is not achieved: the board shows that a pseudonym cast a second ballot (README "Receipt-freeness").

@@ -42,6 +42,10 @@ pub enum BoothError {
     /// A ballot for a pseudonym that never signed up, or signed with a different key.
     #[error("ballot for nym {0} does not match a sign-up")]
     NotSignedUp(String),
+    /// A ballot that repeats an accepted one (same signed digest) or whose `ballot_seq` is not
+    /// greater than that of the pseudonym's previous accepted ballot: a replay.
+    #[error("ballot for nym {0} replays an earlier ballot (ballot_seq must strictly increase)")]
+    BallotReplay(String),
     /// Fewer partial decryptions than the threshold.
     #[error("only {have} of the {need} partial decryptions needed")]
     BelowThreshold {
