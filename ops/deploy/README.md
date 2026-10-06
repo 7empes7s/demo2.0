@@ -43,7 +43,7 @@ systemctl daemon-reload
 systemctl enable civic-provenance.service civic-agora.service  # started with the Companion from now on
 systemctl start app-deploy@civic.service       # first release; wait until it logs "live"
 curl -s 127.0.0.1:8787/healthz                 # {"ok":true,"items":0,...,"provenance":true}
-systemctl start civic-docket.service           # first real snapshot (needs /opt/civic/current); restarts both services
+systemctl start civic-docket.service           # first real snapshot (needs /opt/civic/current); restarts all three services
 curl -s 127.0.0.1:8090/healthz                 # {"ok": true, "items": N, "sentences": M}
 curl -s 127.0.0.1:8091/healthz                 # {"ok": true, "ideas": 0}
 systemctl enable --now app-deploy@civic.timer civic-docket.timer

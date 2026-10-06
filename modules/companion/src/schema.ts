@@ -35,13 +35,26 @@ const KNOWN = new Set([
 ]);
 
 /** RFC 3339 date-time, as `format: date-time` means it (`2026-10-06T09:00:00.000000Z`, `+02:00`). */
-const DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/i;
+const DATE_TIME = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-](\d{2}):(\d{2}))$/i;
+
+/** A real calendar date and clock time: no 30 February, no hour 24, no offset +25:00. */
+function isDateTime(s: string): boolean {
+  const m = DATE_TIME.exec(s);
+  if (!m) return false;
+  const [y, mo, d, h, mi, se] = m.slice(1, 7).map(Number);
+  const day = new Date(0);
+  day.setUTCFullYear(y, mo - 1, d); // not Date.UTC: it reads years 0-99 as 1900-1999
+  const sameDay = day.getUTCFullYear() === y && day.getUTCMonth() === mo - 1 && day.getUTCDate() === d;
+  const offsetOk = m[9] === undefined || (Number(m[9]) <= 23 && Number(m[10]) <= 59);
+  return sameDay && h <= 23 && mi <= 59 && se <= 59 && offsetOk && !Number.isNaN(Date.parse(s));
+}
 
 /** Own keys only: "constructor", "__proto__" or "toString" must never resolve to Object built-ins. */
 const own = <T>(rec: Record<string, T> | undefined, key: string): T | undefined =>
   rec !== undefined && Object.hasOwn(rec, key) ? rec[key] : undefined;
 
-const typeOf = (v: unknown) => (v === null ? "null" : Array.isArray(v) ? "array" : Number.isInteger(v) ? "integer" : typeof v);
+// Only a safe integer counts as an integer: 1e300 or 2^53 is never a count anyone can show exactly.
+const typeOf = (v: unknown) => (v === null ? "null" : Array.isArray(v) ? "array" : Number.isSafeInteger(v) ? "integer" : typeof v);
 
 function check(schema: Schema, value: unknown, root: Schema, at: string, out: string[]): void {
   for (const k of Object.keys(schema)) if (!KNOWN.has(k)) out.push(`${at}: unsupported schema keyword ${k}`);
@@ -69,7 +82,7 @@ function check(schema: Schema, value: unknown, root: Schema, at: string, out: st
     if (schema.minLength !== undefined && [...s].length < schema.minLength) out.push(`${at}: too short`);
     if (schema.pattern && !new RegExp(schema.pattern, "u").test(s)) out.push(`${at}: does not match ${schema.pattern}`);
     if (schema.format === "uri" && !URL.canParse(s)) out.push(`${at}: not a URI`);
-    if (schema.format === "date-time" && !(DATE_TIME.test(s) && !Number.isNaN(Date.parse(s)))) out.push(`${at}: not a date-time`);
+    if (schema.format === "date-time" && !isDateTime(s)) out.push(`${at}: not a date-time`);
   }
   if ((t === "integer" || t === "number") && schema.minimum !== undefined && (value as number) < schema.minimum) out.push(`${at}: below ${schema.minimum}`);
   if (t === "array") {

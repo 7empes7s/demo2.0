@@ -12,6 +12,7 @@
 import ideaSchema from "../../../spec/schemas/idea.schema.json" with { type: "json" };
 
 import { type Schema, schemaProblems } from "./schema.ts";
+import { MAX_UPSTREAM_BYTES, readJson, TooLarge, UPSTREAM } from "./upstream.ts";
 
 export type ScopeTier = "national" | "regional" | "local" | "minor";
 export const TIERS: readonly ScopeTier[] = ["national", "regional", "local", "minor"];
@@ -69,13 +70,25 @@ const publicIdeaSchema: Schema = (() => {
 /** Why a value is not a valid Idea; empty when it is one. */
 export const ideaProblems = (value: unknown): string[] => schemaProblems(ideaSchema as Schema, value, "idea");
 
+/** Schema problems of a queue, plus any idea id that appears twice (the app keys its list by id). */
+function pageProblems(schema: Schema, value: unknown, at: string): string[] {
+  const problems = schemaProblems(schema, value, at);
+  if (problems.length) return problems;
+  const seen = new Set<string>();
+  for (const [i, idea] of (value as { ideas: { id: string }[] }).ideas.entries()) {
+    if (seen.has(idea.id)) problems.push(`${at}.ideas[${i}].id: appears twice`);
+    seen.add(idea.id);
+  }
+  return problems;
+}
+
 /** Why a value is not a valid Agora /queue answer of at most `limit` ideas; empty when it is one. */
 export const queueProblems = (value: unknown, limit = MAX_IDEAS): string[] =>
-  schemaProblems(queueSchema(limit, ideaSchema as Schema), value, "queue");
+  pageProblems(queueSchema(limit, ideaSchema as Schema), value, "queue");
 
 /** Why a value is not a valid /api/ideas answer (no pseudonyms allowed); empty when it is one. */
 export const ideasPageProblems = (value: unknown, limit = MAX_IDEAS): string[] =>
-  schemaProblems(queueSchema(limit, publicIdeaSchema), value, "ideas");
+  pageProblems(queueSchema(limit, publicIdeaSchema), value, "ideas");
 
 /** Agora could not be reached, timed out or failed. */
 export class AgoraUnavailable extends Error {}
@@ -85,6 +98,8 @@ export class AgoraInvalid extends Error {}
 export interface QueueOptions {
   /** Default 3 s, for the whole answer. */
   timeoutMs?: number;
+  /** Default MAX_UPSTREAM_BYTES (16 MiB); a longer answer is refused, never read in full. */
+  maxBytes?: number;
   fetch?: typeof fetch;
 }
 
@@ -98,7 +113,7 @@ export async function readQueue(base: string, query: { jurisdictions?: string[];
   params.set("limit", String(query.limit));
   let res: Response;
   try {
-    res = await doFetch(`${base.replace(/\/+$/, "")}/queue?${params}`, { signal: AbortSignal.timeout(opts.timeoutMs ?? 3_000) });
+    res = await doFetch(`${base.replace(/\/+$/, "")}/queue?${params}`, { ...UPSTREAM, signal: AbortSignal.timeout(opts.timeoutMs ?? 3_000) });
   } catch (e) {
     throw new AgoraUnavailable(`agora unreachable: ${(e as Error).message}`);
   }
@@ -108,9 +123,10 @@ export async function readQueue(base: string, query: { jurisdictions?: string[];
   }
   let body: unknown;
   try {
-    body = await res.json();
+    body = await readJson(res, opts.maxBytes ?? MAX_UPSTREAM_BYTES);
   } catch (e) {
     if (isTimeout(e)) throw new AgoraUnavailable("agora timed out while sending its answer");
+    if (e instanceof TooLarge) throw new AgoraInvalid(`agora's ${e.message}`);
     throw new AgoraInvalid("agora answered something that is not JSON");
   }
   const problems = queueProblems(body, query.limit);

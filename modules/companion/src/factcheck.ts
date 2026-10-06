@@ -7,6 +7,7 @@
 import gradeSchema from "../../../spec/schemas/grade.schema.json" with { type: "json" };
 
 import { type Schema, schemaProblems } from "./schema.ts";
+import { MAX_SMALL_BYTES, MAX_UPSTREAM_BYTES, readJson, TooLarge, UPSTREAM } from "./upstream.ts";
 
 export type GradeColour = "green" | "yellow" | "red";
 
@@ -56,7 +57,7 @@ const isTimeout = (e: unknown) => e instanceof Error && (e.name === "TimeoutErro
 /** Reads a small JSON error body; null if it is not JSON or the read fails. Never throws. */
 async function errorCode(res: Response): Promise<unknown> {
   try {
-    const body = (await res.json()) as { code?: unknown } | null;
+    const body = (await readJson(res, MAX_SMALL_BYTES)) as { code?: unknown } | null;
     return body && typeof body === "object" ? body.code : null;
   } catch {
     return null;
@@ -77,6 +78,7 @@ export async function gradeClaim(base: string, text: string, context?: string, o
   let res: Response;
   try {
     res = await doFetch(`${base.replace(/\/+$/, "")}/claims/grade`, {
+      ...UPSTREAM,
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(context ? { text, context } : { text }),
@@ -98,9 +100,10 @@ export async function gradeClaim(base: string, text: string, context?: string, o
   }
   let body: unknown;
   try {
-    body = await res.json();
+    body = await readJson(res, MAX_UPSTREAM_BYTES);
   } catch (e) {
     if (isTimeout(e)) throw new CheckerUnavailable("provenance timed out while sending its answer");
+    if (e instanceof TooLarge) throw new CheckerInvalid(`provenance's ${e.message}`);
     throw new CheckerInvalid("provenance answered something that is not JSON");
   }
   const problems = gradeProblems(body);

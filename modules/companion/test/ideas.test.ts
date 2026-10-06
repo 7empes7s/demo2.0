@@ -92,6 +92,10 @@ describe("idea schema check", () => {
     expect(ideaProblems(HIDDEN)).toEqual([]);
     expect(queueProblems(QUEUE)).toEqual([]);
     expect(queueProblems({ charter_version: "0.1.0", ideas: [] })).toEqual([]);
+    for (const created_at of ["2024-02-29T00:00:00Z", "2026-12-31T23:59:59.999999+14:00", "0099-01-01T00:00:00-23:59"]) {
+      expect(ideaProblems({ ...IDEA, created_at }), created_at).toEqual([]);
+    }
+    expect(ideaProblems({ ...IDEA, upvote_count: Number.MAX_SAFE_INTEGER })).toEqual([]);
   });
 
   it("rejects anything spec/schemas/idea.schema.json does not allow", () => {
@@ -111,6 +115,15 @@ describe("idea schema check", () => {
       { ...IDEA, topic_ids: ["a", "b", "c", "d", "e", "f", "g", "h", "i"] },
       { ...IDEA, created_at: "yesterday" },
       { ...IDEA, created_at: "2026-13-45T99:00:00Z" },
+      { ...IDEA, created_at: "2026-02-30T00:00:00Z" },
+      { ...IDEA, created_at: "2025-02-29T00:00:00Z" },
+      { ...IDEA, created_at: "2026-04-31T00:00:00Z" },
+      { ...IDEA, created_at: "2026-10-06T24:00:00Z" },
+      { ...IDEA, created_at: "2026-10-06T09:60:00Z" },
+      { ...IDEA, created_at: "2026-10-06T09:00:00+24:00" },
+      { ...IDEA, created_at: "2026-10-06T09:00:00+02:60" },
+      { ...IDEA, upvote_count: 1e300 },
+      { ...IDEA, upvote_count: 2 ** 53 },
       { ...IDEA, charter_version: "" },
       { ...IDEA, extra: 1 },
       { ...IDEA, proposer_nym: undefined },
@@ -124,6 +137,11 @@ describe("idea schema check", () => {
       expect(queueProblems(value), JSON.stringify(value)).not.toEqual([]);
     }
     expect(queueProblems(QUEUE, 1)).toContain("queue.ideas: more than 1 items");
+  });
+
+  it("refuses a page that lists the same idea twice", () => {
+    expect(queueProblems({ ...QUEUE, ideas: [IDEA, HIDDEN, { ...IDEA, upvote_count: 3 }] })).toEqual(["queue.ideas[2].id: appears twice"]);
+    expect(ideasPageProblems({ ...QUEUE, ideas: [PUBLIC_IDEA, PUBLIC_IDEA] })).toEqual(["ideas.ideas[1].id: appears twice"]);
   });
 
   it("never accepts a pseudonym in what the app is sent", () => {
@@ -226,6 +244,7 @@ describe("GET /api/ideas", () => {
       { ideas: [IDEA] },
       [IDEA],
       { charter_version: "0.1.0", ideas: Array.from({ length: 51 }, () => IDEA) },
+      { ...QUEUE, ideas: [IDEA, HIDDEN, IDEA] },
       "<html>oops</html>",
     ];
     for (const answer of answers) {
@@ -264,6 +283,31 @@ describe("GET /api/ideas", () => {
     expect(none.status).toBe(503);
     expect((await none.json()).error).toMatch(/not configured/);
     expect(log.mock.calls.map((c) => c[0])).toContain("ideas: agora timed out while sending its answer");
+  });
+
+  it("reads Agora once per query in 15 s, however many requests arrive, and never keeps a failure", async () => {
+    let fail = true;
+    const agora = await fakeAgora((_, res) => setTimeout(() => (fail ? json(res, 500, {}) : json(res, 200, QUEUE)), 50));
+    const get = await companion(agora.url);
+    quiet();
+    expect((await get()).status).toBe(503);
+    fail = false;
+    expect((await get()).status).toBe(200);
+    const statuses = await Promise.all(Array.from({ length: 5 }, () => get("/api/ideas?jurisdiction=lu&jurisdiction=lu-commune-esch-sur-alzette")));
+    expect(statuses.map((r) => r.status)).toEqual([200, 200, 200, 200, 200]);
+    expect((await get("/api/ideas?jurisdiction=lu-commune-esch-sur-alzette&jurisdiction=lu&limit=50")).status).toBe(200);
+    expect(agora.seen.map((s) => s.path)).toEqual(["/queue?limit=50", "/queue?limit=50", "/queue?jurisdiction=lu&jurisdiction=lu-commune-esch-sur-alzette&limit=50"]);
+  });
+
+  it("asks Agora again once the cached answer is older than the cache time", async () => {
+    const agora = await fakeAgora((_, res) => json(res, 200, QUEUE));
+    const get = await companion(agora.url, { ideasCacheMs: 50 });
+    await get();
+    await get();
+    expect(agora.seen).toHaveLength(1);
+    await new Promise((r) => setTimeout(r, 80));
+    await get();
+    expect(agora.seen).toHaveLength(2);
   });
 
   it("is rate limited per client, in its own bucket apart from claim checks", async () => {
@@ -305,5 +349,14 @@ describe("GET /healthz with Agora", () => {
     const started = Date.now();
     expect((await (await health(await listen(hung)))()).agora).toBe(false);
     expect(Date.now() - started).toBeLessThan(3_000);
+  });
+
+  it("probes Agora and Provenance at the same time: both hung costs one 1 s wait, not two", async () => {
+    const hung = await listen(createServer(() => {}));
+    const base = await listen(createCompanionServer({ provider: null, snapshot, agoraUrl: hung, provenanceUrl: hung }));
+    const started = Date.now();
+    const body = (await (await fetch(base + "/healthz")).json()) as Record<string, unknown>;
+    expect(body).toMatchObject({ ok: true, agora: false, provenance: false });
+    expect(Date.now() - started).toBeLessThan(1_700);
   });
 });

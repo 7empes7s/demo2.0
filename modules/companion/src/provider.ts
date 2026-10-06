@@ -34,6 +34,7 @@ export class AnthropicProvider implements Provider {
 
   async complete(req: CompletionRequest): Promise<string> {
     const res = await fetch(`${this.baseUrl}/v1/messages`, {
+      redirect: "error",
       method: "POST",
       signal: req.signal,
       headers: {

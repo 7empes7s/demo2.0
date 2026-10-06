@@ -28,7 +28,8 @@ import { basename, extname, join, normalize, resolve, sep } from "node:path";
 import { type CommonsArgument, type CommonsClient, commonsSuffices, HttpCommons } from "./commons.ts";
 import { challenge, checkClaim, explain, extractArguments } from "./companion.ts";
 import { CheckerInvalid, CheckerUnavailable, gradeClaim, MAX_CLAIM } from "./factcheck.ts";
-import { AgoraInvalid, AgoraUnavailable, DEFAULT_IDEAS, JURISDICTION, MAX_IDEAS, MAX_JURISDICTIONS, readQueue } from "./ideas.ts";
+import { AgoraInvalid, AgoraUnavailable, DEFAULT_IDEAS, type IdeasPage, JURISDICTION, MAX_IDEAS, MAX_JURISDICTIONS, readQueue } from "./ideas.ts";
+import { MAX_SMALL_BYTES, readJson, UPSTREAM } from "./upstream.ts";
 import { AnthropicProvider, type Provider } from "./provider.ts";
 import { readSnapshot } from "./snapshot.ts";
 import { buildSources } from "./sources.ts";
@@ -69,6 +70,8 @@ export interface ServerOptions {
   agoraUrl?: string;
   /** How long to wait for Agora's whole answer, in ms (default 3000). */
   agoraTimeoutMs?: number;
+  /** How long one Agora answer is reused for the same query, in ms. Default 15 s. */
+  ideasCacheMs?: number;
   /** Ideas-list reads per client per minute (default 60). Their own bucket: they cost no model tokens. */
   ideasPerMinute?: number;
 }
@@ -263,8 +266,8 @@ export function createCompanionServer(opts: ServerOptions) {
     return (): Promise<boolean> => {
       if (!base) return Promise.resolve(false);
       if (seen && Date.now() - seen.at < 30_000) return Promise.resolve(seen.ok);
-      probe ??= fetch(`${base.replace(/\/+$/, "")}/healthz`, { signal: AbortSignal.timeout(1_000) })
-        .then(async (res) => res.ok && ((await res.json()) as { ok?: unknown })?.ok === true)
+      probe ??= fetch(`${base.replace(/\/+$/, "")}/healthz`, { ...UPSTREAM, signal: AbortSignal.timeout(1_000) })
+        .then(async (res) => res.ok && ((await readJson(res, MAX_SMALL_BYTES)) as { ok?: unknown })?.ok === true)
         .catch(() => false)
         .then((ok) => {
           seen = { ok, at: Date.now() };
@@ -282,6 +285,28 @@ export function createCompanionServer(opts: ServerOptions) {
    * 200 {charter_version, ideas} without proposer pseudonyms; 400 on a bad query; 503 when Agora
    * is unreachable, slow or failing; 502 when it answers something that is not a valid queue.
    */
+  /**
+   * Agora's answer per query (sorted jurisdictions and limit), shared by every request in the next
+   * 15 s, including the ones that arrive while it is still being read: page views never multiply
+   * reads of a large queue. Failures are not kept.
+   */
+  const queueCache = new Map<string, { at: number; page: Promise<IdeasPage> }>();
+  function cachedQueue(base: string, jurisdictions: string[], limit: number): Promise<IdeasPage> {
+    const now = Date.now();
+    for (const [k, v] of queueCache) if (now - v.at >= (opts.ideasCacheMs ?? 15_000)) queueCache.delete(k);
+    const key = `${jurisdictions.join(",")}|${limit}`;
+    const hit = queueCache.get(key);
+    if (hit) return hit.page;
+    // Bounded: at most 32 queries are kept, the oldest goes first.
+    if (queueCache.size >= 32) queueCache.delete(queueCache.keys().next().value!);
+    const entry = { at: now, page: readQueue(base, { jurisdictions, limit }, { timeoutMs: opts.agoraTimeoutMs }) };
+    queueCache.set(key, entry);
+    entry.page.catch(() => {
+      if (queueCache.get(key) === entry) queueCache.delete(key);
+    });
+    return entry.page;
+  }
+
   async function ideas(req: IncomingMessage, url: URL): Promise<unknown> {
     for (const key of url.searchParams.keys()) {
       if (key !== "jurisdiction" && key !== "limit") throw new HttpError(400, `unknown parameter ${key.slice(0, 40)}`);
@@ -297,7 +322,7 @@ export function createCompanionServer(opts: ServerOptions) {
     if (!opts.agoraUrl) throw new HttpError(503, "the ideas list is not configured on this server");
     throttle(req, ideasHits, ideasLimit);
     try {
-      return await readQueue(opts.agoraUrl, { jurisdictions, limit }, { timeoutMs: opts.agoraTimeoutMs });
+      return await cachedQueue(opts.agoraUrl, jurisdictions.sort(), limit);
     } catch (e) {
       if (e instanceof AgoraUnavailable) {
         console.error(`ideas: ${e.message}`);
@@ -384,7 +409,10 @@ export function createCompanionServer(opts: ServerOptions) {
   return createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", "http://localhost");
     try {
-      if (url.pathname === "/healthz") return send(res, 200, { ok: true, items: items.size, companion: !!opts.provider, provenance: await provenanceUp(), agora: await agoraUp() });
+      if (url.pathname === "/healthz") {
+        const [provenance, agora] = await Promise.all([provenanceUp(), agoraUp()]);
+        return send(res, 200, { ok: true, items: items.size, companion: !!opts.provider, provenance, agora });
+      }
       if (url.pathname === "/data/snapshot.json") {
         if (req.headers["if-none-match"] === snapshotTag) {
           res.writeHead(304, { etag: snapshotTag });
