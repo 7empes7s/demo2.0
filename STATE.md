@@ -2,6 +2,11 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-06: civic-commons unit, configurable Companion port in ops docs
+
+- Done: `ops/deploy/civic-commons.service` (same shape as `civic-provenance`: loopback `127.0.0.1:8093`, sandboxed, release tree read only, `PartOf`/`WantedBy` `civic-companion`), serving the shipped seed `modules/commons/seed/esch.json`; `COMMONS_URL=http://127.0.0.1:8093` in `companion.env.example`; not in `HEALTH_URLS`. Port 8093 because `d2-commons serve` defaults to 8091 (Agora) and 8092 is kept for Door. README install and health steps. Docs, env examples, `Caddyfile` and `cloudflared.yml` say the Companion port must match `PORT` in `companion.env` and `HEALTH_URLS`; `publish-cloudflare.sh` reads `PORT` from `/etc/civic/companion.env` (code default 8787 unchanged). README "Mulinux notes": port 8788, Node 22 drop-ins, main tunnel plus Caddy host block.
+- Next: install `civic-commons` (and `civic-provenance`, `civic-agora`) on Mulinux and set `COMMONS_URL` in `/etc/civic/companion.env`.
+
 ## 2026-10-06: Agora writes need Door
 
 - Done: `d2-door serve` (Rust, standard library only, loopback `:8092`): `POST /presentations/verify` `{presentation, context, challenge, epoch, require}` -> `{pseudonym, nym, disclosed, epoch}` or `{error, code}`; issuer keys from one file per epoch; the caller names the one epoch it accepts. Head 8 KiB, body 64 KiB, 5 s per request, 32 connections, `Transfer-Encoding` refused; the no-panic sweep now covers raw HTTP input and every body field. `d2-door dev-world` / `present` (mock provider) make real credentials and presentations for tests. Agora `DoorNyms`: `GET /challenge` (32 bytes, 120 s, single use), posts and upvotes take a presentation for `agora:<jurisdiction>`, `adult` must be true, the disclosed path must start with the idea's Charter path (`Charter.jurisdiction_path`, new in the Python binding), raw ids refused with `DOOR_URL`, Door down -> writes `503`, reads fine. `test_door.py` runs Agora against a real `d2-door serve` with Rust-made presentations.
