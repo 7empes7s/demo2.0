@@ -116,9 +116,8 @@
     align-items: flex-start;
     margin: 0;
     padding: 0.7rem 0.9rem;
-    border-radius: var(--radius);
-    background: var(--surface-2);
-    border-left: 3px solid var(--accent);
+    border: var(--rule) solid var(--line);
+    background: var(--surface);
     max-width: 68ch;
   }
   .closed svg { flex: none; margin-top: 2px; color: var(--accent-fg); }
@@ -129,10 +128,8 @@
     gap: 10px;
     justify-items: start;
     padding: 0.8rem 0.9rem;
-    border-radius: var(--radius);
-    background: var(--yellow-bg);
-    color: var(--fg);
-    border-left: 3px solid var(--yellow);
+    border: var(--rule) solid var(--line);
+    background: var(--surface);
   }
   .empty {
     display: grid;
@@ -140,25 +137,22 @@
     text-align: center;
     min-height: 160px;
     padding: 24px;
-    border: 1px dashed var(--line);
-    border-radius: var(--radius);
+    border: var(--rule) dashed var(--line);
   }
   .empty .serif { font-size: 1.45rem; margin: 0; }
   .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
   .idea { display: grid; gap: 8px; align-content: start; }
   .meta { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 0.86rem; }
   .reach {
-    font-size: 0.72rem;
-    letter-spacing: 0.06em;
+    font: 700 0.72rem/1.5 var(--serif);
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    font-weight: 700;
-    padding: 0.15rem 0.55rem;
-    border-radius: 999px;
-    border: 1px solid var(--line);
-    color: var(--muted);
+    padding: 0 6px;
+    border: 2px solid var(--line);
+    background: var(--surface);
   }
-  .reach.national { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-  .reach.regional { border-color: var(--accent); color: var(--accent-fg); }
+  .reach.national { background: var(--accent); color: var(--accent-ink); }
+  .reach.regional { background: var(--surface-2); }
   .idea h3 { font-size: 1.45rem; line-height: 1.2; overflow-wrap: anywhere; }
   .text { margin: 0; max-width: 68ch; white-space: pre-line; overflow-wrap: anywhere; }
   .support { margin: 0; font-weight: 600; font-size: 0.92rem; }

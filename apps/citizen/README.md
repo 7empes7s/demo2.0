@@ -26,15 +26,14 @@ uv run d2-provenance serve --docket path/to/lu-chd.json   # the claim checker on
 - `npm run build` produces `dist/`, which the Companion server serves (`STATIC_DIR=apps/citizen/dist`). The browser sends only an item id. The server builds every prompt and holds the API key.
 - `npm run build:single`, then `node scripts/embed.mjs <snapshot.json>`, produces one self-contained HTML file with the snapshot inside. Pass `--fragment` to get the version for a claude.ai artifact. That version runs the Companion core in the page, uses the viewer's own Claude as the model (the `sample` capability), and needs no server or key.
 
-## Looks
+## Look
 
-The app is moving to the Affichage identity (paper sheets on a public wall; the decision and its pages are in `docs/design/`). It lands behind a per-device flag, in three steps: tokens and type, sheets and marks, motion (all three done).
+The app is Affichage: paper sheets pasted on a public wall (the decision and its pages are in `docs/design/`). It is the only look; there is no flag.
 
-- Open the app with `?look=affichage` in the address to turn it on; the device remembers it (`d2.look`). `?look=default` turns it off. The flag is applied before the first paint as `data-look` on `<html>`.
-- `src/tokens.css` keeps one set of token names; the Affichage block remaps them, so components need no change to pick the look up. Paper first, with a dark mode.
-- Titles (`.serif`), labels and buttons switch to Big Shoulders Display; data to JetBrains Mono; body text stays Public Sans.
-- `src/affichage.css` holds the sheets and marks: every rule is prefixed `html[data-look="affichage"]`, so it beats component styles without touching them. Cards are stapled sheets with a hard offset second sheet behind (amber for yours, navy for official); buttons press on an ink backing; tags, pips and bars are square and inked. Corners are squared explicitly, since the base look's pills are literal values, not tokens.
-- Motion, at the end of the same file and only under `prefers-reduced-motion: no-preference`: new sheets are pasted on, buttons press, the old screen peels off on a screen change (a view transition, run by `peel()` in `src/lib/look.ts` when the look is on and the browser has the API), a score flaps in and waiting is marching ants. Readers who ask for less motion get none, and screen changes switch on the spot.
+- `src/tokens.css` is the only source of colour and material. Light is the wall by day (cream plaster, paper, ink); dark is the same wall at night (navy plaster, the sheets still paper, cream for what is written on the wall itself). Every sheet class remaps the tokens for what is printed on it, so a component never knows which mode it is in.
+- Materials are tokens too: `--rule` (the ink border), `--backing` (the second sheet behind a button), `--backing-navy`, `--ink`, `--paper`. Components use them for their own sheets and marks; nothing has a radius or a blurred shadow.
+- Titles (`.serif`), labels and buttons are set in Big Shoulders Display; data in JetBrains Mono; body text in Public Sans.
+- Motion, at the end of `tokens.css` and only under `prefers-reduced-motion: no-preference`: new sheets are pasted on, buttons press, the old screen peels off on a screen change (a view transition, run by `peel()` in `src/lib/look.ts` when the browser has the API), a score flaps in and waiting is marching ants. Readers who ask for less motion get none, and screen changes switch on the spot.
 
 ## Install and offline
 

@@ -175,8 +175,6 @@
   .arena {
     display: grid;
     gap: 14px;
-    border-color: var(--line);
-    background: linear-gradient(180deg, var(--surface-2), var(--surface) 140px);
     overflow-wrap: anywhere;
   }
   .intro, .ask, .done { display: grid; gap: 12px; }
@@ -187,7 +185,7 @@
     place-items: center;
     width: 34px;
     height: 34px;
-    border-radius: 50%;
+    border: var(--rule) solid var(--line);
     background: var(--accent);
     color: var(--accent-ink);
   }
@@ -202,20 +200,21 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 0.15rem 0.65rem 0.15rem 0.5rem;
-    border-radius: 999px;
-    background: var(--green-bg);
-    color: var(--green);
-    font-size: 0.8rem;
-    font-weight: 700;
+    padding: 0 6px;
+    border: 2px solid var(--line);
+    background: var(--accent);
+    color: var(--accent-ink);
+    font: 700 0.8rem/1.5 var(--serif);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
   }
   .badge::before { content: "✓"; }
   .badge.big { font-size: 0.95rem; padding: 0.3rem 0.9rem 0.3rem 0.7rem; }
 
   .bar { display: flex; gap: 6px; }
-  .seg { flex: 1 1 0; height: 6px; border-radius: 999px; background: var(--line); transition: background 200ms; }
+  .seg { flex: 1 1 0; height: 8px; border: 2px solid var(--line); background: var(--surface); transition: background 200ms; }
   .seg[data-state="now"] { background: var(--accent); }
-  .seg[data-state="match"] { background: var(--green); }
+  .seg[data-state="match"] { background: var(--line); }
   .seg[data-state="miss"] { background: var(--red); }
   .count { margin: 0; }
   .prompt { font-size: 1.15rem; font-weight: 650; line-height: 1.35; margin: 0; }
@@ -230,15 +229,14 @@
     width: 100%;
     min-height: 48px;
     padding: 0.7rem 0.9rem;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
+    border: var(--rule) solid var(--line);
     background: var(--surface);
     color: var(--fg);
     cursor: pointer;
     line-height: 1.4;
-    transition: border-color 120ms, background 160ms, transform 120ms;
+    transition: box-shadow 120ms, background 160ms, transform 120ms;
   }
-  .option[data-state="open"]:hover { border-color: var(--accent); }
+  .option[data-state="open"]:hover { box-shadow: 5px 5px 0 0 var(--accent), 5px 5px 0 var(--rule) var(--backing); }
   .option[data-state="open"]:active { transform: scale(0.99); }
   .option[aria-disabled="true"] { cursor: default; }
   .option[data-state="rest"] { opacity: 0.6; }
@@ -247,14 +245,14 @@
     place-items: center;
     width: 1.6rem;
     height: 1.6rem;
-    border-radius: 50%;
-    border: 1.5px solid var(--line);
-    font-weight: 800;
+    border: 2px solid var(--line);
+    font-family: var(--serif);
+    font-weight: 900;
     font-size: 0.9rem;
   }
-  .option[data-state="text"] { border-color: var(--green); background: var(--green-bg); }
-  .option[data-state="text"] .mark { border-color: var(--green); background: var(--green); color: var(--surface); }
-  .option[data-state="miss"] { border-color: var(--red); background: var(--red-bg); }
+  .option[data-state="text"] { background: var(--accent); color: var(--accent-ink); }
+  .option[data-state="text"] .mark { background: var(--line); color: var(--surface); }
+  .option[data-state="miss"] { background: var(--surface); text-decoration: line-through; }
   .option[data-state="miss"] .mark { border-color: var(--red); color: var(--red); }
 
   .feedback-slot:empty { display: none; }
@@ -267,14 +265,13 @@
     display: grid;
     gap: 6px;
     padding: 0.8rem 1rem;
-    border-left: 3px solid var(--accent);
-    border-radius: 0 var(--radius) var(--radius) 0;
-    background: var(--bg);
+    border-left: 4px solid var(--line);
+    background: var(--surface);
   }
-  .quote blockquote { margin: 0; font-family: var(--serif); font-size: 1.12rem; line-height: 1.4; }
+  .quote blockquote { margin: 0; font-size: 1.12rem; line-height: 1.4; }
   .quote blockquote::before { content: "«\00a0"; color: var(--accent-fg); }
   .quote blockquote::after { content: "\00a0»"; color: var(--accent-fg); }
-  .quote a { font-weight: 600; font-size: 0.9rem; justify-self: start; }
+  .quote a { color: var(--fg); font-weight: 600; font-size: 0.9rem; justify-self: start; }
   .origin { margin: 0; }
   .next { justify-self: start; }
 
@@ -291,7 +288,7 @@
     transform-origin: 40px 40px;
   }
   .done[data-result="all"] .fill { stroke: var(--green); }
-  .num { fill: var(--fg); font: 700 18px var(--sans); }
+  .num { fill: var(--fg); font: 900 18px var(--serif); }
 
   @media (prefers-reduced-motion: no-preference) {
     .option[data-state="text"], .option[data-state="miss"] { animation: pop 260ms ease-out; }

@@ -69,19 +69,15 @@
   textarea {
     width: 100%;
     resize: vertical;
-    background: var(--bg);
-    border: 1px solid var(--line);
-    border-radius: 10px;
+    background: var(--surface);
+    border: var(--rule) solid var(--line);
     padding: 0.6rem 0.8rem;
   }
   .small { font-size: 0.86rem; margin: 0; }
-  .verdict { display: grid; gap: 8px; padding: 12px 14px; border-radius: 10px; border-left: 4px solid; }
+  .verdict { display: grid; gap: 8px; padding: 12px 14px; border: var(--rule) solid var(--line); background: var(--surface); }
   .verdict p { margin: 0; max-width: 68ch; }
-  .verdict.green { background: var(--green-bg); border-color: var(--green); }
-  .verdict.yellow { background: var(--yellow-bg); border-color: var(--yellow); }
-  .verdict.red { background: var(--red-bg); border-color: var(--red); }
-  .grade { display: flex; gap: 8px; align-items: center; font-weight: 700; }
-  .swatch { width: 12px; height: 12px; border-radius: 50%; background: currentColor; }
+  .grade { display: flex; gap: 8px; align-items: center; font: 900 1.2rem var(--serif); text-transform: uppercase; }
+  .swatch { width: 12px; height: 12px; border: 2px solid var(--line); background: currentColor; }
   .green .grade { color: var(--green); }
   .yellow .grade { color: var(--yellow); }
   .red .grade { color: var(--red); }

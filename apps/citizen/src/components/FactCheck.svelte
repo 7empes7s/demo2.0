@@ -113,26 +113,21 @@
   textarea {
     width: 100%;
     resize: vertical;
-    background: var(--bg);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
+    background: var(--surface);
+    border: var(--rule) solid var(--line);
     padding: 0.6rem 0.8rem;
   }
   .status:empty { display: none; }
   .small { font-size: 0.86rem; margin: 0; }
   .notice {
     padding: 0.5rem 0.8rem;
-    border-radius: var(--radius);
-    background: var(--surface-2);
-    border-left: 3px solid var(--accent);
+    border: var(--rule) solid var(--line);
+    background: var(--surface);
   }
-  .verdict { display: grid; gap: 8px; padding: 12px 14px; border-radius: var(--radius); border-left: 4px solid; }
+  .verdict { display: grid; gap: 8px; padding: 12px 14px; border: var(--rule) solid var(--line); background: var(--surface); }
   .verdict p { margin: 0; max-width: 68ch; }
-  .verdict.green { background: var(--green-bg); border-color: var(--green); }
-  .verdict.yellow { background: var(--yellow-bg); border-color: var(--yellow); }
-  .verdict.red { background: var(--red-bg); border-color: var(--red); }
-  .grade { display: flex; gap: 8px; align-items: center; font-weight: 700; font-size: 1.05rem; }
-  .swatch { flex: none; width: 12px; height: 12px; border-radius: 50%; background: currentColor; }
+  .grade { display: flex; gap: 8px; align-items: center; font: 900 1.2rem var(--serif); text-transform: uppercase; }
+  .swatch { flex: none; width: 12px; height: 12px; border: 2px solid var(--line); background: currentColor; }
   .green .grade { color: var(--green); }
   .yellow .grade { color: var(--yellow); }
   .red .grade { color: var(--red); }

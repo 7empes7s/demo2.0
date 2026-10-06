@@ -236,14 +236,13 @@
     gap: 12px;
     padding-block: 12px;
     background: var(--bg);
-    border-bottom: 1px solid var(--line);
+    border-bottom: var(--rule) solid var(--line);
   }
   .offline {
     margin: 12px 0 0;
     padding: 0.5rem 0.8rem;
-    border-radius: var(--radius);
-    background: var(--yellow-bg);
-    color: var(--yellow);
+    border: var(--rule) solid var(--line);
+    background: var(--surface);
     font-size: 0.9rem;
   }
   .brand {
@@ -263,12 +262,12 @@
     place-items: center;
     width: 32px;
     height: 32px;
-    border-radius: 8px;
+    border: var(--rule) solid var(--ink);
     background: var(--accent);
     color: var(--accent-ink);
-    font: 700 1.1rem/1 var(--serif);
+    font: 900 1.1rem/1 var(--serif);
   }
-  .name { font-size: 1.45rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .name { font-size: 1.45rem; font-family: var(--serif); font-weight: 900; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   @media (max-width: 420px) {
     .name { font-size: 1.2rem; }
     select { max-width: 7.5rem; }
@@ -276,12 +275,11 @@
   .tools { flex: none; display: flex; gap: 8px; align-items: center; }
   select, .icon {
     background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 999px;
+    border: var(--rule) solid var(--line);
     padding: 0.4rem 0.8rem;
     font-size: 0.9rem;
   }
-  .icon { display: grid; place-items: center; padding: 0.45rem; cursor: pointer; }
+  .icon { display: grid; place-items: center; padding: 0.35rem; cursor: pointer; }
   .layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -294,7 +292,7 @@
   .intro p { margin: 0; }
   .source-note { font-size: 0.82rem; margin-top: 16px; }
   .page-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-  .check-open[aria-current="page"] { border-color: var(--accent); background: var(--surface-2); }
+  .check-open[aria-current="page"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
   .check-page { display: grid; gap: 16px; padding-top: 4px; }
   .check-page h2 { font-size: clamp(1.6rem, 4.2vw, 2.3rem); line-height: 1.15; margin: 0; }
   .check-page h2:focus { outline: none; }
@@ -304,7 +302,7 @@
     background: none;
     border: 0;
     padding: 4px 0;
-    color: var(--accent-fg);
+    color: var(--fg);
     font-weight: 600;
     cursor: pointer;
   }

@@ -84,37 +84,36 @@
   input[type="search"] {
     width: 100%;
     background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 999px;
+    border: var(--rule) solid var(--line);
     padding: 0.55rem 1rem;
   }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip { padding: 0.3rem 0.8rem; font-size: 0.85rem; }
   .segmented {
     display: flex;
     max-width: 100%;
-    border: 1px solid var(--line);
-    border-radius: 999px;
+    border: var(--rule) solid var(--line);
     background: var(--surface);
-    padding: 3px;
-    gap: 2px;
   }
   .seg {
     flex: 1 1 auto;
     min-width: 0;
     border: 0;
-    border-radius: 999px;
+    border-right: var(--rule) solid var(--line);
     background: none;
     color: var(--fg);
     font: inherit;
-    font-size: 0.85rem;
+    font-family: var(--serif);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
     padding: 0.35rem 0.6rem;
     cursor: pointer;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .seg[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .seg:last-child { border-right: 0; }
+  .seg[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
   .group { display: grid; gap: 8px; }
   .group + .group { margin-top: 20px; }
   .place { margin: 0; display: flex; gap: 8px; align-items: baseline; }
@@ -124,15 +123,14 @@
     display: grid;
     gap: 8px;
     padding: 14px 16px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
+    border: var(--rule) solid var(--line);
     background: var(--surface);
     color: var(--fg);
     text-decoration: none;
-    transition: border-color 120ms;
+    transition: box-shadow 120ms;
   }
-  .file:hover { border-color: var(--accent); }
-  .file.current { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+  .file:hover { box-shadow: 5px 5px 0 0 var(--accent), 5px 5px 0 var(--rule) var(--backing); }
+  .file.current { box-shadow: 7px 7px 0 0 var(--accent), 7px 7px 0 var(--rule) var(--backing); }
   .meta { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
   .title {
     font-weight: 600;
@@ -147,13 +145,14 @@
   .understood {
     margin-left: auto;
     flex: none;
-    padding: 0.05rem 0.55rem 0.05rem 0.45rem;
-    border-radius: 999px;
-    background: var(--green-bg);
-    color: var(--green);
-    font-size: 0.75rem;
-    font-weight: 700;
+    padding: 0 6px;
+    border: 2px solid var(--line);
+    background: var(--accent);
+    color: var(--accent-ink);
+    font: 700 0.75rem/1.5 var(--serif);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
   }
   .understood::before { content: "✓ "; }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+  .dot { width: 8px; height: 8px; border: 2px solid var(--line); background: var(--accent); flex: none; }
 </style>

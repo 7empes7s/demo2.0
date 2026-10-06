@@ -25,9 +25,10 @@
     gap: 4px;
   }
   li { display: grid; gap: 6px; font-size: 0.78rem; color: var(--muted); }
-  .pip { height: 4px; border-radius: 2px; background: var(--line); }
-  li.done .pip { background: var(--accent); }
+  .pip { height: 6px; border: 2px solid var(--line); background: var(--surface); }
+  li.done .pip { background: var(--line); }
+  li.now .pip { background: var(--accent); }
   li.now .name { color: var(--fg); font-weight: 600; }
   .compact li { gap: 0; }
-  .compact .pip { height: 3px; }
+  .compact .pip { height: 5px; }
 </style>

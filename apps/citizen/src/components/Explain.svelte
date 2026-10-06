@@ -108,23 +108,22 @@
     height: 1.6rem;
     margin-left: 2px;
     padding: 0 4px;
-    border-radius: 6px;
-    border: 1px solid var(--line);
-    background: var(--surface-2);
-    color: var(--accent-fg);
+    border: 2px solid var(--line);
+    background: var(--surface);
+    color: var(--fg);
+    font-weight: 700;
     font-size: 0.78rem;
     vertical-align: text-top;
     cursor: pointer;
   }
-  .cite[aria-expanded="true"] { border-color: var(--accent); }
+  .cite[aria-expanded="true"] { background: var(--accent); }
   .quote {
     display: grid;
     gap: 4px;
     margin: 8px 0;
     padding: 10px 12px;
-    border-left: 3px solid var(--accent);
-    background: var(--surface-2);
-    border-radius: 0 8px 8px 0;
+    border-left: 4px solid var(--line);
+    background: var(--surface);
   }
   .quote q { font-style: italic; }
   .error { color: var(--red); margin: 0; }
