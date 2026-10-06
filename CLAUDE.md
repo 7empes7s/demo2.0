@@ -4,7 +4,7 @@
 
 - **What it is:** Democracy2.0, a set of standalone modules for verifiable, accountable direct democracy (architecture: `docs/architecture/`).
 - **Layout:** `spec/` shared schemas, `charter/` rules-as-data, `modules/<name>/` one future repo each (own LICENSE, README, CHANGELOG), `apps/` clients. A module imports only from `spec` and `charter`; `tools/boundaries.py` enforces it.
-- **Stack:** Python (uv workspace, ruff, pytest) for AI and ingestion; TypeScript on Node 22 (npm workspaces) for services and the SvelteKit app; Rust for the crypto core when it lands.
+- **Stack:** Python (uv workspace, ruff, pytest) for AI and ingestion; TypeScript on Node 22 (npm workspaces) for services and the SvelteKit app; Rust (Cargo workspace, toolchain pinned in `rust-toolchain.toml`) for the crypto core, starting with `modules/door`.
 - **Handoff:** long-running work keeps `STATE.md` current.
 - **Set up:** `tools/dev-setup.sh` (cloud sessions run it on start).
 - **Check before pushing:** `tools/check.sh`. CI runs the same script.

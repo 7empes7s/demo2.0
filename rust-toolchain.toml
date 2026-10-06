@@ -1,0 +1,6 @@
+# Pinned so every machine (cloud sessions, CI, Mulinux) builds with the same compiler.
+# rustup reads this file and installs the toolchain on first use.
+[toolchain]
+channel = "1.97.0"
+components = ["rustfmt", "clippy"]
+profile = "minimal"
