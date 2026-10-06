@@ -35,11 +35,14 @@ let observer: MutationObserver | null = null;
 const LOADS = "img, link, script, iframe, frame, audio, video, source, track, embed, object, input[type=image]";
 const URL_ATTRS = ["src", "href", "srcset", "poster", "data"];
 
-function recordElement(el: Element) {
+/** Records what an added element loads. `later` are the records after its insertion in the same
+ * batch: if one of them changed an attribute, the value at insertion is that change's old value. */
+function recordElement(el: Element, later: MutationRecord[] = []) {
   for (const node of [el, ...el.querySelectorAll(LOADS)]) {
     if (!node.matches(LOADS)) continue;
     for (const attr of URL_ATTRS) {
-      const url = node.getAttribute(attr);
+      const next = later.find((n) => n.type === "attributes" && n.target === node && n.attributeName === attr);
+      const url = next ? next.oldValue : node.getAttribute(attr);
       if (url) trace.push({ via: `dom ${node.tagName.toLowerCase()}`, method: attr, url, body: null, headers: [] });
     }
   }
@@ -55,7 +58,7 @@ function recordMutations(records: MutationRecord[]) {
       if (url) trace.push({ via: `dom ${r.target.tagName.toLowerCase()}`, method: r.attributeName!, url, body: null, headers: [] });
       return;
     }
-    for (const node of r.addedNodes) if (node instanceof Element) recordElement(node);
+    for (const node of r.addedNodes) if (node instanceof Element) recordElement(node, records.slice(i + 1));
   });
 }
 
