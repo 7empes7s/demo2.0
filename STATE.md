@@ -2,6 +2,12 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-06: Pulse follow-up, wider privacy trace and open-ended consultations
+
+- Done (review findings on PR #29): the Pulse privacy trace (`apps/citizen/test/pulse.test.ts`) also records service worker registrations (the test registers it as `main.ts` does in the served build) and every resource element the app puts in the document (img, link, script, iframe, audio, video, source, track, embed, object; added nodes and `src`/`href`/`srcset`/`poster`/`data` changes, each intermediate value). It runs twice: without and with the Companion (`healthz` says `companion: true`, `/api/explain` and `/api/factcheck` stubbed, Explain and a fixed claim check used on the opened file). Traces identical across the four choice sets in both runs.
+- Evidence: a planted `<img src="…?h={home}">` in `Week.svelte` failed both runs (every place the resident picked showed up in the trace); plant removed.
+- Decision: a consultation with `opens` and no `closes` counts as open in its opening week and the 3 weeks after (`OPEN_ENDED_WEEKS` = 4), then is counted as outside. No UI text changed.
+
 ## 2026-10-06: Pulse v1, the weekly list on the device
 
 - Done: `modules/pulse` (`@democracy2/pulse`, AGPL, TypeScript, pure functions): `buildWeek` sorts the Docket snapshot into this week's sections, concerned (where the resident lives or a place containing it, over Charter's jurisdiction tree), knowledgeable (elsewhere, on followed topics, with Arena's "understood" mark), judge (always empty: no panels yet) and others (nothing hidden); `outside` counts files with no date this week; `budget` is Charter `vote_budget.matters_per_week` (5), shown only. Week = ISO week on the Luxembourg calendar; files with no date at all are kept and listed last; ordering by day, reason, id, independent of input order. `@democracy2/pulse/charter` reads Charter at build time and the app inlines it (`__PULSE_CHARTER__`). Citizen app: "This week" is the landing view (setup: commune or canton, topics; choices in `localStorage` `d2.pulse.v1`; "Your choices stay on this device" line), `#files` for the full list on phones, back buttons return to where a file was opened. Five languages, `VOCABULARY.md` terms.

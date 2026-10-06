@@ -7,7 +7,7 @@
 // device. Nothing reads the clock, storage or the network. Node-only Charter loading lives in
 // `@democracy2/pulse/charter`.
 
-export { buildWeek, topicList, topicsOf, whenIn } from "./pulse.ts";
+export { OPEN_ENDED_WEEKS, buildWeek, topicList, topicsOf, whenIn } from "./pulse.ts";
 export type { BuildInput, Entry, Preferences, PublicItem, WeeklyList, WhenKind } from "./pulse.ts";
 export { DOCKET_ALIASES, charterIdOf, containingPlaces, homeChoices, indexPlaces, placeName } from "./places.ts";
 export type { Place, PlaceIndex } from "./places.ts";

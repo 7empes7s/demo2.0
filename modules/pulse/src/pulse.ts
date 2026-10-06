@@ -6,7 +6,7 @@
  */
 
 import { charterIdOf, containingPlaces, indexPlaces, type Place } from "./places.ts";
-import { dayOf, inWeek, type Week } from "./week.ts";
+import { dayOf, inWeek, isoWeek, type Week } from "./week.ts";
 
 /** The fields of a public file Pulse reads. Any Docket item fits. */
 export interface PublicItem {
@@ -107,8 +107,21 @@ function events(item: PublicItem): { day: string; kind: WhenKind }[] {
 }
 
 /**
+ * A consultation that gives no closing date counts as open in the week it opened and the
+ * `OPEN_ENDED_WEEKS - 1` weeks after it, then drops out: the list cannot tell whether it is
+ * still open, and must not show it every week forever.
+ */
+export const OPEN_ENDED_WEEKS = 4;
+
+const WEEK_MS = 7 * 86_400_000;
+
+/** Whole weeks from the week containing `day` to `week` (0 for the same week). */
+const weeksSince = (day: string, week: Week): number => Math.round((Date.parse(week.start) - Date.parse(isoWeek(day).start)) / WEEK_MS);
+
+/**
  * When a file shows in `week`: its first event in the week; a consultation that opened before
- * and closes after the week counts from Monday. `undefined` means it has dates, none this week.
+ * and closes after the week counts from Monday (one without a closing date only for
+ * `OPEN_ENDED_WEEKS` weeks from the week it opened). `undefined` means it has dates, none this week.
  */
 export function whenIn(item: PublicItem, week: Week): Entry<PublicItem>["when"] | undefined {
   const all = events(item);
@@ -116,7 +129,8 @@ export function whenIn(item: PublicItem, week: Week): Entry<PublicItem>["when"] 
   const hits = all.filter((e) => inWeek(e.day, week));
   const opens = dayOf(item.opens ?? null);
   const closes = dayOf(item.closes ?? null);
-  if (opens && opens < week.start && (closes === null || closes > week.end)) hits.push({ day: week.start, kind: "open" });
+  const stillOpen = closes === null ? opens !== null && weeksSince(opens, week) < OPEN_ENDED_WEEKS : closes > week.end;
+  if (opens && opens < week.start && stillOpen) hits.push({ day: week.start, kind: "open" });
   if (hits.length === 0) return undefined;
   hits.sort((a, b) => compare(a.day, b.day) || WHEN_ORDER.indexOf(a.kind) - WHEN_ORDER.indexOf(b.kind));
   return hits[0];
