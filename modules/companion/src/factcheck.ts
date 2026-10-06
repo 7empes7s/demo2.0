@@ -6,6 +6,9 @@
 
 import gradeSchema from "../../../spec/schemas/grade.schema.json" with { type: "json" };
 
+import { type Schema, schemaProblems } from "./schema.ts";
+import { MAX_SMALL_BYTES, MAX_UPSTREAM_BYTES, readJson, TooLarge, UPSTREAM } from "./upstream.ts";
+
 export type GradeColour = "green" | "yellow" | "red";
 
 export interface GradeEvidence {
@@ -34,75 +37,9 @@ export type FactCheckResult = { result: "graded"; grade: Grade } | { result: "no
 /** Longest claim a resident can send, in characters. Longer claims are refused, never cut. */
 export const MAX_CLAIM = 500;
 
-type Schema = {
-  type?: string | string[];
-  enum?: unknown[];
-  properties?: Record<string, Schema>;
-  required?: string[];
-  additionalProperties?: boolean;
-  items?: Schema;
-  minItems?: number;
-  minLength?: number;
-  pattern?: string;
-  format?: string;
-  $ref?: string;
-  $defs?: Record<string, Schema>;
-};
-
-/** Own keys only: "constructor", "__proto__" or "toString" must never resolve to Object built-ins. */
-const own = <T>(rec: Record<string, T> | undefined, key: string): T | undefined =>
-  rec !== undefined && Object.hasOwn(rec, key) ? rec[key] : undefined;
-
-const typeOf = (v: unknown) => (v === null ? "null" : Array.isArray(v) ? "array" : typeof v);
-
-/**
- * The JSON Schema keywords the shared schemas use (type, enum, properties, required,
- * additionalProperties: false, items, minItems, minLength, pattern, format uri, local $ref).
- * A keyword it does not know fails closed.
- */
-function check(schema: Schema, value: unknown, root: Schema, at: string, out: string[]): void {
-  const known = new Set(["$schema", "$id", "title", "description", "type", "enum", "properties", "required", "additionalProperties", "items", "minItems", "minLength", "pattern", "format", "$ref", "$defs"]);
-  for (const k of Object.keys(schema)) if (!known.has(k)) out.push(`${at}: unsupported schema keyword ${k}`);
-  if (schema.$ref) {
-    const name = schema.$ref.replace(/^#\/\$defs\//, "");
-    const target = own(root.$defs, name);
-    if (!target) out.push(`${at}: unresolved ${schema.$ref}`);
-    else check(target, value, root, at, out);
-    return;
-  }
-  const t = typeOf(value);
-  if (schema.type !== undefined) {
-    const types = Array.isArray(schema.type) ? schema.type : [schema.type];
-    if (!types.includes(t)) return void out.push(`${at}: expected ${types.join(" or ")}`);
-  }
-  if (schema.enum && !schema.enum.includes(value)) out.push(`${at}: not one of ${schema.enum.join(", ")}`);
-  if (t === "string") {
-    const s = value as string;
-    if (schema.minLength !== undefined && [...s].length < schema.minLength) out.push(`${at}: too short`);
-    if (schema.pattern && !new RegExp(schema.pattern, "u").test(s)) out.push(`${at}: does not match ${schema.pattern}`);
-    if (schema.format === "uri" && !URL.canParse(s)) out.push(`${at}: not a URI`);
-  }
-  if (t === "array") {
-    const arr = value as unknown[];
-    if (schema.minItems !== undefined && arr.length < schema.minItems) out.push(`${at}: fewer than ${schema.minItems} items`);
-    if (schema.items) arr.forEach((v, i) => check(schema.items!, v, root, `${at}[${i}]`, out));
-  }
-  if (t === "object") {
-    const obj = value as Record<string, unknown>;
-    for (const key of schema.required ?? []) if (!Object.hasOwn(obj, key)) out.push(`${at}.${key}: missing`);
-    for (const [key, v] of Object.entries(obj)) {
-      const sub = own(schema.properties, key);
-      if (sub) check(sub, v, root, `${at}.${key}`, out);
-      else if (schema.additionalProperties === false) out.push(`${at}.${key}: not allowed`);
-    }
-  }
-}
-
 /** Why a value is not a valid Grade; empty when it is one. */
 export function gradeProblems(value: unknown): string[] {
-  const out: string[] = [];
-  check(gradeSchema as Schema, value, gradeSchema as Schema, "grade", out);
-  return out;
+  return schemaProblems(gradeSchema as Schema, value, "grade");
 }
 
 export const isGrade = (value: unknown): value is Grade => gradeProblems(value).length === 0;
@@ -120,7 +57,7 @@ const isTimeout = (e: unknown) => e instanceof Error && (e.name === "TimeoutErro
 /** Reads a small JSON error body; null if it is not JSON or the read fails. Never throws. */
 async function errorCode(res: Response): Promise<unknown> {
   try {
-    const body = (await res.json()) as { code?: unknown } | null;
+    const body = (await readJson(res, MAX_SMALL_BYTES)) as { code?: unknown } | null;
     return body && typeof body === "object" ? body.code : null;
   } catch {
     return null;
@@ -141,6 +78,7 @@ export async function gradeClaim(base: string, text: string, context?: string, o
   let res: Response;
   try {
     res = await doFetch(`${base.replace(/\/+$/, "")}/claims/grade`, {
+      ...UPSTREAM,
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(context ? { text, context } : { text }),
@@ -162,9 +100,10 @@ export async function gradeClaim(base: string, text: string, context?: string, o
   }
   let body: unknown;
   try {
-    body = await res.json();
+    body = await readJson(res, MAX_UPSTREAM_BYTES);
   } catch (e) {
     if (isTimeout(e)) throw new CheckerUnavailable("provenance timed out while sending its answer");
+    if (e instanceof TooLarge) throw new CheckerInvalid(`provenance's ${e.message}`);
     throw new CheckerInvalid("provenance answered something that is not JSON");
   }
   const problems = gradeProblems(body);

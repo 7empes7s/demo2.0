@@ -15,5 +15,9 @@ Use one word per role, and use it everywhere: in the UI, the docs and the prompt
 | argue the other side | debate, convince, persuade | The Companion tests a view. It never pushes one. |
 | supported, unclear, contradicted | true, false, fake, misleading | The grades say what the documents say, not what is true in the world. |
 | quote found | verified, fact-checked, true | A found quote shows the words are in the document, not that the sentence is right. |
+| idea | proposal, petition, suggestion | What a resident posts on the Ideas page (Agora). "Proposal" is kept for the drafted plan an idea may become later. |
+| support (an idea), supporter | upvote, like, vote, sign | Supporting an idea puts it higher on the list. It is not a vote. |
+| reach (national, regional, local, small) | tier, scope, priority, importance | How many people an idea affects, from the Charter's population rule. It says nothing about whether the idea is good. |
+| secure sign-in | Door, login, account, credential | What posting and supporting wait for. Name no product or protocol. |
 
-Never in the UI: recommend, should vote, best option, correct answer, raw ids (`lu.chd.8739`), model names, except in the small provenance line.
+Never in the UI: recommend, should vote, best option, correct answer, raw ids (`lu.chd.8739`, idea ids, jurisdiction ids), pseudonyms (`nym-…`, never shown at all), model names, except in the small provenance line.

@@ -141,7 +141,11 @@ separators and zero-width characters.
 - **Topic-based scope.** The Charter's v0 Scope uses the jurisdiction only (see
   `charter/README.md`, Known gaps), so a national subject filed under a commune ranks as local
   until a `ScopeChallenge` exists.
-- **Citizen app view** and systemd units (Agora, and `d2-door serve` as
-  `civic-door-verify.service`, which needs a release binary built in CI). Agora is not deployed.
+- **A unit for `d2-door serve`** (`civic-door-verify.service`), which needs a release binary built
+  in CI (Mulinux does not build).
+- **Posting and upvoting from the citizen app.** The app shows the queue read only (Companion
+  `GET /api/ideas`), and `ops/deploy/civic-agora.service` runs Agora on loopback; the Companion
+  never forwards `POST /ideas` or upvotes until Door is deployed. Not installed
+  on Mulinux yet.
 - **Operations:** no rate limit; the queue is ranked in memory, fine for a commune pilot, not for
   millions of ideas.
