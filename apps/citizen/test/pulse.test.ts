@@ -3,7 +3,9 @@
 // Pulse "done when": a network trace of the client shows no request that depends on the
 // resident's interests. The whole app is mounted under different choices (where they live,
 // topics followed, files understood), each choice is also changed through the screen, and every
-// request the page makes is recorded. The traces must be identical.
+// request the page makes is recorded: fetch, XHR, sockets, beacons, the service worker it
+// registers, and every resource element (img, script, iframe...) it puts in the document. This
+// runs twice, without and with the Companion. The traces must be identical.
 import type { DocketItem } from "@democracy2/companion";
 import { flushSync, mount, unmount } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -12,6 +14,7 @@ import App from "../src/App.svelte";
 import Week from "../src/components/Week.svelte";
 import { reloadArena, resetArena } from "../src/lib/arena.svelte.ts";
 import { DICTS } from "../src/lib/i18n.ts";
+import { registerServiceWorker } from "../src/lib/pwa.ts";
 import { pulse, reloadPulse, resetPulse } from "../src/lib/pulse.svelte.ts";
 import { setLang } from "../src/lib/ui.svelte.ts";
 // The recorded Docket snapshot (real chd.lu and esch.lu records).
@@ -26,6 +29,43 @@ const NOW = new Date("2026-10-01T10:00:00Z");
 type Request = { via: string; method: string; url: string; body: string | null; headers: [string, string][] };
 let trace: Request[] = [];
 let app: Record<string, unknown> | null = null;
+let observer: MutationObserver | null = null;
+
+/** Elements that make the browser load something; `a` is not one (only a click follows it). */
+const LOADS = "img, link, script, iframe, frame, audio, video, source, track, embed, object, input[type=image]";
+const URL_ATTRS = ["src", "href", "srcset", "poster", "data"];
+
+function recordElement(el: Element) {
+  for (const node of [el, ...el.querySelectorAll(LOADS)]) {
+    if (!node.matches(LOADS)) continue;
+    for (const attr of URL_ATTRS) {
+      const url = node.getAttribute(attr);
+      if (url) trace.push({ via: `dom ${node.tagName.toLowerCase()}`, method: attr, url, body: null, headers: [] });
+    }
+  }
+}
+
+function recordMutations(records: MutationRecord[]) {
+  records.forEach((r, i) => {
+    if (r.type === "attributes") {
+      if (!(r.target instanceof Element) || !r.target.matches(LOADS)) return;
+      // Records arrive in batches: the value this change set is the next change's old value.
+      const next = records.slice(i + 1).find((n) => n.type === "attributes" && n.target === r.target && n.attributeName === r.attributeName);
+      const url = next ? next.oldValue : r.target.getAttribute(r.attributeName!);
+      if (url) trace.push({ via: `dom ${r.target.tagName.toLowerCase()}`, method: r.attributeName!, url, body: null, headers: [] });
+      return;
+    }
+    for (const node of r.addedNodes) if (node instanceof Element) recordElement(node);
+  });
+}
+
+/** Ends the DOM watch and records what it saw last. */
+function stopWatching() {
+  if (!observer) return;
+  recordMutations(observer.takeRecords());
+  observer.disconnect();
+  observer = null;
+}
 
 async function bodyOf(body: unknown): Promise<string | null> {
   if (body === undefined || body === null) return null;
@@ -33,9 +73,12 @@ async function bodyOf(body: unknown): Promise<string | null> {
   return await new Response(body as BodyInit).text();
 }
 
-/** Record every way a page can talk to a server; answer the two public reads the app makes. */
-function wireNetwork() {
+/** Record every way a page can talk to a server; answer the public reads (and, with the Companion, its calls). */
+function wireNetwork(companion = false) {
   trace = [];
+  stopWatching();
+  observer = new MutationObserver(recordMutations);
+  observer.observe(document, { subtree: true, childList: true, attributes: true, attributeOldValue: true, attributeFilter: URL_ATTRS });
   vi.stubGlobal("fetch", async (input: RequestInfo | URL, init: RequestInit = {}) => {
     const req = input instanceof Request ? input : null;
     const url = String(req ? req.url : input);
@@ -47,7 +90,12 @@ function wireNetwork() {
       headers: [...new Headers(init.headers ?? req?.headers).entries()].sort(),
     });
     if (url.endsWith("data/snapshot.json")) return new Response(JSON.stringify(recorded), { status: 200 });
-    if (url.endsWith("healthz")) return new Response(JSON.stringify({ companion: false }), { status: 200 });
+    if (url.endsWith("healthz")) return new Response(JSON.stringify({ companion }), { status: 200 });
+    if (companion && url.endsWith("/api/explain")) {
+      const explanation = { headline: "Stub explanation", sections: [], sources: [], verified_share: 1, provenance: {} };
+      return new Response(JSON.stringify(explanation), { status: 200 });
+    }
+    if (companion && url.endsWith("/api/factcheck")) return new Response(JSON.stringify({ result: "no_record" }), { status: 200 });
     return new Response("{}", { status: 404 });
   });
   const refuse = (via: string) =>
@@ -67,6 +115,15 @@ function wireNetwork() {
       return true;
     },
   });
+  Object.defineProperty(navigator, "serviceWorker", {
+    configurable: true,
+    value: {
+      register: async (url: string | URL, options?: RegistrationOptions) => {
+        trace.push({ via: "serviceworker", method: "register", url: String(url), body: options ? JSON.stringify(options) : null, headers: [] });
+        return {};
+      },
+    },
+  });
 }
 
 beforeEach(() => {
@@ -81,6 +138,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  stopWatching();
   if (app) unmount(app);
   app = null;
   document.body.innerHTML = "";
@@ -118,13 +176,15 @@ async function openApp(choices: Choices) {
   const target = document.createElement("div");
   document.body.append(target);
   app = mount(App, { target });
+  // What main.ts does in the served build.
+  registerServiceWorker();
   await settle();
   expect(target.querySelector("#week-title"), "the app opens on this week's list").toBeTruthy();
   return target;
 }
 
 /** Change every choice through the screen, the way a resident would. */
-async function changeEverything(target: HTMLElement) {
+async function changeEverything(target: HTMLElement, companion: boolean) {
   if (!target.querySelector("[data-testid=week-setup]")) click(buttonText(target, "Change"));
   const select = target.querySelector<HTMLSelectElement>("select#home")!;
   for (const value of [CITY, "lu-canton-wiltz", ESCH]) {
@@ -139,15 +199,28 @@ async function changeEverything(target: HTMLElement) {
   // Open a file from the week and come back, as a resident would.
   click(target.querySelector("a.entry"));
   await settle();
+  if (companion) {
+    // Use the Companion on the opened file (the same file in every run).
+    click(buttonText(target, "Explain it"));
+    await settle();
+    expect(target.textContent).toContain("Stub explanation");
+    const claim = target.querySelector<HTMLTextAreaElement>("form textarea")!;
+    claim.value = "Taxes rise next year.";
+    claim.dispatchEvent(new Event("input", { bubbles: true }));
+    flushSync();
+    click(buttonText(target, "Check it"));
+    await settle();
+  }
   click(buttonText(target, "This week"));
   await settle();
 }
 
-async function traceFor(choices: Choices) {
-  wireNetwork();
+async function traceFor(choices: Choices, companion = false) {
+  wireNetwork(companion);
   const target = await openApp(choices);
   const shown = { concerned: ids(target, "g-concerned"), topics: ids(target, "g-topics") };
-  await changeEverything(target);
+  await changeEverything(target, companion);
+  stopWatching();
   unmount(app!);
   app = null;
   document.body.innerHTML = "";
@@ -155,15 +228,22 @@ async function traceFor(choices: Choices) {
 }
 
 describe("Pulse: the network never learns what a resident cares about", () => {
-  it("makes exactly the same requests whatever the resident chose", async () => {
-    const none = await traceFor({});
-    const esch = await traceFor({ home: ESCH, topics: ["Budget et Finances"], understood: ["lu.esch.42063"] });
-    const city = await traceFor({ home: CITY, topics: ["Développement urbain", "Commission des Finances", "Budget et Finances"], understood: ["lu.chd.8752", "lu.esch.42090"] });
-    const canton = await traceFor({ home: "lu-canton-clervaux", topics: ["Tourisme, relations internationales et jumelages, coopération transfrontalière"] });
+  it.each([
+    { companion: false, expected: ["serviceworker register /sw.js", "fetch GET data/snapshot.json", "fetch GET healthz"] },
+    {
+      companion: true,
+      expected: ["serviceworker register /sw.js", "fetch GET data/snapshot.json", "fetch GET healthz", "fetch POST /api/explain", "fetch POST /api/factcheck"],
+    },
+  ])("makes exactly the same requests whatever the resident chose (Companion: $companion)", async ({ companion, expected }) => {
+    const none = await traceFor({}, companion);
+    const esch = await traceFor({ home: ESCH, topics: ["Budget et Finances"], understood: ["lu.esch.42063"] }, companion);
+    const city = await traceFor({ home: CITY, topics: ["Développement urbain", "Commission des Finances", "Budget et Finances"], understood: ["lu.chd.8752", "lu.esch.42090"] }, companion);
+    const canton = await traceFor({ home: "lu-canton-clervaux", topics: ["Tourisme, relations internationales et jumelages, coopération transfrontalière"] }, companion);
 
-    // The spy works: the public list was fetched, and nothing but public reads happened.
-    expect(none.requests.map((r) => `${r.via} ${r.method} ${r.url}`)).toEqual(["fetch GET data/snapshot.json", "fetch GET healthz"]);
-    for (const r of none.requests) expect(r.body).toBeNull();
+    // The spy works: the public list was fetched, and nothing but public reads (and, with the
+    // Companion, the resident's own clicks on the opened file) happened.
+    expect(none.requests.map((r) => `${r.via} ${r.method} ${r.url}`)).toEqual(expected);
+    for (const r of none.requests) if (r.method !== "POST") expect(r.body).toBeNull();
 
     // The choices took effect on screen...
     expect(esch.shown.concerned).toContain("#esch.42063");

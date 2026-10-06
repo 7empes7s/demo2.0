@@ -35,6 +35,9 @@ enforced).
   its dates falls in it: agenda meeting, filing (`deposited`), history entry or `updated`, or a
   consultation's opening or closing (a consultation open across the whole week counts from
   Monday). Timestamps with an offset are read on the Luxembourg calendar.
+- **Consultations without a closing date** count as open in the week they opened and the 3
+  weeks after it (`OPEN_ENDED_WEEKS` = 4), then drop out of the list: it cannot tell whether
+  they are still open and must not show them every week forever.
 - **Files without any date** are kept (`when: null`) and sorted last: the list cannot say they
   are outside the week.
 - **Order** (deterministic, locale-free): first day in the week, then why (meeting, consultation,

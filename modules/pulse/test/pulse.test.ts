@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { buildWeek, charterIdOf, containingPlaces, dayOf, homeChoices, indexPlaces, isoWeek, luxembourgDate, placeName, topicList, topicsOf, weekAt, whenIn, type PublicItem } from "../src/index.ts";
+import { buildWeek, charterIdOf, containingPlaces, dayOf, homeChoices, indexPlaces, isoWeek, luxembourgDate, OPEN_ENDED_WEEKS, placeName, topicList, topicsOf, weekAt, whenIn, type PublicItem } from "../src/index.ts";
 import { pulseCharter } from "../src/charter.ts";
 
 // The recorded Docket snapshot (real chd.lu and esch.lu records), as the citizen app loads it.
@@ -81,9 +81,27 @@ describe("week window", () => {
   it("keeps a consultation that is open across the whole week", () => {
     const open = item({ id: "c", opens: "2026-09-01", closes: "2026-11-30" });
     expect(whenIn(open, W41)).toEqual({ day: "2026-10-05", kind: "open" });
-    expect(whenIn(item({ id: "d", opens: "2026-09-01", closes: null }), W41)).toEqual({ day: "2026-10-05", kind: "open" });
+    expect(whenIn(item({ id: "d", opens: "2026-09-21", closes: null }), W41)).toEqual({ day: "2026-10-05", kind: "open" });
     expect(whenIn(item({ id: "e", opens: "2026-09-01", closes: "2026-10-01" }), W41)).toBeUndefined();
     expect(whenIn(item({ id: "f", opens: "2026-10-07", closes: "2026-11-30" }), W41)).toEqual({ day: "2026-10-07", kind: "open" });
+  });
+
+  it("shows a consultation without a closing date only for a few weeks after it opened", () => {
+    expect(OPEN_ENDED_WEEKS).toBe(4);
+    // Opened on Wednesday 16 September (week 38): weeks 38 to 41, then never again.
+    const open = item({ id: "g", opens: "2026-09-16", closes: null });
+    expect(whenIn(open, isoWeek("2026-09-16"))).toEqual({ day: "2026-09-16", kind: "open" });
+    for (const day of ["2026-09-21", "2026-09-28", "2026-10-05"]) expect(whenIn(open, isoWeek(day))).toEqual({ day: isoWeek(day).start, kind: "open" });
+    for (const day of ["2026-10-12", "2026-10-19", "2027-06-01"]) expect(whenIn(open, isoWeek(day)), day).toBeUndefined();
+    expect(whenIn(open, isoWeek("2026-09-09")), "not before it opened").toBeUndefined();
+    // Across a year end (2026-W53).
+    const winter = item({ id: "h", opens: "2026-12-31", closes: undefined });
+    expect(whenIn(winter, isoWeek("2027-01-18"))).toEqual({ day: "2027-01-18", kind: "open" });
+    expect(whenIn(winter, isoWeek("2027-01-25"))).toBeUndefined();
+    // Out of the list once the window is over, counted as outside.
+    const list = buildWeek({ items: [open], places: PLACES, prefs: { home: null, topics: [] }, week: isoWeek("2026-10-12") });
+    expect(list.outside).toBe(1);
+    expect(list.others).toEqual([]);
   });
 });
 

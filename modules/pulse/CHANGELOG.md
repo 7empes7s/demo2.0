@@ -2,6 +2,9 @@
 
 ## 0.1.0 (unreleased)
 
+- A consultation without a closing date counts as open only in the week it opened and the 3
+  weeks after it (`OPEN_ENDED_WEEKS`), instead of every week forever.
+
 - Pulse v1: `buildWeek` sorts the public file list into this week's sections (concerned,
   knowledgeable, judge, others) on the device, from where the resident lives, the topics they
   follow and Arena's local "understood" mark. Pure and deterministic.
