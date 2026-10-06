@@ -179,7 +179,6 @@ export function verifySentence(
   return { text: raw.text.trim(), sources: cited, quote, verified: cited.length > 0 && quoteIsIn(quote, cited, sources) };
 }
 
-/** Parse the first JSON object in a model answer (models sometimes wrap it in prose or fences). */
 /** The model's answer held no JSON object the Companion could read. The server turns it into a 502. */
 export class ModelAnswerError extends Error {}
 

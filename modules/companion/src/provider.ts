@@ -86,6 +86,21 @@ async function errorText(res: Response): Promise<string> {
   return text.replace(/\s+/g, " ").trim().slice(0, ERROR_BODY_MAX);
 }
 
+/**
+ * Error text goes to the server log, so it must never carry a credential: an upstream may echo
+ * the Authorization header in its error body, and a fetch error may echo the URL. Removes every
+ * credential header value we sent and any user:password@ in a URL.
+ */
+function scrub(text: string, headers: Record<string, string>): string {
+  let out = text.replace(/(\/\/)[^/@\s]*@/g, "$1[redacted]@");
+  for (const [name, value] of Object.entries(headers)) {
+    if (!/^(authorization|x-api-key)$/i.test(name)) continue;
+    const secret = value.replace(/^Bearer\s+/i, "");
+    if (secret.length >= 4) out = out.split(secret).join("[redacted]");
+  }
+  return out;
+}
+
 /** One attempt's signal: the caller's, plus the attempt timeout. */
 function attemptSignal(timeoutMs: number, outer?: AbortSignal): AbortSignal {
   const timeout = AbortSignal.timeout(timeoutMs);
@@ -119,7 +134,7 @@ async function postJson(
     } catch (e) {
       if (signal?.aborted) throw e;
       const why = e instanceof Error ? e.message : String(e);
-      throw new ModelError(`model unreachable: ${why}`);
+      throw new ModelError(`model unreachable: ${scrub(why, headers)}`);
     }
     if (res.ok) {
       try {
@@ -135,7 +150,7 @@ async function postJson(
       await sleep(wait, signal);
       continue;
     }
-    throw new ModelError(`model call failed: ${res.status} ${await errorText(res)}`, res.status);
+    throw new ModelError(`model call failed: ${res.status} ${scrub(await errorText(res), headers)}`, res.status);
   }
 }
 
@@ -282,6 +297,23 @@ export function endpointHost(url: string): string {
 }
 
 /**
+ * A base URL is scheme, host and path only. A key belongs in LLM_API_KEY: one written into the
+ * URL (user:password@ or ?key=) would be sent to every log line that names the endpoint.
+ */
+function checkBaseUrl(baseUrl: string): void {
+  let u: URL;
+  try {
+    u = new URL(baseUrl);
+  } catch {
+    throw new Error("LLM_BASE_URL must be an http(s) URL");
+  }
+  if (u.protocol !== "http:" && u.protocol !== "https:") throw new Error("LLM_BASE_URL must be an http(s) URL");
+  if (u.username || u.password || u.search || u.hash) {
+    throw new Error("LLM_BASE_URL must not carry credentials, a query or a fragment; put the key in LLM_API_KEY");
+  }
+}
+
+/**
  * Builds the provider the environment asks for, or null when it asks for none (the server then
  * serves the app and data and answers 503 on the model routes).
  *
@@ -301,7 +333,7 @@ export function providerFromEnv(env: ProviderEnv): { provider: Provider; endpoin
   if (timeoutMs !== undefined && !(Number.isFinite(timeoutMs) && timeoutMs > 0)) throw new Error("LLM_TIMEOUT_MS must be a positive number of milliseconds");
   if (kind === "openai") {
     const baseUrl = env.LLM_BASE_URL?.trim() || OLLAMA_BASE_URL;
-    if (!/^https?:\/\//.test(baseUrl)) throw new Error("LLM_BASE_URL must be an http(s) URL");
+    checkBaseUrl(baseUrl);
     const model = env.LLM_MODEL?.trim();
     if (!model) throw new Error("LLM_MODEL is required with LLM_PROVIDER=openai (for example qwen3:8b)");
     return { provider: new OpenAICompatibleProvider({ baseUrl, apiKey: env.LLM_API_KEY, model, timeoutMs }), endpoint: endpointHost(baseUrl) };
@@ -311,6 +343,7 @@ export function providerFromEnv(env: ProviderEnv): { provider: Provider; endpoin
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY (or LLM_API_KEY) is required with LLM_PROVIDER=anthropic");
     const model = env.LLM_MODEL?.trim() || env.COMPANION_MODEL?.trim() || undefined;
     const baseUrl = env.LLM_BASE_URL?.trim() || undefined;
+    if (baseUrl) checkBaseUrl(baseUrl);
     return { provider: new AnthropicProvider(apiKey, model, baseUrl, { timeoutMs }), endpoint: endpointHost(baseUrl ?? "https://api.anthropic.com") };
   }
   throw new Error(`LLM_PROVIDER must be openai or anthropic, not "${kind}"`);

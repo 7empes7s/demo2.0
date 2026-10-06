@@ -177,4 +177,34 @@ describe("providerFromEnv", () => {
     expect(endpointHost("http://127.0.0.1:11434/v1")).toBe("http://127.0.0.1:11434");
     expect(endpointHost("nope")).toBe("(invalid URL)");
   });
+
+  it("refuses a base URL that carries credentials, a query or a fragment", () => {
+    for (const url of ["https://key:pw@api.example/v1", "https://api.example/v1?key=k", "https://api.example/v1#k", "ftp://api.example/v1"]) {
+      expect(() => providerFromEnv({ LLM_BASE_URL: url, LLM_MODEL: "m" })).toThrow(/LLM_BASE_URL/);
+      expect(() => providerFromEnv({ LLM_PROVIDER: "anthropic", ANTHROPIC_API_KEY: "k", LLM_BASE_URL: url })).toThrow(/LLM_BASE_URL/);
+    }
+  });
+});
+
+describe("error text that reaches the log", () => {
+  const KEY = "sk-live-0123456789abcdef";
+
+  it("never carries the Bearer key, even when the upstream echoes it", async () => {
+    const { fetch } = fakeFetch([() => json(401, { error: `bad auth header: Bearer ${KEY}` })]);
+    const p = new OpenAICompatibleProvider({ baseUrl: "http://x/v1", apiKey: KEY, model: "m", fetch });
+    const err = await p.complete(REQ).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ModelError);
+    expect((err as Error).message).toContain("401");
+    expect((err as Error).message).not.toContain(KEY);
+  });
+
+  it("never carries the Anthropic key or URL credentials from a network error", async () => {
+    const { fetch } = fakeFetch([() => new Error(`connect failed for https://user:${KEY}@api.example/v1 with key ${KEY}`)]);
+    const p = new AnthropicProvider(KEY, "m", "https://api.example", { fetch });
+    const err = await p.complete(REQ).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ModelError);
+    expect((err as Error).message).toMatch(/model unreachable/);
+    expect((err as Error).message).not.toContain(KEY);
+    expect((err as Error).message).not.toContain("user:");
+  });
 });
