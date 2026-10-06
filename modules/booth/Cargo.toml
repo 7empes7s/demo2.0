@@ -1,0 +1,34 @@
+[package]
+name = "d2-booth"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+description = "Booth: secret, verifiable ballots with threshold guardians (protocol core, unaudited, non-binding)"
+license = "AGPL-3.0-or-later"
+publish = false
+
+[lib]
+name = "d2_booth"
+path = "src/lib.rs"
+
+[[bin]]
+name = "d2-booth"
+path = "src/bin/d2-booth.rs"
+
+[dependencies]
+# ristretto255 group (ElGamal, Chaum-Pedersen, Feldman commitments). No curve code is written here.
+curve25519-dalek = { version = "4.1.3", default-features = false, features = ["alloc", "precomputed-tables", "rand_core", "zeroize"] }
+# Fiat-Shamir transcripts.
+merlin = { version = "3.0.0", default-features = false }
+# Voter round keys and message signatures.
+ed25519-dalek = { version = "2.2.0", default-features = false, features = ["alloc", "rand_core", "zeroize"] }
+zeroize = "1"
+rand_chacha = "0.3"
+rand = "0.8"
+sha2 = "0.10"
+hex = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+
+[dev-dependencies]

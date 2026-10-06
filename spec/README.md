@@ -9,6 +9,7 @@ The contracts modules share. Nothing else is shared.
 | `record-types.json` | The entry types Record accepts |
 | `record/` | Record's log format (entries, tree, checkpoints, proofs) and the test vectors every implementation must pass |
 | `lottery/` | Lottery's draw format (pool root, commitment, drand beacon check, draw algorithm), recorded drand beacons and draw vectors |
+| `booth/` | Booth's board format (entries, canonical JSON, ballots, proofs, transcripts, tally) and a generated test board with must-fail mutations |
 | `openapi/` | API contracts (when they land) |
 | `tests/` | Checks every schema and example; run by `tools/check.sh` |
 

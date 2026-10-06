@@ -3,7 +3,7 @@
 # cargo fmt, clippy and test over the whole workspace). Add one line per Rust module.
 [workspace]
 resolver = "2"
-members = ["modules/door"]
+members = ["modules/door", "modules/booth"]
 
 [workspace.package]
 edition = "2021"

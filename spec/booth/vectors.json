@@ -1,0 +1,1162 @@
+{
+  "schema": "d2.booth.vectors/1",
+  "generated_by": "d2-booth 0.1.0",
+  "seed": "64322e626f6f74682e766563746f72732f31207075626c696320736565642121",
+  "primitives": {
+    "group": "ristretto255 (curve25519-dalek 4.1.3)",
+    "encryption": "exponential ElGamal: (a, b) = (r*G, r*K + m*G)",
+    "proofs": "Chaum-Pedersen and disjunctive Chaum-Pedersen, Fiat-Shamir over merlin 3 transcripts (STROBE-128), protocol label d2.booth/1",
+    "key_generation": "joint Feldman VSS (Pedersen 1991), k-of-n, Schnorr proof of the constant term, Lagrange at zero",
+    "signatures": "Ed25519 (RFC 8032) over SHA-256(\"d2.booth.ballot/1\" || 0x00 || canonical JSON of the ballot with signature \"\")",
+    "board": "SHA-256(\"d2.booth.entry/1\" || 0x00 || seq be64 || prev || kind || 0x00 || canonical JSON payload); canonical = sorted keys, compact, integers only"
+  },
+  "script": {
+    "round_id": "booth:test-round-1",
+    "options": [
+      "yes",
+      "no",
+      "abstain"
+    ],
+    "guardians": 3,
+    "threshold": 2,
+    "voters": [
+      [
+        "nym-a",
+        [
+          0
+        ]
+      ],
+      [
+        "nym-b",
+        [
+          1
+        ]
+      ],
+      [
+        "nym-c",
+        [
+          0,
+          2
+        ]
+      ],
+      [
+        "nym-d",
+        [
+          0
+        ]
+      ],
+      [
+        "nym-e",
+        [
+          1,
+          1,
+          0
+        ]
+      ],
+      [
+        "nym-f",
+        [
+          2
+        ]
+      ]
+    ],
+    "decrypting_guardians": [
+      1,
+      3
+    ]
+  },
+  "board": {
+    "schema": "d2.booth.board/1",
+    "entries": [
+      {
+        "seq": 0,
+        "prev": "0000000000000000000000000000000000000000000000000000000000000000",
+        "kind": "round.params",
+        "payload": {
+          "guardians": 3,
+          "matter_id": "matter:test",
+          "options": [
+            "yes",
+            "no",
+            "abstain"
+          ],
+          "round_id": "booth:test-round-1",
+          "schema": "d2.booth.round/1",
+          "threshold": 2
+        },
+        "hash": "e542aec7e1594281286b6d4004a80fdb351d48f10733ecceed9fee37775139f4"
+      },
+      {
+        "seq": 1,
+        "prev": "e542aec7e1594281286b6d4004a80fdb351d48f10733ecceed9fee37775139f4",
+        "kind": "guardian.commitment",
+        "payload": {
+          "commitments": [
+            "e0cb783f1972f6e96a4a25d5e691ae062b638325084e1de79ed2af8ec72f952b",
+            "d6ba6d90e0cb69b7ef3d29f6eea461608a14506b6ef9d93bb8a00c5e856ac11d"
+          ],
+          "guardian": 1,
+          "proof": {
+            "commit": "0e545f822f9989433276ce589a92a1a86937eec749a17e6321cb6b3162da8c1a",
+            "response": "7f7eb0c9d5cf18a1f59904d503b353a375b43401950e01b5ed07c3e8cbb7d40f"
+          }
+        },
+        "hash": "6fd57d74f9d93ea4885aef4dbda373e0380f115f60b957098fc06e0a3d9093f1"
+      },
+      {
+        "seq": 2,
+        "prev": "6fd57d74f9d93ea4885aef4dbda373e0380f115f60b957098fc06e0a3d9093f1",
+        "kind": "guardian.commitment",
+        "payload": {
+          "commitments": [
+            "ca16029427452cfd84cb2d28b46929681b4084221c40d535adcf24bb246c491f",
+            "6a928fc011bf426552827ab620fd1e4ca566a060df7ff541da60184e5ad06134"
+          ],
+          "guardian": 2,
+          "proof": {
+            "commit": "a29d097f5f4d4edfaa6a5249c8519c21b6c2b88d81b74e45fb34ce67e8025b47",
+            "response": "3becabfdf906dab915e6d66108671435bb286773b59e0baf267e69b0c0c56208"
+          }
+        },
+        "hash": "705decb818ee249f00d94ec760b23ffcd64692de102b58585ca9eafb16550a5d"
+      },
+      {
+        "seq": 3,
+        "prev": "705decb818ee249f00d94ec760b23ffcd64692de102b58585ca9eafb16550a5d",
+        "kind": "guardian.commitment",
+        "payload": {
+          "commitments": [
+            "769beb897c63f211f7f9a193547c5905f51873a730d22aed22200e237031d367",
+            "9211a4e87df1955f4310ab0125bcab0f51dabda1a9046493780469048a81cb75"
+          ],
+          "guardian": 3,
+          "proof": {
+            "commit": "4c93b44734aeb1b7805628e6669bed6f53be7823c547ae2a8ce1fa73193dc954",
+            "response": "e307ef50890af645c5198ad2c8811163e23c55042c82240c5e0b1bf0ab25d50f"
+          }
+        },
+        "hash": "7cab2a6e6cd00f35ac8b202017bc33a04f69cbf7f4a6457cab98e12d36add0c9"
+      },
+      {
+        "seq": 4,
+        "prev": "7cab2a6e6cd00f35ac8b202017bc33a04f69cbf7f4a6457cab98e12d36add0c9",
+        "kind": "round.key",
+        "payload": {
+          "guardian_keys": [
+            "8aba1e551cd4d59f79f47663f6940a278fa69a4f515af0030e1523d51d2d0475",
+            "0a3d8d9999a935796f9e0e4e1e912880500cce2cb9ed81882a838a856bb7a167",
+            "c2e6756ddcf644b24c3950964bf795beeb3347bb3fbd36eb4b3d2b091faeae3a"
+          ],
+          "joint_key": "d08bae5202b1bda2040f4972f2021605403eb3803c5a5809e9d4e5cdba6f8d2c"
+        },
+        "hash": "ecda4529ae3391221bbc711d548b2e42de6e4ad8aa7fe166567c3418e681c050"
+      },
+      {
+        "seq": 5,
+        "prev": "ecda4529ae3391221bbc711d548b2e42de6e4ad8aa7fe166567c3418e681c050",
+        "kind": "signup",
+        "payload": {
+          "nym": "nym-a",
+          "voter_key": "0ceed5d0818c51272018c7404c12992d81f33d86ec631b6e6e69a1a51918201c"
+        },
+        "hash": "acd5d2f9599c37541830c08a6cbe02115ebda7368ffd8505756d7fa022d751cf"
+      },
+      {
+        "seq": 6,
+        "prev": "acd5d2f9599c37541830c08a6cbe02115ebda7368ffd8505756d7fa022d751cf",
+        "kind": "signup",
+        "payload": {
+          "nym": "nym-b",
+          "voter_key": "628910a044427c46ea7e45ef473b85efb1919ca040bcf29da727f0fcf7e5def4"
+        },
+        "hash": "f599c0c63d3b8ce520169ff52aed1870c2224ef6509c8dcc51b7b9e0d25f74ac"
+      },
+      {
+        "seq": 7,
+        "prev": "f599c0c63d3b8ce520169ff52aed1870c2224ef6509c8dcc51b7b9e0d25f74ac",
+        "kind": "signup",
+        "payload": {
+          "nym": "nym-c",
+          "voter_key": "ad4089130bec24938eed6b6b5b2342660a34d2690dac7428f68c285be4241f04"
+        },
+        "hash": "b14cc2fc0576d666cadc76e99170962d8326c18197f41a1a3d448e0dc42117fb"
+      },
+      {
+        "seq": 8,
+        "prev": "b14cc2fc0576d666cadc76e99170962d8326c18197f41a1a3d448e0dc42117fb",
+        "kind": "signup",
+        "payload": {
+          "nym": "nym-d",
+          "voter_key": "fd22e577e46cc14ab0f7fe35a7ef9f51361cdba68a79b34530e8fe501f06ae52"
+        },
+        "hash": "4caef2a336530f651fbf9d8bca1829e420ba8e8fddaf37edff115818a3befaeb"
+      },
+      {
+        "seq": 9,
+        "prev": "4caef2a336530f651fbf9d8bca1829e420ba8e8fddaf37edff115818a3befaeb",
+        "kind": "signup",
+        "payload": {
+          "nym": "nym-e",
+          "voter_key": "f57260ae5840c7b4724192442601894c20f2fe9c6e3084730d87a84a42e5486e"
+        },
+        "hash": "60fe98521a358d0d07f40a53ca5c2ae875799f492119d35ced9787a0ec7cb4ce"
+      },
+      {
+        "seq": 10,
+        "prev": "60fe98521a358d0d07f40a53ca5c2ae875799f492119d35ced9787a0ec7cb4ce",
+        "kind": "signup",
+        "payload": {
+          "nym": "nym-f",
+          "voter_key": "09cbb8ce19d3380740ab3a807074f6250c8fa9633ad7220ae97ca94d1ae85006"
+        },
+        "hash": "1bb44ea7280f48fa80d81916e9cc48053d42f128b61e75b78782ca6942e049f3"
+      },
+      {
+        "seq": 11,
+        "prev": "1bb44ea7280f48fa80d81916e9cc48053d42f128b61e75b78782ca6942e049f3",
+        "kind": "ballot",
+        "payload": {
+          "bit_proofs": [
+            {
+              "challenge_0": "c49de9413059a2d0e7be5aca5e76f54e0456dd46eeca7baa2982a78eee135103",
+              "commit_0_1": "6812306db642b9dbbd8d9d34f8165dec5ab1364d9dbccafcadf850cd86465b5d",
+              "commit_0_2": "907419a6ca4366427bfc134b61323efeda7e3b7f183d8be3c356983badbed50f",
+              "commit_1_1": "342c597d8c0d4d5f64fbc1f2dbd892bbbdba306c575eb05c1925272404f75456",
+              "commit_1_2": "6c6ab70b20104d9e85b158d2ca1e0cc40938345c9f813202bd347423eceea34f",
+              "response_0": "470562e48f916cda235d39fdef239a684a2f2bcbe430617a768b549fd343ce00",
+              "response_1": "365c453a869e07d90de7d7a5d8fe135429a63b35c4257943f6229bfbf15cec03"
+            },
+            {
+              "challenge_0": "80b475dc1ce7089c0cebe4a1c0c44affa76778ff455c5dd5c569b8b7d084080f",
+              "commit_0_1": "28d5868f3c5b78212f726affe9602fd856d9c0997e9cae3f7c640abff016a61c",
+              "commit_0_2": "2ea51ec01f194b5822203db9e46922cfbc94b62470054a88b3081c276127e96a",
+              "commit_1_1": "9658ddabd2d94e3ba85d3becff81f87cedf2dd45820a7e1e63e33f2898d3401e",
+              "commit_1_2": "92e44d4d1645b587a616b704a34935a0509e40a79bb0e5dbcd230f39ba8b7e0d",
+              "response_0": "87d36aadaee72f07b1127b2f2e3a60cf6edfc3496d307dbf1623251d0039ae09",
+              "response_1": "91040e119c1e37600cd90424ac5a0b03300c3731aabfa736edd78eb06e93ad07"
+            },
+            {
+              "challenge_0": "81eb2a88e98e220ae84641bf8ce44a195a57c534e7d4db8f078e8f9376da8409",
+              "commit_0_1": "1c3a45980418e39e9e85f1c5ae53c17ce11a2c65d38fa31476e032c6e1c5fe7e",
+              "commit_0_2": "72d8366e69fceeb34e63f6e2098347f241b593ba4d2f4c08981ac9c4741cdd4b",
+              "commit_1_1": "e685c32e14f2902f8214575ce50d2bf0ae552e8bd60a1caf9058780d88ab471b",
+              "commit_1_2": "208719c354a21b92a0618fb6592c2deb080f9b5043902904fd7932a9a8716a79",
+              "response_0": "0579a7a7397f7d9a006fd330185c0be468789422143b7a0d7e77a6097f84590a",
+              "response_1": "1565459ca4479a4f260ae8811480adfbe13c82f208fadcacbc251160377b410a"
+            }
+          ],
+          "choices": [
+            {
+              "a": "6603fd9306eea2594f644414ddb29e427451fc7876717a4b51c18baa7cf68926",
+              "b": "2c984181ffc2bfd3035f6dfd4abdf561a804c20d59006d2cb7fdbe6beabf4f1b"
+            },
+            {
+              "a": "7e7e2a785f568318970f298bebcb5829c985864195e9f9b5221812623d69e946",
+              "b": "922507f631b8c57dee68dd50967a40704585db968432d903b505adf1c1ee5254"
+            },
+            {
+              "a": "6a1a910e0a18905f3dfc034d7d26b2ffbc47d83dfc26c59d9a26a3ea57af4173",
+              "b": "300fb23ce58317ecc9924538647ade89dec35c10ce2cc3e782b030c597657338"
+            }
+          ],
+          "nym": "nym-a",
+          "round_id": "booth:test-round-1",
+          "signature": "f41354ff6d887080088ce3668a16e4a7c8cd5927d9d94d3301251cdecef125f95c63defcfedd5eb62f1dff5e682329936fc68185b2f7c7d8c1eda842810a520e",
+          "sum_proof": {
+            "commit_1": "c0f2e9246a53c3ccdc40fb766f721f23e2eb274c50d237857516cea269889f11",
+            "commit_2": "9acdaeb7cc115ba0b10453865b93e0f436b963f9a183ba58374b651b8702392b",
+            "response": "a6ba20c56cf64fbbdefe95e3c626ec98f63d0613e7329461415c12aa1d73ac01"
+          },
+          "voter_key": "0ceed5d0818c51272018c7404c12992d81f33d86ec631b6e6e69a1a51918201c"
+        },
+        "hash": "7b0642b2126bec4de8b0e69381d301b992f44037620f8a4e4aaa0e823576a5dc"
+      },
+      {
+        "seq": 12,
+        "prev": "7b0642b2126bec4de8b0e69381d301b992f44037620f8a4e4aaa0e823576a5dc",
+        "kind": "ballot",
+        "payload": {
+          "bit_proofs": [
+            {
+              "challenge_0": "fcf90bd30fcee495a528b4a2919e97904045269f4182dbae0e0c17dafee1bb0d",
+              "commit_0_1": "20c4c6b31cb42ae3e16c7534d00386005724960fadaf91ad4bb6ae23a7f7845f",
+              "commit_0_2": "4c0b8c10d316a1f4cbd628be0b1d54e47f1c1a9620c2051c572fccaed42dfd1b",
+              "commit_1_1": "dafd987bac0b7b58c2a1a4d39463eccfd5ffbdd80d6780857751d0cd37779b1c",
+              "commit_1_2": "ce7c6c936414ff5bed02c4ebb7086923b1479c1af8a50f338de97a85aa21182f",
+              "response_0": "0535eb8ba5b93ff662851a0be9a693c60cf054a8bcdaed689c920d21ab851c03",
+              "response_1": "cddc4d3860067022b91f52ef498f75c7826a950dc6e10dc005880c6cb1edd50e"
+            },
+            {
+              "challenge_0": "6a37fb78de1d1eabb9c61f8e8739cdf2cc21027a2556fa037fcd8b9da132ed0f",
+              "commit_0_1": "66ac053f5e684310c80ec324f398a22dc5150da72ba7dbe2551310ee3c4c7726",
+              "commit_0_2": "a275bcd57a5d72b64bb71149a6a0456756f3540a718eb966d26f30c39f746101",
+              "commit_1_1": "ae48692df878533df28c966f813c7083782344cb5c97b3112545f315e89aa735",
+              "commit_1_2": "6e0d7645a017afa03a5ffa70caac3cc075598dc4289018fb30e18b6083428b1b",
+              "response_0": "f84367fdc048c9c0a2872675b3ccabe332602704fc6f90e0e48fb8ad52f45c02",
+              "response_1": "0450b11d06c0e2dba88d790fa1c1902905373fe26314173946ccc38c78362d08"
+            },
+            {
+              "challenge_0": "b714a4fb41bd502c1a68b7c71847644bb241df39c1a952f13ffe94f06ff66e0b",
+              "commit_0_1": "561e6ef5af23c37ebfc05324f0651c44232c3e4c1176120c98c9ff25f7fe0169",
+              "commit_0_2": "58712c48aacbfc2bef53a2a0c83e49ad36a6f51ee9884b567f49304955a4dd58",
+              "commit_1_1": "28326a27805f1623fd0bc47f8e68e6844b01618316c46d4a57c733bed29ecb59",
+              "commit_1_2": "fccdf6c1db1bf7886b3450281d35728f89a3a5568af24c9d3bbfaa7180510517",
+              "response_0": "cd702578d1d29b86ac597579d616cf85559a14b09cddaa6979d501ab4b16c40b",
+              "response_1": "a14187918daca62157f4d6067e1312b8499e154c63e11bdff26218e255203203"
+            }
+          ],
+          "choices": [
+            {
+              "a": "60826c5eed11dbe1779938e4c2a169c5bcea2d9a0e5a775facfef9e0dbd97348",
+              "b": "82715950bf20ebd032d724e2ac76b7291c1656ffac5518d83b47ca074b78594f"
+            },
+            {
+              "a": "26341d2aabd5d70dbd0194d1887a5f1dd737cdc28343ff39a70daa1be9e0b04e",
+              "b": "8a62deef6ecf6912dacac744921a7007437e4323cab5c8bb5d43c2ce8d13c640"
+            },
+            {
+              "a": "9061e69cd3893653d947ae9acb212d468602196300090b33416dd397ca8acf17",
+              "b": "ea631a4b18df8787be663013410a09c0d33a74c6c0c2f10a656c2555c8c0fa7a"
+            }
+          ],
+          "nym": "nym-b",
+          "round_id": "booth:test-round-1",
+          "signature": "7348ebaba7766ece13582a683d4fe831c0f72c0bcadbb931deaedb4b8ef017d22b6b9b9bfe1df4e0e099035fae8ec8d9966ec0d17260e64f3822ba77520adb0b",
+          "sum_proof": {
+            "commit_1": "4a95da66afed823a34c0d152052c756efd2f92017ce36ef5432aa3743387944a",
+            "commit_2": "52d5f9aab49b02dc3fdb021f25d39624ebe4656234082e1785f35ccf944fc904",
+            "response": "45e60a2ffd10e9a93b41e62cff0b0600635d59372d4c762bfd60cdda61361a03"
+          },
+          "voter_key": "628910a044427c46ea7e45ef473b85efb1919ca040bcf29da727f0fcf7e5def4"
+        },
+        "hash": "27b578e82e112b7046dfb5b8f709824ab1a666506c532b0c3eca19b17a201671"
+      },
+      {
+        "seq": 13,
+        "prev": "27b578e82e112b7046dfb5b8f709824ab1a666506c532b0c3eca19b17a201671",
+        "kind": "ballot",
+        "payload": {
+          "bit_proofs": [
+            {
+              "challenge_0": "693e7c52b5dd0cda4cff863a6aea0d4181133611fc8b6984420ebe9d9cd84105",
+              "commit_0_1": "6ccf4a6c0aee4275218da3cf6e7a5b032100c8a7639fcc91bf89ef2f4cc7d223",
+              "commit_0_2": "8ec78792510d52a2e7ba8467d798c11bd095cdfc1f3e5207e8a6cb81677bdc0e",
+              "commit_1_1": "688dcbef49e4197ffd05010b498eaa5c042cdda5bee921826aaa4682d2f49047",
+              "commit_1_2": "9a08e489f3e8f1b4676a6c74b2f10630b08fce63f746a32e1e4f2d37dcc63701",
+              "response_0": "6996bb56c6d19a09c5b5f877c7133e248c30d989325016c5651f624de84b0f03",
+              "response_1": "d044684f75f3e25c134b0707a28871d4d89daa012c70a47cbb775ab894cdff0b"
+            },
+            {
+              "challenge_0": "23161bdbd0aa65f457c57479feb221bb69b57830a6998ca676b23ed34077ab03",
+              "commit_0_1": "2e2cfd090aeed4cff6ed0b9a2702bed017a074b834063ceaaab2b879fcb41818",
+              "commit_0_2": "343b4b4e05c4655891640a58e4d012bfa7cb6bc350fb826ccdd590180cfff235",
+              "commit_1_1": "dc4f2f599cb045ac8aee897eba3d6669aed06bc25cffa74d3c36e80af6497601",
+              "commit_1_2": "9069ecd5e4d700a2c5ea5f2879e89e26e4c7386d0d15cc2a21bb01e6434b8402",
+              "response_0": "db9e167e611c037d703eb3f1de4f777f8c3316af67e58990d06206213a4dbb03",
+              "response_1": "35701697e235d7112ba7cb23a524d23ffaeb2247433565132b0759fd0cfd6e03"
+            },
+            {
+              "challenge_0": "2e76b445657b0bf073e8b67857ebe5b3d5abae99c062c0de9bad8981fa3cc506",
+              "commit_0_1": "4635266cd850d0a4a5beb48a230bcd90f86df183d4d1d4ea5f4730231eb2821c",
+              "commit_0_2": "206ad1afa1bc4fdf02d3328e37288324b7425682ed1b37d2da5c2a31d9e06c69",
+              "commit_1_1": "30875684987de32650a97e550711fc7d9508217ca10b9f826142153af5f07a79",
+              "commit_1_2": "2cd1cda975e4a20e1efa4934be8f5c0032733ba74e9ac2813c3bc9b475146672",
+              "response_0": "1992f399349828fb22fa041c91b22663e35251eb10004c4c77c24711fa6cf10a",
+              "response_1": "252745c60fef73764989f607dc545342a5ab749b55ba03c80dab32ea8b61fd07"
+            }
+          ],
+          "choices": [
+            {
+              "a": "b6cd8b3a893794c3990d918c00b3f10a213e9056c337956eb79b6233eea5413e",
+              "b": "e489ffeeb1fa5512b0a000868d65860e89d1730065390202111c1d5d62a6d92e"
+            },
+            {
+              "a": "fac85dea901a347448382f1e02424f13adc845dbd74374800400b7d521bf5225",
+              "b": "e689d75d7309968ad92a76f163e6bc90dac50e34f4f073d00f665b3feb20c216"
+            },
+            {
+              "a": "b6ed77453f5faec5d5482e0ced9f1b04fe59627aa35be7a89044c07f1f275517",
+              "b": "92f4f62989ecc4d6abbcb73ad5703e2a5f20855e2dfe8ae9c9e230b2eae87860"
+            }
+          ],
+          "nym": "nym-c",
+          "round_id": "booth:test-round-1",
+          "signature": "af025bca605bc4ec32c52800983c502ad8cf94d48bf8ca3c3be42f9586fc2ba675f8231fbeafe93d060f46d1c156eb3907ad325d87243e5a0355a361137a7506",
+          "sum_proof": {
+            "commit_1": "5cb01037c744b865ff3e05271ef94609d8ed178cec790b1207f5acf297eabd1d",
+            "commit_2": "48838c57bf313b9ae265930d28649d8c038ab67976a5258a15ab70bf1ffb0d0a",
+            "response": "a9af80962b7dccfe8dc903479fcdef0a5580b58425deb14c64c85a87bf045b07"
+          },
+          "voter_key": "ad4089130bec24938eed6b6b5b2342660a34d2690dac7428f68c285be4241f04"
+        },
+        "hash": "dc1ec4a7d92651712ee54a72da6730585b23ccf5ac4b1c294a1c49504536c767"
+      },
+      {
+        "seq": 14,
+        "prev": "dc1ec4a7d92651712ee54a72da6730585b23ccf5ac4b1c294a1c49504536c767",
+        "kind": "ballot",
+        "payload": {
+          "bit_proofs": [
+            {
+              "challenge_0": "33222b59f48fbe7ac9ae0606cd34cab143ac215dabb8359bd4602c34e17a0a05",
+              "commit_0_1": "30f4523477cb2eb15601673c100cf4b6d1010a7447d8ebe6b655e72af0211756",
+              "commit_0_2": "267097c78db76aee32bc3c63c7333ed4c9c6df32e05519748bb73ff8e9977f75",
+              "commit_1_1": "9e46305ff4c25ede46e5d32cdbccbea55933122c77d8379f41c5e036f37b827d",
+              "commit_1_2": "66a743d2a03ea0548e7d22dcefd14cf450568ddc891a7bc609755ecad9070002",
+              "response_0": "b351ab9a2b151d27e1154370d92ba72503b14159e4b089f7b7f853101eca1204",
+              "response_1": "b78e72bfa972ed0afc34b96aa74d959458ec6c1c6d3f0527f6aca8fe061d7e05"
+            },
+            {
+              "challenge_0": "599360ee2484c0e6d46000595dc0ffca91d62f5f352e416d45519ee97f1a4909",
+              "commit_0_1": "7e4c579ecb009d370c6509f085cb65fcdc7e7f207e65f3341c262736906b923e",
+              "commit_0_2": "46be82a6a2f790c5d372c3aef28aa640e17c5e0b5ae4f13811f895ed8e889d5d",
+              "commit_1_1": "9246b8d07afc6f91d71c7bb6a17ce1aa1d3c6dd39a6a30c47e36629e993afa0c",
+              "commit_1_2": "c0a77d4b035f89fc1d4300601f59cd30777dcf94ce6ed5703984a0911459b008",
+              "response_0": "af93874b3574199b22f1580cd9a852ae8d9dff092f50c1f7d8e875416b0c9b0f",
+              "response_1": "8b8484158546e9bbe061385cc05b9d3a2b3a0bba92e8a89af2affad36d228506"
+            },
+            {
+              "challenge_0": "584580dde71cdb2b006d8dd41d277a7ccfed521ad503d75b43a116c23b088007",
+              "commit_0_1": "3af1ba678b3aa9e10d16866dde4e83af52348bd48ad3189ef03c3069eb95601e",
+              "commit_0_2": "ea8a963220230a43ab909f40fb13cd2b1aa9ffdd2b79571ab9a7e9ed2ae54134",
+              "commit_1_1": "cc1b0dfcd17edffecf648cb6477147d84db4d6c68f6de85da186756818046d33",
+              "commit_1_2": "968c62d1bb244770624dada7fd7a2bf0500c759e658caa485cc16c7d34cafb39",
+              "response_0": "5ce67f0c8b7694932e00ec5b2b0d5ccd146b8ef3acb2d14511b82c81bc638400",
+              "response_1": "1c981e5df8ce089c57a6a5617cc792f9ea9d1adcde938bb367fa9e6d0f4b770b"
+            }
+          ],
+          "choices": [
+            {
+              "a": "087137fbf53a877ce1ceff29957a7dad78596a4c9af7c74016c8c7eab452c123",
+              "b": "5235f3db55daf3e237c59b3489a1e9f42da01757507cf208849d21284e814c5a"
+            },
+            {
+              "a": "b4ef08d7fb36e8f70ebb8d7a4a6f361ab6bd3bba7a84fc4257107838f7f22075",
+              "b": "b09b4175f679767c36401c70140ba98a5108bdfd39cfdeec2d05fe3a29b01b04"
+            },
+            {
+              "a": "3c8f147c03f09cfb9f23c17e27300523bc7378b99c20b1f292b989f43520de14",
+              "b": "68c8fa2055daac66a186638433d9b350ea9b6e0c4a123e88567fcfc5169f8d01"
+            }
+          ],
+          "nym": "nym-d",
+          "round_id": "booth:test-round-1",
+          "signature": "be9c6f07b689f65a7402ba45f0d5c0615149fe9df2017fc26f077e6a6970fb87986281b92ef7642670459738e437c614d93068a018412712feae18909c808a0f",
+          "sum_proof": {
+            "commit_1": "2c5a8af4353b4f47d83f70d727c98d47d017bc20c046c45b7914454b6ef9c36b",
+            "commit_2": "40d57713aeafdb64fd7d010e6919c4d06cc9d2a56e096d60ed1a58ae07ed6f54",
+            "response": "16acfa3ab2020b4539359278ef3066e6ec7731f1e4ab06fb0f4cfc0cc61a2f05"
+          },
+          "voter_key": "fd22e577e46cc14ab0f7fe35a7ef9f51361cdba68a79b34530e8fe501f06ae52"
+        },
+        "hash": "7f0fc9676aa73f55c2157083ca86a61b91e027bec37e99d5558d46a6d6a33369"
+      },
+      {
+        "seq": 15,
+        "prev": "7f0fc9676aa73f55c2157083ca86a61b91e027bec37e99d5558d46a6d6a33369",
+        "kind": "ballot",
+        "payload": {
+          "bit_proofs": [
+            {
+              "challenge_0": "d099af792eeae1a9a351b5948080f6da4af7746f37fd98ba36342f90a212b004",
+              "commit_0_1": "002b580b9826c89774e79294297f39fbd9036b3942f75dae4d4cecc955c9a332",
+              "commit_0_2": "3606c0333c95434b527f184c78972c6b115e94fa53070665a5cc237d9fbf3c6a",
+              "commit_1_1": "e81695adc88808572fb6b6b63815473ce17b2f23b4fc0fcf521b7288b4baf663",
+              "commit_1_2": "c2e71f7defb38780a4abcb49b4876fae2f4636893370d30f080410a2e268f10b",
+              "response_0": "6a6f4a025a2ef5045b2102a7c3034bd4b6e6420b63b3a24b136e770c4387d005",
+              "response_1": "e75ebe9176b1fea2b3067bc569f5ba7e12aab5274a20800f2ba31d808222b600"
+            },
+            {
+              "challenge_0": "38ef67d7b4b4de3b9fd0c896b71c4052b61830192dbb64c29aa909eccc48b807",
+              "commit_0_1": "86607313e6cf567608ed6b6512d48e7be63cc54b840fc4440c647ced2061414c",
+              "commit_0_2": "cac2b1c60ed6a2ca424404e9b2e2ebdf6b1096fe87ff52cd85967f366421cb02",
+              "commit_1_1": "0c8c54bd3c8ec806a81a7ac0f3532f0ea41d7c6eef36d325b25a8ec7fd4af60b",
+              "commit_1_2": "903c76c15d6ef2e7162ee127b47f5b3a79056e4ef00dc8deebb05740e16e8001",
+              "response_0": "802aa87d00d77dc6e5849e8787e272aa6b82a1279f84c1230edd0e0672a7a901",
+              "response_1": "abf476b9ddcc14cca1a3033d9f0fef80353a0e757d84cc2a770c7fdc4742c203"
+            },
+            {
+              "challenge_0": "c345711d8c839e25ebb2bbe27b9302c4dad1d8c8b4bea9f8158f9ff237060300",
+              "commit_0_1": "c028cf1656241848f234a29b7ae7e72827a876fa2c1c7f2ab00329401d11b23d",
+              "commit_0_2": "6ac104dea13cff35fb8b9819de9a46111d9a727bcd7dbe962915409ff930086a",
+              "commit_1_1": "d6abe65d02cd2293342bf2a1094f3600324d40b17b227a4fbadbc286a86c0858",
+              "commit_1_2": "4832cfd7b32145a1aba57bfde1cfbe18c157fff2f507b6b2be4959d23661ff40",
+              "response_0": "0d59d5b251575317f10dd725ed24e57f030152b7daee5ffb4ba81cf717f08f06",
+              "response_1": "da07f7d256601e6b94298ae9db0f4b62a759e6c36ad9b51505394edd01fba50e"
+            }
+          ],
+          "choices": [
+            {
+              "a": "f4df48850c104a2c2a28d88b1c413b3f8c9a66418c1b1d1444127745b4fa9b3f",
+              "b": "a8f21727f7d27bcd9103aca99cc9b9d9f87139f5ddb29ad3a32c4e52232d617b"
+            },
+            {
+              "a": "f820ab61b00e996cb5ca8cd5c0b9e0e3837ca2aacc8dfe93cca0b9008830f52b",
+              "b": "7a38504a4d1cd4c8f7e2d13b8463834e6524ee181668ecbe106db298670a982c"
+            },
+            {
+              "a": "4214791021226f4f65577c5f21e22c77866ff0a7028d6d27642217b171feb062",
+              "b": "eef7e63289a07e2d958dbf530e06bc8c9e8bf5635ff2c3510e1dfacb1a62527c"
+            }
+          ],
+          "nym": "nym-e",
+          "round_id": "booth:test-round-1",
+          "signature": "903a7c5c1998200cdc829d628effc484fce613bd5789881572ee2fb8454a40afc19861386f168c43917df98d484b9ce4ede4cad512185d2a147de629b3800a03",
+          "sum_proof": {
+            "commit_1": "82921f76e9cfe4132d7b8436a7e5d650d7d779953860bffbc0a532c20a363943",
+            "commit_2": "98b5b16286bab4f4d74e7ac7f3654b39f692db393bc12ccfe15a0619e6081549",
+            "response": "a2b4a909ef35f5763b0e7fd33f1623fada8aee5e393819aa4fa9c76128c85e01"
+          },
+          "voter_key": "f57260ae5840c7b4724192442601894c20f2fe9c6e3084730d87a84a42e5486e"
+        },
+        "hash": "7c778f775f90fcb9a03f095b06c3dd95191e25ec9994fad298429ba241c9bda5"
+      },
+      {
+        "seq": 16,
+        "prev": "7c778f775f90fcb9a03f095b06c3dd95191e25ec9994fad298429ba241c9bda5",
+        "kind": "ballot",
+        "payload": {
+          "bit_proofs": [
+            {
+              "challenge_0": "5a5bc0185310fba36fc2a5b6838370c2bc1b0b3cf034fb608f6c12588d515102",
+              "commit_0_1": "5e4920c8dcbd86b513c560b9be09cc45e18971f2cd4559e2b244d53a8b3c7964",
+              "commit_0_2": "dc6eca54a4f6b4b053dba269cb09eb4e6939da6cece669f4877ea3d40c6be201",
+              "commit_1_1": "46ce8d236a2b7396f08f85d34414c30fa319482841ae21e2ab00ab5179d2882d",
+              "commit_1_2": "fa98d3e70dabeec702b741f24dfca9d67cd48af878f315ef3abee443c170566c",
+              "response_0": "f6859fdeb06002056618c812e999437461e86caa79e65654b482ed221e56d00b",
+              "response_1": "ecc8fc83e6ab32aa043182bd964b026bd7184b328a11a4f5973c451f2ea30106"
+            },
+            {
+              "challenge_0": "9deadc98d1a26f352b7fcfbae9110b98e3d418369bafe9e026a6a154d0a0da0b",
+              "commit_0_1": "54c18ba680464ad8076e0e4e61cd9e7fb51575a6b8f0c62e96be5c5e0d2a722d",
+              "commit_0_2": "a46a31d1b305e05faadaadc4d5ecf14e650fc16f0f748f66f0b6acd289c74b74",
+              "commit_1_1": "52b2ed90f5ab5f0e0b7da0a8ae777615c134402e82b4fb687d9317252348f54a",
+              "commit_1_2": "f0a1dea418833b2ab3f7735faa2980c8d5cc0d2c7c81f06878e976109ac86044",
+              "response_0": "c754cea6041c643e57f308440de97c62099e76d38e78a3c5e12c5af3fa494d0f",
+              "response_1": "12437e523231730bb20c52a7bc99ab6e557ef47a6c46f7df8fcbdba2ff31cc07"
+            },
+            {
+              "challenge_0": "0e7bf60d639ef4db3b2c576b53e1fdc9c1e4842384ab66dab505f5eb290f4e04",
+              "commit_0_1": "c86f00d16d481d2e3fbaade063b7e2131a9f468d7f17232a20787a954f8c9656",
+              "commit_0_2": "f8b472c3a62bf0464d62c37589520c533b08230e862fdf723a77211104904477",
+              "commit_1_1": "f4633fedf11e7322ce4357c0648c57b2f2aa4dda53bea1e497a04085acaefe75",
+              "commit_1_2": "829a1787564453420d8c4c92333a5fc1908561c2914c918ea8f476b75dfd6331",
+              "response_0": "0b217b0f2aacf54bcdbfe5f16e60f86f3bb90e3f09353072705a0aa35fcee203",
+              "response_1": "4af36387c56f634b5fed4c7b815b4ec462aa85cc9e86da138127c94ec822b30e"
+            }
+          ],
+          "choices": [
+            {
+              "a": "b89223f8dc931b419a5d1ea75d442bf7cdcc4f83f67e956d44a56fa279933600",
+              "b": "243b37e6188ee1ec13e507b31b9f6303c47d925b155ce093c9b9a6f7ecbece29"
+            },
+            {
+              "a": "fac3c29799d40a5e41c50ddfe23068f853825d5322b9eb29c347a7ff9ca2380c",
+              "b": "f4a63dd2b51b4f5e7bab097ea3ca13f70d13fdb0e171a413d7ea1d3eeaf0d24a"
+            },
+            {
+              "a": "94cf7121b7488ab97edbda1f5b87edf67f00ae5812629cec370fdf0c1a880c0f",
+              "b": "ce77014632f47d5f772bfe2ef3bd9716d7a32e901cf18e0071019d05e23c5609"
+            }
+          ],
+          "nym": "nym-f",
+          "round_id": "booth:test-round-1",
+          "signature": "e759fc23e629c0db1da6818ff8374825f87f867cc7f5cf0661f9f8bc12bbfd36abe561def4ad24df78a82f607bd497ed1acb87cc2904bbc78b49da28d1b8650f",
+          "sum_proof": {
+            "commit_1": "664f78330d49fffa58f79332df1ee4d10835a22a65112138b58fa668e0061c2d",
+            "commit_2": "f0bd1ff693637aa976087dd8ddca9770df979d890dd4739f1622c6537ec52b4a",
+            "response": "39aa81e77dc57bacb0de631c94d94799fbccfa88cb51adaaf1798d51caf9d80d"
+          },
+          "voter_key": "09cbb8ce19d3380740ab3a807074f6250c8fa9633ad7220ae97ca94d1ae85006"
+        },
+        "hash": "27881e03d09a21b609e3d0056ff35eb499c15c5a263ac0876e49068b6a3b2bb0"
+      },
+      {
+        "seq": 17,
+        "prev": "27881e03d09a21b609e3d0056ff35eb499c15c5a263ac0876e49068b6a3b2bb0",
+        "kind": "ballot",
+        "payload": {
+          "bit_proofs": [
+            {
+              "challenge_0": "0f06c0e45605af8df86dd6be3b9fb4c6969c1cbe30d53d49197f7b36c6c2c108",
+              "commit_0_1": "62608d1efcaff090c77d0ba9530d6dd4db49493d88640c7ea246af3201bbd57d",
+              "commit_0_2": "92eddbd0ec571bec944b215dbcf25b83aea1239037f755a06cea81283f4ac808",
+              "commit_1_1": "7cdd079b8c63af2c239370ddc701ebf8b35aeca7d93a7f1cb13f5a8cd2751d01",
+              "commit_1_2": "dc3555cce43e7a7e58fb32d9b3649cea6af69efe51f804e5d32d04e093a9e711",
+              "response_0": "6b276ed4409d44b6584f4a8fd853c336afb88fbc4d44f490758cffd71fce6809",
+              "response_1": "9757eae151ed8eeb65ced8477d701a285801f8ad873fee431036f1325ade5702"
+            },
+            {
+              "challenge_0": "a5057b6a24565c02ced00c73a597e511cae82cb665fd6db82705b30c5806f402",
+              "commit_0_1": "e4b40ef62dd62a37be23ace16cb5adbcbd41c67d3a6e12ed6b365b9a892e1643",
+              "commit_0_2": "588d37f4bf65c9fa935424048758696f2f86e7f00953d48010767d1b47a1e561",
+              "commit_1_1": "9022eb20dc344b158671dde26e3222e799e144297acc4d61b85f7469abd22a2d",
+              "commit_1_2": "aead7abebf62cddc5ff89ff776b84e88d9f8c766da0587e7b12bde1aab1a9741",
+              "response_0": "7bda773d1130bcabe8ad20673a50c780ca13cbdc1c6c59cdd80beb7fd2204706",
+              "response_1": "500a549c2554b38dfa77b2da38d23dbe2e09a9f443b409cd0f53144966e8dc0d"
+            },
+            {
+              "challenge_0": "a79e459174328cc2b43790f83b34f601cec3ff1b6ab5e6c7c0177c095cc0b90c",
+              "commit_0_1": "ee2c39a89a79dead7302d29c93c3a674f4e5eb7b086c44096ccdf63e8256de43",
+              "commit_0_2": "7679d66200abb5809821011005d95e178864b7a89be138b5efffefd616e43e22",
+              "commit_1_1": "a89019475956967949e8302c45e500c5518890b038d712778fffd6b1e0396e17",
+              "commit_1_2": "d67516be9b9d6f0aa50a5d0dc19bf96ceb693c3354eef197940ffa539528f842",
+              "response_0": "ede4b0943afda7644bdb02554272f866ac9a39c5c0b0a3fb8118eb0f7ca0dd0f",
+              "response_1": "6c1be9277301f2c75cb979bd932dbcd6cca241f13ae4f0fc7342850deb87e20a"
+            }
+          ],
+          "choices": [
+            {
+              "a": "a85777505ee93f316ba607c59bc8cad35afbcc8f4f194a64f3cfbec734860d4b",
+              "b": "6ac607394ba23ff19b70263a10d6ce71b57041a2d40b15b0efcc0744ff41da4d"
+            },
+            {
+              "a": "5c4585badfb9374ae646a79889107f619588cafc90a642ec7341ab8512eff043",
+              "b": "f2c892ddee68ecbd7acf364a5f8459fe0057d6e72a9e5893c1ba96a458e81751"
+            },
+            {
+              "a": "18268b8ec5d05d8d4a086585c3d9314f79b49113ae5af5ce56b77105be002a6f",
+              "b": "6afe02c8cd728a10090f74e9923667502c44daf5f08c9802d522903dc009bf6e"
+            }
+          ],
+          "nym": "nym-c",
+          "round_id": "booth:test-round-1",
+          "signature": "b9d1f044ff26944c2cfa4c257077ce2c921df6713865092764c5e355de1fdd029254cfc1717e92f60c1274972a95b237aedc73848cbb79c5143fc15588e2b704",
+          "sum_proof": {
+            "commit_1": "5c5dacc4ae5a5ecf6def3a62eb1482d559e41d6e1b47a7d325489afc5a6c0e18",
+            "commit_2": "b47308177e6bb822aa7f99b329ecff3095b3380dc1ce9abb4806a045fef4e43a",
+            "response": "f831b1d5a409b72ab94e46662f8bff6520205c189bb07b43a24131b18cafe100"
+          },
+          "voter_key": "ad4089130bec24938eed6b6b5b2342660a34d2690dac7428f68c285be4241f04"
+        },
+        "hash": "b376d8f8d81721120e4c0851b3ecc21b1675a0c476e684e22af0071506a2fc42"
+      },
+      {
+        "seq": 18,
+        "prev": "b376d8f8d81721120e4c0851b3ecc21b1675a0c476e684e22af0071506a2fc42",
+        "kind": "ballot",
+        "payload": {
+          "bit_proofs": [
+            {
+              "challenge_0": "d65e2c65b0b937b0b5e8acb4299c8dc250fdf80c5fa201c359acd594b2b08f00",
+              "commit_0_1": "4c4635fd845775f14cbffa9c13df79c2afcb9267b3e9ceed717af1b6186b8e65",
+              "commit_0_2": "2ae9d210f58b97fe1f5635d70d7a2fbdeb72b51a87b9971dc1146dd5ed45640e",
+              "commit_1_1": "78ddaa6790fc37cd67a16e90d3bb34f011cbe852880868c4858a78218ad6130f",
+              "commit_1_2": "12618e8f2bbf47a187f9c17d52aa787faac24f3e0475d106e1e341999590f753",
+              "response_0": "6ddc7380fe33f3beb6284755b9c44e93971fff397c5eba4c97d135911a50f607",
+              "response_1": "bddfbf6edf539498df2245d70502299490c5a39024eaf55d668a82406b39c906"
+            },
+            {
+              "challenge_0": "344149e9d25bffebd453a85e64396862c706890256734c8dca01984062cf9909",
+              "commit_0_1": "7e32c4af01fbead93523352c1eab43ed484c30f16f71706fbbc6afdf13fafb6a",
+              "commit_0_2": "f680fd5ba3fcd98fc981b762409a354dc1011a7bdfd4b072b8efa06b2197e015",
+              "commit_1_1": "e2727f30ea2b2a5693dc16d14374238a977e9c0d8ab409472d7aec49689de56e",
+              "commit_1_2": "74970541b7d8743e98f49781325168459bc17c3ed2d0ed320f221092ed304f5f",
+              "response_0": "b9e40dde8b4e07a230951dffca6779ae2a5a8f7d6e330dc8ce7baf52a2372b0b",
+              "response_1": "d98eb51c33c0e74b95e1e95d3d5028262ad4d4a180710716ec8388579c41b608"
+            },
+            {
+              "challenge_0": "904a536132bca541fe9f4ce531cbc4e51935eeccca852f772ee3a1c3e8809e07",
+              "commit_0_1": "78b9280264ffb9178a18b5254c21c3c9846cf71e3b2926e45a7ee26be0496938",
+              "commit_0_2": "c421bede04ffeb92db159b4f29adfb83195aeecb7040cbbf407a5b27ad3c6336",
+              "commit_1_1": "92d351e143c4a13ab3d33d7780c68d1afd8a9718a88f7455132d012c4038c727",
+              "commit_1_2": "080c758c20467ff2da051ac002ea7d8fe494eddcfa5d0cfe16f21e4630c31c49",
+              "response_0": "f35ba8c8bec8cb365a4627163c83ccb2520a54c02b2c33a95e0b99cb4eee2004",
+              "response_1": "a899f8d83578ef3a9af589084a3fed606367587bd141acce66a8f35ff120f60b"
+            }
+          ],
+          "choices": [
+            {
+              "a": "2c3606b62582748e5aa13df547628d62792ee3886b0679526416970c832f8e7b",
+              "b": "ac0737dfb99fde6e7841975a35cfed4b23d1c593a0e23ca70f07d5323142c057"
+            },
+            {
+              "a": "661df4d8f8c5f7b074044059cb3a86b8040c990edb60254f9ab4f8b98f46996a",
+              "b": "827000c492f6c908751ae8bef2f086b9329329b436d08a49cd3bba7afce07a18"
+            },
+            {
+              "a": "208fb3524a848cac8c31e6452c0e6902fd4e9918d2af244d428af92cd430ec5c",
+              "b": "a05dc6ed546ed5a432fddd3612acb4aa571798116ac308ce28015c3694981847"
+            }
+          ],
+          "nym": "nym-e",
+          "round_id": "booth:test-round-1",
+          "signature": "3727ce939f946d31ab82549b9c3bf188b2834ab4c1966016c8c4d9bcfd572f7b54eb07b16c40bb2dc4a86a0b9fddb32b431942f0562681a6b6f46ec1da6e6700",
+          "sum_proof": {
+            "commit_1": "0eb66791dd6a22e6a36d46a0666885ef689955ca210fbef09d947ea4af1d6c43",
+            "commit_2": "486f9eb7449883dfeb27676faa979481efc8e8a29ddf80e7e85afc00bcd51333",
+            "response": "3b09e6066283b64fb1f3df28ec69271f0b48a84db1c204ba1d1c2a0b21e4d306"
+          },
+          "voter_key": "f57260ae5840c7b4724192442601894c20f2fe9c6e3084730d87a84a42e5486e"
+        },
+        "hash": "36eed75f713eebaf0d3f4238ae4cffbc97f29b690baebd1e8d8e445b77c1ee29"
+      },
+      {
+        "seq": 19,
+        "prev": "36eed75f713eebaf0d3f4238ae4cffbc97f29b690baebd1e8d8e445b77c1ee29",
+        "kind": "ballot",
+        "payload": {
+          "bit_proofs": [
+            {
+              "challenge_0": "ad0cbc5427ae8a3384ec88a34491797435e8c583feb36f9dc72ac65644e6130a",
+              "commit_0_1": "687e1d14801306bde72abb7a0a5170979a2eecbfcbeee6e1f39a77de0443a21d",
+              "commit_0_2": "0046a3990649271c00a74dea1bb59c46aa2a072086b692a404f5bf723d637240",
+              "commit_1_1": "5cf19f999cf49c65b6dc0fd6524e8ca0e117efd0cc4bc5b8527cf5a03b35b618",
+              "commit_1_2": "b88180dce014bc34b055ae9bfa45ac2b144d1c46095354ea3c9bd70c232a474b",
+              "response_0": "63275950e2ff856ab22022e633dfb0edc42350eeacc7ec46a9f05e5744a8d80f",
+              "response_1": "5bcdddaa8b482f4f7b295034c8ca1388acb8e170203c88d2c46c678eea526504"
+            },
+            {
+              "challenge_0": "dabd4cb98ca70caac8551bfa9906c851f323db6c5cd8de79a5a141a43e9f2506",
+              "commit_0_1": "4c9b0ab12232ff9e1ca5314d4147a74c651415a9c1da331aac16f76b935a6676",
+              "commit_0_2": "d0e0b9043acda88954b4508d5a430dbe3b6a5f8f995286cfc8545121e5de293c",
+              "commit_1_1": "12e76c53ea83f3b802c2a47cd83d7618a7273d1f2ff0b09e83291eba9e46807f",
+              "commit_1_2": "3c12f51f8d17d89bc287d1a044c27104bcfbd7f00530810bca7a650d78791675",
+              "response_0": "668bf34937cd16b6a5302b5b14743dbcd24e335adf47b7dde7d11f335eef2809",
+              "response_1": "61e2f297b45e3734042c4ff398e2eaf91540d0749d2f1140648ea7f40b83c001"
+            },
+            {
+              "challenge_0": "228fe678175ba5b02d9d02827b95c378f242f16ea25c3371c71830adf8676103",
+              "commit_0_1": "d4b113b3ade717bc4c089f90ec6d9965b86fedeb8f05a3ff958b90cebce10526",
+              "commit_0_2": "e47f783b52da08ea7c2e63dfdb5d16815f66c9d9020149d87113fc5eef3c8921",
+              "commit_1_1": "50642cf2697dd76a042fdc7fc397ea05c989f67382324009016464a48c6bdc0a",
+              "commit_1_2": "c0e8329e89808ccdf22b6b0164b8f4edad51276044278a5a37ac6b1f757f1648",
+              "response_0": "b53ebdd052bd1af3ca93c5bd8422e7a952760e6e8cb8286b0b3130bf11d20c01",
+              "response_1": "290a3f891faf38654b187c00d6ea7408c97c872b5789bfbdc8af9e0a9ecb1b0c"
+            }
+          ],
+          "choices": [
+            {
+              "a": "6abb40bffe28ea213f188c0dc630fe980b7c62419d74c1b2695125ca7a66453b",
+              "b": "da672b00d52f83473e59c320843806a4a390e016b40cac3b900124267d2c1a73"
+            },
+            {
+              "a": "f229d77f88a5eb3941ed82d15abc16d9dc13fa4db43edc30acc77717187bc720",
+              "b": "9e5375061a9ceba75b9a552367ed35121eda2bdb99bcf05e620235291e129416"
+            },
+            {
+              "a": "663efe6f48378c050b7a52aa1b031222a90033e869096ae1cb3ee030bc16767d",
+              "b": "4e3e1e70054652697749022814d5cf5479902f16c78e5fb9ff9b71e05c9e1516"
+            }
+          ],
+          "nym": "nym-e",
+          "round_id": "booth:test-round-1",
+          "signature": "80e701e2eee0557d41c1c757c1cc4aac371d8a0d2a851ae3455e758a4066ca1d86b885129d60551799c076680315a6480676956a005bb4a97f9057f011559d04",
+          "sum_proof": {
+            "commit_1": "c46c28968b89e019f8628281da453d20d2a33253edd3b98c292487b5473af446",
+            "commit_2": "e0e5b2cc15247af574831bf56dbc485b8f5f3e36027548496d2c8ebc64dbd579",
+            "response": "1ca947a1db87936299dbce8cfaadce6e89f784809ff652bd3a7cd1397f2d0807"
+          },
+          "voter_key": "f57260ae5840c7b4724192442601894c20f2fe9c6e3084730d87a84a42e5486e"
+        },
+        "hash": "515561f0c0422c3b38d531a57180b13fcdf7a8262152d88e3c9a9ca39c4290ef"
+      },
+      {
+        "seq": 20,
+        "prev": "515561f0c0422c3b38d531a57180b13fcdf7a8262152d88e3c9a9ca39c4290ef",
+        "kind": "round.close",
+        "payload": {},
+        "hash": "5fa10df7b1d690a255fe903968b518c220caeec3e7958998d4ea7da39d1f6f51"
+      },
+      {
+        "seq": 21,
+        "prev": "5fa10df7b1d690a255fe903968b518c220caeec3e7958998d4ea7da39d1f6f51",
+        "kind": "partial.decryption",
+        "payload": {
+          "guardian": 1,
+          "shares": [
+            {
+              "m": "c28ca8fcbb33357a244823b5776041f2010c74b9c58c98d61e4d1d120ff4892e",
+              "proof": {
+                "commit_1": "9857295cc7d6756248320c6af2aa3515eb9e9f2382b4b0ea94a1ac3fbd00b57c",
+                "commit_2": "0837968f5c22083729cef1aef75a7ae8597829509a0bf424a06bf406cab9e540",
+                "response": "4ccb4934731a64c762ada1f96a81309a5477595babb04ae479cc2f629688440e"
+              }
+            },
+            {
+              "m": "9ce3276bac6342f966e2cbef9b2d7b8cd23b1c03018dc0da4ea4686fca07ad28",
+              "proof": {
+                "commit_1": "d23ac84b96ad9c59b99fb5acee997f51118e02fdbf3776e8ed504c0740f6cf50",
+                "commit_2": "2e9446a916a01bc1ac31753dc7846f81206536acde144a7a4023a0bad70d8059",
+                "response": "8ae14478bc37a4f30f6f2913cfb93d44f2093e483ee0f3d8f0874e2f4f9b5203"
+              }
+            },
+            {
+              "m": "5c4b3aa7b40ce6bc96344e45a6d2c27fbb0fceb58f38e47f1e99400de9ee1b47",
+              "proof": {
+                "commit_1": "06206076f4edc0262eb1f646b26e6625d165650b78bbafcf994543a208a10b60",
+                "commit_2": "2e1dab1eacc4ef78554595dba2bc0a9abbc01a78ff4314baf53824427409e972",
+                "response": "281803d05cb734b43f7ee8f2499bc28787cfd3a160204e0817e5429be8684808"
+              }
+            }
+          ]
+        },
+        "hash": "60b45b226e2b400dbf2d762c5ce19258c1f0e23185fb8a9016864a0881d43319"
+      },
+      {
+        "seq": 22,
+        "prev": "60b45b226e2b400dbf2d762c5ce19258c1f0e23185fb8a9016864a0881d43319",
+        "kind": "partial.decryption",
+        "payload": {
+          "guardian": 3,
+          "shares": [
+            {
+              "m": "6a923193be93a092c1ffc2124aaaea245e0b6539c82ca11e4cd48278ad56f72d",
+              "proof": {
+                "commit_1": "64e557493fc535ce2c4d752bbdfd6ade17980f6fe985e3495770495ef0a26800",
+                "commit_2": "bc34295e57c37e7148f65a0e1b8cc8bd42a74be248d4aee05523f104643a856e",
+                "response": "39fdaeec8702c0e16cc799b35dc6f31849320c2de4b856a403929710a8dfec03"
+              }
+            },
+            {
+              "m": "04583c9804d5bb493271eb680aeaff603679350a36744e6a9191bbaf251a586b",
+              "proof": {
+                "commit_1": "62946b474caf5ca6cb35d3a8d8c4de94735508be9e3e1d98751bb0cc11cffb3b",
+                "commit_2": "eca729f07a7d29c2ed6244838ce67172346298a3f14fb7d44edc483b523fe53d",
+                "response": "833887789b17a80f743cc26cf4b3c0e220c4875345b7a43afaeb70794d35dd01"
+              }
+            },
+            {
+              "m": "b428f9d614319753dc224936e8dc9dc76b1ad69e8c9e1506bf231e1e57f36a53",
+              "proof": {
+                "commit_1": "9213c65c5fef1c797ee501327a6595cc71e3f03e90a1b6c46a793603e2a34879",
+                "commit_2": "8a81c8721c7add9339c4c468c68edf8f73be2b7ba3ababf0d63903d3d2d11f3b",
+                "response": "9f142832501b2c7d6a3c0dbd6843451b2ec10bf8134abbcdfdfd206712e7490e"
+              }
+            }
+          ]
+        },
+        "hash": "7ebd89c046103933319170b62b1e6259f565f9c80a00489a07bf0fc1218c4621"
+      },
+      {
+        "seq": 23,
+        "prev": "7ebd89c046103933319170b62b1e6259f565f9c80a00489a07bf0fc1218c4621",
+        "kind": "tally",
+        "payload": {
+          "counted": 6,
+          "counts": [
+            3,
+            1,
+            2
+          ],
+          "guardians_used": [
+            1,
+            3
+          ],
+          "signups": 6
+        },
+        "hash": "87b59885542e1f167dd6ca6f123ead2c19cabc0b3b0bbd54a3eeaa5582031fc4"
+      }
+    ]
+  },
+  "tally": {
+    "signups": 6,
+    "counted": 6,
+    "counts": [
+      3,
+      1,
+      2
+    ],
+    "guardians_used": [
+      1,
+      3
+    ]
+  },
+  "must_fail": [
+    {
+      "name": "edited_ballot_without_rehash",
+      "note": "A ballot's first ciphertext is replaced in place; the entry hash no longer matches.",
+      "mutation": {
+        "op": "set",
+        "seq": 11,
+        "pointer": "/payload/choices/0",
+        "value": {
+          "a": "60826c5eed11dbe1779938e4c2a169c5bcea2d9a0e5a775facfef9e0dbd97348",
+          "b": "82715950bf20ebd032d724e2ac76b7291c1656ffac5518d83b47ca074b78594f"
+        },
+        "rehash": false
+      },
+      "error": "chain_broken"
+    },
+    {
+      "name": "removed_ballot",
+      "note": "A re-vote is dropped and the chain rehashed; the aggregates change, so the guardians' decryption proofs (which are over the real aggregates) fail.",
+      "mutation": {
+        "op": "remove",
+        "seq": 17
+      },
+      "error": "proof_failed"
+    },
+    {
+      "name": "edited_ballot_rehashed",
+      "note": "An operator rewrites a ballot's ciphertext and rehashes the chain; the voter's signature no longer verifies.",
+      "mutation": {
+        "op": "set",
+        "seq": 11,
+        "pointer": "/payload/choices/0",
+        "value": {
+          "a": "60826c5eed11dbe1779938e4c2a169c5bcea2d9a0e5a775facfef9e0dbd97348",
+          "b": "82715950bf20ebd032d724e2ac76b7291c1656ffac5518d83b47ca074b78594f"
+        },
+        "rehash": true
+      },
+      "error": "bad_signature"
+    },
+    {
+      "name": "ballot_moved_to_another_nym",
+      "note": "A ballot is relabelled with another signed-up pseudonym; the registered key differs.",
+      "mutation": {
+        "op": "set",
+        "seq": 11,
+        "pointer": "/payload/nym",
+        "value": "nym-b",
+        "rehash": true
+      },
+      "error": "not_signed_up"
+    },
+    {
+      "name": "ballot_for_another_round",
+      "note": "A ballot says it belongs to another round.",
+      "mutation": {
+        "op": "set",
+        "seq": 11,
+        "pointer": "/payload/round_id",
+        "value": "booth:other",
+        "rehash": true
+      },
+      "error": "malformed"
+    },
+    {
+      "name": "duplicate_signup",
+      "note": "The same pseudonym signs up twice.",
+      "mutation": {
+        "op": "duplicate",
+        "seq": 5
+      },
+      "error": "duplicate_signup"
+    },
+    {
+      "name": "signup_key_changed",
+      "note": "A sign-up's key is replaced; the pseudonym's ballots no longer match it.",
+      "mutation": {
+        "op": "set",
+        "seq": 5,
+        "pointer": "/payload/voter_key",
+        "value": "628910a044427c46ea7e45ef473b85efb1919ca040bcf29da727f0fcf7e5def4",
+        "rehash": true
+      },
+      "error": "not_signed_up"
+    },
+    {
+      "name": "ballot_before_signup",
+      "note": "A ballot entry is placed where a sign-up was (kind changed); the payload has the wrong shape.",
+      "mutation": {
+        "op": "set",
+        "seq": 5,
+        "pointer": "/kind",
+        "value": "ballot",
+        "rehash": true
+      },
+      "error": "malformed"
+    },
+    {
+      "name": "ballot_after_close",
+      "note": "A partial decryption entry is relabelled as a ballot; a ballot after close is out of order.",
+      "mutation": {
+        "op": "set",
+        "seq": 21,
+        "pointer": "/kind",
+        "value": "ballot",
+        "rehash": true
+      },
+      "error": "out_of_order"
+    },
+    {
+      "name": "guardian_commitment_edited",
+      "note": "Guardian 1's constant-term commitment is swapped for guardian 2's; the proof of knowledge fails.",
+      "mutation": {
+        "op": "set",
+        "seq": 1,
+        "pointer": "/payload/commitments/0",
+        "value": "ca16029427452cfd84cb2d28b46929681b4084221c40d535adcf24bb246c491f",
+        "rehash": true
+      },
+      "error": "proof_failed"
+    },
+    {
+      "name": "round_key_edited",
+      "note": "The published joint key is not what the commitments derive to.",
+      "mutation": {
+        "op": "set",
+        "seq": 4,
+        "pointer": "/payload/joint_key",
+        "value": "e0cb783f1972f6e96a4a25d5e691ae062b638325084e1de79ed2af8ec72f952b",
+        "rehash": true
+      },
+      "error": "malformed"
+    },
+    {
+      "name": "partial_decryption_share_swapped",
+      "note": "Guardian 1's share for option 0 is replaced by its share for option 1; the Chaum-Pedersen proof fails.",
+      "mutation": {
+        "op": "set",
+        "seq": 21,
+        "pointer": "/payload/shares/0/m",
+        "value": "9ce3276bac6342f966e2cbef9b2d7b8cd23b1c03018dc0da4ea4686fca07ad28",
+        "rehash": true
+      },
+      "error": "proof_failed"
+    },
+    {
+      "name": "partial_decryption_duplicated",
+      "note": "A guardian publishes twice.",
+      "mutation": {
+        "op": "duplicate",
+        "seq": 21
+      },
+      "error": "malformed"
+    },
+    {
+      "name": "tally_count_moved",
+      "note": "One vote is moved from option 0 to option 1; the sum still matches but the decryption does not.",
+      "mutation": {
+        "op": "set",
+        "seq": 23,
+        "pointer": "/payload/counts",
+        "value": [
+          2,
+          2,
+          2
+        ],
+        "rehash": true
+      },
+      "error": "tally_mismatch"
+    },
+    {
+      "name": "tally_count_inflated",
+      "note": "One vote is added to option 0; the counts no longer sum to the counted ballots.",
+      "mutation": {
+        "op": "set",
+        "seq": 23,
+        "pointer": "/payload/counts",
+        "value": [
+          4,
+          1,
+          2
+        ],
+        "rehash": true
+      },
+      "error": "malformed"
+    },
+    {
+      "name": "tally_below_threshold",
+      "note": "The tally claims to use one guardian where two are needed.",
+      "mutation": {
+        "op": "set",
+        "seq": 23,
+        "pointer": "/payload/guardians_used",
+        "value": [
+          1
+        ],
+        "rehash": true
+      },
+      "error": "below_threshold"
+    },
+    {
+      "name": "tally_uses_absent_guardian",
+      "note": "The tally names a guardian that published no partial decryption.",
+      "mutation": {
+        "op": "set",
+        "seq": 23,
+        "pointer": "/payload/guardians_used",
+        "value": [
+          1,
+          2
+        ],
+        "rehash": true
+      },
+      "error": "malformed"
+    },
+    {
+      "name": "no_tally",
+      "note": "The board stops before the tally.",
+      "mutation": {
+        "op": "truncate",
+        "len": 23
+      },
+      "error": "no_tally"
+    },
+    {
+      "name": "ballot_payload_edited_unsigned_field",
+      "note": "An extra field is added to a ballot; unknown fields are refused.",
+      "mutation": {
+        "op": "set",
+        "seq": 11,
+        "pointer": "/payload/extra",
+        "value": true,
+        "rehash": true
+      },
+      "error": "malformed"
+    },
+    {
+      "name": "hash_edited",
+      "note": "An entry's hash is replaced by another 32-byte hex value.",
+      "mutation": {
+        "op": "set",
+        "seq": 11,
+        "pointer": "/hash",
+        "value": "628910a044427c46ea7e45ef473b85efb1919ca040bcf29da727f0fcf7e5def4",
+        "rehash": false
+      },
+      "error": "chain_broken"
+    },
+    {
+      "name": "seq_edited",
+      "note": "An entry's sequence number is changed.",
+      "mutation": {
+        "op": "set",
+        "seq": 12,
+        "pointer": "/seq",
+        "value": 99,
+        "rehash": false
+      },
+      "error": "chain_broken"
+    },
+    {
+      "name": "unused_ballot",
+      "note": "A pseudonym's only ballot is dropped; the aggregates change and the decryption proofs fail.",
+      "mutation": {
+        "op": "remove",
+        "seq": 11
+      },
+      "error": "proof_failed"
+    },
+    {
+      "name": "threshold_edited",
+      "note": "Threshold raised to 3 after the fact; guardian commitments have the wrong length.",
+      "mutation": {
+        "op": "set",
+        "seq": 0,
+        "pointer": "/payload/threshold",
+        "value": 3,
+        "rehash": true
+      },
+      "error": "malformed"
+    },
+    {
+      "name": "bad_option_count",
+      "note": "Params say two options; ballots have three.",
+      "mutation": {
+        "op": "set",
+        "seq": 0,
+        "pointer": "/payload/options",
+        "value": [
+          "yes",
+          "no"
+        ],
+        "rehash": true
+      },
+      "error": "malformed"
+    }
+  ]
+}
