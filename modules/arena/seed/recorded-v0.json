@@ -1,0 +1,374 @@
+{
+ "generator": "arena.seed/1",
+ "about": "Hand-written comprehension questions for a few files of the recorded Docket snapshot (modules/arena/test/fixtures/docket-recorded.json: chd.lu dossier 8752, Esch-sur-Alzette council of 2 October 2026, points 6.1 and 7.1). Each answer quotes the file's own text word for word; tests check every quote against that snapshot, and the app drops any question whose quote is not in the live file. Written by the Arena builder; not yet signed off by advocates of each side. Prompts and options are in English, French and German. A seed question whose id matches a rule (about, agenda, vote) takes that rule's place.",
+ "items": {
+  "lu.chd.8752": [
+   {
+    "id": "about",
+    "origin": "seed",
+    "generator": "arena.seed/1",
+    "prompt": {
+     "en": "According to its title, which area of law does this bill change?",
+     "fr": "D'après son titre, quel domaine du droit ce projet de loi modifie-t-il ?",
+     "de": "Welchen Rechtsbereich ändert dieser Gesetzentwurf laut seinem Titel?"
+    },
+    "options": [
+     {
+      "id": "a",
+      "text": {
+       "en": "Financial markets: market abuse, benchmarks and prospectuses",
+       "fr": "Les marchés financiers : abus de marché, indices de référence et prospectus",
+       "de": "Finanzmärkte: Marktmissbrauch, Referenzwerte und Prospekte"
+      }
+     },
+     {
+      "id": "b",
+      "text": {
+       "en": "Renting and housing",
+       "fr": "La location et le logement",
+       "de": "Miete und Wohnen"
+      }
+     },
+     {
+      "id": "c",
+      "text": {
+       "en": "Road traffic",
+       "fr": "La circulation routière",
+       "de": "Straßenverkehr"
+      }
+     }
+    ],
+    "answer": "a",
+    "evidence": [
+     {
+      "field": "title.fr",
+      "quote": "de la loi modifiée du 23 décembre 2016 relative aux abus de marché",
+      "url": "https://www.chd.lu/fr/dossier/8752"
+     }
+    ]
+   },
+   {
+    "id": "seed-aim",
+    "origin": "seed",
+    "generator": "arena.seed/1",
+    "prompt": {
+     "en": "The bill puts an EU regulation into effect. What aim of that regulation does the title quote?",
+     "fr": "Le projet met en œuvre un règlement européen. Quel objectif de ce règlement le titre cite-t-il ?",
+     "de": "Der Entwurf setzt eine EU-Verordnung um. Welches Ziel dieser Verordnung nennt der Titel?"
+    },
+    "options": [
+     {
+      "id": "a",
+      "text": {
+       "en": "Making the EU's capital markets more attractive for companies and easing access to capital for small and medium-sized businesses",
+       "fr": "Rendre les marchés des capitaux de l'Union plus attractifs pour les entreprises et faciliter l'accès des PME aux capitaux",
+       "de": "Die Kapitalmärkte der EU für Unternehmen attraktiver machen und kleinen und mittleren Unternehmen den Zugang zu Kapital erleichtern"
+      }
+     },
+     {
+      "id": "b",
+      "text": {
+       "en": "Merging the stock exchanges of the EU member states",
+       "fr": "Fusionner les bourses des États membres de l'Union",
+       "de": "Die Börsen der EU-Mitgliedstaaten zusammenlegen"
+      }
+     },
+     {
+      "id": "c",
+      "text": {
+       "en": "Setting a single interest rate for bank loans",
+       "fr": "Fixer un taux d'intérêt unique pour les prêts bancaires",
+       "de": "Einen einheitlichen Zinssatz für Bankkredite festlegen"
+      }
+     }
+    ],
+    "answer": "a",
+    "evidence": [
+     {
+      "field": "title.fr",
+      "quote": "afin de rendre les marchés des capitaux de l'Union plus attractifs pour les entreprises et de faciliter l'accès des petites et moyennes entreprises aux capitaux",
+      "url": "https://www.chd.lu/fr/dossier/8752"
+     }
+    ]
+   },
+   {
+    "id": "seed-opinion",
+    "origin": "seed",
+    "generator": "arena.seed/1",
+    "prompt": {
+     "en": "Which professional chamber's opinion on the bill is published in the file so far?",
+     "fr": "L'avis de quelle chambre professionnelle est publié dans le dossier jusqu'ici ?",
+     "de": "Die Stellungnahme welcher Berufskammer ist bisher im Dossier veröffentlicht?"
+    },
+    "options": [
+     {
+      "id": "a",
+      "text": {
+       "fr": "Chambre de Commerce",
+       "en": "Chamber of Commerce (Chambre de Commerce)",
+       "de": "Handelskammer (Chambre de Commerce)"
+      }
+     },
+     {
+      "id": "b",
+      "text": {
+       "fr": "Chambre des salariés",
+       "en": "Chamber of Employees (Chambre des salariés)",
+       "de": "Arbeitnehmerkammer (Chambre des salariés)"
+      }
+     },
+     {
+      "id": "c",
+      "text": {
+       "fr": "Chambre d'agriculture",
+       "en": "Chamber of Agriculture (Chambre d'agriculture)",
+       "de": "Landwirtschaftskammer (Chambre d'agriculture)"
+      }
+     }
+    ],
+    "answer": "a",
+    "evidence": [
+     {
+      "field": "activities.3.description",
+      "quote": "Chambre de Commerce",
+      "url": "https://wdocs-pub.chd.lu/docs/Dossier_Projet_de_loi8752/20260930_Avis.pdf"
+     }
+    ]
+   },
+   {
+    "id": "agenda",
+    "origin": "seed",
+    "generator": "arena.seed/1",
+    "prompt": {
+     "en": "What is planned when the Finance Committee meets on this bill on 9 October 2026?",
+     "fr": "Qu'est-il prévu lorsque la Commission des Finances se réunit sur ce projet le 9 octobre 2026 ?",
+     "de": "Was ist geplant, wenn der Finanzausschuss am 9. Oktober 2026 über diesen Entwurf berät?"
+    },
+    "options": [
+     {
+      "id": "a",
+      "text": {
+       "en": "Appointing a rapporteur and presenting the bill",
+       "fr": "Nommer un rapporteur et présenter le projet de loi",
+       "de": "Einen Berichterstatter ernennen und den Entwurf vorstellen"
+      }
+     },
+     {
+      "id": "b",
+      "text": {
+       "en": "The final vote on the bill",
+       "fr": "Le vote final sur le projet de loi",
+       "de": "Die Schlussabstimmung über den Entwurf"
+      }
+     },
+     {
+      "id": "c",
+      "text": {
+       "en": "Withdrawing the bill",
+       "fr": "Le retrait du projet de loi",
+       "de": "Die Rücknahme des Entwurfs"
+      }
+     }
+    ],
+    "answer": "a",
+    "evidence": [
+     {
+      "field": "agenda.0.steps.0",
+      "quote": "Nomination d’un rapporteur",
+      "url": "https://www.chd.lu/fr/dossier/8752"
+     },
+     {
+      "field": "agenda.0.steps.1",
+      "quote": "Présentation du projet de loi",
+      "url": "https://www.chd.lu/fr/dossier/8752"
+     }
+    ]
+   }
+  ],
+  "lu.esch.42063": [
+   {
+    "id": "about",
+    "origin": "seed",
+    "generator": "arena.seed/1",
+    "prompt": {
+     "en": "What did the council decide on in this point?",
+     "fr": "Sur quoi le conseil a-t-il décidé dans ce point ?",
+     "de": "Worüber hat der Gemeinderat bei diesem Punkt entschieden?"
+    },
+    "options": [
+     {
+      "id": "a",
+      "text": {
+       "en": "A further vote on waiving the compensation payment for the Quai Neiduerf development plan (PAP)",
+       "fr": "Un vote complémentaire sur la renonciation à l'indemnité compensatoire pour le PAP Quai Neiduerf",
+       "de": "Eine ergänzende Abstimmung über den Verzicht auf die Ausgleichszahlung für den Bebauungsplan (PAP) Quai Neiduerf"
+      }
+     },
+     {
+      "id": "b",
+      "text": {
+       "en": "The price of a plot of land at Quai Neiduerf",
+       "fr": "Le prix d'un terrain au Quai Neiduerf",
+       "de": "Den Preis eines Grundstücks am Quai Neiduerf"
+      }
+     },
+     {
+      "id": "c",
+      "text": {
+       "en": "The name of a new street at Quai Neiduerf",
+       "fr": "Le nom d'une nouvelle rue au Quai Neiduerf",
+       "de": "Den Namen einer neuen Straße am Quai Neiduerf"
+      }
+     }
+    ],
+    "answer": "a",
+    "evidence": [
+     {
+      "field": "title.fr",
+      "quote": "PAP Quai Neiduerf ; vote complémentaire relatif à la renonciation à l'indemnité compensatoire",
+      "url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+     }
+    ]
+   },
+   {
+    "id": "vote",
+    "origin": "seed",
+    "generator": "arena.seed/1",
+    "prompt": {
+     "en": "How did the council vote on this point?",
+     "fr": "Comment le conseil a-t-il voté sur ce point ?",
+     "de": "Wie hat der Gemeinderat bei diesem Punkt abgestimmt?"
+    },
+    "options": [
+     {
+      "id": "a",
+      "text": {
+       "en": "11 yes, 8 no",
+       "fr": "11 oui, 8 non",
+       "de": "11 Ja, 8 Nein"
+      }
+     },
+     {
+      "id": "b",
+      "text": {
+       "en": "8 yes, 11 no",
+       "fr": "8 oui, 11 non",
+       "de": "8 Ja, 11 Nein"
+      }
+     },
+     {
+      "id": "c",
+      "text": {
+       "en": "19 yes, none against",
+       "fr": "19 oui, aucun non",
+       "de": "19 Ja, keine Nein-Stimme"
+      }
+     }
+    ],
+    "answer": "a",
+    "evidence": [
+     {
+      "field": "votes.counts.Oui",
+      "quote": "11",
+      "url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+     },
+     {
+      "field": "votes.counts.Non",
+      "quote": "8",
+      "url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+     }
+    ]
+   }
+  ],
+  "lu.esch.42052": [
+   {
+    "id": "seed-partner",
+    "origin": "seed",
+    "generator": "arena.seed/1",
+    "prompt": {
+     "en": "Who does the city sign this agreement with?",
+     "fr": "Avec qui la ville signe-t-elle cette convention ?",
+     "de": "Mit wem schließt die Stadt diese Vereinbarung?"
+    },
+    "options": [
+     {
+      "id": "a",
+      "text": {
+       "en": "The University of Luxembourg",
+       "fr": "L'Université du Luxembourg",
+       "de": "Die Universität Luxemburg"
+      }
+     },
+     {
+      "id": "b",
+      "text": {
+       "en": "A private consulting firm",
+       "fr": "Un cabinet de conseil privé",
+       "de": "Ein privates Beratungsunternehmen"
+      }
+     },
+     {
+      "id": "c",
+      "text": {
+       "en": "The Chamber of Deputies",
+       "fr": "La Chambre des Députés",
+       "de": "Die Abgeordnetenkammer"
+      }
+     }
+    ],
+    "answer": "a",
+    "evidence": [
+     {
+      "field": "title.fr",
+      "quote": "avec l'Université du Luxembourg",
+      "url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+     }
+    ]
+   },
+   {
+    "id": "about",
+    "origin": "seed",
+    "generator": "arena.seed/1",
+    "prompt": {
+     "en": "What is the agreement about?",
+     "fr": "Sur quoi porte la convention ?",
+     "de": "Worum geht es in der Vereinbarung?"
+    },
+    "options": [
+     {
+      "id": "a",
+      "text": {
+       "en": "Research on the Citizens' Assembly",
+       "fr": "Une recherche sur l'Assemblée citoyenne",
+       "de": "Forschung über die Bürgerversammlung"
+      }
+     },
+     {
+      "id": "b",
+      "text": {
+       "en": "Building a new university campus in Esch",
+       "fr": "La construction d'un nouveau campus universitaire à Esch",
+       "de": "Den Bau eines neuen Universitätscampus in Esch"
+      }
+     },
+     {
+      "id": "c",
+      "text": {
+       "en": "Organising the municipal elections",
+       "fr": "L'organisation des élections communales",
+       "de": "Die Organisation der Gemeindewahlen"
+      }
+     }
+    ],
+    "answer": "a",
+    "evidence": [
+     {
+      "field": "title.fr",
+      "quote": "Convention de recherche avec l'Université du Luxembourg sur l'Assemblée citoyenne",
+      "url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+     }
+    ]
+   }
+  ]
+ }
+}

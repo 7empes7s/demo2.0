@@ -2,6 +2,13 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-06: Arena v1, comprehension checks
+
+- Done: `modules/arena` (`@democracy2/arena`, TypeScript, held): `buildQuiz(item, items)` gives 3 to 5 questions per Docket file, each with evidence (field path, word-for-word quote, link) checked by `groundingProblems` before it is shown; stale or malformed questions are dropped. Questions come from fixed rules (`arena.rules/1`: title, classification, committee, theme, agenda step, council yes count, status; wrong options are the same field from other files, deterministic) and a hand-written seed set (`arena.seed/1`, 8 questions on chd.lu 8752 and Esch points 6.1 and 7.1 of the recorded snapshot, en/fr/de). No model, no key, no network. `spec/schemas/quiz.schema.json` with examples; `quizProblems` runs over them too. Citizen app: "What does it actually say?" section on every file, instant feedback with the quoted passage and link, progress bar, score ring, retakes, "Understood" mark on the file and in the list; progress in `localStorage` (`d2.arena.v1`, per file: attempts, best, total, understood), nothing sent. Five languages; rule options and some seed prompts fall back to the source or nearest language with a note.
+- Evidence: on the recorded snapshot every one of its 9 items gets a quiz (40 questions), all grounded.
+- Found: the recorded fixture (`docket-recorded.json`) has council votes without a `members` key, and `FileView` reads `votes.members.length`, so the served app throws on that file with that fixture. Real Docket output always has `members`. Screenshots used a copy with `members: []`; not fixed here.
+- Next: model-drafted questions through the Companion with the same quote check, once a key exists; advocate sign-off for seed questions; opt-in anonymous pass-rate counts (needs Charter threshold and a counting endpoint); questions from document text once Docket extracts PDFs; Door-bound "passed check" badge; seed prompts in lb and pt.
+
 ## 2026-10-06: Phase 2 Door acceptance tests
 
 - Done: Sybil test `modules/door/tests/acceptance.rs`. 1,000 full enrolments (fresh holder secret each, shuffled), with 100 duplicates of 80 people (some via another provider, a new address or a flipped adult flag), issue exactly 900 credentials, and all 100 refusals are `AlreadyEnrolled`. Person id spellings (spaces, zero-width, fullwidth, Arabic-Indic digits, digit dropped or added, grouped, prefixed, wrong case) are refused as `InvalidAttribute`, never a second credential. About 20 s in check.sh.

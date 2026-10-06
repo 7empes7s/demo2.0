@@ -10,15 +10,19 @@
   import FactCheck from "./FactCheck.svelte";
   import FileMeta from "./FileMeta.svelte";
   import StageTrack from "./StageTrack.svelte";
+  import Understand from "./Understand.svelte";
 
   let {
     item,
+    items = [item],
     client,
     checker = null,
     today,
     onback,
   }: {
     item: DocketItem;
+    /** Every file in the snapshot: the questions take their wrong answers from the other files. */
+    items?: DocketItem[];
     client: CompanionClient | null | undefined;
     /** The claim checker (Provenance). Without it, the Companion checks claims itself (the shareable demo). */
     checker?: FactChecker | null;
@@ -106,7 +110,7 @@
           <li><span>{party === "null" || !party ? "—" : party}</span><span class="muted">{tally(counts)}</span></li>
         {/each}
       </ul>
-      {#if votes.members.length}
+      {#if votes.members?.length}
         <details>
           <summary>{t("votes_members")}</summary>
           <ul class="parties">
@@ -150,6 +154,8 @@
   {#if checker}
     {#key item.id}<FactCheck {item} {checker} />{/key}
   {/if}
+
+  {#key item.id}<Understand {item} {items} />{/key}
 
   <section aria-labelledby="docs-h">
     <h3 id="docs-h" class="serif sub">{t("documents")}</h3>

@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@democracy2/arena": "0.1.0",
     "@democracy2/companion": "0.1.0"
   },
   "devDependencies": {

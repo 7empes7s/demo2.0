@@ -1,0 +1,845 @@
+{
+ "schema": "d2.docket.snapshot/2",
+ "generated_at": "2026-10-05T00:00:00Z",
+ "sources": [],
+ "meetings": [],
+ "items": [
+  {
+   "id": "lu.chd.8752",
+   "source": "chd.lu",
+   "jurisdiction_id": "lu",
+   "number": "8752",
+   "type": "bill",
+   "type_label": "Projet de loi",
+   "title": {
+    "fr": "Projet de loi portant: 1° modification : a) de la loi modifiée du 23 décembre 2016 relative aux abus de marché ; b) de la loi modifiée du 17 avril 2018 relative aux indices de référence ; c) de la loi du 16 juillet 2019 relative aux prospectus pour valeurs mobilières ; d) de la loi modifiée du 16 juillet 2019 relative à l’opérationnalisation de règlements européens dans le domaine des services financiers ; 2° mise en œuvre : a) du règlement (UE) 2024/2809 du Parlement européen et du Conseil du 23 octobre 2024 modifiant les règlements (UE) 2017/1129, (UE) n° 596/2014 et (UE) n° 600/2014 afin de rendre les marchés des capitaux de l'Union plus attractifs pour les entreprises et de faciliter l'accès des petites et moyennes entreprises aux capitaux ; b) du règlement (UE) 2025/914 du Parlement européen et du Conseil du 7 mai 2025 modifiant le règlement (UE) 2016/1011 en ce qui concerne le champ d’application des règles applicables aux indices de référence, l’utilisation dans l’Union d’indices de référence fournis par un administrateur situé dans un pays tiers et certaines obligations d’information"
+   },
+   "status": "En commission",
+   "author": "Gilles Roth",
+   "committee": "Commission des Finances",
+   "deposited": "2026-05-15",
+   "updated": "2026-09-30",
+   "urls": {
+    "fr": "https://www.chd.lu/fr/dossier/8752",
+    "de": "https://www.chd.lu/de/dossier/8752",
+    "en": "https://www.chd.lu/en/dossier/8752",
+    "lb": "https://www.chd.lu/lu/dossier/8752"
+   },
+   "agenda": [
+    {
+     "meeting_id": "1016250",
+     "date": "2026-10-09",
+     "time": "14:00",
+     "body": "Commission des Finances",
+     "steps": [
+      "Nomination d’un rapporteur",
+      "Présentation du projet de loi"
+     ]
+    }
+   ],
+   "activities": [
+    {
+     "date": "2026-05-15",
+     "kind": "Creation",
+     "description": "Déposé",
+     "actors": [
+      "Gilles Roth"
+     ],
+     "documents": [
+      {
+       "label": "Document de dépôt",
+       "url": "https://wdocs-pub.chd.lu/docs/Dossiers_parlementaires/8752/20260721_Depot.pdf",
+       "date": "2026-05-15",
+       "kind": "depot"
+      }
+     ]
+    },
+    {
+     "date": "2026-05-15",
+     "kind": "Commission-pressentie",
+     "description": "Commission(s) pressentie(s) : Commission des Finances",
+     "actors": [
+      "Commission des Finances"
+     ],
+     "documents": []
+    },
+    {
+     "date": "2026-06-04",
+     "kind": "Commission",
+     "description": "Renvoyé en commission(s) : Commission des Finances",
+     "actors": [
+      "Commission des Finances"
+     ],
+     "documents": []
+    },
+    {
+     "date": "2026-09-30",
+     "kind": "Avis",
+     "description": "Avis de chambre(s) professionnelle(s) : Chambre de Commerce",
+     "actors": [],
+     "documents": [
+      {
+       "label": "8752/01 - Avis de chambre(s) professionnelle(s) : Chambre de Commerce",
+       "url": "https://wdocs-pub.chd.lu/docs/Dossier_Projet_de_loi8752/20260930_Avis.pdf",
+       "date": "2026-09-30",
+       "kind": "avis"
+      }
+     ]
+    },
+    {
+     "date": "2026-10-09",
+     "kind": "Commission",
+     "description": "Nomination d’un rapporteur Présentation du projet de loi",
+     "actors": [
+      "Commission des Finances"
+     ],
+     "documents": []
+    }
+   ],
+   "documents": [
+    {
+     "label": "Document de dépôt",
+     "url": "https://wdocs-pub.chd.lu/docs/Dossiers_parlementaires/8752/20260721_Depot.pdf",
+     "date": "2026-05-15",
+     "kind": "depot",
+     "sha256": null,
+     "fetched_at": null,
+     "text": "",
+     "truncated": false
+    },
+    {
+     "label": "8752/01 - Avis de chambre(s) professionnelle(s) : Chambre de Commerce",
+     "url": "https://wdocs-pub.chd.lu/docs/Dossier_Projet_de_loi8752/20260930_Avis.pdf",
+     "date": "2026-09-30",
+     "kind": "avis",
+     "sha256": null,
+     "fetched_at": null,
+     "text": "",
+     "truncated": false
+    }
+   ]
+  },
+  {
+   "id": "lu.chd.8821",
+   "source": "chd.lu",
+   "jurisdiction_id": "lu",
+   "number": "8821",
+   "type": "debate",
+   "type_label": "Débat d'orientation",
+   "title": {
+    "fr": "Débat d'orientation sur le financement des grands projets d'infrastructure réalisés par l'Etat"
+   },
+   "status": null,
+   "author": "Commission de la Mobilité et des Travaux publics",
+   "committee": "Commission de la Mobilité et des Travaux publics",
+   "deposited": "2026-08-11",
+   "updated": "2026-08-11",
+   "urls": {
+    "fr": "https://www.chd.lu/fr/dossier/8821",
+    "de": "https://www.chd.lu/de/dossier/8821",
+    "en": "https://www.chd.lu/en/dossier/8821",
+    "lb": "https://www.chd.lu/lu/dossier/8821"
+   },
+   "agenda": [
+    {
+     "meeting_id": "1014755",
+     "date": "2026-10-08",
+     "time": "10:15",
+     "body": "Commission de la Mobilité et des Travaux publics",
+     "steps": [
+      "- Désignation d'un rapporteur",
+      "- Discussion des volets CFL, Bâtiments publics, Ponts et chaussées ainsi que Fonds Belval"
+     ]
+    }
+   ],
+   "activities": [
+    {
+     "date": "2026-08-11",
+     "kind": "Creation",
+     "description": "Déposé",
+     "actors": [
+      "Commission de la Mobilité et des Travaux publics"
+     ],
+     "documents": []
+    },
+    {
+     "date": "2026-08-11",
+     "kind": "Commission-pressentie",
+     "description": "Commission(s) pressentie(s) : Commission de la Mobilité et des Travaux publics",
+     "actors": [
+      "Commission de la Mobilité et des Travaux publics"
+     ],
+     "documents": []
+    },
+    {
+     "date": "2026-10-08",
+     "kind": "Commission",
+     "description": "- Désignation d'un rapporteur - Discussion des volets CFL, Bâtiments publics, Ponts et chaussées ainsi que Fonds Belval",
+     "actors": [
+      "Commission de la Mobilité et des Travaux publics"
+     ],
+     "documents": []
+    }
+   ],
+   "documents": []
+  },
+  {
+   "id": "lu.chd.8700",
+   "source": "chd.lu",
+   "jurisdiction_id": "lu",
+   "number": "8700",
+   "type": "other",
+   "type_label": "Proposition de révision du Règlement de la Chambre",
+   "title": {
+    "fr": "Proposition de modification du Règlement de la Chambre des Députés"
+   },
+   "status": "Déposé(e)",
+   "author": null,
+   "committee": "Commission du Règlement",
+   "deposited": null,
+   "updated": "2026-09-23",
+   "urls": {
+    "fr": "https://www.chd.lu/fr/dossier/8700",
+    "de": "https://www.chd.lu/de/dossier/8700",
+    "en": "https://www.chd.lu/en/dossier/8700",
+    "lb": "https://www.chd.lu/lu/dossier/8700"
+   },
+   "agenda": [
+    {
+     "meeting_id": "1014597",
+     "date": "2026-10-07",
+     "time": "10:00",
+     "body": "Commission du Règlement",
+     "steps": [
+      "Continuation des travaux"
+     ]
+    }
+   ],
+   "activities": [
+    {
+     "date": "2025-10-14",
+     "kind": "Commission-pressentie",
+     "description": "Commission(s) pressentie(s) : Commission du Règlement",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": []
+    },
+    {
+     "date": "2025-11-12",
+     "kind": "Commission",
+     "description": "",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": [
+      {
+       "label": "20260218_PV",
+       "url": "https://wdocs-pub.chd.lu/docs/Reunions/2023_REGLE/a0OMz00000BKSZOMA5/20260218_PV.pdf",
+       "date": "2025-11-12",
+       "kind": "pv"
+      }
+     ]
+    },
+    {
+     "date": "2025-11-26",
+     "kind": "Commission",
+     "description": "",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": [
+      {
+       "label": "20260218_PV",
+       "url": "https://wdocs-pub.chd.lu/docs/Reunions/2023_REGLE/a0OMz00000BKP0VMAX/20260218_PV.pdf",
+       "date": "2025-11-26",
+       "kind": "pv"
+      }
+     ]
+    },
+    {
+     "date": "2025-12-10",
+     "kind": "Commission",
+     "description": "",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": [
+      {
+       "label": "20260218_PV",
+       "url": "https://wdocs-pub.chd.lu/docs/Reunions/2023_REGLE/a0OMz00000BKQZYMA5/20260218_PV.pdf",
+       "date": "2025-12-10",
+       "kind": "pv"
+      }
+     ]
+    },
+    {
+     "date": "2026-01-14",
+     "kind": "Commission",
+     "description": "",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": [
+      {
+       "label": "20260218_PV",
+       "url": "https://wdocs-pub.chd.lu/docs/Reunions/2023_REGLE/a0OMz00000BKReWMAX/20260218_PV.pdf",
+       "date": "2026-01-14",
+       "kind": "pv"
+      }
+     ]
+    },
+    {
+     "date": "2026-01-28",
+     "kind": "Commission",
+     "description": "",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": [
+      {
+       "label": "20260225_PV",
+       "url": "https://wdocs-pub.chd.lu/docs/Reunions/2023_REGLE/a0OMz00000BKSTaMAP/20260225_PV.pdf",
+       "date": "2026-01-28",
+       "kind": "pv"
+      }
+     ]
+    },
+    {
+     "date": "2026-02-25",
+     "kind": "Commission",
+     "description": "",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": [
+      {
+       "label": "20260311_PV",
+       "url": "https://wdocs-pub.chd.lu/docs/Reunions/2023_REGLE/a0OMz00000BKRSpMAP/20260311_PV.pdf",
+       "date": "2026-02-25",
+       "kind": "pv"
+      }
+     ]
+    },
+    {
+     "date": "2026-03-11",
+     "kind": "Commission",
+     "description": "",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": [
+      {
+       "label": "20260325_PV",
+       "url": "https://wdocs-pub.chd.lu/docs/Reunions/2023_REGLE/a0OMz00000BKH9TMAX/20260325_PV.pdf",
+       "date": "2026-03-11",
+       "kind": "pv"
+      }
+     ]
+    },
+    {
+     "date": "2026-03-25",
+     "kind": "Commission",
+     "description": "Examen du chapitre 5 et du chapitre 6",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": [
+      {
+       "label": "20260422_PV",
+       "url": "https://wdocs-pub.chd.lu/docs/Reunions/2023_REGLE/a0OMz00000BKRBqMAP/20260422_PV.pdf",
+       "date": "2026-03-25",
+       "kind": "pv"
+      }
+     ]
+    },
+    {
+     "date": "2026-04-22",
+     "kind": "Commission",
+     "description": "Examen du chapitre 6 et du chapitre 7",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": [
+      {
+       "label": "20260506_PV",
+       "url": "https://wdocs-pub.chd.lu/docs/Reunions/2023_REGLE/a0OMz00000CiVArMAN/20260506_PV.pdf",
+       "date": "2026-04-22",
+       "kind": "pv"
+      }
+     ]
+    },
+    {
+     "date": "2026-05-06",
+     "kind": "Commission",
+     "description": "Examen du Chapitre 7",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": [
+      {
+       "label": "20260611_PV",
+       "url": "https://wdocs-pub.chd.lu/docs/Reunions/2023_REGLE/a0OMz00000CifF3MAJ/20260611_PV.pdf",
+       "date": "2026-05-06",
+       "kind": "pv"
+      }
+     ]
+    },
+    {
+     "date": "2026-05-13",
+     "kind": "Commission",
+     "description": "Continuation des travaux",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": []
+    },
+    {
+     "date": "2026-06-10",
+     "kind": "Commission",
+     "description": "Examen du chapitre 7 et du chapitre 8",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": [
+      {
+       "label": "20260624_PV",
+       "url": "https://wdocs-pub.chd.lu/docs/Reunions/2023_REGLE/a0OMz00000CikGLMAZ/20260624_PV.pdf",
+       "date": "2026-06-10",
+       "kind": "pv"
+      }
+     ]
+    },
+    {
+     "date": "2026-06-24",
+     "kind": "Commission",
+     "description": "Examen du chapitre 7 et du chapitre 8",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": [
+      {
+       "label": "20260702_PV",
+       "url": "https://wdocs-pub.chd.lu/docs/Reunions/2023_REGLE/a0OMz00000CimWfMAJ/20260702_PV.pdf",
+       "date": "2026-06-24",
+       "kind": "pv"
+      }
+     ]
+    },
+    {
+     "date": "2026-07-01",
+     "kind": "Commission",
+     "description": "Examen du chapitre 8",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": [
+      {
+       "label": "20260924_PV",
+       "url": "https://wdocs-pub.chd.lu/docs/Reunions_de_la_Commission_du_Reglement/Documents_internes/Reunion_du_01-07-2026/20260924_PV.pdf",
+       "date": "2026-07-01",
+       "kind": "pv"
+      }
+     ]
+    },
+    {
+     "date": "2026-09-23",
+     "kind": "Commission",
+     "description": "Examen du chapitre 9",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": []
+    },
+    {
+     "date": "2026-10-07",
+     "kind": "Commission",
+     "description": "Continuation des travaux",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": []
+    },
+    {
+     "date": "2026-10-21",
+     "kind": "Commission",
+     "description": "Continuation des travaux",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": []
+    },
+    {
+     "date": "2026-11-11",
+     "kind": "Commission",
+     "description": "Continuation des travaux",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": []
+    },
+    {
+     "date": "2026-11-25",
+     "kind": "Commission",
+     "description": "Continuation des travaux",
+     "actors": [
+      "Commission du Règlement"
+     ],
+     "documents": []
+    }
+   ],
+   "documents": []
+  },
+  {
+   "id": "lu.esch.42063",
+   "source": "esch.lu",
+   "jurisdiction_id": "lu-esch",
+   "number": "6.1",
+   "type": "agenda",
+   "type_label": "Plans d'Aménagement",
+   "title": {
+    "fr": "PAP Quai Neiduerf ; vote complémentaire relatif à la renonciation à l'indemnité compensatoire : décision"
+   },
+   "status": "Délibéré",
+   "author": null,
+   "committee": null,
+   "deposited": null,
+   "updated": null,
+   "urls": {
+    "fr": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+   },
+   "agenda": [
+    {
+     "meeting_id": "esch-1522",
+     "date": "2026-10-02",
+     "time": "08:30",
+     "body": "Conseil communal d'Esch-sur-Alzette",
+     "steps": []
+    }
+   ],
+   "activities": [],
+   "documents": [
+    {
+     "label": "10 Délibération du Conseil Communal du 22 mai 2026.pdf",
+     "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42063/427441",
+     "date": "2026-10-02",
+     "kind": "deliberation",
+     "sha256": null,
+     "fetched_at": null,
+     "text": "",
+     "truncated": false
+    },
+    {
+     "label": "20 Approbation Ministère intérieur_2024859C.pdf",
+     "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42063/427436",
+     "date": "2026-10-02",
+     "kind": "other",
+     "sha256": null,
+     "fetched_at": null,
+     "text": "",
+     "truncated": false
+    },
+    {
+     "label": "30 PAP Quai Neiduerf_PE_approuvé.pdf",
+     "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42063/427431",
+     "date": "2026-10-02",
+     "kind": "other",
+     "sha256": null,
+     "fetched_at": null,
+     "text": "",
+     "truncated": false
+    },
+    {
+     "label": "40 PAP Quai Neiduerf_PG1_approuvé.pdf",
+     "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42063/427426",
+     "date": "2026-10-02",
+     "kind": "other",
+     "sha256": null,
+     "fetched_at": null,
+     "text": "",
+     "truncated": false
+    },
+    {
+     "label": "45 PAP Quai Neiduerf_PG2_approuvé.pdf",
+     "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42063/427421",
+     "date": "2026-10-02",
+     "kind": "other",
+     "sha256": null,
+     "fetched_at": null,
+     "text": "",
+     "truncated": false
+    },
+    {
+     "label": "50 Illustration PAP pour site.pdf",
+     "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42063/427416",
+     "date": "2026-10-02",
+     "kind": "other",
+     "sha256": null,
+     "fetched_at": null,
+     "text": "",
+     "truncated": false
+    }
+   ],
+   "reference": "EWF-P-42063",
+   "theme": "Développement urbain",
+   "votes": {
+    "counts": {
+     "Non": 8,
+     "Oui": 11
+    },
+    "by_party": {
+     "LSAP": {
+      "Non": 6
+     },
+     "déi Lénk": {
+      "Non": 1
+     },
+     "ADR": {
+      "Non": 1
+     },
+     "CSV": {
+      "Oui": 6
+     },
+     "déi gréng": {
+      "Oui": 3
+     },
+     "DP": {
+      "Oui": 2
+     }
+    }
+   }
+  },
+  {
+   "id": "lu.esch.42052",
+   "source": "esch.lu",
+   "jurisdiction_id": "lu-esch",
+   "number": "7.1",
+   "type": "agenda",
+   "type_label": "Conventions",
+   "title": {
+    "fr": "Convention de recherche avec l'Université du Luxembourg sur l'Assemblée citoyenne ; décision"
+   },
+   "status": "Délibéré",
+   "author": null,
+   "committee": null,
+   "deposited": null,
+   "updated": null,
+   "urls": {
+    "fr": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+   },
+   "agenda": [
+    {
+     "meeting_id": "esch-1522",
+     "date": "2026-10-02",
+     "time": "08:30",
+     "body": "Conseil communal d'Esch-sur-Alzette",
+     "steps": []
+    }
+   ],
+   "activities": [],
+   "documents": [
+    {
+     "label": "Convention de recherche sur l'assemblée citoyenne d'Esch-sur-Alzette.pdf",
+     "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42052/427372",
+     "date": "2026-10-02",
+     "kind": "other",
+     "sha256": null,
+     "fetched_at": null,
+     "text": "",
+     "truncated": false
+    }
+   ],
+   "reference": "EWF-P-42052",
+   "theme": "Démocratie participative",
+   "votes": null
+  },
+  {
+   "id": "lu.esch.42090",
+   "source": "esch.lu",
+   "jurisdiction_id": "lu-esch",
+   "number": "10.2.3",
+   "type": "agenda",
+   "type_label": "Devis",
+   "title": {
+    "fr": "Rues C.M. Spoo / Brill (Pasteur - Canal) - Phase1 - voirie - réaménagement ; devis; décision"
+   },
+   "status": "Délibéré",
+   "author": null,
+   "committee": null,
+   "deposited": null,
+   "updated": null,
+   "urls": {
+    "fr": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+   },
+   "agenda": [
+    {
+     "meeting_id": "esch-1522",
+     "date": "2026-10-02",
+     "time": "08:30",
+     "body": "Conseil communal d'Esch-sur-Alzette",
+     "steps": []
+    }
+   ],
+   "activities": [],
+   "documents": [
+    {
+     "label": "26301 - Rues C.M. Spoo  Brill (Pasteur - Canal) (phase1) - voirie.pdf",
+     "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42090/427621",
+     "date": "2026-10-02",
+     "kind": "other",
+     "sha256": null,
+     "fetched_at": null,
+     "text": "",
+     "truncated": false
+    }
+   ],
+   "reference": "EWF-P-42090",
+   "theme": "Budget et Finances",
+   "votes": null
+  },
+  {
+   "id": "lu.esch.42093",
+   "source": "esch.lu",
+   "jurisdiction_id": "lu-esch",
+   "number": "10.3.2",
+   "type": "agenda",
+   "type_label": "Crédits Spéciaux",
+   "title": {
+    "fr": "Réfection rues Brill et Spoo (phase 1) ; crédit spécial extraordinaire; décision"
+   },
+   "status": "Délibéré",
+   "author": null,
+   "committee": null,
+   "deposited": null,
+   "updated": null,
+   "urls": {
+    "fr": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+   },
+   "agenda": [
+    {
+     "meeting_id": "esch-1522",
+     "date": "2026-10-02",
+     "time": "08:30",
+     "body": "Conseil communal d'Esch-sur-Alzette",
+     "steps": []
+    }
+   ],
+   "activities": [],
+   "documents": [
+    {
+     "label": "EWF-D-106665 Crédit spécial extraordinaire - 26301 rues Brill et Spoo (phase1) - 20260922 - initial 2026.pdf",
+     "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42093/427638",
+     "date": "2026-10-02",
+     "kind": "other",
+     "sha256": null,
+     "fetched_at": null,
+     "text": "",
+     "truncated": false
+    }
+   ],
+   "reference": "EWF-P-42093",
+   "theme": "Budget et Finances",
+   "votes": null
+  },
+  {
+   "id": "lu.esch.42060",
+   "source": "esch.lu",
+   "jurisdiction_id": "lu-esch",
+   "number": "10.4",
+   "type": "agenda",
+   "type_label": "Relevés et Rôles",
+   "title": {
+    "fr": "Relevé et rôle supplétif de l'impôt foncier ; décision"
+   },
+   "status": "Délibéré",
+   "author": null,
+   "committee": null,
+   "deposited": null,
+   "updated": null,
+   "urls": {
+    "fr": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+   },
+   "agenda": [
+    {
+     "meeting_id": "esch-1522",
+     "date": "2026-10-02",
+     "time": "08:30",
+     "body": "Conseil communal d'Esch-sur-Alzette",
+     "steps": []
+    }
+   ],
+   "activities": [],
+   "documents": [
+    {
+     "label": "10 relevé et rôle_3 (6).pdf",
+     "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42060/427399",
+     "date": "2026-10-02",
+     "kind": "other",
+     "sha256": null,
+     "fetched_at": null,
+     "text": "",
+     "truncated": false
+    },
+    {
+     "label": "20 tableaux de contrôle 3.pdf",
+     "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42060/427403",
+     "date": "2026-10-02",
+     "kind": "other",
+     "sha256": null,
+     "fetched_at": null,
+     "text": "",
+     "truncated": false
+    }
+   ],
+   "reference": "EWF-P-42060",
+   "theme": "Budget et Finances",
+   "votes": null
+  },
+  {
+   "id": "lu.esch.42071",
+   "source": "esch.lu",
+   "jurisdiction_id": "lu-esch",
+   "number": "11",
+   "type": "agenda",
+   "type_label": "Propositions",
+   "title": {
+    "fr": "GECT Alzette Belval : contribution financière pour l'année 2027 ; décision"
+   },
+   "status": "Délibéré",
+   "author": null,
+   "committee": null,
+   "deposited": null,
+   "updated": null,
+   "urls": {
+    "fr": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+   },
+   "agenda": [
+    {
+     "meeting_id": "esch-1522",
+     "date": "2026-10-02",
+     "time": "08:30",
+     "body": "Conseil communal d'Esch-sur-Alzette",
+     "steps": []
+    }
+   ],
+   "activities": [],
+   "documents": [
+    {
+     "label": "[Courrier]58448.pdf",
+     "url": "https://workflow.esch.lu/api/api/v1/AgendaItems/GetDocument/42071/427494",
+     "date": "2026-10-02",
+     "kind": "other",
+     "sha256": null,
+     "fetched_at": null,
+     "text": "",
+     "truncated": false
+    }
+   ],
+   "reference": "EWF-P-42071",
+   "theme": "Tourisme, relations internationales et jumelages, coopération transfrontalière",
+   "votes": null
+  }
+ ],
+ "errors": [],
+ "note": "Built with d2_docket parsers from the pages recorded in modules/docket/tests/fixtures (chd.lu dossiers 8752, 8821, 8700; Esch-sur-Alzette council of 2026-10-02). Councillor names removed from votes."
+}
