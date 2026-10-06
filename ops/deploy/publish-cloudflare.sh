@@ -7,11 +7,17 @@ set -euo pipefail
 HOST="${HOST:-cracia.techinsiderbytes.com}"
 NAME="${NAME:-cracia}"
 CONF="/etc/cloudflared/$NAME.yml"
-PORT_FROM_ENV=$(sed -n 's/^PORT=\([0-9][0-9]*\)$/\1/p' /etc/civic/companion.env 2>/dev/null | tail -1 || true)
+ENV_FILE=/etc/civic/companion.env
+PORT_FROM_ENV=""
+if [ -z "${COMPANION_PORT:-}" ] && [ -r "$ENV_FILE" ] && grep -qE '^[[:space:]]*(export[[:space:]]+)?PORT[[:space:]]*=' "$ENV_FILE"; then
+  PORT_FROM_ENV=$(sed -nE "s/^[[:space:]]*(export[[:space:]]+)?PORT[[:space:]]*=[[:space:]]*[\"']?([0-9]+)[\"']?[[:space:]]*\r?\$/\2/p" "$ENV_FILE" | tail -1)
+  [ -n "$PORT_FROM_ENV" ] || { echo "cannot read PORT from $ENV_FILE; set COMPANION_PORT"; exit 1; }
+fi
 PORT="${COMPANION_PORT:-${PORT_FROM_ENV:-8787}}"
+case "$PORT" in ''|*[!0-9]*) echo "PORT must be a number, got '$PORT'"; exit 1;; esac
 
 command -v cloudflared >/dev/null || { echo "cloudflared is not installed"; exit 1; }
-curl -fsS --max-time 5 "http://127.0.0.1:$PORT/healthz" >/dev/null || { echo "civic-companion is not healthy on :$PORT"; exit 1; }
+curl -fsS --max-time 5 "http://127.0.0.1:$PORT/healthz" | grep -q '"companion"' || { echo "civic-companion is not healthy on :$PORT"; exit 1; }
 
 id=$(cloudflared tunnel list --output json | jq -r --arg n "$NAME" '.[] | select(.name == $n) | .id' | head -1)
 if [ -z "$id" ]; then
