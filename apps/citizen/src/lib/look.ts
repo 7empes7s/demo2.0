@@ -23,3 +23,20 @@ export function applyLook(root: HTMLElement, look: Look): void {
   if (look) root.dataset.look = look;
   else delete root.dataset.look;
 }
+
+type Doc = Document & { startViewTransition?: (update: () => Promise<void> | void) => unknown };
+
+/**
+ * Runs a screen change as a view transition when the look wants one (Affichage peels the old
+ * sheet off), the browser has the API and the reader has not asked for reduced motion.
+ * Otherwise the change runs on the spot.
+ */
+export function peel(root: HTMLElement, update: () => Promise<void> | void): void {
+  const doc = root.ownerDocument as Doc;
+  const wanted =
+    root.dataset.look === "affichage" &&
+    typeof doc.startViewTransition === "function" &&
+    !(doc.defaultView?.matchMedia("(prefers-reduced-motion: reduce)").matches ?? false);
+  if (wanted) doc.startViewTransition!(update);
+  else void update();
+}

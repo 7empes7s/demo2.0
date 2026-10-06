@@ -1,8 +1,8 @@
 /*
- * Affichage, step two: sheets and marks. Every rule is scoped to the look flag (`data-look` on
+ * Affichage, steps two and three: sheets, marks and motion. Every rule is scoped to the look flag (`data-look` on
  * <html>, see lib/look.ts) and overrides a component's own style, so components stay unchanged.
  * Selectors mirror the component's selector with the html prefix in front, which beats Svelte's
- * scoping by one element. Step three (motion) follows; nothing here moves except a press.
+ * scoping by one element. Motion is at the end, and only for readers who have not asked for less of it.
  *
  * Sheets: paper with a 3px ink border, square. A second sheet behind is a hard offset shadow
  * (never a blurred one): amber for what is yours or current, navy for what is official.
@@ -111,3 +111,53 @@ html[data-look="affichage"] .verdict, html[data-look="affichage"] .mark, html[da
 html[data-look="affichage"] .understood, html[data-look="affichage"] .tag, html[data-look="affichage"] .reach, html[data-look="affichage"] .badge, html[data-look="affichage"] .place,
 html[data-look="affichage"] .swatch, html[data-look="affichage"] .dot, html[data-look="affichage"] .pip, html[data-look="affichage"] .bar .seg,
 html[data-look="affichage"] .brand .mark { border-radius: 0; }
+
+/*
+ * Motion. Six verbs, one job each, from docs/design/03-affichage-identity.html. Everything below
+ * is off for readers who prefer reduced motion; screen changes then switch on the spot.
+ * Paste: anything new is pasted on and settles with a slight overshoot (700 ms). Press: a button
+ * goes flat onto its backing (120 ms). Peel: the old screen peels off from its top left corner
+ * while the next one was already underneath (view transition). Tear: a dismissed sheet is torn off
+ * sideways (nothing in the app is dismissed yet, so it is defined by the identity, not used here).
+ * Flap: a number that appears flips like a split-flap board. March: waiting is marching ants along
+ * the cut line instead of a fading pulse.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes affichage-paste { 0% { transform: scale(1.04) rotate(-1.2deg); opacity: 0; } 60% { transform: scale(0.99) rotate(0.3deg); opacity: 1; } 100% { transform: none; opacity: 1; } }
+  @keyframes affichage-peel { to { transform: rotateY(-80deg) rotateX(10deg) translateY(12px); opacity: 0.4; } }
+  @keyframes affichage-flap { 0% { transform: rotateX(0); } 50% { transform: rotateX(-90deg); } 51% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
+  @keyframes affichage-march { to { background-position: -20px 0, 0 0; } }
+
+  /* Paste */
+  html[data-look="affichage"] .card, html[data-look="affichage"] .file, html[data-look="affichage"] .entry,
+  html[data-look="affichage"] .chat li, html[data-look="affichage"] .verdict, html[data-look="affichage"] .intro,
+  html[data-look="affichage"] .done { animation: affichage-paste 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+  html[data-look="affichage"] .file:nth-child(2), html[data-look="affichage"] .entry:nth-child(2) { animation-delay: 0.06s; }
+  html[data-look="affichage"] .file:nth-child(3), html[data-look="affichage"] .entry:nth-child(3) { animation-delay: 0.12s; }
+  html[data-look="affichage"] .file:nth-child(4), html[data-look="affichage"] .entry:nth-child(4) { animation-delay: 0.18s; }
+  html[data-look="affichage"] .file:nth-child(5), html[data-look="affichage"] .entry:nth-child(5) { animation-delay: 0.24s; }
+  html[data-look="affichage"] .file:nth-child(n + 6), html[data-look="affichage"] .entry:nth-child(n + 6) { animation-delay: 0.3s; }
+  html[data-look="affichage"] .card.next { animation-delay: 0.15s; }
+
+  /* Press */
+  html[data-look="affichage"] .btn, html[data-look="affichage"] .seg, html[data-look="affichage"] .chip, html[data-look="affichage"] .cite,
+  html[data-look="affichage"] .option { transition: transform 0.12s linear, box-shadow 0.12s linear, background-color 0.12s linear, color 0.12s linear; }
+
+  /* Peel: the header stays pinned to the wall; the rest of the page is the sheet that peels. */
+  html[data-look="affichage"] .top { view-transition-name: affichage-top; }
+  html[data-look="affichage"]::view-transition-old(root) { animation: affichage-peel 0.5s cubic-bezier(0.4, 0, 0.2, 1) both; transform-origin: 0 0; }
+  html[data-look="affichage"]::view-transition-new(root) { animation: affichage-paste 0.6s 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+  html[data-look="affichage"]::view-transition-group(root) { animation-duration: 0s; }
+  html[data-look="affichage"]::view-transition-old(affichage-top), html[data-look="affichage"]::view-transition-new(affichage-top) { animation: none; }
+
+  /* Flap */
+  html[data-look="affichage"] .score svg { animation: affichage-flap 0.45s ease-in-out both; transform-origin: center; }
+
+  /* March */
+  html[data-look="affichage"] .pulse {
+    animation: affichage-march 1s linear infinite;
+    padding-top: 0.6rem;
+    background: repeating-linear-gradient(90deg, var(--line) 0 10px, transparent 10px 20px) top / 200% 3px no-repeat;
+    opacity: 1;
+  }
+}

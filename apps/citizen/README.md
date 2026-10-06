@@ -28,12 +28,13 @@ uv run d2-provenance serve --docket path/to/lu-chd.json   # the claim checker on
 
 ## Looks
 
-The app is moving to the Affichage identity (paper sheets on a public wall; the decision and its pages are in `docs/design/`). It lands behind a per-device flag, in three steps: tokens and type (done), sheets and marks (done), motion.
+The app is moving to the Affichage identity (paper sheets on a public wall; the decision and its pages are in `docs/design/`). It lands behind a per-device flag, in three steps: tokens and type, sheets and marks, motion (all three done).
 
 - Open the app with `?look=affichage` in the address to turn it on; the device remembers it (`d2.look`). `?look=default` turns it off. The flag is applied before the first paint as `data-look` on `<html>`.
 - `src/tokens.css` keeps one set of token names; the Affichage block remaps them, so components need no change to pick the look up. Paper first, with a dark mode.
 - Titles (`.serif`), labels and buttons switch to Big Shoulders Display; data to JetBrains Mono; body text stays Public Sans.
 - `src/affichage.css` holds the sheets and marks: every rule is prefixed `html[data-look="affichage"]`, so it beats component styles without touching them. Cards are stapled sheets with a hard offset second sheet behind (amber for yours, navy for official); buttons press on an ink backing; tags, pips and bars are square and inked. Corners are squared explicitly, since the base look's pills are literal values, not tokens.
+- Motion, at the end of the same file and only under `prefers-reduced-motion: no-preference`: new sheets are pasted on, buttons press, the old screen peels off on a screen change (a view transition, run by `peel()` in `src/lib/look.ts` when the look is on and the browser has the API), a score flaps in and waiting is marching ants. Readers who ask for less motion get none, and screen changes switch on the spot.
 
 ## Install and offline
 
