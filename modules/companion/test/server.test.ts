@@ -29,7 +29,7 @@ const explainAnswer = JSON.stringify({
 describe("companion server", () => {
   it("reports health and serves the snapshot without a model", async () => {
     const { base, post } = await start();
-    expect(await (await fetch(base + "/healthz")).json()).toEqual({ ok: true, items: 1, companion: false, provenance: false });
+    expect(await (await fetch(base + "/healthz")).json()).toEqual({ ok: true, items: 1, companion: false, provenance: false, agora: false });
     expect((await (await fetch(base + "/data/snapshot.json")).json()).items[0].id).toBe(ITEM.id);
     expect((await post("/api/explain", { item_id: ITEM.id })).status).toBe(503);
   });
@@ -89,7 +89,7 @@ describe("companion server", () => {
       errors: [],
     };
     const two = await start({ snapshot: v2 });
-    expect(await (await fetch(two.base + "/healthz")).json()).toEqual({ ok: true, items: 3, companion: false, provenance: false });
+    expect(await (await fetch(two.base + "/healthz")).json()).toEqual({ ok: true, items: 3, companion: false, provenance: false, agora: false });
     expect((await (await fetch(two.base + "/data/snapshot.json")).json()).items[1].votes.counts).toEqual({ Oui: 11, Non: 8 });
 
     const one = await start({ snapshot: { ...snapshot, source: { name: "Chambre des Députés" } } as typeof snapshot });

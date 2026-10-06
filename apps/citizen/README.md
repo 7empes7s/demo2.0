@@ -5,6 +5,7 @@ The resident-facing app for Luxembourg.
 - Lists what the Chamber of Deputies has on its agenda, from the Docket snapshot.
 - Explains each file in Luxembourgish, French, German, English or Portuguese. Every sentence cites the official document it comes from.
 - Asks where you stand, keeps that answer on your device, and argues the other side using only arguments that official bodies made about the file.
+- Shows the ideas residents posted on Agora (`#ideas`, served build only), read only: posting and supporting open once secure sign-in is ready. The Companion server reads them (`GET /api/ideas`) and drops proposer pseudonyms.
 - Checks a claim you heard against the documents, graded green, yellow or red. The served build asks Provenance through the Companion server (`/api/factcheck`), on each file and on its own page (`#check`); the single-file demo asks the Companion.
 
 The app never tells anyone how to vote. See `VOCABULARY.md` for the words it uses.

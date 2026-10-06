@@ -6,6 +6,7 @@
  */
 
 import type { Position } from "./types.ts";
+import { readJson, UPSTREAM } from "./upstream.ts";
 
 /** An argument as Commons serves it (spec/schemas/argument.schema.json). */
 export interface CommonsArgument {
@@ -82,10 +83,12 @@ export class HttpCommons implements CommonsClient {
   async argumentsFor(matterId: string, signal?: AbortSignal): Promise<CommonsArgument[]> {
     const timeout = AbortSignal.timeout(this.timeoutMs);
     const res = await fetch(`${this.baseUrl}/matters/${encodeURIComponent(matterId)}/arguments`, {
+      ...UPSTREAM,
       signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     });
     if (!res.ok) throw new Error(`commons answered ${res.status}`);
-    const body = (await res.json()) as { arguments?: unknown } | null;
+    // Past the cap this throws, and an oversized answer is treated like an outage.
+    const body = (await readJson(res)) as { arguments?: unknown } | null;
     // A malformed answer is treated like an outage: the caller falls back to the documents.
     if (typeof body !== "object" || body === null || !Array.isArray(body.arguments)) {
       throw new Error("commons answered with an unexpected shape");

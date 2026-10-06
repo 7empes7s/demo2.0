@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- `GET /api/ideas` reads the Agora queue (`AGORA_URL`, default `http://127.0.0.1:8091`), read only. Every idea is checked against `spec/schemas/idea.schema.json` and the answer against the queue shape (502 if invalid), proposer pseudonyms are dropped, Agora unreachable, failing or slower than 3 s is 503, a bad `limit` or `jurisdiction` or an unknown parameter is 400 before Agora is called, and every other method on `/api/ideas*` is 405 and never forwarded. Own rate-limit bucket (`ideasPerMinute`, default 60); `/healthz` reports `agora: true|false` and never fails on it. Exports `readQueue`, `ideaProblems`, `queueProblems`, `ideasPageProblems` and the `Idea`, `PublicIdea`, `IdeasPage` types.
+- Answers from Agora, Provenance and Commons are read as a stream and refused past 16 MiB (64 KiB for error codes and `/healthz`), never read in full: Agora or Provenance past the cap is 502, Commons past it counts as an outage. No request to another service follows a redirect. `/api/ideas` reuses Agora's answer for the same query (sorted jurisdictions, limit) for 15 s (`ideasCacheMs`), including for requests that arrive while it is being read; failures are not kept. A queue that lists the same idea id twice is refused (502). `/healthz` probes Provenance and Agora at the same time.
+- The schema checker's `format: date-time` checks the calendar (no 30 February, hour 24 or offset +24:00), and `integer` means a safe integer (at most 2^53 - 1), so a count of `1e300` is refused.
+- The JSON Schema checker moved to `schema.ts` and is shared by grades and ideas. It now knows `maxItems`, `uniqueItems`, `minimum`, `minProperties`, `format: date-time` and `$ref` to `localized-text.schema.json`; any other keyword still fails closed.
 - The devil's advocate draws the other side from Commons first, over HTTP (`COMMONS_URL`,
   `GET /matters/{id}/arguments`). Each turn returns `shown`: the arguments it rests on, each
   with its origin (`commons`, `document` or `model`) and a source link. When Commons has at

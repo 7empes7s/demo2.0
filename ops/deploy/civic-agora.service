@@ -1,0 +1,40 @@
+[Unit]
+Description=Civic Agora: the ideas residents post, read by the citizen app (read only for now)
+After=network-online.target
+Wants=network-online.target
+# The deployer restarts only civic-companion.service; PartOf makes a deploy (and a stop or a
+# restart of the Companion) restart this service too, so both run the same release.
+PartOf=civic-companion.service
+
+[Service]
+User=civic
+Group=civic
+WorkingDirectory=/opt/civic/current
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+# Same uv locations as civic-docket.service. Agora needs only the Charter library, so the first sync is quick.
+Environment=UV_PROJECT_ENVIRONMENT=/opt/civic/shared/venv UV_CACHE_DIR=/opt/civic/shared/uv-cache UV_PYTHON_INSTALL_DIR=/opt/civic/shared/python
+# The ideas database lives outside the release tree: /var/lib/civic-agora, created by systemd for
+# the civic user. It starts empty; nothing is seeded.
+StateDirectory=civic-agora
+StateDirectoryMode=0700
+# Loopback only: Agora's identity is a stand-in that lets anyone who reaches it invent
+# participants, so only the Companion server calls it (AGORA_URL in companion.env), and the
+# Companion passes on reads only (GET /api/ideas), never posts or upvotes.
+# The nym key is a file outside git, mode 600, owned by civic (see README, One-time install).
+ExecStart=/usr/bin/env uv run --frozen --no-dev --package d2-agora d2-agora serve --db /var/lib/civic-agora/agora.db --nym-key-file /etc/civic/agora-nym.key --host 127.0.0.1 --port 8091
+Restart=on-failure
+RestartSec=3
+# Hardening: read-only system, no new privileges, private /tmp. uv may write only its own
+# environment and cache, Agora only its state directory. The install creates the uv directories;
+# if one is missing the unit fails at start with a clear error instead of uv failing on a
+# read-only file system.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+ReadOnlyPaths=/opt/civic
+ReadWritePaths=/opt/civic/shared/venv /opt/civic/shared/uv-cache /opt/civic/shared/python
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target civic-companion.service
