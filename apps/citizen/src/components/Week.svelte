@@ -238,7 +238,7 @@
   .tags { margin-left: auto; display: flex; gap: 6px; }
   .tag { flex: none; padding: 0 6px; border: 2px solid var(--line); font: 700 0.75rem/1.5 var(--serif); text-transform: uppercase; letter-spacing: 0.02em; }
   .topic { background: var(--surface-2); color: var(--fg); }
-  .understood { background: var(--accent); color: var(--accent-ink); }
+  .understood { background: var(--accent); color: var(--accent-ink); border-color: var(--accent-line); }
   .understood::before { content: "✓ "; }
   .foot { display: grid; gap: 8px; justify-items: start; border-top: var(--rule) solid var(--line); padding-top: 16px; }
   .tech summary { cursor: pointer; }

@@ -201,7 +201,7 @@
     align-items: center;
     gap: 6px;
     padding: 0 6px;
-    border: 2px solid var(--line);
+    border: 2px solid var(--accent-line);
     background: var(--accent);
     color: var(--accent-ink);
     font: 700 0.8rem/1.5 var(--serif);
@@ -214,7 +214,7 @@
   .bar { display: flex; gap: 6px; }
   .seg { flex: 1 1 0; height: 8px; border: 2px solid var(--line); background: var(--surface); transition: background 200ms; }
   .seg[data-state="now"] { background: var(--accent); }
-  .seg[data-state="match"] { background: var(--line); }
+  .seg[data-state="match"] { background: var(--fg); }
   .seg[data-state="miss"] { background: var(--red); }
   .count { margin: 0; }
   .prompt { font-size: 1.15rem; font-weight: 650; line-height: 1.35; margin: 0; }
@@ -251,7 +251,7 @@
     font-size: 0.9rem;
   }
   .option[data-state="text"] { background: var(--accent); color: var(--accent-ink); }
-  .option[data-state="text"] .mark { background: var(--line); color: var(--surface); }
+  .option[data-state="text"] .mark { background: var(--fg); color: var(--surface); }
   .option[data-state="miss"] { background: var(--surface); text-decoration: line-through; }
   .option[data-state="miss"] .mark { border-color: var(--red); color: var(--red); }
 

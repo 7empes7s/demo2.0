@@ -30,8 +30,8 @@ uv run d2-provenance serve --docket path/to/lu-chd.json   # the claim checker on
 
 The app is Affichage: paper sheets pasted on a public wall (the decision and its pages are in `docs/design/`). It is the only look; there is no flag.
 
-- `src/tokens.css` is the only source of colour and material. Light is the wall by day (cream plaster, paper, ink); dark is the same wall at night (navy plaster, the sheets still paper, cream for what is written on the wall itself). Every sheet class remaps the tokens for what is printed on it, so a component never knows which mode it is in.
-- Materials are tokens too: `--rule` (the ink border), `--backing` (the second sheet behind a button), `--backing-navy`, `--ink`, `--paper`. Components use them for their own sheets and marks; nothing has a radius or a blurred shadow.
+- `src/tokens.css` is the only source of colour and material. Light is the wall by day (cream plaster, paper, ink); dark is the wall with the lights off (a near-black wall, charcoal sheets, cream print, soft grey lines, amber only for what is pressed, chosen or yours). Every sheet class remaps the tokens for what is printed on it, so a component never knows which mode it is in.
+- Materials are tokens too: `--rule` (the ink border), `--backing` (the second sheet behind a button), `--backing-navy`, `--pressed-bg` and `--pressed-fg` (a pressed or chosen thing), `--accent-line`, `--ink`, `--paper`. Components use them for their own sheets and marks; nothing has a radius or a blurred shadow.
 - Titles (`.serif`), labels and buttons are set in Big Shoulders Display; data in JetBrains Mono; body text in Public Sans.
 - Motion, at the end of `tokens.css` and only under `prefers-reduced-motion: no-preference`: new sheets are pasted on, buttons press, the old screen peels off on a screen change (a view transition, run by `peel()` in `src/lib/look.ts` when the browser has the API), a score flaps in and waiting is marching ants. Readers who ask for less motion get none, and screen changes switch on the spot.
 

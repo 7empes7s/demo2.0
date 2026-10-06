@@ -292,7 +292,7 @@
   .intro p { margin: 0; }
   .source-note { font-size: 0.82rem; margin-top: 16px; }
   .page-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-  .check-open[aria-current="page"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .check-open[aria-current="page"] { background: var(--pressed-bg); border-color: var(--pressed-bg); color: var(--pressed-fg); }
   .check-page { display: grid; gap: 16px; padding-top: 4px; }
   .check-page h2 { font-size: clamp(1.6rem, 4.2vw, 2.3rem); line-height: 1.15; margin: 0; }
   .check-page h2:focus { outline: none; }
