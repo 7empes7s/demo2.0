@@ -5,6 +5,7 @@ import { applyLook, resolveLook } from "./lib/look.ts";
 import { prefs } from "./lib/prefs.ts";
 import { registerServiceWorker } from "./lib/pwa.ts";
 import "./tokens.css";
+import "./affichage.css";
 
 // The look flag is applied before the first paint, so no frame shows the other look.
 const look = resolveLook(location.search, prefs.look());

@@ -1,0 +1,113 @@
+/*
+ * Affichage, step two: sheets and marks. Every rule is scoped to the look flag (`data-look` on
+ * <html>, see lib/look.ts) and overrides a component's own style, so components stay unchanged.
+ * Selectors mirror the component's selector with the html prefix in front, which beats Svelte's
+ * scoping by one element. Step three (motion) follows; nothing here moves except a press.
+ *
+ * Sheets: paper with a 3px ink border, square. A second sheet behind is a hard offset shadow
+ * (never a blurred one): amber for what is yours or current, navy for what is official.
+ * Marks: staples on cards, square tags in the display face, ink-backed buttons, square swatches.
+ */
+
+/* Sheets */
+html[data-look="affichage"] .card { border: 3px solid var(--line); background: var(--surface); position: relative; }
+html[data-look="affichage"] .card::before, html[data-look="affichage"] .card::after {
+  content: ""; position: absolute; top: -2px; width: 22px; height: 7px;
+  border: 2.5px solid var(--line); border-bottom: 0; pointer-events: none;
+}
+html[data-look="affichage"] .card::before { left: 14px; transform: rotate(-6deg); }
+html[data-look="affichage"] .card::after { right: 14px; transform: rotate(5deg); }
+html[data-look="affichage"] .card.setup { border-color: var(--line); box-shadow: 7px 7px 0 0 var(--accent), 7px 7px 0 3px var(--line); }
+html[data-look="affichage"] .card.next { border-left: 3px solid var(--line); box-shadow: 7px 7px 0 0 #1b2a4a, 7px 7px 0 3px var(--line); }
+html[data-look="affichage"] .card.arena { background: var(--surface); }
+html[data-look="affichage"] .file, html[data-look="affichage"] .entry, html[data-look="affichage"] .option {
+  border: 3px solid var(--line); background: var(--surface); transition: box-shadow 120ms, transform 120ms;
+}
+html[data-look="affichage"] .file:hover, html[data-look="affichage"] .entry:hover { border-color: var(--line); box-shadow: 5px 5px 0 0 var(--accent), 5px 5px 0 3px var(--line); }
+html[data-look="affichage"] .file.current { border-color: var(--line); box-shadow: 7px 7px 0 0 var(--accent), 7px 7px 0 3px var(--line); }
+html[data-look="affichage"] .chat li { border: 3px solid var(--line); }
+html[data-look="affichage"] .chat li.assistant { background: var(--surface); }
+html[data-look="affichage"] .chat li.user { background: var(--accent); color: var(--accent-ink); }
+html[data-look="affichage"] .quote { border: 0; border-left: 4px solid var(--line); background: var(--surface); }
+html[data-look="affichage"] .empty { border: 3px dashed var(--line); }
+html[data-look="affichage"] .private, html[data-look="affichage"] .notice, html[data-look="affichage"] .closed, html[data-look="affichage"] .offline { border: 3px solid var(--line); background: var(--surface); color: var(--fg); }
+html[data-look="affichage"] .never { border-top: 3px solid var(--line); border-bottom: 3px solid var(--line); color: var(--fg); }
+
+/* Marks: tags, badges, swatches, pips */
+html[data-look="affichage"] .understood, html[data-look="affichage"] .tag, html[data-look="affichage"] .reach, html[data-look="affichage"] .badge, html[data-look="affichage"] .place {
+  font-family: var(--serif); font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em;
+  border: 2px solid var(--line); padding: 0 6px; color: var(--fg); background: var(--surface);
+}
+html[data-look="affichage"] .understood, html[data-look="affichage"] .badge { background: var(--accent); color: var(--accent-ink); border-color: var(--line); }
+html[data-look="affichage"] .tag.topic { background: var(--surface-2); color: var(--fg); }
+html[data-look="affichage"] .reach { font-size: 0.72rem; letter-spacing: 0.04em; }
+html[data-look="affichage"] .reach.national { background: var(--accent); color: var(--accent-ink); border-color: var(--line); }
+html[data-look="affichage"] .reach.regional { border-color: var(--line); color: var(--fg); background: var(--surface-2); }
+html[data-look="affichage"] .place { font-size: 0.72rem; color: var(--fg); }
+html[data-look="affichage"] .no { color: var(--fg); font-weight: 700; }
+html[data-look="affichage"] .swatch { border: 2px solid var(--line); }
+html[data-look="affichage"] .dot { width: 8px; height: 8px; border: 2px solid var(--line); background: var(--accent); }
+html[data-look="affichage"] .pip { height: 6px; border: 2px solid var(--line); background: var(--surface); }
+html[data-look="affichage"] li.done .pip { background: var(--line); }
+html[data-look="affichage"] li.now .pip { background: var(--accent); }
+html[data-look="affichage"] .compact .pip { height: 5px; }
+html[data-look="affichage"] .bar .seg { height: 8px; border: 2px solid var(--line); background: var(--surface); }
+html[data-look="affichage"] .bar .seg[data-state="now"] { background: var(--accent); }
+html[data-look="affichage"] .bar .seg[data-state="match"] { background: var(--line); }
+html[data-look="affichage"] .bar .seg[data-state="miss"] { background: var(--red); }
+html[data-look="affichage"] .verdict { border: 3px solid var(--line); border-left-width: 3px; background: var(--surface); }
+html[data-look="affichage"] .verdict.green, html[data-look="affichage"] .verdict.yellow, html[data-look="affichage"] .verdict.red { border-color: var(--line); }
+html[data-look="affichage"] .verdict .grade { font-family: var(--serif); font-weight: 900; text-transform: uppercase; font-size: 1.2rem; }
+html[data-look="affichage"] .mark { border: 2px solid var(--line); font-family: var(--serif); font-weight: 900; }
+html[data-look="affichage"] .option[data-state="text"] { border-color: var(--line); background: var(--accent); color: var(--accent-ink); }
+html[data-look="affichage"] .option[data-state="text"] .mark { border-color: var(--line); background: var(--line); color: var(--surface); }
+html[data-look="affichage"] .option[data-state="miss"] { border-color: var(--line); background: var(--surface); text-decoration: line-through; }
+html[data-look="affichage"] .option[data-state="miss"] .mark { border-color: var(--red); color: var(--red); }
+html[data-look="affichage"] .glyph { border: 3px solid var(--line); }
+html[data-look="affichage"] .num { font-family: var(--serif); font-weight: 900; }
+
+/* Buttons: paper face, 3px ink border, ink backing; a press flattens it onto the backing */
+html[data-look="affichage"] .btn {
+  border: 3px solid var(--line); background: var(--surface); color: var(--fg);
+  padding: 0.5rem 0.95rem; box-shadow: 4px 4px 0 0 var(--line); transition: transform 120ms, box-shadow 120ms;
+}
+html[data-look="affichage"] .btn:hover { border-color: var(--line); }
+html[data-look="affichage"] .btn:active { transform: translate(4px, 4px); box-shadow: none; }
+html[data-look="affichage"] .btn.primary { background: var(--accent); border-color: var(--line); color: var(--accent-ink); }
+html[data-look="affichage"] .btn[aria-pressed="true"], html[data-look="affichage"] .check-open[aria-current="page"] { background: var(--line); border-color: var(--line); color: var(--surface); }
+html[data-look="affichage"] .btn:disabled { opacity: 0.5; box-shadow: none; transform: none; }
+html[data-look="affichage"] .btn.chip, html[data-look="affichage"] .chip { border-width: 2px; box-shadow: none; padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+html[data-look="affichage"] .chip:active { transform: none; }
+html[data-look="affichage"] .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--line); color: var(--accent-ink); }
+html[data-look="affichage"] .btn.small { box-shadow: none; border-width: 2px; }
+html[data-look="affichage"] .back, html[data-look="affichage"] .quote a, html[data-look="affichage"] details summary { color: var(--fg); }
+html[data-look="affichage"] .cite { border: 2px solid var(--line); background: var(--surface); color: var(--fg); font-weight: 700; }
+html[data-look="affichage"] .cite[aria-expanded="true"] { background: var(--accent); border-color: var(--line); }
+
+/* Controls: square, ink borders */
+html[data-look="affichage"] select, html[data-look="affichage"] .icon, html[data-look="affichage"] input[type="search"], html[data-look="affichage"] textarea, html[data-look="affichage"] .reply input {
+  border: 3px solid var(--line); background: var(--surface); color: var(--fg);
+}
+html[data-look="affichage"] .segmented { border: 3px solid var(--line); background: var(--surface); padding: 0; gap: 0; }
+html[data-look="affichage"] .seg { border-right: 3px solid var(--line); font-family: var(--serif); font-weight: 700; text-transform: uppercase; font-size: 0.8rem; }
+html[data-look="affichage"] .seg:last-child { border-right: 0; }
+html[data-look="affichage"] .seg[aria-pressed="true"] { background: var(--line); color: var(--surface); }
+
+/* Header: ink rule, the § on an amber square */
+html[data-look="affichage"] .top { border-bottom: 3px solid var(--line); }
+html[data-look="affichage"] .brand .mark { border: 3px solid var(--line); background: var(--accent); color: var(--accent-ink); font-weight: 900; }
+html[data-look="affichage"] .brand .name { font-family: var(--serif); font-weight: 900; text-transform: uppercase; }
+html[data-look="affichage"] .icon { padding: 0.35rem; }
+
+/* Corners. Paper is cut square; the base look's pills and rounded cards are undone here explicitly. */
+html[data-look="affichage"] .btn, html[data-look="affichage"] .chip, html[data-look="affichage"] .cite,
+html[data-look="affichage"] select, html[data-look="affichage"] .icon, html[data-look="affichage"] input[type="search"],
+html[data-look="affichage"] textarea, html[data-look="affichage"] .reply input,
+html[data-look="affichage"] .segmented, html[data-look="affichage"] .seg,
+html[data-look="affichage"] .card, html[data-look="affichage"] .file, html[data-look="affichage"] .entry, html[data-look="affichage"] .option,
+html[data-look="affichage"] .chat li, html[data-look="affichage"] .quote, html[data-look="affichage"] .empty,
+html[data-look="affichage"] .private, html[data-look="affichage"] .notice, html[data-look="affichage"] .closed, html[data-look="affichage"] .offline,
+html[data-look="affichage"] .verdict, html[data-look="affichage"] .mark, html[data-look="affichage"] .glyph,
+html[data-look="affichage"] .understood, html[data-look="affichage"] .tag, html[data-look="affichage"] .reach, html[data-look="affichage"] .badge, html[data-look="affichage"] .place,
+html[data-look="affichage"] .swatch, html[data-look="affichage"] .dot, html[data-look="affichage"] .pip, html[data-look="affichage"] .bar .seg,
+html[data-look="affichage"] .brand .mark { border-radius: 0; }
