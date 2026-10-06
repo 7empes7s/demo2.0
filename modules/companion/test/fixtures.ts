@@ -38,6 +38,7 @@ export const ITEM: DocketItem = {
 
 /** Returns canned answers in order and records every request. */
 export class FakeProvider implements Provider {
+  readonly kind = "fake";
   readonly model = "fake-1";
   readonly requests: CompletionRequest[] = [];
   private readonly answers: string[];

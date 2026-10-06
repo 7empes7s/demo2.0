@@ -2,6 +2,15 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-06: Companion model-agnostic (OpenAI-compatible API)
+
+- Decision (Marouane): no reliance on hosted model APIs the project does not control; AI goes local/open-weight, a free tier is only a bridge; the Anthropic API is too expensive.
+- Done: `modules/companion/src/provider.ts` has `OpenAICompatibleProvider` (`POST {LLM_BASE_URL}/chat/completions`, Bearer `LLM_API_KEY` optional, `LLM_MODEL`, temperature 0.2, JSON mode with a one-time fallback when a server rejects it, 120 s timeout, retries only on 429/5xx, cap 2) and `providerFromEnv` (`LLM_PROVIDER=openai|anthropic`, openai by default when `LLM_BASE_URL` is set; the Anthropic path stays when only `ANTHROPIC_API_KEY` is set). Plain `fetch` for both, no SDK. `/healthz` adds `model: {kind, name}` (never a key); start-up logs kind, model and endpoint host. Model failures are 502, never 500: `ModelAnswerError` (refusal, prose, list) and `ModelError` (unreachable, failing). `parseJson` handles `<think>` blocks, untagged fences and stray braces. Prompts `companion-prompts/4`: shared `JSON_ONLY` output rule, model-neutral. README "Choosing a model" (Ollama first, open-weight sizes, Groq and OpenRouter free tiers as bridges, rate limits and prompt logging), `companion.env.example` and deploy README updated.
+- Evidence: `tools/check.sh` exit 0; companion tests 105 (new: provider transport, fence/think/prose parsing, refusal and unreachable model as 502, healthz model).
+- Mulinux: `/etc/civic/companion.env` needs `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` (free tier with an open-weight model; no local model on the box, nothing heavy runs there). `ANTHROPIC_API_KEY` keeps working until then.
+- Symmetry (`modules/symmetry`) is separate: it tests a system over HTTP (`HttpTarget`), not through the Provider interface, so no change. Follow-up: an adapter route or script that puts the Companion's `challenge` behind `/pushback` so Symmetry can score each candidate model on fr/de/lb.
+- Next: pick a first open-weight model by running Symmetry and the quote checks against Ollama on Marouane's hardware; then point `LLM_BASE_URL` at it.
+
 ## 2026-10-06: Booth independent verifier (Python)
 
 - Done: `modules/booth-verify` (`d2-booth-verify`, Apache-2.0, Python), written from `spec/booth/README.md` and `vectors.json` only (Rust source and tests not read). Pure Python ristretto255 (RFC 9496), Keccak-f[1600], STROBE-128 and Merlin; Ed25519 via PyNaCl. CLI prints the tally or `fail: <code>`; exit 0, 1, 2. Ballot proofs checked on all cores first.
