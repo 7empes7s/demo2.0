@@ -18,7 +18,8 @@
 //! not 1/N: a presentation discloses the jurisdiction of its context, so the best an attacker
 //! can do without breaking anything is guess uniformly among the enrolled adults of that
 //! jurisdiction. Each attack's success count is checked against that baseline plus a
-//! one-sided 4.5 standard deviation margin (false alarm about 3 in a million), and a control
+//! one-sided 4.5 standard deviation margin (false alarm about 3 in a million under a normal approximation, nearer
+//! 1 in 25,000 for the small-E cross-context attack), and a control
 //! run with a planted leak shows the same attacks do find a link when there is one.
 
 use d2_door::{

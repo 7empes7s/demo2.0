@@ -46,7 +46,8 @@ able to guess uniformly among the enrolled adults of that area, so for presentat
 anonymity set of size *n_j*, chance success is *1/n_j*. The expected number of chance links
 is *E = Σ 1/n_j*, with variance *Σ p(1−p)*. Each attack passes if its successes are at most
 *E + 4.5·sd + 1*, a one-sided margin with a false alarm rate of about 3 in a million per
-attack. With 365 trials, that bound sits about 4.5 percentage points above chance. An attack
+attack under a normal approximation (for the cross-context attack, where *E* is about 1, the
+exact tail is closer to 1 in 25,000; still negligible). With 365 trials, that bound sits about 4.5 percentage points above chance. An attack
 that links more often than that fails the test.
 
 The **control** shows the attacks would catch a link if there were one. It plants a leak (each

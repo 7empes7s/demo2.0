@@ -97,7 +97,8 @@ fn sybil_1000_attempts_with_100_duplicates_issue_exactly_900_credentials() {
         match k % 4 {
             0 => {} // same assertion, other device
             1 => {
-                // same id through another adapter of the same kind
+                // same id through another adapter: EUDI people come back through LuxTrust;
+                // mock people have only the one mock adapter, so this repeats case 0 for them
                 a.provider = match a.provider.as_str() {
                     "eudi" => "luxtrust".to_string(),
                     _ => "mock".to_string(),
@@ -120,7 +121,7 @@ fn sybil_1000_attempts_with_100_duplicates_issue_exactly_900_credentials() {
             .filter(|(p, _)| duplicate_of.contains(p))
             .count()
             > 0,
-        "some duplicated person must appear in the first 900 attempts"
+        "shuffle sanity: some duplicated person must appear in the first 900 attempts"
     );
 
     let mut door = door(7);
