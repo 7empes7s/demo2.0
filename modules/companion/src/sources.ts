@@ -83,7 +83,7 @@ export function renderSources(sources: Source[]): string {
 
 /** Source text can't close its own wrapper: a document saying "</source>" stays inside it. */
 export function fence(text: string): string {
-  return text.replace(/<(\/?\s*(?:sources?|claim|conversation)\b)/gi, "‹$1");
+  return text.replace(/<(\/?\s*(?:sources?|claim|conversation|arguments)\b)/gi, "‹$1");
 }
 
 function escapeAttr(value: string): string {

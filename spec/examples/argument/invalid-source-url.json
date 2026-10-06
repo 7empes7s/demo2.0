@@ -1,0 +1,9 @@
+{
+  "id": "example-arg-3",
+  "matter_id": "example-matter",
+  "stance_option_id": "no",
+  "text": "Example argument.",
+  "source_refs": [],
+  "author_nym": "source:example.org",
+  "source_url": "example.org/no-scheme"
+}

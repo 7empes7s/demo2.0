@@ -71,6 +71,55 @@ python -m d2_commons.rank ratings.json
 `{"ratings": [...], "stances": {"<argument_id>": "<stance_option_id>"}, "params": {...}}`.
 A rating is `{"argument_id": "...", "rater_nym": "...", "strong": true}`.
 
+## Seeded arguments: Esch-sur-Alzette (`src/d2_commons/esch.py`)
+
+| Source | What becomes an argument | Attributed to | Link |
+|---|---|---|---|
+| Council votes, from a Docket snapshot (`votes.by_party` of each Esch point) | One `position` per council group and side: `yes` (Oui) or `no` (Non). Abstentions take no side. | The group, e.g. "LSAP group, Esch-sur-Alzette municipal council" | The council session page |
+| participation.esch.lu project pages (Hoplr) | Each resident proposal on the page, as a `proposal` for its own option of the project | "A resident, on the city's participation platform" | The proposal's page |
+
+- **Privacy:** no person is named. Councillors are grouped by party (Docket's `members` list is
+  never read). The proposal tiles do not show their author, and Commons never reads the author.
+  Email addresses (also disguised ones like "jo (at) example (dot) lu"), phone numbers, links
+  and a name after "proposé par / proposed by / vorgeschlagen von" in a resident's text are
+  replaced by `[removed]`; amounts and years are left alone. A name written any other way is
+  not caught, so full proposal text needs a review step before it is ingested.
+  Image links (which carry the poster's platform user id) are not stored.
+- **A position is not a reason.** A group's recorded vote says who took a side, not why. Its text
+  says only that, and the Companion is told never to invent reasons for it. Positions do not
+  count toward the Companion's "Commons has enough" threshold.
+- **Politeness and safety:** live fetching (`--fetch`) reads only participation.esch.lu, one
+  request every 3 seconds, the pace Docket uses for every Esch host. Every redirect is checked
+  against the same allowlist, and a response over 2 MiB is refused.
+- **Links and matters:** a proposal is kept only if its link stays on
+  https://participation.esch.lu; the matter comes from the page URL asked for, never from the
+  page's own markup. A bad tile or page is skipped and listed on stderr, and `ingest` then
+  exits 1 (library still written).
+- **Seed:** `seed/esch.json` is built from the recorded fixtures in `tests/fixtures/`
+  (a Docket snapshot built from Docket's recorded Esch pages, and the recorded Budget
+  participatif 2026 page). It holds 14 arguments: 6 council positions on point 6.1 of
+  2 October 2026 (3 yes, 3 no) and 8 resident proposals. A test rebuilds it and fails on drift.
+
+Arguments follow `spec/schemas/argument.schema.json`, which gained three optional fields for
+this: `kind` (`argument`, `position`, `proposal`), `attribution` and `source_url`.
+
+```
+d2-commons ingest --out library.json --docket docket.json --fetch        # live, 1 request per 3 s
+d2-commons ingest --out library.json --docket docket.json --page URL=FILE  # recorded pages
+d2-commons arguments --library library.json lu.esch.42063 --stance no
+d2-commons serve --library library.json --port 8091
+```
+
+## HTTP API (`d2-commons serve`)
+
+| Route | Answer |
+|---|---|
+| `GET /matters/{docket item id}/arguments[?stance=]` | `{matter_id, stance, ranker, arguments[]}`; an empty list when Commons has nothing yet |
+| `GET /healthz` | `{ok, arguments, matters}` |
+
+No argument has ratings yet, so `ranker` is `null` and the list is in ingestion order. The
+Companion reads this API over HTTP (`COMMONS_URL`).
+
 ## Licence
 
 AGPL-3.0-or-later.

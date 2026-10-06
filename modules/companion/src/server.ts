@@ -7,6 +7,7 @@
  *   ANTHROPIC_API_KEY  required for the API routes
  *   COMPANION_MODEL    default claude-sonnet-5-5
  *   SNAPSHOT           path to the Docket snapshot JSON (default data/lu-chd.json)
+ *   COMMONS_URL        Commons API base URL (optional); the devil's advocate draws from it first
  *   STATIC_DIR         built app to serve (optional)
  *   PORT               default 8787
  *   HOST               interface to listen on (default 127.0.0.1)
@@ -21,10 +22,12 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { readFile, stat } from "node:fs/promises";
 import { basename, extname, join, normalize, resolve, sep } from "node:path";
 
+import { type CommonsArgument, type CommonsClient, commonsSuffices, HttpCommons } from "./commons.ts";
 import { challenge, checkClaim, explain, extractArguments } from "./companion.ts";
 import { CheckerInvalid, CheckerUnavailable, gradeClaim, MAX_CLAIM } from "./factcheck.ts";
 import { AnthropicProvider, type Provider } from "./provider.ts";
 import { readSnapshot } from "./snapshot.ts";
+import { buildSources } from "./sources.ts";
 import { LANGS, type ChatMessage, type Depth, type DocketItem, type DocketSnapshot, type Lang, type Position } from "./types.ts";
 
 const MIME: Record<string, string> = {
@@ -43,6 +46,10 @@ const REVALIDATE = new Set(["sw.js", "manifest.webmanifest"]);
 export interface ServerOptions {
   provider: Provider | null;
   snapshot: DocketSnapshot;
+  /** Where the devil's advocate finds real arguments first. Without it, only the file's documents are used. */
+  commons?: CommonsClient | null;
+  /** Commons-first rule (default on). Test seam: off only as a control for the Phase 1 metric. */
+  commonsFirst?: boolean;
   staticDir?: string;
   /** Requests per client per minute on the model-backed routes. */
   ratePerMinute?: number;
@@ -191,6 +198,17 @@ export function createCompanionServer(opts: ServerOptions) {
     });
   };
 
+  /** Commons' arguments on an item; an unreachable Commons means none, never a failed turn. */
+  const commonsFor = async (it: DocketItem): Promise<CommonsArgument[]> => {
+    if (!opts.commons) return [];
+    try {
+      return await opts.commons.argumentsFor(it.id);
+    } catch (e) {
+      console.warn(`commons unavailable for ${it.id}: ${e instanceof Error ? e.message : e}`);
+      return [];
+    }
+  };
+
   /**
    * Proxies a claim to Provenance. Needs no model: it works with or without ANTHROPIC_API_KEY.
    * 200 {result: "graded", grade} | {result: "no_record"}; 503 when Provenance is unreachable;
@@ -259,8 +277,22 @@ export function createCompanionServer(opts: ServerOptions) {
         const it = item(body);
         throttle(req);
         const position = pick<Position>(body.position, ["for", "against", "unsure"]);
-        const args = await argumentsFor(it, req);
-        return challenge(provider, it, { lang, position, arguments: args.arguments, sources: args.sources, history: history(body.history) });
+        const commons = await commonsFor(it);
+        const commonsFirst = opts.commonsFirst ?? true;
+        // Enough real reasons in Commons: no need to extract more from the documents.
+        const args =
+          commonsFirst && commonsSuffices(commons, position)
+            ? { arguments: [], sources: buildSources(it, "fr") }
+            : await argumentsFor(it, req);
+        return challenge(provider, it, {
+          lang,
+          position,
+          arguments: args.arguments,
+          sources: args.sources,
+          history: history(body.history),
+          commons,
+          commonsFirst,
+        });
       }
       case "/api/claim": {
         const it = item(body);
@@ -330,8 +362,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const port = Number(process.env.PORT ?? 8787);
   const trustProxy = Number(process.env.TRUST_PROXY ?? 0) || 0;
   const host = process.env.HOST || "127.0.0.1";
+  const commons = process.env.COMMONS_URL ? new HttpCommons(process.env.COMMONS_URL) : null;
   const provenanceUrl = process.env.PROVENANCE_URL || "http://127.0.0.1:8090";
-  createCompanionServer({ provider, snapshot, staticDir: process.env.STATIC_DIR, trustProxy, provenanceUrl }).listen(port, host, () =>
+  createCompanionServer({ provider, snapshot, commons, staticDir: process.env.STATIC_DIR, trustProxy, provenanceUrl }).listen(port, host, () =>
     console.log(`companion listening on ${host}:${port}`),
   );
 }
