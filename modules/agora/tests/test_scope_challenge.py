@@ -16,7 +16,7 @@ from pathlib import Path
 import d2_charter
 import pytest
 from d2_agora import Agora, AgoraError, KeyedNyms, LotteryCli, ReadOnly
-from d2_agora.agora import DRAW_DELAY
+from d2_agora.agora import DRAW_DELAY, DRAW_RETRY
 from d2_agora.server import make_server
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
@@ -200,7 +200,26 @@ def test_a_participant_challenges_an_idea_once_and_one_challenge_is_open_at_a_ti
         vote(agora, ch, n, "uphold")
     assert agora.challenge(ch["id"])["status"] == "upheld"
     assert code(contest, agora, idea) == (409, "duplicate_challenge")
-    assert contest(agora, idea, 3)["status"] == "open"
+    # Someone else can, but not for the area the panel already refused (no fresh draw for it).
+    assert code(contest, agora, idea, 3) == (409, "already_decided")
+    assert contest(agora, idea, 3, DISTRICT)["status"] == "open"
+
+
+def test_an_idea_takes_at_most_three_upheld_challenges(clock, open_at, lottery_cmd):
+    # No beacon ever: each challenge goes undrawn and is upheld at its deadline.
+    a = Agora(
+        charter=CHARTER,
+        nyms=NYMS,
+        now=clock,
+        lottery=LotteryCli(lottery_cmd, chain="default", beacon=lambda r: None),
+    )
+    idea = widened(a, clock, open_at)
+    for n, area in ((2, CANTON_ESCH), (3, ESCH), (4, DISTRICT)):
+        ch = contest(a, idea, n, area)
+        clock.tick(days=8)
+        assert a.challenge(ch["id"])["status"] == "upheld"
+    assert code(contest, a, idea, 5, CITY) == (409, "challenge_limit")
+    assert a.idea(idea["id"])["contested"] is False
 
 
 def test_the_proposer_cannot_challenge_their_own_idea(agora, clock, open_at):
@@ -311,10 +330,38 @@ def test_a_failed_draw_leaves_the_panel_undrawn_and_is_retried(
     ch = contest(a, idea)
     clock.tick(hours=2)
     assert a.challenge(ch["id"])["panel"] is None  # beacon not available
+    clock.tick(seconds=DRAW_RETRY.total_seconds())
     a.lottery = LotteryCli(["false"])
     assert a.challenge(ch["id"])["panel"] is None  # Lottery failing
     a.lottery = lottery
+    # A failed attempt waits DRAW_RETRY before the next one (reads do not spawn a CLI each).
+    assert a.challenge(ch["id"])["panel"] is None
+    clock.tick(seconds=DRAW_RETRY.total_seconds())
     assert len(a.challenge(ch["id"])["panel"]) == 5
+
+
+def test_reads_retry_a_failed_draw_at_most_once_a_minute(clock, open_at, lottery, tmp_path):
+    calls = tmp_path / "calls"
+    failing = LotteryCli(["sh", "-c", 'echo x >> "$0"; exit 1', str(calls)])
+    a = Agora(charter=CHARTER, nyms=NYMS, now=clock, lottery=lottery)
+    idea = widened(a, clock, open_at)
+    ch = contest(a, idea)
+    clock.tick(hours=2)
+    a.lottery = failing
+
+    def attempts():
+        return len(calls.read_text().splitlines()) if calls.exists() else 0
+
+    for _ in range(3):
+        assert a.challenge(ch["id"])["panel"] is None
+        a.challenges_of(idea["id"])
+    assert attempts() == 1
+    clock.tick(seconds=59)
+    a.challenge(ch["id"])
+    assert attempts() == 1
+    clock.tick(seconds=1)
+    a.challenge(ch["id"])
+    assert attempts() == 2
 
 
 # --- votes and the decision ---------------------------------------------------------------------
@@ -410,13 +457,18 @@ def test_after_narrowing_upvotes_still_count_once_per_participant(agora, clock, 
 @pytest.mark.parametrize(
     "votes,want",
     [
-        (["narrow", "narrow", "uphold"], "narrowed"),  # more narrow than uphold among votes cast
+        # Narrowing needs 3 of the 5 drawn, at the deadline too: more narrow than uphold among
+        # the votes cast is not enough (it narrowed before review of PR #28).
+        (["narrow", "narrow", "uphold"], "upheld"),
+        (["narrow"], "upheld"),  # one narrow vote and nobody else: the tier stays
         (["narrow", "uphold"], "upheld"),  # a tie keeps the tier
         ([], "upheld"),  # nobody voted: the tier stays
         (["uphold"], "upheld"),
     ],
 )
-def test_at_the_deadline_the_votes_cast_decide(agora, clock, open_at, votes, want):
+def test_at_the_deadline_without_a_panel_majority_the_tier_stands(
+    agora, clock, open_at, votes, want
+):
     idea = widened(agora, clock, open_at)
     ch = drawn(agora, clock, contest(agora, idea))
     for n, choice in zip(panel_members(ch), votes, strict=False):
@@ -452,6 +504,24 @@ def test_a_panel_never_drawn_by_the_deadline_upholds(clock, open_at, lottery_cmd
     assert (ch["status"], ch["panel"], ch["outcome"]["decided_by"]) == ("upheld", None, "deadline")
 
 
+def test_a_narrowing_scope_cannot_tier_is_recorded_as_upheld(agora, clock, open_at, caplog):
+    idea = widened(agora, clock, open_at)
+    ch = drawn(agora, clock, contest(agora, idea, CHALLENGER, DISTRICT))
+    # The Charter changes under the open challenge: the district is gone, so Scope cannot tier it.
+    agora.charter = d2_charter.Charter()
+    for n in panel_members(ch)[:3]:
+        vote(agora, ch, n, "narrow")
+    ch = agora.challenge(ch["id"])
+    assert not list(CHALLENGE_SCHEMA.iter_errors(ch))
+    assert ch["status"] == "upheld" and ch["outcome"]["votes"] == {"uphold": 0, "narrow": 3}
+    assert (ch["outcome"]["jurisdiction_id"], ch["outcome"]["scope_tier"]) == (COUNTRY, "national")
+    assert "Scope could not tier" in ch["outcome"]["reason"]
+    assert "could not tier" in caplog.text
+    # Reads keep working.
+    assert agora.idea(idea["id"])["scope_tier"] == "national"
+    assert idea["id"] in [i["id"] for i in agora.queue()]
+
+
 # --- storage and HTTP ---------------------------------------------------------------------------
 
 
@@ -468,7 +538,7 @@ def test_challenge_tables_are_append_only(agora, clock, open_at):
         "DELETE FROM scope_challenge_draws",
         "INSERT OR REPLACE INTO scope_challenge_outcomes SELECT challenge_id, 'narrowed',"
         " decided_by, uphold_votes, narrow_votes, jurisdiction_id, scope_tier, charter_version,"
-        " decided_at FROM scope_challenge_outcomes",
+        " decided_at, reason FROM scope_challenge_outcomes",
     ):
         with pytest.raises(sqlite3.DatabaseError, match="append-only"):
             agora._db.execute(sql)

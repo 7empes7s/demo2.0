@@ -22,7 +22,7 @@
     "proposed_tier": { "$ref": "#/$defs/tier" },
     "opened_at": { "type": "string", "format": "date-time" },
     "deadline": {
-      "description": "opened_at plus Charter scope_challenge.decision_days. Then the votes cast decide; a tie or none keeps the tier.",
+      "description": "opened_at plus Charter scope_challenge.decision_days. Only a majority of the drawn panel (floor(panel_size/2)+1) narrows, before or at the deadline; without one the tier stands.",
       "type": "string",
       "format": "date-time"
     },
@@ -62,7 +62,11 @@
         "jurisdiction_id": { "type": "string", "minLength": 1 },
         "scope_tier": { "$ref": "#/$defs/tier" },
         "charter_version": { "type": "string", "minLength": 1 },
-        "decided_at": { "type": "string", "format": "date-time" }
+        "decided_at": { "type": "string", "format": "date-time" },
+        "reason": {
+          "description": "Why the tier stands although the panel voted to narrow (Scope could not tier the proposed jurisdiction); null otherwise.",
+          "type": ["string", "null"]
+        }
       },
       "required": ["decided_by", "votes", "jurisdiction_id", "scope_tier", "charter_version", "decided_at"],
       "additionalProperties": false

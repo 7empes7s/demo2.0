@@ -103,8 +103,8 @@ agora:
   upvote_hidden_hours: 24
 
 # ScopeChallenge: contesting an idea's tier. A Lottery panel of this size, drawn from the area's
-# participants, votes uphold or narrow; a majority of the panel decides at once, otherwise the
-# votes cast when the window closes decide, and a tie or no votes keeps the tier.
+# participants, votes uphold or narrow; a majority of the panel decides at once. Only that
+# majority narrows: without it when the window closes, the tier stands.
 scope_challenge:
   panel_size: 5 # placeholder: decision needed
   decision_days: 7 # placeholder: decision needed

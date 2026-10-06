@@ -57,6 +57,10 @@ CHALLENGE_PURPOSE = "scope-challenge"
 # exists at most one chain period later (30 s on the slowest trusted chain). Agora asks for the
 # draw only after this delay, so a recorded or early beacon cannot be used before its time.
 DRAW_DELAY = timedelta(seconds=3600 + 60)
+# After a failed panel draw, reads wait this long before running the Lottery CLI again.
+DRAW_RETRY = timedelta(seconds=60)
+# An idea takes at most this many upheld challenges; then the tier is settled.
+MAX_UPHELD_CHALLENGES = 3
 _TOPIC = re.compile(r"[a-z0-9_]{1,32}(\.[a-z0-9_]{1,32}){0,5}")
 _JURISDICTION = re.compile(r"[a-z0-9-]{1,64}")
 # C0 controls except tab and newline, DEL, C1 controls, bidi overrides that can disguise text,
@@ -145,7 +149,8 @@ CREATE TABLE IF NOT EXISTS scope_challenge_outcomes (
   jurisdiction_id TEXT NOT NULL,
   scope_tier TEXT NOT NULL,
   charter_version TEXT NOT NULL,
-  decided_at TEXT NOT NULL
+  decided_at TEXT NOT NULL,
+  reason TEXT
 );
 """ + "".join(
     f"""
@@ -280,6 +285,7 @@ class Agora:
         self.panel_size = self.charter.param("scope_challenge.panel_size")
         self.decision_window = timedelta(days=self.charter.param("scope_challenge.decision_days"))
         self._lock = threading.Lock()
+        self._draw_failed_at: dict[str, datetime] = {}  # challenge id -> last failed draw
         self._db = sqlite3.connect(str(path), check_same_thread=False, isolation_level=None)
         self._db.execute("PRAGMA foreign_keys = ON")
         self._db.executescript(SCHEMA)
@@ -423,7 +429,7 @@ class Agora:
         if nym == idea["proposer_nym"]:
             raise Forbidden("own_idea", "a proposer cannot challenge their own idea")
         with self._lock:
-            self._refuse_second_challenge(idea_id, nym)
+            self._refuse_second_challenge(idea_id, nym, proposed)
             pool = self._panel_pool(idea, nym)
         if len(pool) < self.panel_size:
             raise Conflict(
@@ -460,7 +466,7 @@ class Agora:
             json.dumps(commitment, sort_keys=True),
         )
         with self._lock:
-            self._refuse_second_challenge(idea_id, nym)  # again: the commit ran unlocked
+            self._refuse_second_challenge(idea_id, nym, proposed)  # again: the commit ran unlocked
             self._db.execute(
                 "INSERT INTO scope_challenges VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", row
             )
@@ -468,7 +474,7 @@ class Agora:
 
     def vote_challenge(self, challenge_id: str, body: Any) -> dict[str, Any]:
         """A panel member's vote, `{participant, vote}` with vote `uphold` or `narrow`. A
-        majority of the panel decides at once."""
+        majority of the panel (3 of 5) decides at once; only such a majority narrows."""
         if not isinstance(body, dict) or set(body) != VOTE_FIELDS:
             raise AgoraError("invalid_body", "body must be exactly {participant, vote}")
         if body["vote"] not in VOTES:
@@ -530,8 +536,9 @@ class Agora:
             ]
         return [self.challenge(i) for i in ids]
 
-    def _refuse_second_challenge(self, idea_id: str, nym: str) -> None:
-        """Under the lock. One challenge per participant per idea, ever; one open per idea."""
+    def _refuse_second_challenge(self, idea_id: str, nym: str, proposed: str) -> None:
+        """Under the lock. One challenge per participant per idea, ever; one open per idea; no
+        new draw for an area a panel already refused; at most MAX_UPHELD_CHALLENGES upheld."""
         if self._db.execute(
             "SELECT 1 FROM scope_challenges WHERE idea_id = ? AND challenger_nym = ?",
             (idea_id, nym),
@@ -543,6 +550,24 @@ class Agora:
             (idea_id,),
         ).fetchone():
             raise Conflict("challenge_open", "this idea already has an open challenge")
+        upheld = [
+            r[0]
+            for r in self._db.execute(
+                "SELECT c.proposed_jurisdiction_id FROM scope_challenges c"
+                " JOIN scope_challenge_outcomes o ON o.challenge_id = c.id"
+                " WHERE c.idea_id = ? AND o.outcome = 'upheld'",
+                (idea_id,),
+            )
+        ]
+        if proposed in upheld:
+            raise Conflict(
+                "already_decided", "a panel already kept this idea's tier against that area"
+            )
+        if len(upheld) >= MAX_UPHELD_CHALLENGES:
+            raise Conflict(
+                "challenge_limit",
+                f"this idea's tier was upheld {MAX_UPHELD_CHALLENGES} times: it is settled",
+            )
 
     def _panel_pool(self, idea: Mapping[str, Any], challenger: str) -> list[str]:
         """Under the lock. Everyone with a nym in the idea's area (context agora:<filed
@@ -597,24 +622,34 @@ class Agora:
         at: datetime,
     ) -> None:
         """Under the lock. Narrowed: Scope computes the tier of the proposed jurisdiction now,
-        under the current Charter; nothing is set by hand. Upheld: the tier stays."""
+        under the current Charter; nothing is set by hand. Upheld: the tier stays. When Scope
+        cannot tier it (the Charter changed under the challenge), the tier stands, with a reason,
+        so one bad challenge never breaks the reads that settle it."""
+        reason = None
         if outcome == "narrowed":
-            topics = json.loads(
-                self._db.execute(
-                    "SELECT topic_ids FROM ideas WHERE id = ?", (row["idea_id"],)
-                ).fetchone()[0]
-            )
-            jurisdiction = row["proposed_jurisdiction_id"]
-            tier = self.charter.tier({"jurisdiction_id": jurisdiction, "topic_ids": topics})
-            version = self.charter.version
-        else:
+            try:
+                topics = json.loads(
+                    self._db.execute(
+                        "SELECT topic_ids FROM ideas WHERE id = ?", (row["idea_id"],)
+                    ).fetchone()[0]
+                )
+                jurisdiction = row["proposed_jurisdiction_id"]
+                tier = self.charter.tier({"jurisdiction_id": jurisdiction, "topic_ids": topics})
+                version = self.charter.version
+                if tier not in self.priority:
+                    raise ValueError(f"unknown tier {tier!r}")
+            except Exception as exc:  # noqa: BLE001 - any failure here keeps the tier
+                log.error("ScopeChallenge %s: Scope could not tier it: %s", row["id"], exc)
+                outcome = "upheld"
+                reason = f"Scope could not tier {row['proposed_jurisdiction_id']}: {exc}"[:500]
+        if outcome == "upheld":
             jurisdiction, tier, version = (
                 row["from_jurisdiction_id"],
                 row["from_tier"],
                 row["charter_version"],
             )
         self._db.execute(
-            "INSERT INTO scope_challenge_outcomes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO scope_challenge_outcomes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 row["id"],
                 outcome,
@@ -625,12 +660,14 @@ class Agora:
                 tier,
                 version,
                 _timestamp(at),
+                reason,
             ),
         )
 
     def _settle(self) -> None:
-        """Close every open challenge whose window has passed: the votes cast decide, and a
-        tie or no votes keeps the tier (upheld)."""
+        """Close every open challenge whose window has passed. Only a majority of the drawn
+        panel narrows (the vote that reaches it decides at once), so at the deadline the tier
+        stands (upheld), whatever a minority voted."""
         now = self.now()
         with self._lock:
             due = self._db.execute(
@@ -642,24 +679,41 @@ class Agora:
             for (challenge_id,) in due:
                 row = self._challenge_row(challenge_id)
                 uphold, narrow = self._tally(challenge_id)
-                outcome = "narrowed" if narrow > uphold else "upheld"
+                outcome = "narrowed" if narrow >= row["panel_size"] // 2 + 1 else "upheld"
                 deadline = _parse_time(row["deadline"])
                 self._decide(row, outcome, "deadline", uphold, narrow, deadline)
 
     def _draw_if_due(self, row: Mapping[str, Any]) -> None:
         """Ask the Lottery for the panel once the committed round is due. A failure (drand
-        unreachable, beacon not out yet) leaves it undrawn; the next read tries again."""
-        if self.lottery is None or self.now() < _parse_time(row["opened_at"]) + DRAW_DELAY:
+        unreachable, beacon not out yet) leaves it undrawn; a read DRAW_RETRY later tries again,
+        so reads do not run the Lottery CLI each time."""
+        now = self.now()
+        if self.lottery is None or now < _parse_time(row["opened_at"]) + DRAW_DELAY:
             return
+        with self._lock:
+            failed = self._draw_failed_at.get(row["id"])
+            if failed is not None and now < failed + DRAW_RETRY:
+                return
+            self._draw_failed_at[row["id"]] = now  # held until the draw is stored
+        stored = False
+        try:
+            stored = self._draw(row)
+        finally:
+            if stored:
+                with self._lock:
+                    self._draw_failed_at.pop(row["id"], None)
+
+    def _draw(self, row: Mapping[str, Any]) -> bool:
+        """One draw attempt; True once the panel is stored."""
         commitment = json.loads(row["commitment"])
         pool = json.loads(row["pool"])
         try:
             transcript = self.lottery.draw(commitment, pool)
         except LotteryError as exc:
             log.error("ScopeChallenge panel draw failed: %s", exc)
-            return
+            return False
         if transcript is None:
-            return
+            return False
         committed = {k: v for k, v in commitment.items() if k != "commitment_hash"}
         result = transcript.get("result") if isinstance(transcript, dict) else None
         selected = result.get("selected") if isinstance(result, dict) else None
@@ -671,7 +725,7 @@ class Agora:
             or not set(selected) <= set(pool)
         ):
             log.error("ScopeChallenge panel draw: the Lottery answered another draw")
-            return
+            return False
         with self._lock:
             try:
                 self._db.execute(
@@ -680,6 +734,7 @@ class Agora:
                 )
             except sqlite3.DatabaseError:
                 pass  # another request stored the same (deterministic) draw first
+        return True
 
     def _view(
         self,
@@ -716,6 +771,7 @@ class Agora:
                 "scope_tier": outcome["scope_tier"],
                 "charter_version": outcome["charter_version"],
                 "decided_at": outcome["decided_at"],
+                "reason": outcome["reason"],
             }
         return view
 
