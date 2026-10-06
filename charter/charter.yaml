@@ -7,8 +7,22 @@
 # Values marked "# placeholder: decision needed" are conservative defaults chosen because the
 # architecture docs give no number. They need a human decision before any binding use.
 # Every other value is the default named in docs/architecture/.
+#
+# Where the rules come from (decision of 2026-10-06): for the Luxembourg version, the Charter is
+# the Luxembourg Constitution (revised text in force since 1 July 2023). Every rule therefore
+# carries a `basis` and a `source` in the `provenance` section at the end of this file (protected
+# rights carry them inline):
+#   basis: constitution  the rule restates something the Constitution decides; the Charter may
+#                        not override it, a vote may not change it
+#   basis: law           the rule restates an ordinary law (changed by the legislature, not here)
+#   basis: project       a choice this project makes; a charter_change vote may change it
+# A source's `status` is `verified` only once a reviewer with the official text (Legilux) in hand
+# has confirmed the article; `to_verify` cites a chapter or a right in words and waits for that
+# check; `none` means no legal instrument applies. No article number below is a guess: where the
+# 2023 numbering is not certain, the entry names the chapter and is `to_verify`.
+# charter/CONSTITUTION.md explains the method and lists the exact lookups still open.
 
-version: "0.2.0"
+version: "0.3.0"
 
 # Scope: a matter's tier comes from its affected population, never from a proposer's label.
 # A matter takes the first tier, from the top, whose min_population it reaches.
@@ -122,30 +136,298 @@ treasury:
   max_tranche_share: 0.5 # placeholder: decision needed
 
 # Changing this file: a constitution-class Booth round with a two-thirds majority of votes cast.
+# Constitution-bound (to_verify): must mirror the Constitution's revision procedure, see provenance.
 charter_change:
   majority: { numerator: 2, denominator: 3 }
   quorum_share_of_electorate: 0.2 # placeholder: decision needed
 
 # Protected rights: matters no vote may decide. A matter is protected when any of its topics is
 # one of these topics or sits under one (topic ids are dotted paths, e.g. rights.expression.press).
-# The list as a whole is a placeholder: decision needed. It follows the Luxembourg Constitution
-# and the ECHR conservatively.
+# The list as a whole is a placeholder: decision needed. Eight entries restate rights the
+# Luxembourg Constitution guarantees (basis: constitution) and cross-reference the ECHR; the ninth
+# (anonymity of participation) is this project's own rule (basis: project). Article numbers in
+# the 2023 constitutional numbering are not cited until verified against Legilux: each entry names
+# the chapter on rights and freedoms and the right in words, status to_verify.
 protected_rights:
   - id: life_and_bodily_integrity
     topics: [rights.life, rights.bodily_integrity]
+    basis: constitution
+    source:
+      instrument: lu_constitution_2023
+      chapter: Chapitre 2, Des droits et libertés
+      right: right to life and to physical and mental integrity; prohibition of torture and inhuman or degrading treatment
+      status: to_verify
+      cross_references:
+        - { instrument: echr, article: "Articles 2 and 3", status: to_verify }
   - id: equality_and_non_discrimination
     topics: [rights.equality]
+    basis: constitution
+    source:
+      instrument: lu_constitution_2023
+      chapter: Chapitre 2, Des droits et libertés
+      right: equality before the law; prohibition of discrimination
+      status: to_verify
+      cross_references:
+        - { instrument: echr, article: "Article 14 and Protocol 12", status: to_verify }
   - id: freedom_of_expression_and_press
     topics: [rights.expression]
+    basis: constitution
+    source:
+      instrument: lu_constitution_2023
+      chapter: Chapitre 2, Des droits et libertés
+      right: freedom of expression and of the press
+      status: to_verify
+      cross_references:
+        - { instrument: echr, article: "Article 10", status: to_verify }
   - id: freedom_of_assembly_and_association
     topics: [rights.assembly, rights.association]
+    basis: constitution
+    source:
+      instrument: lu_constitution_2023
+      chapter: Chapitre 2, Des droits et libertés
+      right: freedom of peaceful assembly and freedom of association
+      status: to_verify
+      cross_references:
+        - { instrument: echr, article: "Article 11", status: to_verify }
   - id: freedom_of_conscience_and_religion
     topics: [rights.conscience]
+    basis: constitution
+    source:
+      instrument: lu_constitution_2023
+      chapter: Chapitre 2, Des droits et libertés
+      right: freedom of thought, conscience and religion
+      status: to_verify
+      cross_references:
+        - { instrument: echr, article: "Article 9", status: to_verify }
   - id: privacy_and_data_protection
     topics: [rights.privacy]
+    basis: constitution
+    source:
+      instrument: lu_constitution_2023
+      chapter: Chapitre 2, Des droits et libertés
+      right: respect for private and family life, the home and correspondence; protection of personal data
+      status: to_verify
+      cross_references:
+        - { instrument: echr, article: "Article 8", status: to_verify }
   - id: fair_trial_and_due_process
     topics: [rights.fair_trial]
+    basis: constitution
+    source:
+      instrument: lu_constitution_2023
+      chapter: Chapitre 2, Des droits et libertés
+      right: access to a court and a fair trial; no removal from the judge the law assigns; legality of offences and penalties
+      status: to_verify
+      cross_references:
+        - { instrument: echr, article: "Articles 6 and 7", status: to_verify }
   - id: right_to_vote_and_secret_ballot
     topics: [rights.vote, democracy.ballot_secrecy]
+    basis: constitution
+    source:
+      instrument: lu_constitution_2023
+      chapter: Chapitre 2, Des droits et libertés, and the chapter on the Chambre des Députés (elections)
+      right: universal suffrage and the secret ballot
+      status: to_verify
+      cross_references:
+        - { instrument: echr, article: "Protocol 1, Article 3", status: to_verify }
   - id: anonymity_of_participation
     topics: [democracy.participant_anonymity]
+    basis: project
+    source:
+      instrument: d2_architecture
+      article: docs/architecture/01-modules.md, section 3 (Door) and section 5 (Booth)
+      status: none
+      note: This project's extension of ballot secrecy to every act of participation (upvotes, panels, challenges). No legal instrument requires it.
+
+# Instruments the sources above and below refer to. `consulted: false` until the official text is
+# in the repo (a Scout report in 7empes7s/brain research/ is requested).
+sources:
+  lu_constitution_2023:
+    name: Constitution du Grand-Duché de Luxembourg (révision 2023, texte en vigueur depuis le 1er juillet 2023)
+    publisher: Legilux (legilux.public.lu)
+    consulted: false
+    note: Cited by chapter until the 2023 article numbering is verified. Pre-2023 article numbers are not used.
+  lu_electoral_law:
+    name: Loi électorale modifiée du 18 février 2003
+    publisher: Legilux (legilux.public.lu)
+    consulted: false
+    note: Who may vote in national and communal elections; residence and nationality conditions.
+  echr:
+    name: Convention européenne des droits de l'homme (ECHR) and its protocols
+    publisher: Council of Europe
+    consulted: false
+    note: Cross-reference only. Luxembourg is bound by it; the Constitution is the primary source here.
+  d2_architecture:
+    name: Democracy2.0 architecture documents (docs/architecture/)
+    publisher: this repository
+    consulted: true
+    note: The project's own design choices. A charter_change vote may change these rules.
+
+# Provenance of every rule above, by its dotted key (the key `param` reads). Read it through
+# `source(key)` and `basis(key)`; `protected_rights.<id>` keys read the inline entries above.
+# Ordering: constitution-bound rules first, then law, then project-chosen.
+provenance:
+  # Constitution-bound (basis: constitution). The Charter restates these; a vote may not change them.
+  charter_change.majority:
+    basis: constitution
+    source:
+      instrument: lu_constitution_2023
+      chapter: chapter on the revision of the Constitution
+      status: to_verify
+      note: The decision of 2026-10-06 makes the Charter the Constitution for the Luxembourg version, so changing it must follow the constitutional revision procedure. The two-thirds majority of votes cast is provisional until the revision chapter is read; it is expected to set a qualified majority of the Chambre des Députés, possibly with a referendum. The rule becomes project-chosen if the chapter sets no majority a citizen vote can mirror.
+  charter_change.quorum_share_of_electorate:
+    basis: constitution
+    source:
+      instrument: lu_constitution_2023
+      chapter: chapter on the revision of the Constitution
+      status: to_verify
+      note: Kept only if the revision procedure or the referendum rules set a turnout condition; otherwise this rule becomes project-chosen.
+  # Law-bound (basis: law). Changed by the legislature, not by a charter_change vote.
+  eligibility.outsiders:
+    basis: law
+    source:
+      instrument: lu_electoral_law
+      chapter: provisions on the right to vote in legislative and communal elections (nationality, residence, registration)
+      status: to_verify
+      note: Who votes where follows the electoral law (nationality for national elections, residence for communal ones). The Charter only adds that non-voters may advise.
+  # Project-chosen (basis: project). The architecture documents are the source; a charter_change vote may change them.
+  scope.thresholds:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2", status: none, note: "Population thresholds between tiers. Placeholders." }
+  tiers.national.queue_priority:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.national.details_drafted_by:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.national.review_panel:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.national.review_rounds:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.national.delivery_verified_by:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.national.ratification:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none, note: "A full vote on national matters is this project's rule. The Constitution's own referendum rules are a separate, to_verify question: see CONSTITUTION.md." }
+  tiers.regional.queue_priority:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.regional.details_drafted_by:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.regional.review_panel:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.regional.review_rounds:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none, note: "Placeholder." }
+  tiers.regional.delivery_verified_by:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.regional.ratification:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.local.queue_priority:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.local.details_drafted_by:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.local.review_panel:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.local.review_rounds:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none, note: "Placeholder." }
+  tiers.local.delivery_verified_by:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.local.ratification:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none, note: "Local votes sit inside communal autonomy, which the Constitution guarantees (to_verify, see CONSTITUTION.md); the Charter may not take decisions away from the communal council." }
+  tiers.minor.queue_priority:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.minor.details_drafted_by:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.minor.review_panel:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.minor.review_rounds:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none, note: "Placeholder." }
+  tiers.minor.delivery_verified_by:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  tiers.minor.ratification:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial", status: none }
+  silent_ratification.objection_window_days:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial (objection window)", status: none, note: "Placeholder." }
+  silent_ratification.objection_share_to_force_vote:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2, the dial (objection window)", status: none, note: "Placeholder." }
+  delegation.cap_share_of_electorate:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/02-protocols.md, section 3", status: none }
+  delegation.max_depth:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/02-protocols.md, section 3", status: none }
+  delegation.ttl_months:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/02-protocols.md, section 3", status: none }
+  vote_budget.matters_per_week:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2 and section 12 (Pulse)", status: none, note: "Placeholder." }
+  bans.bar_years_by_rating.good:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 14 (Delivered, end of mandate)", status: none }
+  bans.bar_years_by_rating.mixed:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 14 (Delivered, end of mandate)", status: none }
+  bans.bar_years_by_rating.poor:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 14 (Delivered, end of mandate)", status: none, note: "Placeholder. A bar on operators is not a bar on holding public office; eligibility for office is the Constitution's and the electoral law's, which this rule may not touch." }
+  bans.bar_years_by_rating.failed:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 14 (Delivered, end of mandate)", status: none, note: "Placeholder. Same limit as bans.bar_years_by_rating.poor." }
+  bans.good_rating_reward:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 14 (Delivered, end of mandate)", status: none }
+  reopen_windows.delivery_verdict_days:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 14 (Delivered, small physical work)", status: none, note: "Placeholder." }
+  door.epoch_months:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 3 (Door)", status: none }
+  door.revoked_id_credential:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 3 (Door)", status: none }
+  compensation.panel:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 4 (Lottery)", status: none, note: "Placeholder." }
+  compensation.review:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 13 (Workbench)", status: none, note: "Placeholder." }
+  agora.upvote_hidden_hours:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 11 (Agora, mechanics)", status: none }
+  scope_challenge.panel_size:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2 and section 11 (Agora)", status: none, note: "Placeholder." }
+  scope_challenge.decision_days:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2 and section 11 (Agora)", status: none, note: "Placeholder." }
+  arena.max_pass_rate_gap:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 10 (Arena, done when)", status: none, note: "Placeholder." }
+  watchtower.max_false_flag_rate:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 16 (Watchtower, done when)", status: none, note: "Placeholder." }
+  treasury.max_tranche_share:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 17 (Treasury)", status: none, note: "Placeholder." }

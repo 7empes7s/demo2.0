@@ -171,9 +171,43 @@
         "type": "object",
         "properties": {
           "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
-          "topics": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/topic_id" } }
+          "topics": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/topic_id" } },
+          "basis": { "$ref": "#/$defs/basis" },
+          "source": { "$ref": "#/$defs/source" }
         },
-        "required": ["id", "topics"],
+        "required": ["id", "topics", "basis", "source"],
+        "additionalProperties": false
+      }
+    },
+    "sources": {
+      "description": "The instruments that `source.instrument` keys refer to. `consulted` is true only once the official text has been read for this repo.",
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "publisher": { "type": "string", "minLength": 1 },
+          "consulted": { "type": "boolean" },
+          "note": { "type": "string", "minLength": 1 }
+        },
+        "required": ["name", "publisher", "consulted"],
+        "additionalProperties": false
+      }
+    },
+    "provenance": {
+      "description": "The basis and source of every rule, by the dotted key `param` reads. Protected rights carry theirs inline. Read through source(key) and basis(key).",
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$" },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "basis": { "$ref": "#/$defs/basis" },
+          "source": { "$ref": "#/$defs/source" }
+        },
+        "required": ["basis", "source"],
         "additionalProperties": false
       }
     }
@@ -196,7 +230,9 @@
     "watchtower",
     "treasury",
     "charter_change",
-    "protected_rights"
+    "protected_rights",
+    "sources",
+    "provenance"
   ],
   "additionalProperties": false,
   "$defs": {
@@ -204,6 +240,41 @@
     "non_negative_int": { "type": "integer", "minimum": 0 },
     "share": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
     "topic_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$" },
+    "basis": {
+      "description": "constitution: the Constitution decides it and the Charter may not override it. law: an ordinary law decides it. project: this project's choice, open to a charter_change vote.",
+      "enum": ["constitution", "law", "project"]
+    },
+    "source_status": {
+      "description": "verified: confirmed against the official text by a reviewer with it in hand. to_verify: cited by chapter or in words, awaiting that check. none: no legal instrument applies.",
+      "enum": ["verified", "to_verify", "none"]
+    },
+    "citation_fields": {
+      "type": "object",
+      "properties": {
+        "instrument": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "description": "A key of `sources`." },
+        "article": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The article, or for project sources the document and section. Required once status is verified."
+        },
+        "chapter": { "type": "string", "minLength": 1, "description": "The chapter or title, while the article is not yet verified." },
+        "right": { "type": "string", "minLength": 1, "description": "The right in words, for a protected right not yet cited by article." },
+        "status": { "$ref": "#/$defs/source_status" },
+        "note": { "type": "string", "minLength": 1 }
+      },
+      "required": ["instrument", "status"],
+      "if": { "properties": { "status": { "const": "verified" } } },
+      "then": { "required": ["article"] }
+    },
+    "citation": { "allOf": [{ "$ref": "#/$defs/citation_fields" }], "unevaluatedProperties": false },
+    "source": {
+      "description": "A citation plus optional cross-references to other instruments (for example the ECHR).",
+      "allOf": [{ "$ref": "#/$defs/citation_fields" }],
+      "properties": {
+        "cross_references": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/citation" } }
+      },
+      "unevaluatedProperties": false
+    },
     "threshold": {
       "type": "object",
       "properties": {

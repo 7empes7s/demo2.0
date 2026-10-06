@@ -2,6 +2,7 @@
   "source": "STATEC, Luxembourg national statistics institute: resident population by canton and commune (statistiques.public.lu)",
   "reference_date": "2024-01-01",
   "verified_against_source": false,
+  "population_source": { "name": "STATEC", "status": "to_verify" },
   "note": "Must be refreshed from STATEC before any binding use. The national total is STATEC's published figure for 1 January 2024. Canton and commune figures were entered without access to the STATEC table and are rounded to the nearest 100; they are close but not exact. Only the capital and Esch-sur-Alzette are listed as communes so far; add the rest from the same STATEC table. Cantons use the spec kind 'region'. Every entry is a spec/schemas/jurisdiction.schema.json object.",
   "jurisdictions": [
     { "id": "lu", "parent_id": null, "kind": "country", "name": { "lb": "Lëtzebuerg", "fr": "Luxembourg", "de": "Luxemburg", "en": "Luxembourg" }, "population": 672050 },

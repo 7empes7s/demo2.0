@@ -4,17 +4,18 @@ import json
 
 import pytest
 import yaml
-from d2_charter import CHARTER_ROOT, Charter, CharterError, is_protected, param
+from d2_charter import CHARTER_ROOT, Charter, CharterError, basis, is_protected, param, source
 
 VECTORS = CHARTER_ROOT / "vectors"
 TIER = json.loads((VECTORS / "tier.json").read_text())
 PROTECTED = json.loads((VECTORS / "protected.json").read_text())
 PARAM = json.loads((VECTORS / "param.json").read_text())
+PROVENANCE = json.loads((VECTORS / "provenance.json").read_text())
 CHARTER = Charter(extra_jurisdictions=TIER["extra_jurisdictions"])
 
 
 def test_vectors_match_this_charter_version():
-    for doc in (TIER, PROTECTED, PARAM):
+    for doc in (TIER, PROTECTED, PARAM, PROVENANCE):
         assert doc["charter_version"] == CHARTER.version
 
 
@@ -47,6 +48,25 @@ def test_param(case):
         assert err.value.code == case["expect_error"]
         return
     assert param(case["key"], case.get("version")) == case["expect"]
+
+
+@pytest.mark.parametrize("case", PROVENANCE["cases"], ids=lambda c: c["key"])
+def test_source_and_basis(case):
+    if "expect_error" in case:
+        with pytest.raises(CharterError) as err:
+            source(case["key"])
+        assert err.value.code == case["expect_error"]
+        with pytest.raises(CharterError) as err:
+            basis(case["key"])
+        assert err.value.code == case["expect_error"]
+        return
+    assert source(case["key"]) == case["expect"]["source"]
+    assert basis(case["key"]) == case["expect"]["basis"]
+
+
+def test_source_returns_a_copy():
+    source("charter_change.majority")["status"] = "verified"
+    assert source("charter_change.majority")["status"] == "to_verify"
 
 
 def test_param_returns_a_copy():
@@ -163,3 +183,34 @@ def test_jurisdiction_path_refuses_a_non_string(bad):
     # An empty path would cover every jurisdiction (levels[:0] == []), so never return one.
     with pytest.raises(TypeError):
         Charter().jurisdiction_path(bad)
+
+
+def _provenance_null(data):
+    data["provenance"] = None
+
+
+def _basis_null_on_first_right(data):
+    data["protected_rights"][0]["basis"] = None
+
+
+def _source_not_a_mapping(data):
+    data["provenance"]["door.epoch_months"]["source"] = "constitution"
+
+
+@pytest.mark.parametrize(
+    ("change", "key"),
+    [
+        (_provenance_null, "door.epoch_months"),
+        (_basis_null_on_first_right, "protected_rights.life_and_bodily_integrity"),
+        (_source_not_a_mapping, "door.epoch_months"),
+    ],
+)
+def test_malformed_provenance_is_unknown_key_like_the_ts_binding(tmp_path, change, key):
+    """A file the schema would reject still answers unknown_key, never another exception."""
+    charter = _charter_with(tmp_path, change)()
+    with pytest.raises(CharterError) as err:
+        charter.basis(key)
+    assert err.value.code == "unknown_key"
+    with pytest.raises(CharterError) as err:
+        charter.source(key)
+    assert err.value.code == "unknown_key"

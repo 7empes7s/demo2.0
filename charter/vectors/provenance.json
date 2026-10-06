@@ -1,0 +1,175 @@
+{
+  "description": "source(key) and basis(key): the provenance of a rule, by the dotted key param reads, or protected_rights.<id> for a protected right. A key that names no rule, a section, a value inside a rule or the provenance section itself is unknown_key. Charter 0.3.0.",
+  "charter_version": "0.3.0",
+  "cases": [
+    {
+      "key": "charter_change.majority",
+      "expect": {
+        "basis": "constitution",
+        "source": {
+          "instrument": "lu_constitution_2023",
+          "chapter": "chapter on the revision of the Constitution",
+          "status": "to_verify",
+          "note": "The decision of 2026-10-06 makes the Charter the Constitution for the Luxembourg version, so changing it must follow the constitutional revision procedure. The two-thirds majority of votes cast is provisional until the revision chapter is read; it is expected to set a qualified majority of the Chambre des Députés, possibly with a referendum. The rule becomes project-chosen if the chapter sets no majority a citizen vote can mirror."
+        }
+      }
+    },
+    {
+      "key": "charter_change.quorum_share_of_electorate",
+      "expect": {
+        "basis": "constitution",
+        "source": {
+          "instrument": "lu_constitution_2023",
+          "chapter": "chapter on the revision of the Constitution",
+          "status": "to_verify",
+          "note": "Kept only if the revision procedure or the referendum rules set a turnout condition; otherwise this rule becomes project-chosen."
+        }
+      }
+    },
+    {
+      "key": "eligibility.outsiders",
+      "expect": {
+        "basis": "law",
+        "source": {
+          "instrument": "lu_electoral_law",
+          "chapter": "provisions on the right to vote in legislative and communal elections (nationality, residence, registration)",
+          "status": "to_verify",
+          "note": "Who votes where follows the electoral law (nationality for national elections, residence for communal ones). The Charter only adds that non-voters may advise."
+        }
+      }
+    },
+    {
+      "key": "vote_budget.matters_per_week",
+      "expect": {
+        "basis": "project",
+        "source": {
+          "instrument": "d2_architecture",
+          "article": "docs/architecture/01-modules.md, section 2 and section 12 (Pulse)",
+          "status": "none",
+          "note": "Placeholder."
+        }
+      }
+    },
+    {
+      "key": "scope.thresholds",
+      "expect": {
+        "basis": "project",
+        "source": {
+          "instrument": "d2_architecture",
+          "article": "docs/architecture/01-modules.md, section 2",
+          "status": "none",
+          "note": "Population thresholds between tiers. Placeholders."
+        }
+      }
+    },
+    {
+      "key": "tiers.local.review_panel",
+      "expect": {
+        "basis": "project",
+        "source": {
+          "instrument": "d2_architecture",
+          "article": "docs/architecture/01-modules.md, section 2, the dial",
+          "status": "none"
+        }
+      }
+    },
+    {
+      "key": "bans.bar_years_by_rating.failed",
+      "expect": {
+        "basis": "project",
+        "source": {
+          "instrument": "d2_architecture",
+          "article": "docs/architecture/01-modules.md, section 14 (Delivered, end of mandate)",
+          "status": "none",
+          "note": "Placeholder. Same limit as bans.bar_years_by_rating.poor."
+        }
+      }
+    },
+    {
+      "key": "protected_rights.freedom_of_expression_and_press",
+      "expect": {
+        "basis": "constitution",
+        "source": {
+          "instrument": "lu_constitution_2023",
+          "chapter": "Chapitre 2, Des droits et libertés",
+          "right": "freedom of expression and of the press",
+          "status": "to_verify",
+          "cross_references": [
+            {
+              "instrument": "echr",
+              "article": "Article 10",
+              "status": "to_verify"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "protected_rights.right_to_vote_and_secret_ballot",
+      "expect": {
+        "basis": "constitution",
+        "source": {
+          "instrument": "lu_constitution_2023",
+          "chapter": "Chapitre 2, Des droits et libertés, and the chapter on the Chambre des Députés (elections)",
+          "right": "universal suffrage and the secret ballot",
+          "status": "to_verify",
+          "cross_references": [
+            {
+              "instrument": "echr",
+              "article": "Protocol 1, Article 3",
+              "status": "to_verify"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "protected_rights.anonymity_of_participation",
+      "expect": {
+        "basis": "project",
+        "source": {
+          "instrument": "d2_architecture",
+          "article": "docs/architecture/01-modules.md, section 3 (Door) and section 5 (Booth)",
+          "status": "none",
+          "note": "This project's extension of ballot secrecy to every act of participation (upvotes, panels, challenges). No legal instrument requires it."
+        }
+      }
+    },
+    {
+      "key": "tiers.local",
+      "expect_error": "unknown_key"
+    },
+    {
+      "key": "tiers.local.review_panel.min",
+      "expect_error": "unknown_key"
+    },
+    {
+      "key": "protected_rights",
+      "expect_error": "unknown_key"
+    },
+    {
+      "key": "protected_rights.nope",
+      "expect_error": "unknown_key"
+    },
+    {
+      "key": "provenance.door.epoch_months",
+      "expect_error": "unknown_key"
+    },
+    {
+      "key": "sources",
+      "expect_error": "unknown_key"
+    },
+    {
+      "key": "",
+      "expect_error": "unknown_key"
+    },
+    {
+      "key": "__proto__",
+      "expect_error": "unknown_key"
+    },
+    {
+      "key": "constructor",
+      "expect_error": "unknown_key"
+    }
+  ]
+}

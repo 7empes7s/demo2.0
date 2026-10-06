@@ -3,6 +3,8 @@
 //   tier({ jurisdiction_id: "lu-commune-esch-sur-alzette", topic_ids: ["parks"] }) // "local"
 //   param("tiers.local.review_panel") // { min: 5, max: 9 }
 //   isProtected({ jurisdiction_id: "lu", topic_ids: ["rights.expression"] }) // true
+//   basis("charter_change.majority") // "constitution"
+//   source("protected_rights.freedom_of_expression_and_press").status // "to_verify"
 //
 // A matter is any object with `jurisdiction_id` (string) and `topic_ids` (string[]). Every other
 // field, including a proposer's own tier label, is ignored. Mirrors the Python d2_charter.
@@ -30,6 +32,23 @@ export interface Matter {
   jurisdiction_id: string;
   topic_ids: string[];
   [other: string]: unknown;
+}
+
+/** Who decides a rule. The Charter may not override a `constitution` rule; `project` rules are open to a charter_change vote. */
+export type Basis = "constitution" | "law" | "project";
+export type SourceStatus = "verified" | "to_verify" | "none";
+
+/** A citation: a key of the Charter's `sources` plus the article, or the chapter and right in words while unverified. */
+export interface Citation {
+  instrument: string;
+  article?: string;
+  chapter?: string;
+  right?: string;
+  status: SourceStatus;
+  note?: string;
+}
+export interface Source extends Citation {
+  cross_references?: Citation[];
 }
 
 export type CharterErrorCode =
@@ -101,6 +120,37 @@ export class Charter {
       node = node[part];
     }
     return structuredClone(node);
+  }
+
+  /**
+   * Where a rule comes from, from the `provenance` section, by the same dotted key `param` reads
+   * (`charter_change.majority`), or `protected_rights.<id>` for a protected right. See
+   * charter/CONSTITUTION.md for what each `status` means.
+   */
+  source(key: string): Source {
+    return structuredClone(this.#provenance(key).source);
+  }
+
+  /** `constitution`, `law` or `project`: who decides the rule at `key`. */
+  basis(key: string): Basis {
+    return this.#provenance(key).basis;
+  }
+
+  #provenance(key: string): { basis: Basis; source: Source } {
+    const prefix = "protected_rights.";
+    let entry: unknown;
+    if (key.startsWith(prefix)) {
+      const id = key.slice(prefix.length);
+      const rights = this.#data.protected_rights as Record<string, unknown>[];
+      entry = rights.find((r) => r.id === id);
+    } else {
+      const provenance = this.#data.provenance;
+      entry = isPlainObject(provenance) && Object.hasOwn(provenance, key) ? provenance[key] : undefined;
+    }
+    if (isPlainObject(entry) && typeof entry.basis === "string" && isPlainObject(entry.source)) {
+      return entry as unknown as { basis: Basis; source: Source };
+    }
+    throw new CharterError("unknown_key", `no Charter provenance for "${key}"`);
   }
 
   affectedPopulation(matter: unknown): number {
@@ -222,5 +272,7 @@ export const tier = (matter: unknown): Tier => load().tier(matter);
 export const affectedPopulation = (matter: unknown): number => load().affectedPopulation(matter);
 export const param = (key: string, version?: string): unknown => load().param(key, version);
 export const isProtected = (matter: unknown): boolean => load().isProtected(matter);
+export const source = (key: string): Source => load().source(key);
+export const basis = (key: string): Basis => load().basis(key);
 /** Same as isProtected, under the name the architecture docs and the Python binding use. */
 export const is_protected = isProtected;

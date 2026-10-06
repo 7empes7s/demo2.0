@@ -5,6 +5,8 @@
     tier({"jurisdiction_id": "lu-commune-esch-sur-alzette", "topic_ids": ["parks"]})  # "local"
     param("tiers.local.review_panel")  # {"min": 5, "max": 9}
     is_protected({"jurisdiction_id": "lu", "topic_ids": ["rights.expression"]})  # True
+    basis("charter_change.majority")  # "constitution"
+    source("protected_rights.freedom_of_expression_and_press")["status"]  # "to_verify"
 
 A matter is any mapping with `jurisdiction_id` (str) and `topic_ids` (list of str). Every other
 field, including a proposer's own tier label, is ignored.
@@ -27,9 +29,11 @@ __all__ = [
     "Charter",
     "CharterError",
     "affected_population",
+    "basis",
     "is_protected",
     "load",
     "param",
+    "source",
     "tier",
 ]
 
@@ -83,6 +87,38 @@ class Charter:
                 raise CharterError("unknown_key", f"no Charter parameter {key!r}")
             node = node[part]
         return copy.deepcopy(node)
+
+    def source(self, key: str) -> dict[str, Any]:
+        """Where a rule comes from: `{instrument, status, article | chapter | right, note,
+        cross_references}` from the `provenance` section, by the same dotted key `param` reads
+        (`charter_change.majority`), or `protected_rights.<id>` for a protected right. The
+        `status` is `verified`, `to_verify` or `none`; see charter/CONSTITUTION.md."""
+        return copy.deepcopy(self._provenance(key)["source"])
+
+    def basis(self, key: str) -> str:
+        """`constitution`, `law` or `project`: who decides the rule at `key`. The Charter may not
+        override a `constitution` rule; a `project` rule is open to a charter_change vote."""
+        return self._provenance(key)["basis"]
+
+    def _provenance(self, key: str) -> Mapping[str, Any]:
+        prefix = "protected_rights."
+        if key.startswith(prefix):
+            right_id = key[len(prefix) :]
+            entry: Any = next(
+                (r for r in self._data["protected_rights"] if r.get("id") == right_id), None
+            )
+        else:
+            provenance = self._data.get("provenance")
+            entry = provenance.get(key) if isinstance(provenance, dict) else None
+        # Same shape test as the TypeScript binding: a string basis and a mapping source, or
+        # unknown_key. A malformed file never raises anything else.
+        if (
+            isinstance(entry, dict)
+            and isinstance(entry.get("basis"), str)
+            and isinstance(entry.get("source"), dict)
+        ):
+            return entry
+        raise CharterError("unknown_key", f"no Charter provenance for {key!r}")
 
     def affected_population(self, matter: Any) -> int:
         jurisdiction_id, _ = _read_matter(matter)
@@ -222,3 +258,11 @@ def param(key: str, version: str | None = None) -> Any:
 
 def is_protected(matter: Any) -> bool:
     return load().is_protected(matter)
+
+
+def source(key: str) -> dict[str, Any]:
+    return load().source(key)
+
+
+def basis(key: str) -> str:
+    return load().basis(key)
