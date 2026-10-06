@@ -127,3 +127,32 @@ def test_malformed_charter_is_rejected(tmp_path, change):
     with pytest.raises(CharterError) as err:
         build()
     assert err.value.code == "invalid_charter"
+
+
+def test_jurisdiction_path_root_first():
+    c = Charter()
+    assert c.jurisdiction_path("lu") == ["lu"]
+    assert c.jurisdiction_path("lu-commune-esch-sur-alzette") == [
+        "lu",
+        "lu-canton-esch-sur-alzette",
+        "lu-commune-esch-sur-alzette",
+    ]
+    with pytest.raises(CharterError) as e:
+        c.jurisdiction_path("lu-commune-nowhere")
+    assert e.value.code == "unknown_jurisdiction"
+
+
+def test_jurisdiction_path_refuses_a_cycle_and_a_missing_parent():
+    c = Charter(
+        extra_jurisdictions=[
+            {"id": "a", "parent_id": "b", "kind": "district", "population": 1},
+            {"id": "b", "parent_id": "a", "kind": "district", "population": 1},
+            {"id": "orphan", "parent_id": "gone", "kind": "district", "population": 1},
+        ]
+    )
+    with pytest.raises(CharterError) as e:
+        c.jurisdiction_path("a")
+    assert e.value.code == "invalid_charter"
+    with pytest.raises(CharterError) as e:
+        c.jurisdiction_path("orphan")
+    assert e.value.code == "unknown_jurisdiction"

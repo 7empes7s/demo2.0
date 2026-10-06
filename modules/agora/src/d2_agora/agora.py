@@ -5,8 +5,10 @@ Rules (docs/architecture/01-modules.md section 11, Phase 2 criteria in 00-overvi
   cannot carry a tier: any field outside the documented ones is rejected, and nothing can change
   an idea after it is stored (database triggers refuse UPDATE, DELETE and an INSERT that would
   replace a stored row).
-- Known v1 gap: the proposer picks the jurisdiction, so a commune matter filed under a wider one
-  (say `lu`) gets that wider tier. Closing it needs Door eligibility or a ScopeChallenge.
+- The proposer picks the jurisdiction. With Door (`DoorNyms`) it must be one their credential
+  places them in, so nobody files in a commune they do not live in. Known gap: a resident can
+  still file a commune matter under an area that contains it (say `lu`) and get that wider
+  tier; closing that needs a ScopeChallenge.
 - One upvote per (idea, nym). A second one is refused, not merged.
 - Upvote counts stay hidden for Charter `agora.upvote_hidden_hours` after an idea is posted.
   While hidden the count is null and the idea ranks as if it had none, so its position does not
@@ -30,7 +32,7 @@ from typing import Any
 import d2_charter
 from d2_charter import CharterError
 
-from .identity import InvalidParticipant, NymSource
+from .identity import IdentityError, NymSource
 
 LANGS = ("lb", "fr", "de", "en", "pt")
 LIMITS = {
@@ -247,8 +249,10 @@ class Agora:
     def _nym(self, participant: Any, jurisdiction_id: str) -> str:
         try:
             return self.nyms.nym(participant, f"agora:{jurisdiction_id}")
-        except InvalidParticipant as exc:
-            raise AgoraError(exc.code, str(exc)) from exc
+        except IdentityError as exc:
+            err = AgoraError(exc.code, str(exc))
+            err.status = exc.status  # 400 bad input, 403 refused, 503 Door unavailable
+            raise err from exc
 
     # --- reads --------------------------------------------------------------------------------
 

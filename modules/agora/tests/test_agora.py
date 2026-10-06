@@ -160,10 +160,12 @@ def test_stored_ideas_and_upvotes_cannot_be_rewritten(agora):
 
 
 def test_known_gap_a_proposer_can_widen_the_jurisdiction_to_raise_the_tier(agora):
-    # KNOWN v1 GAP, pinned on purpose (README "Not done yet", STATE.md): the proposer picks the
+    # KNOWN GAP, pinned on purpose (README "Not done yet", STATE.md): the proposer picks the
     # jurisdiction, so a commune matter filed under "lu" is stored as national and jumps the
-    # queue. Closing it needs Door eligibility (the proposer's area) or a ScopeChallenge. When
-    # that lands this test must change to expect a refusal or a challenge.
+    # queue. With Door (test_door.py) a proposer can only file in an area their credential
+    # places them in, which stops filing in someone else's commune but not widening to an area
+    # that contains their own (a resident of Esch can still file under "lu"). Closing the rest
+    # needs a ScopeChallenge; when that lands this test must change to expect a challenge.
     commune_matter = {**body(ESCH), "title": {"en": "Synthetic commune bench repair"}}
     honest = agora.post_idea(commune_matter)
     widened = agora.post_idea({**commune_matter, "jurisdiction_id": COUNTRY})
@@ -327,6 +329,7 @@ def test_there_is_no_default_nym_key(monkeypatch, tmp_path):
 
 def test_cli_refuses_to_start_without_a_nym_key(tmp_path, monkeypatch, capsys):
     monkeypatch.delenv("AGORA_NYM_KEY_FILE", raising=False)
+    monkeypatch.delenv("DOOR_URL", raising=False)
     assert main(["serve", "--db", str(tmp_path / "agora.db"), "--port", "0"]) == 2
     assert "nym key" in capsys.readouterr().err
     short = tmp_path / "short.key"
@@ -462,7 +465,7 @@ def api(agora):
 
 
 def test_http_api(api, clock):
-    assert api("/healthz") == (200, {"ok": True, "ideas": 0})
+    assert api("/healthz") == (200, {"ok": True, "ideas": 0, "identity": "keyed"})
     assert api("/queue") == (200, {"charter_version": "0.1.0", "ideas": []})
 
     status, local = api("/ideas", body(ESCH, 1))
@@ -501,7 +504,8 @@ def test_http_api(api, clock):
         {"error": "no idea with that id", "code": "unknown_idea"},
     )
     assert api("/nope")[0] == 404
-    assert api("/healthz") == (200, {"ok": True, "ideas": 2})
+    assert api("/healthz") == (200, {"ok": True, "ideas": 2, "identity": "keyed"})
+    assert api("/challenge") == (404, {"error": "Door is not configured", "code": "not_found"})
 
 
 def test_http_api_refuses_relabelling_and_bad_scope(api):

@@ -191,3 +191,181 @@ fn random_input_in_every_external_field_never_panics() {
     }
     assert!(panics.is_empty(), "{} panics: {panics:#?}", panics.len());
 }
+
+/// The verifier service's input: raw request bytes into the HTTP reader, and random or
+/// wrongly-typed values in every field of the `POST /presentations/verify` body (and of the
+/// presentation inside it) into the handler. Every case gives a response, never a panic, and
+/// only a well-formed request for a valid presentation gives 200.
+#[test]
+fn random_http_input_never_panics() {
+    use d2_door::http::{handle, read_request, verify_body, Request};
+    use serde_json::{json, Value};
+    use std::collections::BTreeMap;
+    use std::time::Duration;
+
+    let mut rng = StdRng::seed_from_u64(0xd003);
+    let mut panics = Vec::new();
+
+    let provider = MockIdProvider::demo();
+    let mut door = Issuer::new(UniquenessKey::generate(&mut OsRng), MemoryStore::new());
+    door.add_epoch(IssuerSecret::generate(1, FROM, TO, &mut OsRng))
+        .unwrap();
+    let key = door.issuer_key(1).unwrap().clone();
+    let keys = BTreeMap::from([(1, key.clone())]);
+    let holder = Holder::new(&mut OsRng);
+    let commit = holder.commit().unwrap();
+    let issuance = door
+        .enrol(
+            &provider.assert_identity("alice-phone").unwrap(),
+            1,
+            &commit.commitment,
+            &mut OsRng,
+        )
+        .unwrap();
+    let credential = holder.finalize(&key, &issuance, &commit.blind).unwrap();
+    let presentation = credential
+        .present(&key, "agora:lu.esch", b"c", &ESCH)
+        .unwrap();
+    let good = json!({
+        "presentation": presentation,
+        "context": "agora:lu.esch",
+        "challenge": "63",
+        "epoch": 1,
+        "require": {"jurisdiction_levels": 2, "adult": true, "epoch": true},
+    });
+    let good_bytes = serde_json::to_vec(&good).unwrap();
+    assert_eq!(verify_body(&keys, &good_bytes).status, 200);
+    let wire = |body: &[u8]| {
+        let mut out = format!(
+            "POST /presentations/verify HTTP/1.1\r\nHost: x\r\nContent-Length: {}\r\n\r\n",
+            body.len()
+        )
+        .into_bytes();
+        out.extend_from_slice(body);
+        out
+    };
+    let good_wire = wire(&good_bytes);
+    let timeout = Duration::from_secs(1);
+
+    // Values of every JSON type, of growing size, for each field.
+    let odd_values = |rng: &mut StdRng, len: usize| -> Vec<Value> {
+        let mut v: Vec<Value> = hex_inputs(rng, len).into_iter().map(Value::from).collect();
+        v.extend([
+            Value::Null,
+            json!(len),
+            json!(-(len as i64) - 1),
+            json!(u64::MAX - len as u64),
+            json!(len as f64 + 0.5),
+            json!(len % 2 == 0),
+            json!(vec![len; len % 7]),
+            json!({ "x": len }),
+        ]);
+        v
+    };
+
+    for len in 0..MAX_LEN {
+        // Raw bytes as a whole request, and as a body behind a valid head.
+        let raw = bytes(&mut rng, len * 7);
+        no_panic(
+            &mut panics,
+            format!("raw request len {}", raw.len()),
+            || {
+                if let Ok(r) = read_request(&mut &raw[..], timeout) {
+                    let _ = handle(&keys, &r);
+                }
+            },
+        );
+        let framed = wire(&raw);
+        no_panic(&mut panics, format!("raw body len {}", raw.len()), || {
+            let r = read_request(&mut &framed[..], timeout).expect("framed request reads");
+            assert_ne!(handle(&keys, &r).status, 200);
+        });
+
+        // A valid request cut short, or with one byte changed.
+        let cut = good_wire
+            .get(..len * good_wire.len() / MAX_LEN)
+            .unwrap_or(&[]);
+        no_panic(
+            &mut panics,
+            format!("truncated request at {}", cut.len()),
+            || {
+                if let Ok(r) = read_request(&mut &cut[..], timeout) {
+                    let _ = handle(&keys, &r);
+                }
+            },
+        );
+        let mut flipped = good_wire.clone();
+        let at = rng.gen_range(0..flipped.len());
+        flipped[at] = rng.gen();
+        no_panic(&mut panics, format!("byte {at} changed"), || {
+            if let Ok(r) = read_request(&mut &flipped[..], timeout) {
+                let _ = handle(&keys, &r);
+            }
+        });
+
+        // Heads with odd Content-Length values and odd request lines.
+        let length_text: String = hex_inputs(&mut rng, len % 12).remove(2);
+        let head = format!(
+            "POST /presentations/verify HTTP/1.1\r\nContent-Length: {length_text}\r\n\r\n{{}}"
+        );
+        no_panic(
+            &mut panics,
+            format!("content-length {length_text:?}"),
+            || {
+                if let Ok(r) = read_request(&mut head.as_bytes(), timeout) {
+                    let _ = handle(&keys, &r);
+                }
+            },
+        );
+        let line = format!(
+            "{} HTTP/1.1\r\n\r\n",
+            String::from_utf8_lossy(&bytes(&mut rng, len % 40))
+        );
+        no_panic(&mut panics, format!("request line len {len}"), || {
+            if let Ok(r) = read_request(&mut line.as_bytes(), timeout) {
+                let _ = handle(&keys, &r);
+            }
+        });
+
+        // Every body field and every presentation field, with values of every type.
+        for (variant, value) in odd_values(&mut rng, len).into_iter().enumerate() {
+            let fields: [&[&str]; 13] = [
+                &["presentation"],
+                &["context"],
+                &["challenge"],
+                &["epoch"],
+                &["require"],
+                &["require", "jurisdiction_levels"],
+                &["presentation", "epoch"],
+                &["presentation", "context"],
+                &["presentation", "challenge"],
+                &["presentation", "pseudonym"],
+                &["presentation", "proof"],
+                &["presentation", "disclosed"],
+                &["presentation", "disclosed", "jurisdiction_path"],
+            ];
+            for path in fields {
+                let mut body = good.clone();
+                let mut slot = &mut body;
+                for p in path {
+                    slot = &mut slot[*p];
+                }
+                *slot = value.clone();
+                let bytes = serde_json::to_vec(&body).unwrap();
+                no_panic(
+                    &mut panics,
+                    format!("{} len {len} variant {variant}", path.join(".")),
+                    || {
+                        let request = Request {
+                            method: "POST".into(),
+                            path: "/presentations/verify".into(),
+                            body: bytes,
+                        };
+                        let _ = handle(&keys, &request);
+                    },
+                );
+            }
+        }
+    }
+    assert!(panics.is_empty(), "{} panics: {panics:#?}", panics.len());
+}

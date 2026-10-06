@@ -2,6 +2,13 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-06: Agora writes need Door
+
+- Done: `d2-door serve` (Rust, standard library only, loopback `:8092`): `POST /presentations/verify` `{presentation, context, challenge, epoch, require}` -> `{pseudonym, nym, disclosed, epoch}` or `{error, code}`; issuer keys from one file per epoch; the caller names the one epoch it accepts. Head 8 KiB, body 64 KiB, 5 s per request, 32 connections, `Transfer-Encoding` refused; the no-panic sweep now covers raw HTTP input and every body field. `d2-door dev-world` / `present` (mock provider) make real credentials and presentations for tests. Agora `DoorNyms`: `GET /challenge` (32 bytes, 120 s, single use), posts and upvotes take a presentation for `agora:<jurisdiction>`, `adult` must be true, the disclosed path must start with the idea's Charter path (`Charter.jurisdiction_path`, new in the Python binding), raw ids refused with `DOOR_URL`, Door down -> writes `503`, reads fine. `test_door.py` runs Agora against a real `d2-door serve` with Rust-made presentations.
+- Gap narrowed, not closed: nobody can file or upvote outside the areas their credential names, but a resident can still file a commune matter under an area containing it (Esch -> `lu`). Pinned; needs a `ScopeChallenge`.
+- Decisions: one nym per person per area (context `agora:<jurisdiction_id>`, unchanged from KeyedNyms, so tables do not change); Door paths for Agora are Charter ids joined by `.`; KeyedNyms stays as the explicit development stand-in (`--nym-key-file` or `--dev-insecure-key`), refused together with `DOOR_URL`; HTTP bridge, not PyO3.
+- Next: `civic-door-verify.service` once CI ships a release binary (Mulinux does not build); epoch rollover rule for Agora; issuer keys from Record; `ScopeChallenge`; citizen app holder (WASM) and Agora view.
+
 ## 2026-10-06: Door v1 protocol core (first Rust module)
 
 - Done: `modules/door` (`d2-door`, AGPL, unaudited): issuer keys per epoch (BBS over BLS12-381, `zkryptium` 0.7.1), uniqueness key `u = OPRF_K(person_id)` (`voprf` 0.5.0, RFC 9497, single key) with a store that refuses a second enrolment per `u` per epoch, blind BBS issuance over the holder's committed secret plus jurisdiction path (one message per level), adult, epoch and revocation handle, presentations with prefix disclosure and per-context pseudonyms (per-verifier-linkability draft), `verify` with precise errors, `d2-door` CLI, `spec/door/` format and generated vectors (18 presentation cases, 13 must-fail) with a drift test. Root Cargo workspace, `rust-toolchain.toml` (1.97.0), dev-setup installs rustup, CI caches cargo; `tools/boundaries.py` understands Rust (`d2_<module>::` and Cargo `path` deps). Mock identity provider only.

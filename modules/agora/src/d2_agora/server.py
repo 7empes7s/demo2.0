@@ -1,5 +1,10 @@
-"""A minimal stdlib HTTP API. Bind it to loopback: v1 trusts the caller's participant ids.
+"""A minimal stdlib HTTP API, on loopback by default.
 
+`participant` is a Door presentation (an object) when Agora runs with Door (`DoorNyms`), or an
+opaque id with the development stand-in (`KeyedNyms`).
+
+GET  /challenge            -> 200 {challenge, expires_in}: one-time, for a Door presentation
+                              (404 without Door)
 POST /ideas                {participant, jurisdiction_id, topic_ids?, title, text}
                            -> 201 Idea (spec/schemas/idea.schema.json)
 POST /ideas/<id>/upvote    {participant} -> 201 {idea_id, upvoted: true}
@@ -7,11 +12,12 @@ POST /ideas/<id>/upvote    {participant} -> 201 {idea_id, upvoted: true}
 GET  /ideas/<id>           -> 200 Idea
 GET  /queue?jurisdiction=<id>&jurisdiction=<id>&limit=<n>
                            -> 200 {charter_version, ideas: [Idea, ...]} in queue order
-GET  /healthz              -> {ok, ideas}
+GET  /healthz              -> {ok, ideas, identity: "door" | "keyed"}
 
-Errors are {error, code}: 400 bad input, 404 unknown idea or path, 408 body too slow,
-409 duplicate upvote, 411 no Content-Length, 413 body over MAX_BODY, 500 internal (no details),
-503 too many connections.
+Errors are {error, code}: 400 bad input, 403 presentation refused (not adult, jurisdiction not
+covered, Door's proof checks), 404 unknown idea or path, 408 body too slow, 409 duplicate upvote,
+411 no Content-Length, 413 body over MAX_BODY, 500 internal (no details), 503 too many
+connections or Door unavailable (writes fail closed; reads do not need Door).
 """
 
 from __future__ import annotations
@@ -139,7 +145,14 @@ def make_server(
             url = urlsplit(self.path)
             try:
                 if url.path == "/healthz":
-                    return self._json(200, {"ok": True, "ideas": agora.count()})
+                    identity = getattr(agora.nyms, "kind", "custom")
+                    health = {"ok": True, "ideas": agora.count(), "identity": identity}
+                    return self._json(200, health)
+                if url.path == "/challenge":
+                    issue = getattr(agora.nyms, "challenge", None)
+                    if issue is None:
+                        return self._error(404, "not_found", "Door is not configured")
+                    return self._json(200, issue())
                 if url.path == "/queue":
                     q = parse_qs(url.query)
                     raw_limit = q.get("limit", ["100"])[-1]

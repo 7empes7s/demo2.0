@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- `d2-door serve`: the verifier as an HTTP service, standard library only, loopback by default. `POST /presentations/verify` with the caller's context, challenge and the one epoch it accepts; `GET /issuer-keys`; `GET /healthz`. Issuer keys from files, one per epoch. Head 8 KiB, body 64 KiB, 5 s per request, 32 connections; `Transfer-Encoding` refused.
+- No-panic sweep extended to the HTTP input (raw requests, bodies, every body and presentation field with every JSON type).
+- `d2-door dev-world` and `d2-door present` (mock identity provider) to make real credentials and presentations for other modules' tests.
+
 ## 0.1.0
 
 - Protocol core of Door (02-protocols section 1) with a mock identity provider; unaudited.
