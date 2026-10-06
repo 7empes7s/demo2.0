@@ -28,11 +28,12 @@ uv run d2-provenance serve --docket path/to/lu-chd.json   # the claim checker on
 
 ## Looks
 
-The app is moving to the Affichage identity (paper sheets on a public wall; the decision and its pages are in `docs/design/`). It lands behind a per-device flag, in three steps: tokens and type (done), sheets and marks, motion.
+The app is moving to the Affichage identity (paper sheets on a public wall; the decision and its pages are in `docs/design/`). It lands behind a per-device flag, in three steps: tokens and type (done), sheets and marks (done), motion.
 
 - Open the app with `?look=affichage` in the address to turn it on; the device remembers it (`d2.look`). `?look=default` turns it off. The flag is applied before the first paint as `data-look` on `<html>`.
 - `src/tokens.css` keeps one set of token names; the Affichage block remaps them, so components need no change to pick the look up. Paper first, with a dark mode.
 - Titles (`.serif`), labels and buttons switch to Big Shoulders Display; data to JetBrains Mono; body text stays Public Sans.
+- `src/affichage.css` holds the sheets and marks: every rule is prefixed `html[data-look="affichage"]`, so it beats component styles without touching them. Cards are stapled sheets with a hard offset second sheet behind (amber for yours, navy for official); buttons press on an ink backing; tags, pips and bars are square and inked. Corners are squared explicitly, since the base look's pills are literal values, not tokens.
 
 ## Install and offline
 
