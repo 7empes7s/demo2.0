@@ -134,12 +134,14 @@ export function verifyBeacon(chain: ChainInfo, beacon: unknown, expectedRound: n
       sig = hexBytes(b.signature, 48, "signature");
       const S = bls.shortSignatures;
       const point = S.Signature.fromBytes(sig);
+      if (point.is0()) fail("signature is the point at infinity");
       ok = S.verify(point, S.hash(sha256(u64be(round)), DST_G1), Buffer.from(chain.public_key, "hex"));
     } else {
       sig = hexBytes(b.signature, 96, "signature");
       const prev = hexBytes(b.previous_signature, 96, "previous_signature");
       const L = bls.longSignatures;
       const point = L.Signature.fromBytes(sig);
+      if (point.is0()) fail("signature is the point at infinity");
       ok = L.verify(point, L.hash(sha256(prev, u64be(round)), DST_G2), Buffer.from(chain.public_key, "hex"));
     }
   } catch (err) {

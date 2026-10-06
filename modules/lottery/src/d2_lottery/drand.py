@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import urllib.request
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -37,15 +38,10 @@ class BeaconError(ValueError):
 
 
 def _hex(value: Any, size: int, what: str) -> bytes:
-    if not isinstance(value, str) or value != value.lower():
-        raise BeaconError(f"{what} must be lowercase hex")
-    try:
-        raw = bytes.fromhex(value)
-    except ValueError as exc:
-        raise BeaconError(f"{what} must be lowercase hex") from exc
-    if len(raw) != size:
-        raise BeaconError(f"{what} must be {size} bytes")
-    return raw
+    """Exactly `size` bytes as lowercase hex: no whitespace, no prefix (bytes.fromhex is laxer)."""
+    if not isinstance(value, str) or not re.fullmatch(f"[0-9a-f]{{{2 * size}}}", value):
+        raise BeaconError(f"{what} must be {size} bytes of lowercase hex")
+    return bytes.fromhex(value)
 
 
 def _uint(value: Any, what: str, minimum: int = 0) -> int:
@@ -87,6 +83,16 @@ class ChainInfo:
             )
         except (KeyError, TypeError, AttributeError) as exc:
             raise BeaconError(f"malformed chain info: {exc}") from exc
+
+    def matches(self, raw: Any) -> bool:
+        """Spec section 7: a transcript's chain_info has exactly the spec's six fields, each
+        equal to this chain's in JSON type and value (no drand /info names, no extra fields)."""
+        mine = self.to_dict()
+        return (
+            isinstance(raw, Mapping)
+            and set(raw) == set(mine)
+            and all(type(raw[k]) is type(v) and raw[k] == v for k, v in mine.items())
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -158,6 +164,8 @@ class Beacon:
     def from_dict(cls, raw: Mapping[str, Any]) -> Beacon:
         if not isinstance(raw, Mapping):
             raise BeaconError("a beacon is an object")
+        if "previous_signature" in raw and raw["previous_signature"] is None:
+            raise BeaconError("previous_signature is hex when present, never null")
         return cls(
             round=_uint(raw.get("round"), "round", 1),
             randomness=raw.get("randomness"),

@@ -12,6 +12,7 @@ import {
   panelAfter,
   parseChainInfo,
   parseCommitment,
+  parseJson,
   poolRoot,
   Stream,
   trustedChains,
@@ -20,6 +21,7 @@ import {
   VerifyError,
   type Result,
 } from "../src/index.ts";
+import { sha256 } from "../src/drand.ts";
 
 const load = (name: string) => JSON.parse(readFileSync(new URL(`../../../spec/lottery/vectors/${name}`, import.meta.url), "utf8"));
 const V = load("draws.json");
@@ -78,6 +80,16 @@ describe("drand", () => {
     expect(verifyBeacon(parseChainInfo(w.chain_info), w.beacon, 38).toString("hex")).toBe(w.beacon.randomness);
   });
 
+  it("rejects a signature at the point at infinity", () => {
+    const g1 = "c0" + "00".repeat(47);
+    const g2 = "c0" + "00".repeat(95);
+    const beacon = (sig: string) => ({ round: 5, signature: sig, randomness: sha256(Buffer.from(sig, "hex")).toString("hex") });
+    expect(() => verifyBeacon(KNOWN_CHAINS.quicknet!, beacon(g1), 5)).toThrow(/point at infinity/);
+    expect(() => verifyBeacon(KNOWN_CHAINS.default!, { ...beacon(g2), previous_signature: "aa".repeat(96) }, 5)).toThrow(
+      /point at infinity/,
+    );
+  });
+
   it("rejects a valid signature under the wrong key or round", () => {
     const w = B["walkthrough-rfc9380-38"];
     expect(() => verifyBeacon(KNOWN_CHAINS.quicknet!, w.beacon, 38)).toThrow(/does not verify/);
@@ -107,12 +119,22 @@ describe("draws", () => {
     expect(verifyTranscript(inputs)).toEqual(result);
   });
 
-  it.each(V.invalid as { reason: string; transcript: unknown; trusted_chain_info: unknown }[])(
+  it.each(V.invalid as { reason: string; transcript?: unknown; transcript_json?: string; trusted_chain_info: unknown }[])(
     "rejects: $reason",
     (c) => {
-      expect(() => verifyTranscript(c.transcript, trustedFor(c.trusted_chain_info))).toThrow(VerifyError);
+      // Cases whose fault is in the JSON text itself (number syntax) carry the text.
+      const read = () => (c.transcript_json !== undefined ? parseJson(c.transcript_json) : c.transcript);
+      expect(() => verifyTranscript(read(), trustedFor(c.trusted_chain_info))).toThrow(VerifyError);
     },
   );
+
+  it("reads only decimal integers from JSON text", () => {
+    expect(parseJson('{"a": [0, -1, 2634945]}')).toEqual({ a: [0, -1, 2634945] });
+    for (const bad of ["2634945.0", "2e1", "1E3", "-0.5"]) expect(() => parseJson(`{"a": ${bad}}`)).toThrow(VerifyError);
+    expect(() => parseJson("{")).toThrow(VerifyError);
+    const text = JSON.stringify(V.draws[0].transcript);
+    expect(verifyTranscript(parseJson(text))).toEqual(V.draws[0].transcript.result);
+  });
 
   it("fills declined seats from the same stratum's order", () => {
     const r = V.replacements;

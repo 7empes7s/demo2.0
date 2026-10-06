@@ -11,4 +11,6 @@ npm run verify -w @democracy2/lottery-verify -- --transcript t.json --declined <
 npm run verify -w @democracy2/lottery-verify -- member --root <hex> --size <n> --proof proof.json
 ```
 
+Every success ends with `warning: commit time not anchored to Record; a backdated commitment cannot be detected`: transcripts do not yet cite their Record `draw.commit` entry (spec section 7, step 0). Input must be canonical (spec section 7, "Strict input"); numbers like `2634945.0` are rejected.
+
 Only the League of Entropy mainnet chains are trusted; `--chain-info <file>` adds another (the tests use drand's walkthrough test chain this way).

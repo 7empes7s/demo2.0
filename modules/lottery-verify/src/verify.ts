@@ -4,7 +4,7 @@
 
 import { isDeepStrictEqual } from "node:util";
 
-import { chainHash, fail, KNOWN_CHAINS, roundTime, sha256, uint, u64be, verifyBeacon, type ChainInfo } from "./drand.ts";
+import { chainHash, fail, KNOWN_CHAINS, roundTime, sha256, uint, u64be, verifyBeacon, VerifyError, type ChainInfo } from "./drand.ts";
 
 export { VerifyError } from "./drand.ts";
 
@@ -13,6 +13,32 @@ const TOKEN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/;
 const LABEL = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const HASH = /^[0-9a-f]{64}$/;
 const MIN_SEED_DELAY = 3600;
+
+/** Spec section 7, step 0: printed with every success until transcripts cite their Record entry. */
+export const UNANCHORED_WARNING =
+  "warning: commit time not anchored to Record; a backdated commitment cannot be detected";
+
+const INTEGER_LITERAL = /^-?(0|[1-9][0-9]*)$/;
+
+/**
+ * JSON.parse that refuses numbers not written as plain decimal integers (spec section 7,
+ * "Strict input"): `2634945.0` and `2e1` parse to integers in JavaScript, so the text is checked.
+ */
+export function parseJson(text: string): unknown {
+  type Reviver = (this: unknown, key: string, value: unknown, context?: { source?: string }) => unknown;
+  const reviver: Reviver = (_key, value, context) => {
+    if (typeof value === "number" && (context?.source === undefined || !INTEGER_LITERAL.test(context.source))) {
+      fail(`number ${context?.source ?? String(value)} is not a decimal integer`);
+    }
+    return value;
+  };
+  try {
+    return JSON.parse(text, reviver as Parameters<typeof JSON.parse>[1]);
+  } catch (err) {
+    if (err instanceof VerifyError) throw err;
+    fail(`not JSON: ${(err as Error).message}`);
+  }
+}
 
 const ascii = (s: string): Buffer => Buffer.from(s, "ascii");
 const bytewise = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0); // ASCII only
@@ -34,7 +60,7 @@ export function parseMember(raw: unknown): Member {
   const r = raw as Record<string, unknown>;
   for (const k of Object.keys(r)) if (k !== "nym" && k !== "strata") fail(`unknown member field ${k}`);
   const nym = match(NYM, r.nym, "pseudonym");
-  const strata = (r.strata ?? {}) as Record<string, unknown>;
+  const strata = (r.strata === undefined ? {} : r.strata) as Record<string, unknown>;
   if (typeof strata !== "object" || strata === null || Array.isArray(strata)) fail("strata must be an object");
   const out: Record<string, string> = {};
   for (const key of Object.keys(strata).sort(bytewise)) {
@@ -136,7 +162,7 @@ export function parseCommitment(raw: unknown): Commitment {
   if (typeof raw !== "object" || raw === null) fail("the commitment is an object");
   const r = raw as Record<string, unknown>;
   for (const k of Object.keys(r)) if (!COMMITMENT_FIELDS.includes(k)) fail(`unknown commitment field ${k}`);
-  if ((r.version ?? "d2.lottery.draw/1") !== "d2.lottery.draw/1") fail(`unsupported version ${String(r.version)}`);
+  if (r.version !== undefined && r.version !== "d2.lottery.draw/1") fail(`unsupported version ${String(r.version)}`);
   const c: Commitment = {
     purpose: match(LABEL, r.purpose, "purpose"),
     context: match(LABEL, r.context, "context"),
@@ -151,7 +177,7 @@ export function parseCommitment(raw: unknown): Commitment {
     quotas: {},
   };
   if (c.size > c.pool_size) fail("panel size exceeds pool size");
-  const quotas = (r.quotas ?? {}) as Record<string, unknown>;
+  const quotas = (r.quotas === undefined ? {} : r.quotas) as Record<string, unknown>;
   if (typeof quotas !== "object" || quotas === null || Array.isArray(quotas)) fail("quotas must be an object");
   let sum = 0;
   for (const value of Object.keys(quotas).sort(bytewise)) {
@@ -302,6 +328,7 @@ export function verifyTranscript(transcript: unknown, trusted = trustedChains())
   const chain = trusted.get(c.chain);
   if (chain === undefined) fail(`chain ${c.chain} is not a trusted drand chain`);
   if (chain.scheme !== c.scheme) fail("committed scheme differs from the chain's");
+  // Spec section 7: exactly the six spec fields, each equal in JSON type and value.
   if (t.chain_info !== undefined && !isDeepStrictEqual(t.chain_info, chain)) {
     fail("chain_info differs from the trusted chain");
   }

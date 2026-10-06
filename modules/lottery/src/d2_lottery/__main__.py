@@ -7,10 +7,13 @@
     d2-lottery draw --commitment commitment.json --pool pool.json [--beacon beacon.json] \
         > transcript.json
     d2-lottery verify --transcript transcript.json [--chain-info walkthrough.json]
-    d2-lottery panel --transcript transcript.json [--declined nym-a --declined nym-b]
+    d2-lottery panel --transcript transcript.json [--declined nym-a --declined nym-b] \
+        [--chain-info walkthrough.json]
     d2-lottery prove-member --pool pool.json --nym nym-a
 
 Without --beacon, `draw` fetches the round from api.drand.sh (or --drand-url) and verifies it.
+`verify` and `panel` reproduce the draw first; `panel` refuses a transcript that does not verify.
+Both warn that the commit time is not yet anchored to Record (spec section 7, step 0).
 Exit codes: 0 ok, 1 the check failed, 2 bad usage.
 """
 
@@ -26,7 +29,7 @@ from typing import Any
 from .drand import DEFAULT_URL, KNOWN_CHAINS, Beacon, BeaconError, ChainInfo, DrandClient
 from .draw import Commitment, DrawError, commit, panel
 from .pool import Pool, PoolError
-from .transcript import build, verify
+from .transcript import UNANCHORED_WARNING, build, verify
 
 
 def _read(path: str) -> Any:
@@ -88,9 +91,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--transcript", required=True)
     p.add_argument("--chain-info", help="trust this extra chain (drand /info JSON)")
 
-    p = sub.add_parser("panel", help="the panel after declines")
+    p = sub.add_parser("panel", help="verify a published draw, then the panel after declines")
     p.add_argument("--transcript", required=True)
     p.add_argument("--declined", action="append", default=[])
+    p.add_argument("--chain-info", help="trust this extra chain (drand /info JSON)")
 
     args = parser.parse_args(argv)
     try:
@@ -136,14 +140,26 @@ def _run(args: argparse.Namespace) -> Any:
             beacon = DrandClient(chain, args.drand_url).beacon(c.round)
         return build(c, pool, chain, beacon)
     if args.cmd == "verify":
-        t = _read(args.transcript)
-        c = Commitment.from_dict(t.get("commitment"))
-        chain = _chain_for(c, args.chain_info)
-        result = verify(t, {chain.hash: chain})
-        return f"ok: {len(result['selected'])} selected from {c.pool_size} (round {c.round})"
+        c, result = _verified(args)
+        return (
+            f"ok: {len(result['selected'])} selected from {c.pool_size} (round {c.round})\n"
+            + UNANCHORED_WARNING
+        )
     if args.cmd == "panel":
-        return panel(_read(args.transcript)["result"], args.declined)
+        _, result = _verified(args)
+        print(UNANCHORED_WARNING, file=sys.stderr)
+        return {**panel(result, args.declined), "anchored": False}
     raise AssertionError(args.cmd)
+
+
+def _verified(args: argparse.Namespace) -> tuple[Commitment, dict[str, Any]]:
+    """Reproduce the transcript's draw; raises unless it verifies."""
+    t = _read(args.transcript)
+    if not isinstance(t, dict):
+        raise DrawError("the transcript is an object")
+    c = Commitment.from_dict(t.get("commitment"))
+    chain = _chain_for(c, args.chain_info)
+    return c, verify(t, {chain.hash: chain})
 
 
 if __name__ == "__main__":

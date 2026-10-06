@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { run } from "../src/cli.ts";
+import { UNANCHORED_WARNING } from "../src/verify.ts";
 
 const load = (name: string) => JSON.parse(readFileSync(new URL(`../../../spec/lottery/vectors/${name}`, import.meta.url), "utf8"));
 const V = load("draws.json");
@@ -23,6 +24,28 @@ describe("lottery-verify CLI", () => {
     expect(r.code).toBe(0);
     expect(r.out).toContain("ok: the draw reproduces; 5 selected");
     for (const nym of plain.result.selected) expect(r.out).toContain(nym);
+  });
+
+  it("warns on every success that the commit time is not anchored to Record", async () => {
+    expect(UNANCHORED_WARNING).toMatch(/not anchored to Record.*backdated/);
+    const r = await run(["--transcript", file(plain)]);
+    expect(r.out.split("\n").at(-1)).toBe(UNANCHORED_WARNING);
+    const declined = await run(["--transcript", file(plain), "--declined", plain.result.selected[0]]);
+    expect(declined.code).toBe(0);
+    expect(declined.out.split("\n").at(-1)).toBe(UNANCHORED_WARNING);
+    const bad = structuredClone(plain);
+    bad.result.selected.reverse();
+    expect((await run(["--transcript", file(bad)])).out).not.toContain("warning:");
+  });
+
+  it("rejects a transcript whose numbers are not decimal integers", async () => {
+    const text = JSON.stringify(plain).replace(`"round":${plain.commitment.round},"size"`, `"round":${plain.commitment.round}.0,"size"`);
+    expect(text).not.toBe(JSON.stringify(plain));
+    const path = join(mkdtempSync(join(tmpdir(), "lottery-verify-")), "t.json");
+    writeFileSync(path, text);
+    const r = await run(["--transcript", path]);
+    expect(r.code).toBe(1);
+    expect(r.out).toContain("not a decimal integer");
   });
 
   it("exits 1 for an edited result", async () => {
@@ -65,5 +88,10 @@ describe("lottery-verify CLI", () => {
     const proof = file(V.pool.inclusion[3]);
     expect((await run(["member", "--root", V.pool.root, "--size", "5", "--proof", proof])).code).toBe(0);
     expect((await run(["member", "--root", V.pool.root, "--size", "4", "--proof", proof])).code).toBe(1);
+    for (const size of ["5.0", "0x5", "5e0", " 5", "05", "+5"]) {
+      const r = await run(["member", "--root", V.pool.root, "--size", size, "--proof", proof]);
+      expect(r.code).toBe(1);
+      expect(r.out).toContain("--size must be a decimal integer");
+    }
   });
 });

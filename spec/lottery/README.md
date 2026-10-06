@@ -59,7 +59,8 @@ quota <value> <count>          one line per stratum, sorted by value bytewise; n
 Rules a verifier checks:
 - With `stratify-by -` there are no quota lines and the pool is one stratum with quota `size`.
 - Otherwise there is at least one quota line, quotas sum to `size`, every member has the `stratify-by` key, every member's value has a quota line, every quota line's value is held by at least one member, and no quota exceeds the members holding that value. A quota may be 0.
-- **Timing:** the round must be produced at least 3600 seconds after `committed-at` (`round time >= committed-at + 3600`, section 4), so nobody can know the seed when committing. `committed-at` is checked against the time Record logged the `draw.commit` entry.
+- **Timing:** the round must be produced at least 3600 seconds after `committed-at` (`round time >= committed-at + 3600`, section 4), so nobody can know the seed when committing. `committed-at` is self-declared; only the time Record logged the `draw.commit` entry makes it trustworthy (section 7, step 0).
+- **One commit per context:** a context has exactly one draw. Only the first `draw.commit` entry Record holds for a context is valid; any later `draw.commit` for the same context is void and never seeds a panel. Every `draw.commit` is public in Record, so a second commit for a context is visible evidence of an attempted re-draw. A genuine re-draw needs a new context.
 
 JSON form (in transcripts): `{version: "d2.lottery.draw/1", purpose, context, committed_at, pool_root, pool_size, chain, scheme, round, size, stratify_by: token|null, quotas: {value: count}}`. Unknown fields are rejected.
 
@@ -135,22 +136,34 @@ Acceptance and decline are pseudonymous. With a set `D` of declined pseudonyms, 
 
 A transcript is `{commitment, pool, chain_info?, beacon, result?}` with `pool` a list of `{nym, strata}`. To verify:
 
+0. **Record anchoring.** Find the Record `draw.commit` entry whose payload is this commitment hash. Check that Record logged it no later than `committed-at` plus a tolerance (the Record's own clock skew bound), and that it is the first `draw.commit` for this `context` (section 3, one commit per context). Without this step a drawer who already knows a beacon can write an earlier `committed-at` and vary free fields (purpose, context, round, pool) until a chosen panel comes out; steps 1 to 5 still pass.
 1. Parse the commitment (section 3) and pool (section 2); recompute the pool root and size and compare.
 2. Look up the trusted chain by the commitment's chain hash and check its scheme matches; if `chain_info` is present it must equal that chain.
 3. Check the timing rule (section 3).
 4. Verify the beacon (section 4) for the committed round.
 5. Run the draw (section 5) and compare with `result` when present.
 
+**v1 status of step 0.** Transcripts do not yet cite their Record entry, so neither `d2-lottery` nor `lottery-verify` performs step 0. On every success both print `warning: commit time not anchored to Record; a backdated commitment cannot be detected`, and JSON output carries `"anchored": false`. A v1 "ok" proves the panel follows from the commitment, pool and beacon; it does not prove the commitment was made before the beacon existed.
+
+**Comparing `chain_info`.** When present, `chain_info` is an object with exactly the fields `public_key`, `period`, `genesis_time`, `group_hash`, `scheme`, `beacon_id`, each equal in JSON type and value to the trusted chain's. drand's own `/info` names (`groupHash`, `schemeID`, `metadata.beaconID`) and extra fields are rejected. (A verifier may still accept drand `/info` JSON for the chain its user explicitly trusts; that is input to the verifier, not part of the transcript.)
+
+**Strict input.** Verifiers reject, rather than normalise, any non-canonical transcript, so two verifiers never disagree:
+- Hex is lowercase `[0-9a-f]` of the exact length, with no whitespace, prefix or uppercase.
+- Numbers are JSON integers written in decimal (`-?(0|[1-9][0-9]*)`): no fraction or exponent, so `2634945.0` and `2e1` are rejected even though they equal integers. A verifier whose JSON reader cannot tell them apart checks the text.
+- `null` is allowed only for `stratify_by`. `strata`, `quotas`, `version` and `previous_signature` are absent or of their spec'd type: `strata` and `quotas` objects, `version` the string `d2.lottery.draw/1`, `previous_signature` hex.
+- An unchained beacon has no `previous_signature` key at all.
+
 ## 8. Vectors
 
 | File | What it pins |
 |---|---|
 | `vectors/beacons.json` | Real recorded drand beacons and where each came from: League of Entropy mainnet `default` round 2634945, and round 38 of drand's `walkthrough` test chain (scheme `bls-unchained-g1-rfc9380`, as quicknet) |
-| `vectors/draws.json` | Pool leaf data, root and every inclusion proof; stream outputs (`u64` and `below`, as decimal strings) for two seeds; three full transcripts with their commitment text and seed; a replacement case; and 15 transcripts that must fail |
+| `vectors/draws.json` | Pool leaf data, root and every inclusion proof; stream outputs (`u64` and `below`, as decimal strings) for two seeds; three full transcripts with their commitment text and seed; a replacement case; and 28 transcripts that must fail, including the non-canonical inputs above. Two of them (number syntax) are stored as JSON text in `transcript_json`, since a parsed number loses the difference |
 
 `draws.json` is generated by `uv run python -m d2_lottery.vectors --out spec/lottery/vectors/draws.json`; a test fails when it drifts. Pools in it are synthetic.
 
 ## 9. Not in v1
 
+- **Record anchoring (section 7, step 0).** A transcript will cite its `draw.commit` Record entry with an inclusion proof, and both verifiers will check its log time and that it is the first commit for the context. Until then both print the unanchored warning.
 - **LEXIMIN.** 02-protocols section 5 calls for a committed LEXIMIN distribution over panels when quotas cross several attributes. v1 stratifies on one attribute with uniform selection inside each stratum, which needs no solver and is exact. A multi-attribute version will commit the computed distribution (a list of panels with probabilities) in the commitment and sample one panel with `below` over a cumulative integer weight.
 - **Mainnet quicknet fixture.** The recorded quicknet-scheme beacon comes from drand's test chain; a mainnet quicknet round should be added when a session with access to a drand relay records one.

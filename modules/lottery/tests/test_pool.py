@@ -48,6 +48,10 @@ def test_inclusion_proofs_for_every_size():
         lambda p: p["proof"].append(p["proof"][0]),
         lambda p: p["proof"].pop(),
         lambda p: p.update(size=p["size"] + 1),
+        lambda p: p.update(size=float(p["size"])),
+        lambda p: p.update(index=True),
+        lambda p: p["proof"].__setitem__(0, p["proof"][0].upper()),
+        lambda p: p["proof"].__setitem__(0, p["proof"][0][:8] + " " + p["proof"][0][8:]),
     ],
 )
 def test_tampered_inclusion_proofs_fail(vectors, mutate):

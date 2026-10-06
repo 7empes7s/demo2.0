@@ -1,6 +1,6 @@
 # Lottery
 
-Verifiable sortition. An organiser commits to a pool of pseudonyms and to a drand round at least an hour in the future; when the round arrives, the panel is drawn from the beacon. Anyone holding the published pool, commitment and beacon reproduces the panel exactly, and nobody, including the organiser, could know it when committing.
+Verifiable sortition. An organiser commits to a pool of pseudonyms and to a drand round at least an hour in the future; when the round arrives, the panel is drawn from the beacon. Anyone holding the published pool, commitment and beacon reproduces the panel exactly, and nobody, including the organiser, could know it when committing, provided the commitment's Record entry predates the beacon. Verifiers do not check that entry yet (see "Not yet"), so every successful check prints a warning that the commit time is not anchored.
 
 The format is specified in [`spec/lottery/README.md`](../../spec/lottery/README.md). [`modules/lottery-verify`](../lottery-verify) is an independent verifier in TypeScript, written from that spec; both pass the vectors in `spec/lottery/vectors/`.
 
@@ -12,8 +12,8 @@ uv run d2-lottery commit --pool pool.json --purpose review-panel --context matte
     --size 5 --tier local > commitment.json                         # quicknet, first round >= 1 h away
 # log commitment.json to Record as draw.commit, then wait for the round
 uv run d2-lottery draw --commitment commitment.json --pool pool.json > transcript.json
-uv run d2-lottery verify --transcript transcript.json               # ok: 5 selected from ...
-uv run d2-lottery panel --transcript transcript.json --declined <nym>
+uv run d2-lottery verify --transcript transcript.json               # ok: 5 selected from ... + warning
+uv run d2-lottery panel --transcript transcript.json --declined <nym>  # verifies first; "anchored": false
 uv run d2-lottery prove-member --pool pool.json --nym <nym>         # a member checks it was counted
 ```
 
@@ -43,5 +43,6 @@ verify(transcript)
 ## Not yet
 
 - HTTP API (`POST /draws`, `GET /draws/{id}`, accept/decline) and writing `draw.commit` / `draw.result` to Record.
+- Record anchoring in verification (spec section 7, step 0): until a transcript cites its `draw.commit` entry, `committed_at` is self-declared and a backdated commitment cannot be detected.
 - LEXIMIN distributions for quotas over several attributes (v1 stratifies on one attribute).
 - A recorded mainnet quicknet beacon in the fixtures (the quicknet scheme is tested with drand's walkthrough test chain).

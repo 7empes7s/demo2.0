@@ -7,17 +7,27 @@
 //   lottery-verify ... --declined <nym> [--declined ..]  print the panel after these declines
 //   lottery-verify member --root <hex> --size <n> --proof <file>   check a pool inclusion proof
 //
-// Only the League of Entropy mainnet chains are trusted by default.
+// Only the League of Entropy mainnet chains are trusted by default. Every success ends with a
+// warning line: the commit time is not yet checked against Record (spec section 7, step 0).
 
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 
 import { fetchBeacon, parseChainInfo, type Fetch } from "./drand.ts";
-import { checkMemberInclusion, panelAfter, parseCommitment, trustedChains, verifyTranscript, VerifyError } from "./verify.ts";
+import {
+  checkMemberInclusion,
+  panelAfter,
+  parseCommitment,
+  parseJson,
+  trustedChains,
+  UNANCHORED_WARNING,
+  verifyTranscript,
+  VerifyError,
+} from "./verify.ts";
 
 const read = (path: string): string => readFileSync(path === "-" ? 0 : path, "utf8");
-const readJson = (path: string): unknown => JSON.parse(read(path));
+const readJson = (path: string): unknown => parseJson(read(path));
 
 const httpGet: Fetch = async (url) => {
   const res = await fetch(url);
@@ -44,6 +54,7 @@ export async function run(argv: string[], get: Fetch = httpGet): Promise<{ code:
     if (positionals[0] === "member") {
       const { root, size, proof } = values;
       if (!root || !size || !proof) throw new VerifyError("usage: lottery-verify member --root <hex> --size <n> --proof <file>");
+      if (!/^(0|[1-9][0-9]*)$/.test(size)) throw new VerifyError("--size must be a decimal integer");
       checkMemberInclusion(root, Number(size), readJson(proof));
       return { code: 0, out: "ok: the member is in the pool" };
     }
@@ -65,6 +76,7 @@ export async function run(argv: string[], get: Fetch = httpGet): Promise<{ code:
       const p = panelAfter(result, values.declined);
       lines.push(`panel after ${values.declined.length} declined (${p.short} short):`, ...p.members);
     }
+    lines.push(UNANCHORED_WARNING);
     return { code: 0, out: lines.join("\n") };
   } catch (err) {
     return { code: 1, out: `fail: ${(err as Error).message}` };

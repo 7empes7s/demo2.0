@@ -14,11 +14,16 @@ from typing import Any
 
 NYM = re.compile(r"[A-Za-z0-9+/=_.:-]{1,256}")
 TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,63}")
+HASH = re.compile(r"[0-9a-f]{64}")
 MEMBER_TAG = b"d2.lottery.member/1\n"
 
 
 class PoolError(ValueError):
     """The pool, or a proof about it, is malformed or does not hold."""
+
+
+def _int(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
 
 
 def _full(pattern: re.Pattern[str], value: Any) -> bool:
@@ -130,15 +135,15 @@ def check_inclusion(root_hex: str, size: int, proof: Mapping[str, Any]) -> None:
     try:
         member = Member.from_dict(proof["member"])
         index, path = proof["index"], proof["proof"]
+        if not isinstance(path, list) or not all(_full(HASH, h) for h in path):
+            raise PoolError("proof hashes are 32 bytes of lowercase hex")
         hashes = [bytes.fromhex(h) for h in path]
-    except (KeyError, TypeError, ValueError) as exc:
+    except (KeyError, TypeError) as exc:
         raise PoolError(f"malformed inclusion proof: {exc}") from exc
-    if proof.get("size") != size:
-        raise PoolError(f"proof is for a pool of {proof['size']}, the commitment says {size}")
-    if not (isinstance(index, int) and isinstance(size, int) and 0 <= index < size):
+    if not _int(proof.get("size")) or proof["size"] != size:
+        raise PoolError(f"proof is for a pool of {proof.get('size')}, the commitment says {size}")
+    if not (_int(index) and _int(size) and 0 <= index < size):
         raise PoolError("index out of range")
-    if any(len(h) != 32 for h in hashes):
-        raise PoolError("proof hashes are 32 bytes")
     fn, sn, r = index, size - 1, leaf_hash(member.leaf_data())
     for p in hashes:
         if sn == 0:

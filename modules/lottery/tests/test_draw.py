@@ -1,4 +1,5 @@
 import copy
+import json
 from collections import Counter
 from pathlib import Path
 
@@ -82,11 +83,15 @@ def test_every_published_draw_reproduces(vectors):
         assert verify(d["transcript"], _trusted(d)) == d["transcript"]["result"]
 
 
-@pytest.mark.parametrize("i", range(15))
-def test_invalid_transcripts_fail(vectors, i):
-    case = vectors["invalid"][i]
+INVALID = json.loads(DRAWS.read_text("utf-8"))["invalid"]
+
+
+@pytest.mark.parametrize("case", INVALID, ids=[c["reason"] for c in INVALID])
+def test_invalid_transcripts_fail(case):
+    # Cases whose fault is in the JSON text itself (number syntax) carry the text.
+    t = json.loads(case["transcript_json"]) if "transcript_json" in case else case["transcript"]
     with pytest.raises(DrawError):
-        verify(case["transcript"], _trusted(case))
+        verify(t, _trusted(case))
 
 
 def test_stratified_draw_honours_quotas(vectors):

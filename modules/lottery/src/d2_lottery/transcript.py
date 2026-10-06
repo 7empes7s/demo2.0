@@ -9,6 +9,12 @@ from .drand import KNOWN_CHAIN_HASHES, Beacon, BeaconError, ChainInfo, verify_be
 from .draw import Commitment, DrawError, run_draw
 from .pool import Pool, PoolError
 
+# Spec section 7, step 0. Until transcripts cite their Record draw.commit entry, `committed_at`
+# is self-declared, so every successful verification says so.
+UNANCHORED_WARNING = (
+    "warning: commit time not anchored to Record; a backdated commitment cannot be detected"
+)
+
 
 def build(commitment: Commitment, pool: Pool, chain: ChainInfo, beacon: Beacon) -> dict[str, Any]:
     """Verify the beacon, run the draw, and return the transcript to publish."""
@@ -38,7 +44,7 @@ def verify(transcript: Mapping[str, Any], trusted_chains: Mapping[str, ChainInfo
         chain = trusted.get(commitment.chain)
         if chain is None:
             raise DrawError(f"chain {commitment.chain} is not a trusted drand chain")
-        if "chain_info" in transcript and ChainInfo.from_dict(transcript["chain_info"]) != chain:
+        if "chain_info" in transcript and not chain.matches(transcript["chain_info"]):
             raise DrawError("chain_info differs from the trusted chain")
         commitment.check_chain(chain)
         randomness = verify_beacon(chain, beacon, commitment.round)

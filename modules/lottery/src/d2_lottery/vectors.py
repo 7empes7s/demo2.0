@@ -196,6 +196,70 @@ def invalid_cases(draws: list[dict[str, Any]]) -> list[dict[str, Any]]:
         src=walk["transcript"],
         trusted=walk["trusted_chain_info"],
     )
+
+    # Non-canonical input (spec section 7, "Strict input"): each would hash the same bytes,
+    # so both verifiers must reject it rather than disagree.
+    def spaced(field: str, sep: str) -> Any:
+        return lambda t: t["beacon"].update(
+            {field: t["beacon"][field][:10] + sep + t["beacon"][field][10:]}
+        )
+
+    case("signature hex with a space", spaced("signature", " "))
+    case("randomness hex with a newline", spaced("randomness", "\n"))
+    case(
+        "signature hex in uppercase",
+        lambda t: t["beacon"].update(signature=t["beacon"]["signature"].upper()),
+    )
+    case("member strata null", lambda t: [m.update(strata=None) for m in t["pool"]])
+    case("commitment quotas null", lambda t: t["commitment"].update(quotas=None))
+    case("commitment version null", lambda t: t["commitment"].update(version=None))
+
+    def drand_form(t: dict[str, Any]) -> None:
+        ci = t["chain_info"]
+        t["chain_info"] = {
+            "public_key": ci["public_key"],
+            "period": ci["period"],
+            "genesis_time": ci["genesis_time"],
+            "groupHash": ci["group_hash"],
+            "schemeID": ci["scheme"],
+            "metadata": {"beaconID": ci["beacon_id"]},
+        }
+
+    case("chain_info in drand /info form", drand_form)
+    case(
+        "chain_info with an extra field",
+        lambda t: t["chain_info"].update(hash=t["commitment"]["chain"]),
+    )
+    case("chain_info missing a field", lambda t: t["chain_info"].pop("beacon_id"))
+    case("chain_info period as a string", lambda t: t["chain_info"].update(period="30"))
+    case(
+        "previous_signature null on an unchained beacon",
+        lambda t: t["beacon"].update(previous_signature=None),
+        src=walk["transcript"],
+        trusted=walk["trusted_chain_info"],
+    )
+
+    # Number syntax only shows in the JSON text, so these cases carry the text itself.
+    def text_case(reason: str, old: str, new: str) -> None:
+        text = json.dumps(base)
+        assert text.count(old) == 1, old
+        cases.append(
+            {
+                "reason": reason,
+                "trusted_chain_info": None,
+                "transcript_json": text.replace(old, new),
+            }
+        )
+
+    c = base["commitment"]
+    scheme = f'"scheme": "{c["scheme"]}", '
+    text_case(
+        "round written as a float",
+        f'{scheme}"round": {c["round"]},',
+        f'{scheme}"round": {c["round"]}.0,',
+    )
+    assert c["pool_size"] == 20
+    text_case("pool_size written with an exponent", '"pool_size": 20,', '"pool_size": 2e1,')
     return cases
 
 

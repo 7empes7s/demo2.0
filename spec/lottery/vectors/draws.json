@@ -3578,6 +3578,1876 @@
           ]
         }
       }
+    },
+    {
+      "reason": "signature hex with a space",
+      "trusted_chain_info": null,
+      "transcript": {
+        "commitment": {
+          "version": "d2.lottery.draw/1",
+          "purpose": "review-panel",
+          "context": "matter-0001",
+          "committed_at": 1674472170,
+          "pool_root": "d3587dbff1d30e1bef1e69640c02a7a03e7f40620fe7f7a4838194e4d8d9c5f2",
+          "pool_size": 20,
+          "chain": "8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce",
+          "scheme": "pedersen-bls-chained",
+          "round": 2634945,
+          "size": 5,
+          "stratify_by": null,
+          "quotas": {}
+        },
+        "pool": [
+          {
+            "nym": "nym-044770911a3985f4e18f",
+            "strata": {}
+          },
+          {
+            "nym": "nym-074d74994ab26cef9875",
+            "strata": {}
+          },
+          {
+            "nym": "nym-169e81e612932eab1a3d",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2837f416fe53ec50ae56",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2d45189c4683c3399189",
+            "strata": {}
+          },
+          {
+            "nym": "nym-445a3f39eb3f7ff33895",
+            "strata": {}
+          },
+          {
+            "nym": "nym-4cffddc1d9d8ca1ed7d6",
+            "strata": {}
+          },
+          {
+            "nym": "nym-5e953a6db8157fbc9609",
+            "strata": {}
+          },
+          {
+            "nym": "nym-619045a8915c9c2d68bb",
+            "strata": {}
+          },
+          {
+            "nym": "nym-7951eab7e7402150e908",
+            "strata": {}
+          },
+          {
+            "nym": "nym-81140a4e05d99a433aa3",
+            "strata": {}
+          },
+          {
+            "nym": "nym-84bed557a9a7219fedba",
+            "strata": {}
+          },
+          {
+            "nym": "nym-98bf388013ee67f1e823",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ab130997e67851c38b43",
+            "strata": {}
+          },
+          {
+            "nym": "nym-be44e73ba78ada2d2763",
+            "strata": {}
+          },
+          {
+            "nym": "nym-c36da7f12fe5d4b65d6e",
+            "strata": {}
+          },
+          {
+            "nym": "nym-d1c89d32081868567f5c",
+            "strata": {}
+          },
+          {
+            "nym": "nym-dd841be3e09d370a9ec9",
+            "strata": {}
+          },
+          {
+            "nym": "nym-e74d256150b8c352ea66",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ed706cd3a93de18a4832",
+            "strata": {}
+          }
+        ],
+        "chain_info": {
+          "public_key": "868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31",
+          "period": 30,
+          "genesis_time": 1595431050,
+          "group_hash": "176f93498eac9ca337150b46d21dd58673ea4e3581185f869672e59fa4cb390a",
+          "scheme": "pedersen-bls-chained",
+          "beacon_id": "default"
+        },
+        "beacon": {
+          "round": 2634945,
+          "randomness": "fc8f2b3561428c365ada1aeecad04ccc044ba649c6363c5f687c1989cc2c20e5",
+          "signature": "814778ed1e 480406beb43b74af71ce2f0373e0ea1bfdfea8f9ed62c876c20fcbc7f0163860e3da42ed2148756015f4551451898ffe06d384b4d002245025571b6b7a752f7158b40ad92b13b6d703ad31922a617f2c7f6d960b84d56cf1d79eef",
+          "previous_signature": "8bd96294383b4d1e04e736360bd7a487f9f409f1e7bd800b720656a310d577b3bdb1e1631af6c5782a1d8979c502f395036181eff4058960fc40bb7034cdae1991d3eda518ab204a077d2f7e724974cf87b407e549bd815cf0b8e5a3832f675d"
+        },
+        "result": {
+          "commitment_hash": "669fd9c9ca1a176759057d29fe16933a7a02f2d867894fd1749957dc5f1969f5",
+          "groups": [
+            {
+              "stratum": null,
+              "quota": 5,
+              "order": [
+                "nym-ed706cd3a93de18a4832",
+                "nym-619045a8915c9c2d68bb",
+                "nym-7951eab7e7402150e908",
+                "nym-2d45189c4683c3399189",
+                "nym-84bed557a9a7219fedba",
+                "nym-4cffddc1d9d8ca1ed7d6",
+                "nym-2837f416fe53ec50ae56",
+                "nym-169e81e612932eab1a3d",
+                "nym-81140a4e05d99a433aa3",
+                "nym-e74d256150b8c352ea66",
+                "nym-98bf388013ee67f1e823",
+                "nym-074d74994ab26cef9875",
+                "nym-5e953a6db8157fbc9609",
+                "nym-dd841be3e09d370a9ec9",
+                "nym-445a3f39eb3f7ff33895",
+                "nym-044770911a3985f4e18f",
+                "nym-c36da7f12fe5d4b65d6e",
+                "nym-ab130997e67851c38b43",
+                "nym-be44e73ba78ada2d2763",
+                "nym-d1c89d32081868567f5c"
+              ]
+            }
+          ],
+          "selected": [
+            "nym-ed706cd3a93de18a4832",
+            "nym-619045a8915c9c2d68bb",
+            "nym-7951eab7e7402150e908",
+            "nym-2d45189c4683c3399189",
+            "nym-84bed557a9a7219fedba"
+          ]
+        }
+      }
+    },
+    {
+      "reason": "randomness hex with a newline",
+      "trusted_chain_info": null,
+      "transcript": {
+        "commitment": {
+          "version": "d2.lottery.draw/1",
+          "purpose": "review-panel",
+          "context": "matter-0001",
+          "committed_at": 1674472170,
+          "pool_root": "d3587dbff1d30e1bef1e69640c02a7a03e7f40620fe7f7a4838194e4d8d9c5f2",
+          "pool_size": 20,
+          "chain": "8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce",
+          "scheme": "pedersen-bls-chained",
+          "round": 2634945,
+          "size": 5,
+          "stratify_by": null,
+          "quotas": {}
+        },
+        "pool": [
+          {
+            "nym": "nym-044770911a3985f4e18f",
+            "strata": {}
+          },
+          {
+            "nym": "nym-074d74994ab26cef9875",
+            "strata": {}
+          },
+          {
+            "nym": "nym-169e81e612932eab1a3d",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2837f416fe53ec50ae56",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2d45189c4683c3399189",
+            "strata": {}
+          },
+          {
+            "nym": "nym-445a3f39eb3f7ff33895",
+            "strata": {}
+          },
+          {
+            "nym": "nym-4cffddc1d9d8ca1ed7d6",
+            "strata": {}
+          },
+          {
+            "nym": "nym-5e953a6db8157fbc9609",
+            "strata": {}
+          },
+          {
+            "nym": "nym-619045a8915c9c2d68bb",
+            "strata": {}
+          },
+          {
+            "nym": "nym-7951eab7e7402150e908",
+            "strata": {}
+          },
+          {
+            "nym": "nym-81140a4e05d99a433aa3",
+            "strata": {}
+          },
+          {
+            "nym": "nym-84bed557a9a7219fedba",
+            "strata": {}
+          },
+          {
+            "nym": "nym-98bf388013ee67f1e823",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ab130997e67851c38b43",
+            "strata": {}
+          },
+          {
+            "nym": "nym-be44e73ba78ada2d2763",
+            "strata": {}
+          },
+          {
+            "nym": "nym-c36da7f12fe5d4b65d6e",
+            "strata": {}
+          },
+          {
+            "nym": "nym-d1c89d32081868567f5c",
+            "strata": {}
+          },
+          {
+            "nym": "nym-dd841be3e09d370a9ec9",
+            "strata": {}
+          },
+          {
+            "nym": "nym-e74d256150b8c352ea66",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ed706cd3a93de18a4832",
+            "strata": {}
+          }
+        ],
+        "chain_info": {
+          "public_key": "868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31",
+          "period": 30,
+          "genesis_time": 1595431050,
+          "group_hash": "176f93498eac9ca337150b46d21dd58673ea4e3581185f869672e59fa4cb390a",
+          "scheme": "pedersen-bls-chained",
+          "beacon_id": "default"
+        },
+        "beacon": {
+          "round": 2634945,
+          "randomness": "fc8f2b3561\n428c365ada1aeecad04ccc044ba649c6363c5f687c1989cc2c20e5",
+          "signature": "814778ed1e480406beb43b74af71ce2f0373e0ea1bfdfea8f9ed62c876c20fcbc7f0163860e3da42ed2148756015f4551451898ffe06d384b4d002245025571b6b7a752f7158b40ad92b13b6d703ad31922a617f2c7f6d960b84d56cf1d79eef",
+          "previous_signature": "8bd96294383b4d1e04e736360bd7a487f9f409f1e7bd800b720656a310d577b3bdb1e1631af6c5782a1d8979c502f395036181eff4058960fc40bb7034cdae1991d3eda518ab204a077d2f7e724974cf87b407e549bd815cf0b8e5a3832f675d"
+        },
+        "result": {
+          "commitment_hash": "669fd9c9ca1a176759057d29fe16933a7a02f2d867894fd1749957dc5f1969f5",
+          "groups": [
+            {
+              "stratum": null,
+              "quota": 5,
+              "order": [
+                "nym-ed706cd3a93de18a4832",
+                "nym-619045a8915c9c2d68bb",
+                "nym-7951eab7e7402150e908",
+                "nym-2d45189c4683c3399189",
+                "nym-84bed557a9a7219fedba",
+                "nym-4cffddc1d9d8ca1ed7d6",
+                "nym-2837f416fe53ec50ae56",
+                "nym-169e81e612932eab1a3d",
+                "nym-81140a4e05d99a433aa3",
+                "nym-e74d256150b8c352ea66",
+                "nym-98bf388013ee67f1e823",
+                "nym-074d74994ab26cef9875",
+                "nym-5e953a6db8157fbc9609",
+                "nym-dd841be3e09d370a9ec9",
+                "nym-445a3f39eb3f7ff33895",
+                "nym-044770911a3985f4e18f",
+                "nym-c36da7f12fe5d4b65d6e",
+                "nym-ab130997e67851c38b43",
+                "nym-be44e73ba78ada2d2763",
+                "nym-d1c89d32081868567f5c"
+              ]
+            }
+          ],
+          "selected": [
+            "nym-ed706cd3a93de18a4832",
+            "nym-619045a8915c9c2d68bb",
+            "nym-7951eab7e7402150e908",
+            "nym-2d45189c4683c3399189",
+            "nym-84bed557a9a7219fedba"
+          ]
+        }
+      }
+    },
+    {
+      "reason": "signature hex in uppercase",
+      "trusted_chain_info": null,
+      "transcript": {
+        "commitment": {
+          "version": "d2.lottery.draw/1",
+          "purpose": "review-panel",
+          "context": "matter-0001",
+          "committed_at": 1674472170,
+          "pool_root": "d3587dbff1d30e1bef1e69640c02a7a03e7f40620fe7f7a4838194e4d8d9c5f2",
+          "pool_size": 20,
+          "chain": "8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce",
+          "scheme": "pedersen-bls-chained",
+          "round": 2634945,
+          "size": 5,
+          "stratify_by": null,
+          "quotas": {}
+        },
+        "pool": [
+          {
+            "nym": "nym-044770911a3985f4e18f",
+            "strata": {}
+          },
+          {
+            "nym": "nym-074d74994ab26cef9875",
+            "strata": {}
+          },
+          {
+            "nym": "nym-169e81e612932eab1a3d",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2837f416fe53ec50ae56",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2d45189c4683c3399189",
+            "strata": {}
+          },
+          {
+            "nym": "nym-445a3f39eb3f7ff33895",
+            "strata": {}
+          },
+          {
+            "nym": "nym-4cffddc1d9d8ca1ed7d6",
+            "strata": {}
+          },
+          {
+            "nym": "nym-5e953a6db8157fbc9609",
+            "strata": {}
+          },
+          {
+            "nym": "nym-619045a8915c9c2d68bb",
+            "strata": {}
+          },
+          {
+            "nym": "nym-7951eab7e7402150e908",
+            "strata": {}
+          },
+          {
+            "nym": "nym-81140a4e05d99a433aa3",
+            "strata": {}
+          },
+          {
+            "nym": "nym-84bed557a9a7219fedba",
+            "strata": {}
+          },
+          {
+            "nym": "nym-98bf388013ee67f1e823",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ab130997e67851c38b43",
+            "strata": {}
+          },
+          {
+            "nym": "nym-be44e73ba78ada2d2763",
+            "strata": {}
+          },
+          {
+            "nym": "nym-c36da7f12fe5d4b65d6e",
+            "strata": {}
+          },
+          {
+            "nym": "nym-d1c89d32081868567f5c",
+            "strata": {}
+          },
+          {
+            "nym": "nym-dd841be3e09d370a9ec9",
+            "strata": {}
+          },
+          {
+            "nym": "nym-e74d256150b8c352ea66",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ed706cd3a93de18a4832",
+            "strata": {}
+          }
+        ],
+        "chain_info": {
+          "public_key": "868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31",
+          "period": 30,
+          "genesis_time": 1595431050,
+          "group_hash": "176f93498eac9ca337150b46d21dd58673ea4e3581185f869672e59fa4cb390a",
+          "scheme": "pedersen-bls-chained",
+          "beacon_id": "default"
+        },
+        "beacon": {
+          "round": 2634945,
+          "randomness": "fc8f2b3561428c365ada1aeecad04ccc044ba649c6363c5f687c1989cc2c20e5",
+          "signature": "814778ED1E480406BEB43B74AF71CE2F0373E0EA1BFDFEA8F9ED62C876C20FCBC7F0163860E3DA42ED2148756015F4551451898FFE06D384B4D002245025571B6B7A752F7158B40AD92B13B6D703AD31922A617F2C7F6D960B84D56CF1D79EEF",
+          "previous_signature": "8bd96294383b4d1e04e736360bd7a487f9f409f1e7bd800b720656a310d577b3bdb1e1631af6c5782a1d8979c502f395036181eff4058960fc40bb7034cdae1991d3eda518ab204a077d2f7e724974cf87b407e549bd815cf0b8e5a3832f675d"
+        },
+        "result": {
+          "commitment_hash": "669fd9c9ca1a176759057d29fe16933a7a02f2d867894fd1749957dc5f1969f5",
+          "groups": [
+            {
+              "stratum": null,
+              "quota": 5,
+              "order": [
+                "nym-ed706cd3a93de18a4832",
+                "nym-619045a8915c9c2d68bb",
+                "nym-7951eab7e7402150e908",
+                "nym-2d45189c4683c3399189",
+                "nym-84bed557a9a7219fedba",
+                "nym-4cffddc1d9d8ca1ed7d6",
+                "nym-2837f416fe53ec50ae56",
+                "nym-169e81e612932eab1a3d",
+                "nym-81140a4e05d99a433aa3",
+                "nym-e74d256150b8c352ea66",
+                "nym-98bf388013ee67f1e823",
+                "nym-074d74994ab26cef9875",
+                "nym-5e953a6db8157fbc9609",
+                "nym-dd841be3e09d370a9ec9",
+                "nym-445a3f39eb3f7ff33895",
+                "nym-044770911a3985f4e18f",
+                "nym-c36da7f12fe5d4b65d6e",
+                "nym-ab130997e67851c38b43",
+                "nym-be44e73ba78ada2d2763",
+                "nym-d1c89d32081868567f5c"
+              ]
+            }
+          ],
+          "selected": [
+            "nym-ed706cd3a93de18a4832",
+            "nym-619045a8915c9c2d68bb",
+            "nym-7951eab7e7402150e908",
+            "nym-2d45189c4683c3399189",
+            "nym-84bed557a9a7219fedba"
+          ]
+        }
+      }
+    },
+    {
+      "reason": "member strata null",
+      "trusted_chain_info": null,
+      "transcript": {
+        "commitment": {
+          "version": "d2.lottery.draw/1",
+          "purpose": "review-panel",
+          "context": "matter-0001",
+          "committed_at": 1674472170,
+          "pool_root": "d3587dbff1d30e1bef1e69640c02a7a03e7f40620fe7f7a4838194e4d8d9c5f2",
+          "pool_size": 20,
+          "chain": "8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce",
+          "scheme": "pedersen-bls-chained",
+          "round": 2634945,
+          "size": 5,
+          "stratify_by": null,
+          "quotas": {}
+        },
+        "pool": [
+          {
+            "nym": "nym-044770911a3985f4e18f",
+            "strata": null
+          },
+          {
+            "nym": "nym-074d74994ab26cef9875",
+            "strata": null
+          },
+          {
+            "nym": "nym-169e81e612932eab1a3d",
+            "strata": null
+          },
+          {
+            "nym": "nym-2837f416fe53ec50ae56",
+            "strata": null
+          },
+          {
+            "nym": "nym-2d45189c4683c3399189",
+            "strata": null
+          },
+          {
+            "nym": "nym-445a3f39eb3f7ff33895",
+            "strata": null
+          },
+          {
+            "nym": "nym-4cffddc1d9d8ca1ed7d6",
+            "strata": null
+          },
+          {
+            "nym": "nym-5e953a6db8157fbc9609",
+            "strata": null
+          },
+          {
+            "nym": "nym-619045a8915c9c2d68bb",
+            "strata": null
+          },
+          {
+            "nym": "nym-7951eab7e7402150e908",
+            "strata": null
+          },
+          {
+            "nym": "nym-81140a4e05d99a433aa3",
+            "strata": null
+          },
+          {
+            "nym": "nym-84bed557a9a7219fedba",
+            "strata": null
+          },
+          {
+            "nym": "nym-98bf388013ee67f1e823",
+            "strata": null
+          },
+          {
+            "nym": "nym-ab130997e67851c38b43",
+            "strata": null
+          },
+          {
+            "nym": "nym-be44e73ba78ada2d2763",
+            "strata": null
+          },
+          {
+            "nym": "nym-c36da7f12fe5d4b65d6e",
+            "strata": null
+          },
+          {
+            "nym": "nym-d1c89d32081868567f5c",
+            "strata": null
+          },
+          {
+            "nym": "nym-dd841be3e09d370a9ec9",
+            "strata": null
+          },
+          {
+            "nym": "nym-e74d256150b8c352ea66",
+            "strata": null
+          },
+          {
+            "nym": "nym-ed706cd3a93de18a4832",
+            "strata": null
+          }
+        ],
+        "chain_info": {
+          "public_key": "868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31",
+          "period": 30,
+          "genesis_time": 1595431050,
+          "group_hash": "176f93498eac9ca337150b46d21dd58673ea4e3581185f869672e59fa4cb390a",
+          "scheme": "pedersen-bls-chained",
+          "beacon_id": "default"
+        },
+        "beacon": {
+          "round": 2634945,
+          "randomness": "fc8f2b3561428c365ada1aeecad04ccc044ba649c6363c5f687c1989cc2c20e5",
+          "signature": "814778ed1e480406beb43b74af71ce2f0373e0ea1bfdfea8f9ed62c876c20fcbc7f0163860e3da42ed2148756015f4551451898ffe06d384b4d002245025571b6b7a752f7158b40ad92b13b6d703ad31922a617f2c7f6d960b84d56cf1d79eef",
+          "previous_signature": "8bd96294383b4d1e04e736360bd7a487f9f409f1e7bd800b720656a310d577b3bdb1e1631af6c5782a1d8979c502f395036181eff4058960fc40bb7034cdae1991d3eda518ab204a077d2f7e724974cf87b407e549bd815cf0b8e5a3832f675d"
+        },
+        "result": {
+          "commitment_hash": "669fd9c9ca1a176759057d29fe16933a7a02f2d867894fd1749957dc5f1969f5",
+          "groups": [
+            {
+              "stratum": null,
+              "quota": 5,
+              "order": [
+                "nym-ed706cd3a93de18a4832",
+                "nym-619045a8915c9c2d68bb",
+                "nym-7951eab7e7402150e908",
+                "nym-2d45189c4683c3399189",
+                "nym-84bed557a9a7219fedba",
+                "nym-4cffddc1d9d8ca1ed7d6",
+                "nym-2837f416fe53ec50ae56",
+                "nym-169e81e612932eab1a3d",
+                "nym-81140a4e05d99a433aa3",
+                "nym-e74d256150b8c352ea66",
+                "nym-98bf388013ee67f1e823",
+                "nym-074d74994ab26cef9875",
+                "nym-5e953a6db8157fbc9609",
+                "nym-dd841be3e09d370a9ec9",
+                "nym-445a3f39eb3f7ff33895",
+                "nym-044770911a3985f4e18f",
+                "nym-c36da7f12fe5d4b65d6e",
+                "nym-ab130997e67851c38b43",
+                "nym-be44e73ba78ada2d2763",
+                "nym-d1c89d32081868567f5c"
+              ]
+            }
+          ],
+          "selected": [
+            "nym-ed706cd3a93de18a4832",
+            "nym-619045a8915c9c2d68bb",
+            "nym-7951eab7e7402150e908",
+            "nym-2d45189c4683c3399189",
+            "nym-84bed557a9a7219fedba"
+          ]
+        }
+      }
+    },
+    {
+      "reason": "commitment quotas null",
+      "trusted_chain_info": null,
+      "transcript": {
+        "commitment": {
+          "version": "d2.lottery.draw/1",
+          "purpose": "review-panel",
+          "context": "matter-0001",
+          "committed_at": 1674472170,
+          "pool_root": "d3587dbff1d30e1bef1e69640c02a7a03e7f40620fe7f7a4838194e4d8d9c5f2",
+          "pool_size": 20,
+          "chain": "8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce",
+          "scheme": "pedersen-bls-chained",
+          "round": 2634945,
+          "size": 5,
+          "stratify_by": null,
+          "quotas": null
+        },
+        "pool": [
+          {
+            "nym": "nym-044770911a3985f4e18f",
+            "strata": {}
+          },
+          {
+            "nym": "nym-074d74994ab26cef9875",
+            "strata": {}
+          },
+          {
+            "nym": "nym-169e81e612932eab1a3d",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2837f416fe53ec50ae56",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2d45189c4683c3399189",
+            "strata": {}
+          },
+          {
+            "nym": "nym-445a3f39eb3f7ff33895",
+            "strata": {}
+          },
+          {
+            "nym": "nym-4cffddc1d9d8ca1ed7d6",
+            "strata": {}
+          },
+          {
+            "nym": "nym-5e953a6db8157fbc9609",
+            "strata": {}
+          },
+          {
+            "nym": "nym-619045a8915c9c2d68bb",
+            "strata": {}
+          },
+          {
+            "nym": "nym-7951eab7e7402150e908",
+            "strata": {}
+          },
+          {
+            "nym": "nym-81140a4e05d99a433aa3",
+            "strata": {}
+          },
+          {
+            "nym": "nym-84bed557a9a7219fedba",
+            "strata": {}
+          },
+          {
+            "nym": "nym-98bf388013ee67f1e823",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ab130997e67851c38b43",
+            "strata": {}
+          },
+          {
+            "nym": "nym-be44e73ba78ada2d2763",
+            "strata": {}
+          },
+          {
+            "nym": "nym-c36da7f12fe5d4b65d6e",
+            "strata": {}
+          },
+          {
+            "nym": "nym-d1c89d32081868567f5c",
+            "strata": {}
+          },
+          {
+            "nym": "nym-dd841be3e09d370a9ec9",
+            "strata": {}
+          },
+          {
+            "nym": "nym-e74d256150b8c352ea66",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ed706cd3a93de18a4832",
+            "strata": {}
+          }
+        ],
+        "chain_info": {
+          "public_key": "868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31",
+          "period": 30,
+          "genesis_time": 1595431050,
+          "group_hash": "176f93498eac9ca337150b46d21dd58673ea4e3581185f869672e59fa4cb390a",
+          "scheme": "pedersen-bls-chained",
+          "beacon_id": "default"
+        },
+        "beacon": {
+          "round": 2634945,
+          "randomness": "fc8f2b3561428c365ada1aeecad04ccc044ba649c6363c5f687c1989cc2c20e5",
+          "signature": "814778ed1e480406beb43b74af71ce2f0373e0ea1bfdfea8f9ed62c876c20fcbc7f0163860e3da42ed2148756015f4551451898ffe06d384b4d002245025571b6b7a752f7158b40ad92b13b6d703ad31922a617f2c7f6d960b84d56cf1d79eef",
+          "previous_signature": "8bd96294383b4d1e04e736360bd7a487f9f409f1e7bd800b720656a310d577b3bdb1e1631af6c5782a1d8979c502f395036181eff4058960fc40bb7034cdae1991d3eda518ab204a077d2f7e724974cf87b407e549bd815cf0b8e5a3832f675d"
+        },
+        "result": {
+          "commitment_hash": "669fd9c9ca1a176759057d29fe16933a7a02f2d867894fd1749957dc5f1969f5",
+          "groups": [
+            {
+              "stratum": null,
+              "quota": 5,
+              "order": [
+                "nym-ed706cd3a93de18a4832",
+                "nym-619045a8915c9c2d68bb",
+                "nym-7951eab7e7402150e908",
+                "nym-2d45189c4683c3399189",
+                "nym-84bed557a9a7219fedba",
+                "nym-4cffddc1d9d8ca1ed7d6",
+                "nym-2837f416fe53ec50ae56",
+                "nym-169e81e612932eab1a3d",
+                "nym-81140a4e05d99a433aa3",
+                "nym-e74d256150b8c352ea66",
+                "nym-98bf388013ee67f1e823",
+                "nym-074d74994ab26cef9875",
+                "nym-5e953a6db8157fbc9609",
+                "nym-dd841be3e09d370a9ec9",
+                "nym-445a3f39eb3f7ff33895",
+                "nym-044770911a3985f4e18f",
+                "nym-c36da7f12fe5d4b65d6e",
+                "nym-ab130997e67851c38b43",
+                "nym-be44e73ba78ada2d2763",
+                "nym-d1c89d32081868567f5c"
+              ]
+            }
+          ],
+          "selected": [
+            "nym-ed706cd3a93de18a4832",
+            "nym-619045a8915c9c2d68bb",
+            "nym-7951eab7e7402150e908",
+            "nym-2d45189c4683c3399189",
+            "nym-84bed557a9a7219fedba"
+          ]
+        }
+      }
+    },
+    {
+      "reason": "commitment version null",
+      "trusted_chain_info": null,
+      "transcript": {
+        "commitment": {
+          "version": null,
+          "purpose": "review-panel",
+          "context": "matter-0001",
+          "committed_at": 1674472170,
+          "pool_root": "d3587dbff1d30e1bef1e69640c02a7a03e7f40620fe7f7a4838194e4d8d9c5f2",
+          "pool_size": 20,
+          "chain": "8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce",
+          "scheme": "pedersen-bls-chained",
+          "round": 2634945,
+          "size": 5,
+          "stratify_by": null,
+          "quotas": {}
+        },
+        "pool": [
+          {
+            "nym": "nym-044770911a3985f4e18f",
+            "strata": {}
+          },
+          {
+            "nym": "nym-074d74994ab26cef9875",
+            "strata": {}
+          },
+          {
+            "nym": "nym-169e81e612932eab1a3d",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2837f416fe53ec50ae56",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2d45189c4683c3399189",
+            "strata": {}
+          },
+          {
+            "nym": "nym-445a3f39eb3f7ff33895",
+            "strata": {}
+          },
+          {
+            "nym": "nym-4cffddc1d9d8ca1ed7d6",
+            "strata": {}
+          },
+          {
+            "nym": "nym-5e953a6db8157fbc9609",
+            "strata": {}
+          },
+          {
+            "nym": "nym-619045a8915c9c2d68bb",
+            "strata": {}
+          },
+          {
+            "nym": "nym-7951eab7e7402150e908",
+            "strata": {}
+          },
+          {
+            "nym": "nym-81140a4e05d99a433aa3",
+            "strata": {}
+          },
+          {
+            "nym": "nym-84bed557a9a7219fedba",
+            "strata": {}
+          },
+          {
+            "nym": "nym-98bf388013ee67f1e823",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ab130997e67851c38b43",
+            "strata": {}
+          },
+          {
+            "nym": "nym-be44e73ba78ada2d2763",
+            "strata": {}
+          },
+          {
+            "nym": "nym-c36da7f12fe5d4b65d6e",
+            "strata": {}
+          },
+          {
+            "nym": "nym-d1c89d32081868567f5c",
+            "strata": {}
+          },
+          {
+            "nym": "nym-dd841be3e09d370a9ec9",
+            "strata": {}
+          },
+          {
+            "nym": "nym-e74d256150b8c352ea66",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ed706cd3a93de18a4832",
+            "strata": {}
+          }
+        ],
+        "chain_info": {
+          "public_key": "868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31",
+          "period": 30,
+          "genesis_time": 1595431050,
+          "group_hash": "176f93498eac9ca337150b46d21dd58673ea4e3581185f869672e59fa4cb390a",
+          "scheme": "pedersen-bls-chained",
+          "beacon_id": "default"
+        },
+        "beacon": {
+          "round": 2634945,
+          "randomness": "fc8f2b3561428c365ada1aeecad04ccc044ba649c6363c5f687c1989cc2c20e5",
+          "signature": "814778ed1e480406beb43b74af71ce2f0373e0ea1bfdfea8f9ed62c876c20fcbc7f0163860e3da42ed2148756015f4551451898ffe06d384b4d002245025571b6b7a752f7158b40ad92b13b6d703ad31922a617f2c7f6d960b84d56cf1d79eef",
+          "previous_signature": "8bd96294383b4d1e04e736360bd7a487f9f409f1e7bd800b720656a310d577b3bdb1e1631af6c5782a1d8979c502f395036181eff4058960fc40bb7034cdae1991d3eda518ab204a077d2f7e724974cf87b407e549bd815cf0b8e5a3832f675d"
+        },
+        "result": {
+          "commitment_hash": "669fd9c9ca1a176759057d29fe16933a7a02f2d867894fd1749957dc5f1969f5",
+          "groups": [
+            {
+              "stratum": null,
+              "quota": 5,
+              "order": [
+                "nym-ed706cd3a93de18a4832",
+                "nym-619045a8915c9c2d68bb",
+                "nym-7951eab7e7402150e908",
+                "nym-2d45189c4683c3399189",
+                "nym-84bed557a9a7219fedba",
+                "nym-4cffddc1d9d8ca1ed7d6",
+                "nym-2837f416fe53ec50ae56",
+                "nym-169e81e612932eab1a3d",
+                "nym-81140a4e05d99a433aa3",
+                "nym-e74d256150b8c352ea66",
+                "nym-98bf388013ee67f1e823",
+                "nym-074d74994ab26cef9875",
+                "nym-5e953a6db8157fbc9609",
+                "nym-dd841be3e09d370a9ec9",
+                "nym-445a3f39eb3f7ff33895",
+                "nym-044770911a3985f4e18f",
+                "nym-c36da7f12fe5d4b65d6e",
+                "nym-ab130997e67851c38b43",
+                "nym-be44e73ba78ada2d2763",
+                "nym-d1c89d32081868567f5c"
+              ]
+            }
+          ],
+          "selected": [
+            "nym-ed706cd3a93de18a4832",
+            "nym-619045a8915c9c2d68bb",
+            "nym-7951eab7e7402150e908",
+            "nym-2d45189c4683c3399189",
+            "nym-84bed557a9a7219fedba"
+          ]
+        }
+      }
+    },
+    {
+      "reason": "chain_info in drand /info form",
+      "trusted_chain_info": null,
+      "transcript": {
+        "commitment": {
+          "version": "d2.lottery.draw/1",
+          "purpose": "review-panel",
+          "context": "matter-0001",
+          "committed_at": 1674472170,
+          "pool_root": "d3587dbff1d30e1bef1e69640c02a7a03e7f40620fe7f7a4838194e4d8d9c5f2",
+          "pool_size": 20,
+          "chain": "8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce",
+          "scheme": "pedersen-bls-chained",
+          "round": 2634945,
+          "size": 5,
+          "stratify_by": null,
+          "quotas": {}
+        },
+        "pool": [
+          {
+            "nym": "nym-044770911a3985f4e18f",
+            "strata": {}
+          },
+          {
+            "nym": "nym-074d74994ab26cef9875",
+            "strata": {}
+          },
+          {
+            "nym": "nym-169e81e612932eab1a3d",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2837f416fe53ec50ae56",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2d45189c4683c3399189",
+            "strata": {}
+          },
+          {
+            "nym": "nym-445a3f39eb3f7ff33895",
+            "strata": {}
+          },
+          {
+            "nym": "nym-4cffddc1d9d8ca1ed7d6",
+            "strata": {}
+          },
+          {
+            "nym": "nym-5e953a6db8157fbc9609",
+            "strata": {}
+          },
+          {
+            "nym": "nym-619045a8915c9c2d68bb",
+            "strata": {}
+          },
+          {
+            "nym": "nym-7951eab7e7402150e908",
+            "strata": {}
+          },
+          {
+            "nym": "nym-81140a4e05d99a433aa3",
+            "strata": {}
+          },
+          {
+            "nym": "nym-84bed557a9a7219fedba",
+            "strata": {}
+          },
+          {
+            "nym": "nym-98bf388013ee67f1e823",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ab130997e67851c38b43",
+            "strata": {}
+          },
+          {
+            "nym": "nym-be44e73ba78ada2d2763",
+            "strata": {}
+          },
+          {
+            "nym": "nym-c36da7f12fe5d4b65d6e",
+            "strata": {}
+          },
+          {
+            "nym": "nym-d1c89d32081868567f5c",
+            "strata": {}
+          },
+          {
+            "nym": "nym-dd841be3e09d370a9ec9",
+            "strata": {}
+          },
+          {
+            "nym": "nym-e74d256150b8c352ea66",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ed706cd3a93de18a4832",
+            "strata": {}
+          }
+        ],
+        "chain_info": {
+          "public_key": "868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31",
+          "period": 30,
+          "genesis_time": 1595431050,
+          "groupHash": "176f93498eac9ca337150b46d21dd58673ea4e3581185f869672e59fa4cb390a",
+          "schemeID": "pedersen-bls-chained",
+          "metadata": {
+            "beaconID": "default"
+          }
+        },
+        "beacon": {
+          "round": 2634945,
+          "randomness": "fc8f2b3561428c365ada1aeecad04ccc044ba649c6363c5f687c1989cc2c20e5",
+          "signature": "814778ed1e480406beb43b74af71ce2f0373e0ea1bfdfea8f9ed62c876c20fcbc7f0163860e3da42ed2148756015f4551451898ffe06d384b4d002245025571b6b7a752f7158b40ad92b13b6d703ad31922a617f2c7f6d960b84d56cf1d79eef",
+          "previous_signature": "8bd96294383b4d1e04e736360bd7a487f9f409f1e7bd800b720656a310d577b3bdb1e1631af6c5782a1d8979c502f395036181eff4058960fc40bb7034cdae1991d3eda518ab204a077d2f7e724974cf87b407e549bd815cf0b8e5a3832f675d"
+        },
+        "result": {
+          "commitment_hash": "669fd9c9ca1a176759057d29fe16933a7a02f2d867894fd1749957dc5f1969f5",
+          "groups": [
+            {
+              "stratum": null,
+              "quota": 5,
+              "order": [
+                "nym-ed706cd3a93de18a4832",
+                "nym-619045a8915c9c2d68bb",
+                "nym-7951eab7e7402150e908",
+                "nym-2d45189c4683c3399189",
+                "nym-84bed557a9a7219fedba",
+                "nym-4cffddc1d9d8ca1ed7d6",
+                "nym-2837f416fe53ec50ae56",
+                "nym-169e81e612932eab1a3d",
+                "nym-81140a4e05d99a433aa3",
+                "nym-e74d256150b8c352ea66",
+                "nym-98bf388013ee67f1e823",
+                "nym-074d74994ab26cef9875",
+                "nym-5e953a6db8157fbc9609",
+                "nym-dd841be3e09d370a9ec9",
+                "nym-445a3f39eb3f7ff33895",
+                "nym-044770911a3985f4e18f",
+                "nym-c36da7f12fe5d4b65d6e",
+                "nym-ab130997e67851c38b43",
+                "nym-be44e73ba78ada2d2763",
+                "nym-d1c89d32081868567f5c"
+              ]
+            }
+          ],
+          "selected": [
+            "nym-ed706cd3a93de18a4832",
+            "nym-619045a8915c9c2d68bb",
+            "nym-7951eab7e7402150e908",
+            "nym-2d45189c4683c3399189",
+            "nym-84bed557a9a7219fedba"
+          ]
+        }
+      }
+    },
+    {
+      "reason": "chain_info with an extra field",
+      "trusted_chain_info": null,
+      "transcript": {
+        "commitment": {
+          "version": "d2.lottery.draw/1",
+          "purpose": "review-panel",
+          "context": "matter-0001",
+          "committed_at": 1674472170,
+          "pool_root": "d3587dbff1d30e1bef1e69640c02a7a03e7f40620fe7f7a4838194e4d8d9c5f2",
+          "pool_size": 20,
+          "chain": "8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce",
+          "scheme": "pedersen-bls-chained",
+          "round": 2634945,
+          "size": 5,
+          "stratify_by": null,
+          "quotas": {}
+        },
+        "pool": [
+          {
+            "nym": "nym-044770911a3985f4e18f",
+            "strata": {}
+          },
+          {
+            "nym": "nym-074d74994ab26cef9875",
+            "strata": {}
+          },
+          {
+            "nym": "nym-169e81e612932eab1a3d",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2837f416fe53ec50ae56",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2d45189c4683c3399189",
+            "strata": {}
+          },
+          {
+            "nym": "nym-445a3f39eb3f7ff33895",
+            "strata": {}
+          },
+          {
+            "nym": "nym-4cffddc1d9d8ca1ed7d6",
+            "strata": {}
+          },
+          {
+            "nym": "nym-5e953a6db8157fbc9609",
+            "strata": {}
+          },
+          {
+            "nym": "nym-619045a8915c9c2d68bb",
+            "strata": {}
+          },
+          {
+            "nym": "nym-7951eab7e7402150e908",
+            "strata": {}
+          },
+          {
+            "nym": "nym-81140a4e05d99a433aa3",
+            "strata": {}
+          },
+          {
+            "nym": "nym-84bed557a9a7219fedba",
+            "strata": {}
+          },
+          {
+            "nym": "nym-98bf388013ee67f1e823",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ab130997e67851c38b43",
+            "strata": {}
+          },
+          {
+            "nym": "nym-be44e73ba78ada2d2763",
+            "strata": {}
+          },
+          {
+            "nym": "nym-c36da7f12fe5d4b65d6e",
+            "strata": {}
+          },
+          {
+            "nym": "nym-d1c89d32081868567f5c",
+            "strata": {}
+          },
+          {
+            "nym": "nym-dd841be3e09d370a9ec9",
+            "strata": {}
+          },
+          {
+            "nym": "nym-e74d256150b8c352ea66",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ed706cd3a93de18a4832",
+            "strata": {}
+          }
+        ],
+        "chain_info": {
+          "public_key": "868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31",
+          "period": 30,
+          "genesis_time": 1595431050,
+          "group_hash": "176f93498eac9ca337150b46d21dd58673ea4e3581185f869672e59fa4cb390a",
+          "scheme": "pedersen-bls-chained",
+          "beacon_id": "default",
+          "hash": "8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce"
+        },
+        "beacon": {
+          "round": 2634945,
+          "randomness": "fc8f2b3561428c365ada1aeecad04ccc044ba649c6363c5f687c1989cc2c20e5",
+          "signature": "814778ed1e480406beb43b74af71ce2f0373e0ea1bfdfea8f9ed62c876c20fcbc7f0163860e3da42ed2148756015f4551451898ffe06d384b4d002245025571b6b7a752f7158b40ad92b13b6d703ad31922a617f2c7f6d960b84d56cf1d79eef",
+          "previous_signature": "8bd96294383b4d1e04e736360bd7a487f9f409f1e7bd800b720656a310d577b3bdb1e1631af6c5782a1d8979c502f395036181eff4058960fc40bb7034cdae1991d3eda518ab204a077d2f7e724974cf87b407e549bd815cf0b8e5a3832f675d"
+        },
+        "result": {
+          "commitment_hash": "669fd9c9ca1a176759057d29fe16933a7a02f2d867894fd1749957dc5f1969f5",
+          "groups": [
+            {
+              "stratum": null,
+              "quota": 5,
+              "order": [
+                "nym-ed706cd3a93de18a4832",
+                "nym-619045a8915c9c2d68bb",
+                "nym-7951eab7e7402150e908",
+                "nym-2d45189c4683c3399189",
+                "nym-84bed557a9a7219fedba",
+                "nym-4cffddc1d9d8ca1ed7d6",
+                "nym-2837f416fe53ec50ae56",
+                "nym-169e81e612932eab1a3d",
+                "nym-81140a4e05d99a433aa3",
+                "nym-e74d256150b8c352ea66",
+                "nym-98bf388013ee67f1e823",
+                "nym-074d74994ab26cef9875",
+                "nym-5e953a6db8157fbc9609",
+                "nym-dd841be3e09d370a9ec9",
+                "nym-445a3f39eb3f7ff33895",
+                "nym-044770911a3985f4e18f",
+                "nym-c36da7f12fe5d4b65d6e",
+                "nym-ab130997e67851c38b43",
+                "nym-be44e73ba78ada2d2763",
+                "nym-d1c89d32081868567f5c"
+              ]
+            }
+          ],
+          "selected": [
+            "nym-ed706cd3a93de18a4832",
+            "nym-619045a8915c9c2d68bb",
+            "nym-7951eab7e7402150e908",
+            "nym-2d45189c4683c3399189",
+            "nym-84bed557a9a7219fedba"
+          ]
+        }
+      }
+    },
+    {
+      "reason": "chain_info missing a field",
+      "trusted_chain_info": null,
+      "transcript": {
+        "commitment": {
+          "version": "d2.lottery.draw/1",
+          "purpose": "review-panel",
+          "context": "matter-0001",
+          "committed_at": 1674472170,
+          "pool_root": "d3587dbff1d30e1bef1e69640c02a7a03e7f40620fe7f7a4838194e4d8d9c5f2",
+          "pool_size": 20,
+          "chain": "8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce",
+          "scheme": "pedersen-bls-chained",
+          "round": 2634945,
+          "size": 5,
+          "stratify_by": null,
+          "quotas": {}
+        },
+        "pool": [
+          {
+            "nym": "nym-044770911a3985f4e18f",
+            "strata": {}
+          },
+          {
+            "nym": "nym-074d74994ab26cef9875",
+            "strata": {}
+          },
+          {
+            "nym": "nym-169e81e612932eab1a3d",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2837f416fe53ec50ae56",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2d45189c4683c3399189",
+            "strata": {}
+          },
+          {
+            "nym": "nym-445a3f39eb3f7ff33895",
+            "strata": {}
+          },
+          {
+            "nym": "nym-4cffddc1d9d8ca1ed7d6",
+            "strata": {}
+          },
+          {
+            "nym": "nym-5e953a6db8157fbc9609",
+            "strata": {}
+          },
+          {
+            "nym": "nym-619045a8915c9c2d68bb",
+            "strata": {}
+          },
+          {
+            "nym": "nym-7951eab7e7402150e908",
+            "strata": {}
+          },
+          {
+            "nym": "nym-81140a4e05d99a433aa3",
+            "strata": {}
+          },
+          {
+            "nym": "nym-84bed557a9a7219fedba",
+            "strata": {}
+          },
+          {
+            "nym": "nym-98bf388013ee67f1e823",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ab130997e67851c38b43",
+            "strata": {}
+          },
+          {
+            "nym": "nym-be44e73ba78ada2d2763",
+            "strata": {}
+          },
+          {
+            "nym": "nym-c36da7f12fe5d4b65d6e",
+            "strata": {}
+          },
+          {
+            "nym": "nym-d1c89d32081868567f5c",
+            "strata": {}
+          },
+          {
+            "nym": "nym-dd841be3e09d370a9ec9",
+            "strata": {}
+          },
+          {
+            "nym": "nym-e74d256150b8c352ea66",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ed706cd3a93de18a4832",
+            "strata": {}
+          }
+        ],
+        "chain_info": {
+          "public_key": "868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31",
+          "period": 30,
+          "genesis_time": 1595431050,
+          "group_hash": "176f93498eac9ca337150b46d21dd58673ea4e3581185f869672e59fa4cb390a",
+          "scheme": "pedersen-bls-chained"
+        },
+        "beacon": {
+          "round": 2634945,
+          "randomness": "fc8f2b3561428c365ada1aeecad04ccc044ba649c6363c5f687c1989cc2c20e5",
+          "signature": "814778ed1e480406beb43b74af71ce2f0373e0ea1bfdfea8f9ed62c876c20fcbc7f0163860e3da42ed2148756015f4551451898ffe06d384b4d002245025571b6b7a752f7158b40ad92b13b6d703ad31922a617f2c7f6d960b84d56cf1d79eef",
+          "previous_signature": "8bd96294383b4d1e04e736360bd7a487f9f409f1e7bd800b720656a310d577b3bdb1e1631af6c5782a1d8979c502f395036181eff4058960fc40bb7034cdae1991d3eda518ab204a077d2f7e724974cf87b407e549bd815cf0b8e5a3832f675d"
+        },
+        "result": {
+          "commitment_hash": "669fd9c9ca1a176759057d29fe16933a7a02f2d867894fd1749957dc5f1969f5",
+          "groups": [
+            {
+              "stratum": null,
+              "quota": 5,
+              "order": [
+                "nym-ed706cd3a93de18a4832",
+                "nym-619045a8915c9c2d68bb",
+                "nym-7951eab7e7402150e908",
+                "nym-2d45189c4683c3399189",
+                "nym-84bed557a9a7219fedba",
+                "nym-4cffddc1d9d8ca1ed7d6",
+                "nym-2837f416fe53ec50ae56",
+                "nym-169e81e612932eab1a3d",
+                "nym-81140a4e05d99a433aa3",
+                "nym-e74d256150b8c352ea66",
+                "nym-98bf388013ee67f1e823",
+                "nym-074d74994ab26cef9875",
+                "nym-5e953a6db8157fbc9609",
+                "nym-dd841be3e09d370a9ec9",
+                "nym-445a3f39eb3f7ff33895",
+                "nym-044770911a3985f4e18f",
+                "nym-c36da7f12fe5d4b65d6e",
+                "nym-ab130997e67851c38b43",
+                "nym-be44e73ba78ada2d2763",
+                "nym-d1c89d32081868567f5c"
+              ]
+            }
+          ],
+          "selected": [
+            "nym-ed706cd3a93de18a4832",
+            "nym-619045a8915c9c2d68bb",
+            "nym-7951eab7e7402150e908",
+            "nym-2d45189c4683c3399189",
+            "nym-84bed557a9a7219fedba"
+          ]
+        }
+      }
+    },
+    {
+      "reason": "chain_info period as a string",
+      "trusted_chain_info": null,
+      "transcript": {
+        "commitment": {
+          "version": "d2.lottery.draw/1",
+          "purpose": "review-panel",
+          "context": "matter-0001",
+          "committed_at": 1674472170,
+          "pool_root": "d3587dbff1d30e1bef1e69640c02a7a03e7f40620fe7f7a4838194e4d8d9c5f2",
+          "pool_size": 20,
+          "chain": "8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce",
+          "scheme": "pedersen-bls-chained",
+          "round": 2634945,
+          "size": 5,
+          "stratify_by": null,
+          "quotas": {}
+        },
+        "pool": [
+          {
+            "nym": "nym-044770911a3985f4e18f",
+            "strata": {}
+          },
+          {
+            "nym": "nym-074d74994ab26cef9875",
+            "strata": {}
+          },
+          {
+            "nym": "nym-169e81e612932eab1a3d",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2837f416fe53ec50ae56",
+            "strata": {}
+          },
+          {
+            "nym": "nym-2d45189c4683c3399189",
+            "strata": {}
+          },
+          {
+            "nym": "nym-445a3f39eb3f7ff33895",
+            "strata": {}
+          },
+          {
+            "nym": "nym-4cffddc1d9d8ca1ed7d6",
+            "strata": {}
+          },
+          {
+            "nym": "nym-5e953a6db8157fbc9609",
+            "strata": {}
+          },
+          {
+            "nym": "nym-619045a8915c9c2d68bb",
+            "strata": {}
+          },
+          {
+            "nym": "nym-7951eab7e7402150e908",
+            "strata": {}
+          },
+          {
+            "nym": "nym-81140a4e05d99a433aa3",
+            "strata": {}
+          },
+          {
+            "nym": "nym-84bed557a9a7219fedba",
+            "strata": {}
+          },
+          {
+            "nym": "nym-98bf388013ee67f1e823",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ab130997e67851c38b43",
+            "strata": {}
+          },
+          {
+            "nym": "nym-be44e73ba78ada2d2763",
+            "strata": {}
+          },
+          {
+            "nym": "nym-c36da7f12fe5d4b65d6e",
+            "strata": {}
+          },
+          {
+            "nym": "nym-d1c89d32081868567f5c",
+            "strata": {}
+          },
+          {
+            "nym": "nym-dd841be3e09d370a9ec9",
+            "strata": {}
+          },
+          {
+            "nym": "nym-e74d256150b8c352ea66",
+            "strata": {}
+          },
+          {
+            "nym": "nym-ed706cd3a93de18a4832",
+            "strata": {}
+          }
+        ],
+        "chain_info": {
+          "public_key": "868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31",
+          "period": "30",
+          "genesis_time": 1595431050,
+          "group_hash": "176f93498eac9ca337150b46d21dd58673ea4e3581185f869672e59fa4cb390a",
+          "scheme": "pedersen-bls-chained",
+          "beacon_id": "default"
+        },
+        "beacon": {
+          "round": 2634945,
+          "randomness": "fc8f2b3561428c365ada1aeecad04ccc044ba649c6363c5f687c1989cc2c20e5",
+          "signature": "814778ed1e480406beb43b74af71ce2f0373e0ea1bfdfea8f9ed62c876c20fcbc7f0163860e3da42ed2148756015f4551451898ffe06d384b4d002245025571b6b7a752f7158b40ad92b13b6d703ad31922a617f2c7f6d960b84d56cf1d79eef",
+          "previous_signature": "8bd96294383b4d1e04e736360bd7a487f9f409f1e7bd800b720656a310d577b3bdb1e1631af6c5782a1d8979c502f395036181eff4058960fc40bb7034cdae1991d3eda518ab204a077d2f7e724974cf87b407e549bd815cf0b8e5a3832f675d"
+        },
+        "result": {
+          "commitment_hash": "669fd9c9ca1a176759057d29fe16933a7a02f2d867894fd1749957dc5f1969f5",
+          "groups": [
+            {
+              "stratum": null,
+              "quota": 5,
+              "order": [
+                "nym-ed706cd3a93de18a4832",
+                "nym-619045a8915c9c2d68bb",
+                "nym-7951eab7e7402150e908",
+                "nym-2d45189c4683c3399189",
+                "nym-84bed557a9a7219fedba",
+                "nym-4cffddc1d9d8ca1ed7d6",
+                "nym-2837f416fe53ec50ae56",
+                "nym-169e81e612932eab1a3d",
+                "nym-81140a4e05d99a433aa3",
+                "nym-e74d256150b8c352ea66",
+                "nym-98bf388013ee67f1e823",
+                "nym-074d74994ab26cef9875",
+                "nym-5e953a6db8157fbc9609",
+                "nym-dd841be3e09d370a9ec9",
+                "nym-445a3f39eb3f7ff33895",
+                "nym-044770911a3985f4e18f",
+                "nym-c36da7f12fe5d4b65d6e",
+                "nym-ab130997e67851c38b43",
+                "nym-be44e73ba78ada2d2763",
+                "nym-d1c89d32081868567f5c"
+              ]
+            }
+          ],
+          "selected": [
+            "nym-ed706cd3a93de18a4832",
+            "nym-619045a8915c9c2d68bb",
+            "nym-7951eab7e7402150e908",
+            "nym-2d45189c4683c3399189",
+            "nym-84bed557a9a7219fedba"
+          ]
+        }
+      }
+    },
+    {
+      "reason": "previous_signature null on an unchained beacon",
+      "trusted_chain_info": {
+        "public_key": "81d320f220ee9c79e60e19dedc838c31e3ab919b15481e9feb52f643628c4f6a13fdc52129493875a818109d767272ca0541cbcdcea9335f2870d781b39b845ba8cbd44fdfe4967781cf72ca5917fc9398bcf97ca0548ed5a709016c4b1ff0f3",
+        "period": 3,
+        "genesis_time": 1687506816,
+        "group_hash": "02d678e93908888871b70e3f015b396a8c082bc1493ae5479f8743cb5d972b54",
+        "scheme": "bls-unchained-g1-rfc9380",
+        "beacon_id": "walkthrough"
+      },
+      "transcript": {
+        "commitment": {
+          "version": "d2.lottery.draw/1",
+          "purpose": "briefing-panel",
+          "context": "matter-0002",
+          "committed_at": 1687499727,
+          "pool_root": "de156689b3d24b1119bf3f059e590384fd1e47961f125490b110767000c11665",
+          "pool_size": 30,
+          "chain": "af8b6fc95693b058a3a59efe586eb31c2c352fe00cf40c62a427d87c34f7a235",
+          "scheme": "bls-unchained-g1-rfc9380",
+          "round": 38,
+          "size": 6,
+          "stratify_by": "age",
+          "quotas": {
+            "18-34": 2,
+            "35-54": 2,
+            "55-plus": 2
+          }
+        },
+        "pool": [
+          {
+            "nym": "nym-0d93942be0abd47f1e91",
+            "strata": {
+              "age": "18-34",
+              "commune": "esch"
+            }
+          },
+          {
+            "nym": "nym-16882b81d58c40b5d36a",
+            "strata": {
+              "age": "18-34",
+              "commune": "esch"
+            }
+          },
+          {
+            "nym": "nym-181cd0149d5d2a23cf54",
+            "strata": {
+              "age": "35-54",
+              "commune": "dudelange"
+            }
+          },
+          {
+            "nym": "nym-1911052db8a53d991b06",
+            "strata": {
+              "age": "55-plus",
+              "commune": "dudelange"
+            }
+          },
+          {
+            "nym": "nym-1c0b9d6b538d55762daf",
+            "strata": {
+              "age": "55-plus",
+              "commune": "dudelange"
+            }
+          },
+          {
+            "nym": "nym-1ef2ce58001a36f84a5c",
+            "strata": {
+              "age": "35-54",
+              "commune": "esch"
+            }
+          },
+          {
+            "nym": "nym-22fc34bf02072e4d5dea",
+            "strata": {
+              "age": "35-54",
+              "commune": "dudelange"
+            }
+          },
+          {
+            "nym": "nym-253573ea4813676c113d",
+            "strata": {
+              "age": "18-34",
+              "commune": "esch"
+            }
+          },
+          {
+            "nym": "nym-37a117af5cd55731013b",
+            "strata": {
+              "age": "35-54",
+              "commune": "esch"
+            }
+          },
+          {
+            "nym": "nym-40910efaed80e62d90ae",
+            "strata": {
+              "age": "35-54",
+              "commune": "esch"
+            }
+          },
+          {
+            "nym": "nym-446d6e99fb8b08d43fa3",
+            "strata": {
+              "age": "18-34",
+              "commune": "esch"
+            }
+          },
+          {
+            "nym": "nym-560cb15498f6a9c1b03f",
+            "strata": {
+              "age": "35-54",
+              "commune": "esch"
+            }
+          },
+          {
+            "nym": "nym-577e971673f058a30274",
+            "strata": {
+              "age": "18-34",
+              "commune": "dudelange"
+            }
+          },
+          {
+            "nym": "nym-6bc4d8d0a5eb7936ac10",
+            "strata": {
+              "age": "55-plus",
+              "commune": "dudelange"
+            }
+          },
+          {
+            "nym": "nym-754c6a5840e762d066a7",
+            "strata": {
+              "age": "55-plus",
+              "commune": "dudelange"
+            }
+          },
+          {
+            "nym": "nym-7df024ee4bd152e617ee",
+            "strata": {
+              "age": "35-54",
+              "commune": "dudelange"
+            }
+          },
+          {
+            "nym": "nym-8f63eb3dbafe5f375ea9",
+            "strata": {
+              "age": "35-54",
+              "commune": "dudelange"
+            }
+          },
+          {
+            "nym": "nym-90655c868edc7a769f92",
+            "strata": {
+              "age": "55-plus",
+              "commune": "esch"
+            }
+          },
+          {
+            "nym": "nym-996c14e4fea1c3c85b72",
+            "strata": {
+              "age": "55-plus",
+              "commune": "dudelange"
+            }
+          },
+          {
+            "nym": "nym-a02c4a5af71b66e21333",
+            "strata": {
+              "age": "18-34",
+              "commune": "dudelange"
+            }
+          },
+          {
+            "nym": "nym-a57018658825875024ff",
+            "strata": {
+              "age": "55-plus",
+              "commune": "esch"
+            }
+          },
+          {
+            "nym": "nym-a68674fbb04e7c3a7de8",
+            "strata": {
+              "age": "55-plus",
+              "commune": "esch"
+            }
+          },
+          {
+            "nym": "nym-ac4a0aa63e1f0d03f02b",
+            "strata": {
+              "age": "35-54",
+              "commune": "esch"
+            }
+          },
+          {
+            "nym": "nym-c11a86267a2fcb40a648",
+            "strata": {
+              "age": "18-34",
+              "commune": "esch"
+            }
+          },
+          {
+            "nym": "nym-d46f313cd2d267fb7495",
+            "strata": {
+              "age": "18-34",
+              "commune": "dudelange"
+            }
+          },
+          {
+            "nym": "nym-e8c3b2fb8cc6329422c5",
+            "strata": {
+              "age": "18-34",
+              "commune": "dudelange"
+            }
+          },
+          {
+            "nym": "nym-eb5bb70b00e77854f9aa",
+            "strata": {
+              "age": "35-54",
+              "commune": "dudelange"
+            }
+          },
+          {
+            "nym": "nym-efff0d3037e2db524095",
+            "strata": {
+              "age": "18-34",
+              "commune": "dudelange"
+            }
+          },
+          {
+            "nym": "nym-fabedb1f110436aa8a50",
+            "strata": {
+              "age": "55-plus",
+              "commune": "esch"
+            }
+          },
+          {
+            "nym": "nym-fceabf567f23e443079e",
+            "strata": {
+              "age": "55-plus",
+              "commune": "esch"
+            }
+          }
+        ],
+        "chain_info": {
+          "public_key": "81d320f220ee9c79e60e19dedc838c31e3ab919b15481e9feb52f643628c4f6a13fdc52129493875a818109d767272ca0541cbcdcea9335f2870d781b39b845ba8cbd44fdfe4967781cf72ca5917fc9398bcf97ca0548ed5a709016c4b1ff0f3",
+          "period": 3,
+          "genesis_time": 1687506816,
+          "group_hash": "02d678e93908888871b70e3f015b396a8c082bc1493ae5479f8743cb5d972b54",
+          "scheme": "bls-unchained-g1-rfc9380",
+          "beacon_id": "walkthrough"
+        },
+        "beacon": {
+          "round": 38,
+          "randomness": "b2fc21325a24904a6a9e81a6c63f65f6cec3f0b2400df3f4a56b214770e9ccca",
+          "signature": "95c93585c513ebbcb4777ff15599b3140e5ec0295faa0e483f3deadd88fa6d43f0d3703e3a4ce106e8fd6c6987f32126",
+          "previous_signature": null
+        },
+        "result": {
+          "commitment_hash": "b0a11a049849d57f44d5c202a9661a63bd2a23c561a348b5a20fddec9b1d0d04",
+          "groups": [
+            {
+              "stratum": "18-34",
+              "quota": 2,
+              "order": [
+                "nym-d46f313cd2d267fb7495",
+                "nym-446d6e99fb8b08d43fa3",
+                "nym-e8c3b2fb8cc6329422c5",
+                "nym-16882b81d58c40b5d36a",
+                "nym-577e971673f058a30274",
+                "nym-efff0d3037e2db524095",
+                "nym-a02c4a5af71b66e21333",
+                "nym-253573ea4813676c113d",
+                "nym-c11a86267a2fcb40a648",
+                "nym-0d93942be0abd47f1e91"
+              ]
+            },
+            {
+              "stratum": "35-54",
+              "quota": 2,
+              "order": [
+                "nym-ac4a0aa63e1f0d03f02b",
+                "nym-7df024ee4bd152e617ee",
+                "nym-560cb15498f6a9c1b03f",
+                "nym-22fc34bf02072e4d5dea",
+                "nym-181cd0149d5d2a23cf54",
+                "nym-37a117af5cd55731013b",
+                "nym-eb5bb70b00e77854f9aa",
+                "nym-40910efaed80e62d90ae",
+                "nym-8f63eb3dbafe5f375ea9",
+                "nym-1ef2ce58001a36f84a5c"
+              ]
+            },
+            {
+              "stratum": "55-plus",
+              "quota": 2,
+              "order": [
+                "nym-1c0b9d6b538d55762daf",
+                "nym-fceabf567f23e443079e",
+                "nym-90655c868edc7a769f92",
+                "nym-996c14e4fea1c3c85b72",
+                "nym-a68674fbb04e7c3a7de8",
+                "nym-a57018658825875024ff",
+                "nym-1911052db8a53d991b06",
+                "nym-754c6a5840e762d066a7",
+                "nym-6bc4d8d0a5eb7936ac10",
+                "nym-fabedb1f110436aa8a50"
+              ]
+            }
+          ],
+          "selected": [
+            "nym-d46f313cd2d267fb7495",
+            "nym-446d6e99fb8b08d43fa3",
+            "nym-ac4a0aa63e1f0d03f02b",
+            "nym-7df024ee4bd152e617ee",
+            "nym-1c0b9d6b538d55762daf",
+            "nym-fceabf567f23e443079e"
+          ]
+        }
+      }
+    },
+    {
+      "reason": "round written as a float",
+      "trusted_chain_info": null,
+      "transcript_json": "{\"commitment\": {\"version\": \"d2.lottery.draw/1\", \"purpose\": \"review-panel\", \"context\": \"matter-0001\", \"committed_at\": 1674472170, \"pool_root\": \"d3587dbff1d30e1bef1e69640c02a7a03e7f40620fe7f7a4838194e4d8d9c5f2\", \"pool_size\": 20, \"chain\": \"8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce\", \"scheme\": \"pedersen-bls-chained\", \"round\": 2634945.0, \"size\": 5, \"stratify_by\": null, \"quotas\": {}}, \"pool\": [{\"nym\": \"nym-044770911a3985f4e18f\", \"strata\": {}}, {\"nym\": \"nym-074d74994ab26cef9875\", \"strata\": {}}, {\"nym\": \"nym-169e81e612932eab1a3d\", \"strata\": {}}, {\"nym\": \"nym-2837f416fe53ec50ae56\", \"strata\": {}}, {\"nym\": \"nym-2d45189c4683c3399189\", \"strata\": {}}, {\"nym\": \"nym-445a3f39eb3f7ff33895\", \"strata\": {}}, {\"nym\": \"nym-4cffddc1d9d8ca1ed7d6\", \"strata\": {}}, {\"nym\": \"nym-5e953a6db8157fbc9609\", \"strata\": {}}, {\"nym\": \"nym-619045a8915c9c2d68bb\", \"strata\": {}}, {\"nym\": \"nym-7951eab7e7402150e908\", \"strata\": {}}, {\"nym\": \"nym-81140a4e05d99a433aa3\", \"strata\": {}}, {\"nym\": \"nym-84bed557a9a7219fedba\", \"strata\": {}}, {\"nym\": \"nym-98bf388013ee67f1e823\", \"strata\": {}}, {\"nym\": \"nym-ab130997e67851c38b43\", \"strata\": {}}, {\"nym\": \"nym-be44e73ba78ada2d2763\", \"strata\": {}}, {\"nym\": \"nym-c36da7f12fe5d4b65d6e\", \"strata\": {}}, {\"nym\": \"nym-d1c89d32081868567f5c\", \"strata\": {}}, {\"nym\": \"nym-dd841be3e09d370a9ec9\", \"strata\": {}}, {\"nym\": \"nym-e74d256150b8c352ea66\", \"strata\": {}}, {\"nym\": \"nym-ed706cd3a93de18a4832\", \"strata\": {}}], \"chain_info\": {\"public_key\": \"868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31\", \"period\": 30, \"genesis_time\": 1595431050, \"group_hash\": \"176f93498eac9ca337150b46d21dd58673ea4e3581185f869672e59fa4cb390a\", \"scheme\": \"pedersen-bls-chained\", \"beacon_id\": \"default\"}, \"beacon\": {\"round\": 2634945, \"randomness\": \"fc8f2b3561428c365ada1aeecad04ccc044ba649c6363c5f687c1989cc2c20e5\", \"signature\": \"814778ed1e480406beb43b74af71ce2f0373e0ea1bfdfea8f9ed62c876c20fcbc7f0163860e3da42ed2148756015f4551451898ffe06d384b4d002245025571b6b7a752f7158b40ad92b13b6d703ad31922a617f2c7f6d960b84d56cf1d79eef\", \"previous_signature\": \"8bd96294383b4d1e04e736360bd7a487f9f409f1e7bd800b720656a310d577b3bdb1e1631af6c5782a1d8979c502f395036181eff4058960fc40bb7034cdae1991d3eda518ab204a077d2f7e724974cf87b407e549bd815cf0b8e5a3832f675d\"}, \"result\": {\"commitment_hash\": \"669fd9c9ca1a176759057d29fe16933a7a02f2d867894fd1749957dc5f1969f5\", \"groups\": [{\"stratum\": null, \"quota\": 5, \"order\": [\"nym-ed706cd3a93de18a4832\", \"nym-619045a8915c9c2d68bb\", \"nym-7951eab7e7402150e908\", \"nym-2d45189c4683c3399189\", \"nym-84bed557a9a7219fedba\", \"nym-4cffddc1d9d8ca1ed7d6\", \"nym-2837f416fe53ec50ae56\", \"nym-169e81e612932eab1a3d\", \"nym-81140a4e05d99a433aa3\", \"nym-e74d256150b8c352ea66\", \"nym-98bf388013ee67f1e823\", \"nym-074d74994ab26cef9875\", \"nym-5e953a6db8157fbc9609\", \"nym-dd841be3e09d370a9ec9\", \"nym-445a3f39eb3f7ff33895\", \"nym-044770911a3985f4e18f\", \"nym-c36da7f12fe5d4b65d6e\", \"nym-ab130997e67851c38b43\", \"nym-be44e73ba78ada2d2763\", \"nym-d1c89d32081868567f5c\"]}], \"selected\": [\"nym-ed706cd3a93de18a4832\", \"nym-619045a8915c9c2d68bb\", \"nym-7951eab7e7402150e908\", \"nym-2d45189c4683c3399189\", \"nym-84bed557a9a7219fedba\"]}}"
+    },
+    {
+      "reason": "pool_size written with an exponent",
+      "trusted_chain_info": null,
+      "transcript_json": "{\"commitment\": {\"version\": \"d2.lottery.draw/1\", \"purpose\": \"review-panel\", \"context\": \"matter-0001\", \"committed_at\": 1674472170, \"pool_root\": \"d3587dbff1d30e1bef1e69640c02a7a03e7f40620fe7f7a4838194e4d8d9c5f2\", \"pool_size\": 2e1, \"chain\": \"8990e7a9aaed2ffed73dbd7092123d6f289930540d7651336225dc172e51b2ce\", \"scheme\": \"pedersen-bls-chained\", \"round\": 2634945, \"size\": 5, \"stratify_by\": null, \"quotas\": {}}, \"pool\": [{\"nym\": \"nym-044770911a3985f4e18f\", \"strata\": {}}, {\"nym\": \"nym-074d74994ab26cef9875\", \"strata\": {}}, {\"nym\": \"nym-169e81e612932eab1a3d\", \"strata\": {}}, {\"nym\": \"nym-2837f416fe53ec50ae56\", \"strata\": {}}, {\"nym\": \"nym-2d45189c4683c3399189\", \"strata\": {}}, {\"nym\": \"nym-445a3f39eb3f7ff33895\", \"strata\": {}}, {\"nym\": \"nym-4cffddc1d9d8ca1ed7d6\", \"strata\": {}}, {\"nym\": \"nym-5e953a6db8157fbc9609\", \"strata\": {}}, {\"nym\": \"nym-619045a8915c9c2d68bb\", \"strata\": {}}, {\"nym\": \"nym-7951eab7e7402150e908\", \"strata\": {}}, {\"nym\": \"nym-81140a4e05d99a433aa3\", \"strata\": {}}, {\"nym\": \"nym-84bed557a9a7219fedba\", \"strata\": {}}, {\"nym\": \"nym-98bf388013ee67f1e823\", \"strata\": {}}, {\"nym\": \"nym-ab130997e67851c38b43\", \"strata\": {}}, {\"nym\": \"nym-be44e73ba78ada2d2763\", \"strata\": {}}, {\"nym\": \"nym-c36da7f12fe5d4b65d6e\", \"strata\": {}}, {\"nym\": \"nym-d1c89d32081868567f5c\", \"strata\": {}}, {\"nym\": \"nym-dd841be3e09d370a9ec9\", \"strata\": {}}, {\"nym\": \"nym-e74d256150b8c352ea66\", \"strata\": {}}, {\"nym\": \"nym-ed706cd3a93de18a4832\", \"strata\": {}}], \"chain_info\": {\"public_key\": \"868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31\", \"period\": 30, \"genesis_time\": 1595431050, \"group_hash\": \"176f93498eac9ca337150b46d21dd58673ea4e3581185f869672e59fa4cb390a\", \"scheme\": \"pedersen-bls-chained\", \"beacon_id\": \"default\"}, \"beacon\": {\"round\": 2634945, \"randomness\": \"fc8f2b3561428c365ada1aeecad04ccc044ba649c6363c5f687c1989cc2c20e5\", \"signature\": \"814778ed1e480406beb43b74af71ce2f0373e0ea1bfdfea8f9ed62c876c20fcbc7f0163860e3da42ed2148756015f4551451898ffe06d384b4d002245025571b6b7a752f7158b40ad92b13b6d703ad31922a617f2c7f6d960b84d56cf1d79eef\", \"previous_signature\": \"8bd96294383b4d1e04e736360bd7a487f9f409f1e7bd800b720656a310d577b3bdb1e1631af6c5782a1d8979c502f395036181eff4058960fc40bb7034cdae1991d3eda518ab204a077d2f7e724974cf87b407e549bd815cf0b8e5a3832f675d\"}, \"result\": {\"commitment_hash\": \"669fd9c9ca1a176759057d29fe16933a7a02f2d867894fd1749957dc5f1969f5\", \"groups\": [{\"stratum\": null, \"quota\": 5, \"order\": [\"nym-ed706cd3a93de18a4832\", \"nym-619045a8915c9c2d68bb\", \"nym-7951eab7e7402150e908\", \"nym-2d45189c4683c3399189\", \"nym-84bed557a9a7219fedba\", \"nym-4cffddc1d9d8ca1ed7d6\", \"nym-2837f416fe53ec50ae56\", \"nym-169e81e612932eab1a3d\", \"nym-81140a4e05d99a433aa3\", \"nym-e74d256150b8c352ea66\", \"nym-98bf388013ee67f1e823\", \"nym-074d74994ab26cef9875\", \"nym-5e953a6db8157fbc9609\", \"nym-dd841be3e09d370a9ec9\", \"nym-445a3f39eb3f7ff33895\", \"nym-044770911a3985f4e18f\", \"nym-c36da7f12fe5d4b65d6e\", \"nym-ab130997e67851c38b43\", \"nym-be44e73ba78ada2d2763\", \"nym-d1c89d32081868567f5c\"]}], \"selected\": [\"nym-ed706cd3a93de18a4832\", \"nym-619045a8915c9c2d68bb\", \"nym-7951eab7e7402150e908\", \"nym-2d45189c4683c3399189\", \"nym-84bed557a9a7219fedba\"]}}"
     }
   ]
 }
