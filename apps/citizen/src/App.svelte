@@ -12,6 +12,7 @@
 
   import { loadSnapshot, luxembourgToday, placeOf, routeOf, sitesOf } from "./lib/data.ts";
   import { LANG_LABELS } from "./lib/i18n.ts";
+  import { peel } from "./lib/look.ts";
   import { prefs } from "./lib/prefs.ts";
   import { findSample, SampleProvider } from "./lib/sample-provider.ts";
   import { date, setLang, t, ui } from "./lib/ui.svelte.ts";
@@ -85,10 +86,16 @@
   async function open(target: string | null) {
     if (target) location.hash = target;
     else history.pushState(null, "", location.pathname + location.search);
-    route = target ?? "";
+    // Under the Affichage look the old screen peels off and the new one is pasted (see lib/look.ts).
+    await new Promise<void>((done) =>
+      peel(document.documentElement, async () => {
+        route = target ?? "";
+        await tick();
+        done();
+      }),
+    );
     window.scrollTo({ top: 0 });
     // Move focus to what just appeared, so keyboard and screen-reader users land on it.
-    await tick();
     const focus = target === FILES_ROUTE ? "list-title" : target ? "file-title" : "week-title";
     document.getElementById(focus)?.focus({ preventScroll: true });
   }
@@ -96,7 +103,7 @@
   onMount(() => {
     applyTheme(theme);
     document.documentElement.lang = ui.lang;
-    const onHash = () => (route = readRoute());
+    const onHash = () => peel(document.documentElement, async () => { route = readRoute(); await tick(); });
     window.addEventListener("hashchange", onHash);
     window.addEventListener("popstate", onHash);
     const onNetwork = () => (online = navigator.onLine);
