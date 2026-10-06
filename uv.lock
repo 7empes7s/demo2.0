@@ -12,6 +12,7 @@ members = [
     "d2-commons",
     "d2-docket",
     "d2-lottery",
+    "d2-provenance",
     "d2-record",
     "d2-symmetry",
     "democracy2-workspace",
@@ -419,6 +420,11 @@ requires-dist = [
     { name = "d2-charter", editable = "charter/python" },
     { name = "py-ecc", specifier = ">=8,<9" },
 ]
+
+[[package]]
+name = "d2-provenance"
+version = "0.1.0"
+source = { editable = "modules/provenance" }
 
 [[package]]
 name = "d2-record"

@@ -1,0 +1,224 @@
+{
+ "docket": "../tests/fixtures/docket-recorded.json",
+ "about": "Claims about real Docket records (chd.lu dossiers 8752, 8821, 8700; Esch-sur-Alzette council of 2 October 2026). Labels say what the records show: green confirmed, red flatly contradicted, yellow unclear or opinion, none no record.",
+ "claims": [
+  {
+   "text": "Le projet de loi 8752 a été déposé le 15 mai 2026",
+   "label": "green"
+  },
+  {
+   "text": "Bill 8752 was filed on 21 July 2026",
+   "label": "red"
+  },
+  {
+   "text": "Das Gesetzesprojet 8752 wurde am 15. Mai 2026 eingereicht",
+   "label": "green"
+  },
+  {
+   "text": "O projeto de lei 8752 foi apresentado em 15 de maio de 2026",
+   "label": "green"
+  },
+  {
+   "text": "Le débat d'orientation 8821 a été déposé le 11 août 2026",
+   "label": "green"
+  },
+  {
+   "text": "Le débat d'orientation 8821 a été déposé le 11 septembre 2026",
+   "label": "red"
+  },
+  {
+   "text": "Le projet de loi 8752 n'a pas été déposé le 15 mai 2026",
+   "label": "red"
+  },
+  {
+   "text": "Le projet de loi 8752 a été renvoyé à la Commission des Finances le 4 juin 2026",
+   "label": "green"
+  },
+  {
+   "text": "Le projet de loi 8752 a déjà été voté par la Chambre",
+   "label": "red"
+  },
+  {
+   "text": "Le projet de loi 8752 modifie la loi du 23 décembre 2016 relative aux abus de marché",
+   "label": "green"
+  },
+  {
+   "text": "Le projet de loi 8752 modifie la loi du 23 décembre 2018 relative aux abus de marché",
+   "label": "red"
+  },
+  {
+   "text": "Le projet de loi 8752 prévoit la mise en œuvre du règlement (UE) 2024/2809",
+   "label": "green"
+  },
+  {
+   "text": "Le projet de loi 8752 met en œuvre le règlement (UE) 2024/2810",
+   "label": "yellow"
+  },
+  {
+   "text": "Le projet de loi 8752 est une mauvaise idée pour les petites et moyennes entreprises",
+   "label": "yellow"
+  },
+  {
+   "text": "La Chambre de Commerce a rendu un avis sur le projet de loi 8752",
+   "label": "green"
+  },
+  {
+   "text": "Le conseil communal a approuvé le PAP Quai Neiduerf par 11 voix contre 8",
+   "context": "lu.esch.42063",
+   "label": "green"
+  },
+  {
+   "text": "Le point a recueilli 11 voix pour et 8 voix contre",
+   "context": "lu.esch.42063",
+   "label": "green"
+  },
+  {
+   "text": "The council approved the Quai Neiduerf plan by 11 votes to 8",
+   "context": "lu.esch.42063",
+   "label": "green"
+  },
+  {
+   "text": "De Gemengerot huet de PAP Quai Neiduerf mat 11 Stëmme fir an 8 Stëmme dogéint ugeholl",
+   "context": "lu.esch.42063",
+   "label": "green"
+  },
+  {
+   "text": "Le PAP Quai Neiduerf a été voté à l'unanimité",
+   "context": "lu.esch.42063",
+   "label": "red"
+  },
+  {
+   "text": "The council approved the Quai Neiduerf plan by 12 votes to 7",
+   "context": "lu.esch.42063",
+   "label": "red"
+  },
+  {
+   "text": "Der PAP Quai Neiduerf wurde einstimmig angenommen",
+   "context": "lu.esch.42063",
+   "label": "red"
+  },
+  {
+   "text": "Le vote sur le PAP Quai Neiduerf, 11 voix contre 8, est un scandale",
+   "context": "lu.esch.42063",
+   "label": "yellow"
+  },
+  {
+   "text": "La contribution financière au GECT Alzette Belval concerne l'année 2027",
+   "label": "green"
+  },
+  {
+   "text": "La contribution financière au GECT Alzette Belval porte sur l'année 2028",
+   "label": "red"
+  },
+  {
+   "text": "Le conseil a voté la contribution au GECT Alzette Belval à l'unanimité",
+   "context": "lu.esch.42071",
+   "label": "yellow"
+  },
+  {
+   "text": "La convention de recherche avec l'Université du Luxembourg porte sur l'Assemblée citoyenne",
+   "label": "green"
+  },
+  {
+   "text": "La convention avec l'Université du Luxembourg sur l'Assemblée citoyenne est une mauvaise idée",
+   "label": "yellow"
+  },
+  {
+   "text": "Le relevé et rôle supplétif de l'impôt foncier a été délibéré",
+   "context": "lu.esch.42060",
+   "label": "green"
+  },
+  {
+   "text": "La réfection des rues Brill et Spoo (phase 1) est financée par un crédit spécial extraordinaire",
+   "label": "green"
+  },
+  {
+   "text": "Le Luxembourg a gagné la Coupe du monde de football",
+   "label": "none"
+  },
+  {
+   "text": "Mars has two moons",
+   "label": "none"
+  },
+  {
+   "text": "Le PAP Quai Neiduerf a été rejeté par 8 voix contre 11",
+   "context": "lu.esch.42063",
+   "label": "red"
+  },
+  {
+   "text": "Le conseil a refusé d'adopter le PAP Quai Neiduerf par 11 voix contre 8",
+   "context": "lu.esch.42063",
+   "label": "red"
+  },
+  {
+   "text": "The plan was defeated 11 to 8",
+   "context": "lu.esch.42063",
+   "label": "red"
+  },
+  {
+   "text": "The plan failed, 11 votes to 8",
+   "context": "lu.esch.42063",
+   "label": "red"
+  },
+  {
+   "text": "The plan lost by 11 votes to 8",
+   "context": "lu.esch.42063",
+   "label": "red"
+  },
+  {
+   "text": "The council didn't approve the Quai Neiduerf plan by 11 votes to 8",
+   "context": "lu.esch.42063",
+   "label": "red"
+  },
+  {
+   "text": "Le PAP a été approuvé par 11 voix pour, 8 contre et 3 abstentions",
+   "context": "lu.esch.42063",
+   "label": "red"
+  },
+  {
+   "text": "Le PAP a été approuvé par 11 voix contre 8 le 3 octobre 2026",
+   "context": "lu.esch.42063",
+   "label": "red"
+  },
+  {
+   "text": "Le PAP a été approuvé par 11 voix contre 8 par le conseil de Differdange",
+   "context": "lu.esch.42063",
+   "label": "red"
+  },
+  {
+   "text": "The Quai Neiduerf plan, debated from 2024 to 2026, was approved by the council",
+   "context": "lu.esch.42063",
+   "label": "yellow"
+  },
+  {
+   "text": "Le PAP Quai Neiduerf, discuté de 2024 à 2026, a été approuvé",
+   "context": "lu.esch.42063",
+   "label": "yellow"
+  },
+  {
+   "text": "Le projet de loi 8752 a été déposé le 15 mai 2026 et adopté à l'unanimité",
+   "label": "red"
+  },
+  {
+   "text": "Le projet de loi 8752 a été déposé par l'opposition le 15 mai 2026",
+   "label": "red"
+  },
+  {
+   "text": "Bill 8752 wasn't filed on 15 May 2026",
+   "label": "red"
+  },
+  {
+   "text": "Le projet de loi 8752 a été déposé le 15 mai 2026",
+   "context": "lu.chd.8821",
+   "label": "green"
+  },
+  {
+   "text": "L'avis de la Chambre de Commerce sur le projet de loi 8752 a été déposé le 30 septembre 2026",
+   "label": "green"
+  },
+  {
+   "text": "Le rapport sur le projet de loi 8752 sera déposé le 9 octobre 2026",
+   "label": "yellow"
+  }
+ ]
+}

@@ -1,0 +1,5 @@
+# Adversarial claims before "0 false greens"
+
+**Mistake (Provenance PR #16 review):** the `match` checker reported no false green and 100% red precision on its labelled sets, but those sets held only claims written to look like the records. A review reproduced green for claims that say the opposite of the record ("plus de" for "moins de", "interdire" for "obliger", "rejeté par 8 voix contre 11" for a point adopted 11 to 8, "wasn't filed"), green for a matching date followed by an unsupported clause ("déposé ... et adopté à l'unanimité"), and red for true claims (a year range read as a vote tally, another document's deposit date, a wrong `context`).
+
+**Rule:** a grader's labelled set must include adversarial claims with honest labels before anyone claims "0 false greens" or a red precision: negation (including contractions), swapped words in a copied sentence, flipped comparisons, extra clauses after a matching fact, inverted outcomes, wrong context, look-alike numbers (year ranges, other digit scripts, invisible characters). When a rule-based checker cannot tell, it grades yellow, never green or red.
