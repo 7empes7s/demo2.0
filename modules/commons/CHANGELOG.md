@@ -10,6 +10,12 @@
   and rebuilt by a test.
 - Read API: `GET /matters/{id}/arguments[?stance=]` and `GET /healthz`.
 - CLI `d2-commons`: `ingest` (recorded pages, or live at 1 request per 3 s), `arguments`, `serve`.
+- Scrubbing also removes disguised emails ("(at)", "[at]", " @ ") and a name after "proposé
+  par / proposed by / vorgeschlagen von", and no longer removes amounts or years
+  (1.000.000, 2025-2030, 2024 2025 2026).
+- Fetching re-checks every redirect against the allowlist and refuses responses over 2 MiB.
+  Proposal links must stay on https://participation.esch.lu; the matter comes from the
+  requested URL, not `og:url`. A bad tile or page is skipped and logged; `ingest` exits 1 then.
 
 ## 0.1.0 (2026-10-05)
 

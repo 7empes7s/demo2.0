@@ -9,7 +9,10 @@ Two sources, both public:
 - **Consultation contributions** on participation.esch.lu (Hoplr): each proposal a resident
   posted on a project page becomes a `proposal` for its own option of the project. The page
   shows the proposal's title and the start of its text; the author is not on the page and is
-  never stored. Email addresses, phone numbers and links are removed from the text.
+  never stored. Email addresses (also written "(at)" or "[at]"), phone numbers, links and a
+  name after "proposé par / proposed by / vorgeschlagen von" are removed from the text. A name
+  written any other way ("Ech sinn de ...") is not caught: residual risk, so full proposal
+  text needs a review step before it is ingested.
 
 Only pure functions here: data in, arguments out. Fetching lives in ingest.py.
 """
@@ -19,7 +22,9 @@ from __future__ import annotations
 import hashlib
 import re
 from html.parser import HTMLParser
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
+
+from .library import check_argument
 
 PARTICIPATION = "https://participation.esch.lu"
 COUNCIL_NYM = "source:esch.lu-council"
@@ -28,11 +33,30 @@ PARTICIPATION_NYM = "source:participation.esch.lu"
 # The council publishes votes in French.
 SIDES = {"Oui": "yes", "Non": "no"}
 
-EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+# Emails, including the disguised forms: jo (at) example (dot) lu, jo[at]example[dot]lu, jo @ pt.lu
+_AT = r"(?:\s*@\s*|\s*[(\[{]\s*at\s*[)\]}]\s*)"
+_DOT = r"(?:\.|\s*[(\[{]\s*dot\s*[)\]}]\s*)"
+EMAIL = re.compile(rf"[\w.+-]+{_AT}[\w-]+(?:{_DOT}[\w-]+)+", re.I)
 URL = re.compile(r"(?:https?://|www\.)\S+", re.I)
-# Luxembourg and international numbers: +352 621 123 456, (+352)621 357 733, 621123456, 26 12 34 56
-PHONE = re.compile(r"(?:\(?\+\d{2,3}\)?[\s./-]*)?(?:\d[\s./-]?){6,}\d")
+# Phone numbers. Only shapes a phone number has, so amounts (1.000.000), year ranges (2025-2030)
+# and lists of years (2024 2025 2026) are left alone:
+# - international: +352 621 123 456, (+352)621 357 733, 00352 621 123 456
+# - Luxembourg mobile: 621 123 456, 621-123-456, 621123456, 621 12 34 56
+# - Luxembourg landline written in pairs: 26 12 34 56, 54 73 83
+_SEP = r"[\s./-]"
+PHONE = re.compile(
+    rf"(?:\(?(?:\+|00)\s?\d{{2,3}}\)?{_SEP}*(?:\d{_SEP}?){{5,}}\d"
+    rf"|(?<![\d.,])6\d{{2}}(?:{_SEP}?\d{{3}}{_SEP}?\d{{3}}|(?:{_SEP}?\d{{2}}){{3}})(?![\d.,]\d)"
+    rf"|(?<![\d.,])\d{{2}}(?:[ ./]\d{{2}}){{2,3}}(?![\d.,]?\d))"
+)
 DATE = re.compile(r"^(?:\d{4}-\d{2}-\d{2}|\d{1,2}[./-]\d{1,2}[./-]\d{2,4})$")
+# "Proposé par Jean Dupont": the name after a byline phrase. A heuristic: names written any other
+# way are not caught, which is why only the start of a proposal is stored and authors never are.
+_NAME = r"[A-ZÀ-ÖØ-Þ][\w'’-]*"
+BYLINE = re.compile(
+    rf"((?i:propos[ée]e?s?\s+par|proposed\s+by|submitted\s+by|vorgeschlagen\s+von"
+    rf"|eingereicht\s+von|proposéiert\s+vun)\s+)(?:{_NAME})(?:\s+(?:{_NAME}|de|von|van|da|dos|du))*"
+)
 SPACES = re.compile(r"[ \t]+")
 REMOVED = "[removed]"
 
@@ -42,10 +66,11 @@ def _phone(m: re.Match) -> str:
 
 
 def scrub(text: str) -> str:
-    """Remove contact details from a resident's text and tidy the whitespace."""
+    """Remove contact details and bylined names from a resident's text; tidy the whitespace."""
     text = EMAIL.sub(REMOVED, text)
     text = URL.sub(REMOVED, text)
     text = PHONE.sub(_phone, text)
+    text = BYLINE.sub(lambda m: m.group(1) + REMOVED, text)
     lines = [SPACES.sub(" ", line).strip() for line in text.splitlines()]
     return "\n".join(line for line in lines if line)
 
@@ -115,12 +140,9 @@ class _Markers(HTMLParser):
         self._depth = 0  # nesting depth inside the current marker, 0 when outside
         self._in_text = 0  # nesting depth inside its text block
         self._text: list[str] = []
-        self.og_url: str | None = None
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
-        if tag == "meta" and a.get("property") == "og:url":
-            self.og_url = a.get("content")
         classes = (a.get("class") or "").split()
         if self._depth == 0:
             if tag == "div" and "js-marker" in classes and a.get("data-id"):
@@ -161,17 +183,37 @@ def project_matter_id(page_url: str) -> str | None:
     return f"lu.esch.participation.project.{m.group(1)}" if m else None
 
 
-def proposals_from_project_page(html: str, page_url: str) -> list[dict]:
-    """Each proposal on a participation project page, as a `proposal` argument for itself."""
+def _participation_link(href: str) -> str | None:
+    """The proposal's link, only when it stays on participation.esch.lu over https."""
+    url = urljoin(PARTICIPATION + "/", href.strip())
+    parts = urlsplit(url)
+    if parts.scheme != "https" or parts.netloc != urlsplit(PARTICIPATION).netloc:
+        return None
+    return url
+
+
+def proposals_from_project_page(
+    html: str, page_url: str, errors: list[dict] | None = None
+) -> list[dict]:
+    """Each proposal on a participation project page, as a `proposal` argument for itself.
+
+    The matter is the page that was asked for, never what the page says about itself. A tile
+    whose link leaves participation.esch.lu, or that fails the library checks, is skipped and
+    recorded in ``errors``.
+    """
+    matter_id = project_matter_id(page_url)
+    if matter_id is None:
+        raise ValueError(f"not a participation project page: {page_url}")
     parser = _Markers()
     parser.feed(html)
     parser.close()
-    canonical = urljoin(PARTICIPATION, parser.og_url) if parser.og_url else page_url
-    matter_id = project_matter_id(canonical) or project_matter_id(page_url)
-    if matter_id is None:
-        raise ValueError(f"not a participation project page: {page_url}")
     out: list[dict] = []
     seen: set[str] = set()
+
+    def skip(tile: dict, why: str) -> None:
+        if errors is not None:
+            errors.append({"url": page_url, "error": f"proposal {tile['id']}: {why}"})
+
     for tile in parser.tiles:
         if tile["id"] in seen or not tile.get("href"):
             continue
@@ -181,18 +223,26 @@ def proposals_from_project_page(html: str, page_url: str) -> list[dict]:
         text = f"{title}: {body}" if title and body else title or body
         if not text:
             continue
-        out.append(
-            {
-                "id": _arg_id(matter_id, tile["id"]),
-                "matter_id": matter_id,
-                "stance_option_id": f"{matter_id}.proposal.{tile['id']}",
-                "text": text,
-                "source_refs": [matter_id],
-                "author_nym": PARTICIPATION_NYM,
-                "cluster_id": None,
-                "kind": "proposal",
-                "attribution": "A resident, on the city's participation platform",
-                "source_url": urljoin(PARTICIPATION, tile["href"]),
-            }
-        )
+        link = _participation_link(tile["href"])
+        if link is None:
+            skip(tile, "link is not on participation.esch.lu")
+            continue
+        arg = {
+            "id": _arg_id(matter_id, tile["id"]),
+            "matter_id": matter_id,
+            "stance_option_id": f"{matter_id}.proposal.{tile['id']}",
+            "text": text,
+            "source_refs": [matter_id],
+            "author_nym": PARTICIPATION_NYM,
+            "cluster_id": None,
+            "kind": "proposal",
+            "attribution": "A resident, on the city's participation platform",
+            "source_url": link,
+        }
+        try:
+            check_argument(arg)
+        except ValueError as exc:
+            skip(tile, str(exc))
+            continue
+        out.append(arg)
     return out

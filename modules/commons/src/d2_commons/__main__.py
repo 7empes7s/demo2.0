@@ -7,7 +7,8 @@
   d2-commons arguments --library library.json MATTER_ID [--stance yes|no|...]
   d2-commons serve --library library.json [--host 127.0.0.1] [--port 8091]
 
-Exit codes: 0 ok, 2 bad input.
+Exit codes: 0 ok, 1 library written but some pages or proposals were skipped (listed on
+stderr), 2 bad input.
 """
 
 from __future__ import annotations
@@ -59,7 +60,7 @@ def main(argv: list[str] | None = None) -> int:
                 for url in ingest.project_urls(snapshot):
                     try:
                         pages.append((url, fetcher.get(url)))
-                    except OSError as exc:
+                    except (OSError, ValueError) as exc:
                         errors.append({"url": url, "error": str(exc)})
             when = args.generated_at or datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
             lib = ingest.build(snapshot, pages, when, errors)
@@ -69,7 +70,7 @@ def main(argv: list[str] | None = None) -> int:
             print(
                 f"{len(lib.arguments)} arguments on {len(lib.matters())} matters", file=sys.stderr
             )
-            return 0
+            return 1 if errors else 0
         lib = library.load(args.library)
     except (OSError, ValueError, KeyError) as exc:
         print(f"d2-commons: {exc}", file=sys.stderr)

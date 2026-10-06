@@ -80,12 +80,21 @@ A rating is `{"argument_id": "...", "rater_nym": "...", "strong": true}`.
 
 - **Privacy:** no person is named. Councillors are grouped by party (Docket's `members` list is
   never read). The proposal tiles do not show their author, and Commons never reads the author.
-  Email addresses, phone numbers and links in a resident's text are replaced by `[removed]`.
+  Email addresses (also disguised ones like "jo (at) example (dot) lu"), phone numbers, links
+  and a name after "proposé par / proposed by / vorgeschlagen von" in a resident's text are
+  replaced by `[removed]`; amounts and years are left alone. A name written any other way is
+  not caught, so full proposal text needs a review step before it is ingested.
   Image links (which carry the poster's platform user id) are not stored.
 - **A position is not a reason.** A group's recorded vote says who took a side, not why. Its text
-  says only that, and the Companion is told never to invent reasons for it.
-- **Politeness:** live fetching (`--fetch`) reads only participation.esch.lu, one request every
-  3 seconds, the pace Docket uses for every Esch host.
+  says only that, and the Companion is told never to invent reasons for it. Positions do not
+  count toward the Companion's "Commons has enough" threshold.
+- **Politeness and safety:** live fetching (`--fetch`) reads only participation.esch.lu, one
+  request every 3 seconds, the pace Docket uses for every Esch host. Every redirect is checked
+  against the same allowlist, and a response over 2 MiB is refused.
+- **Links and matters:** a proposal is kept only if its link stays on
+  https://participation.esch.lu; the matter comes from the page URL asked for, never from the
+  page's own markup. A bad tile or page is skipped and listed on stderr, and `ingest` then
+  exits 1 (library still written).
 - **Seed:** `seed/esch.json` is built from the recorded fixtures in `tests/fixtures/`
   (a Docket snapshot built from Docket's recorded Esch pages, and the recorded Budget
   participatif 2026 page). It holds 14 arguments: 6 council positions on point 6.1 of

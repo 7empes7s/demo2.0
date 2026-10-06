@@ -20,7 +20,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { readFile, stat } from "node:fs/promises";
 import { basename, extname, join, normalize, resolve, sep } from "node:path";
 
-import { type CommonsArgument, type CommonsClient, HttpCommons, MIN_COMMONS, otherSide } from "./commons.ts";
+import { type CommonsArgument, type CommonsClient, commonsSuffices, HttpCommons } from "./commons.ts";
 import { challenge, checkClaim, explain, extractArguments } from "./companion.ts";
 import { AnthropicProvider, type Provider } from "./provider.ts";
 import { readSnapshot } from "./snapshot.ts";
@@ -45,6 +45,8 @@ export interface ServerOptions {
   snapshot: DocketSnapshot;
   /** Where the devil's advocate finds real arguments first. Without it, only the file's documents are used. */
   commons?: CommonsClient | null;
+  /** Commons-first rule (default on). Test seam: off only as a control for the Phase 1 metric. */
+  commonsFirst?: boolean;
   staticDir?: string;
   /** Requests per client per minute on the model-backed routes. */
   ratePerMinute?: number;
@@ -213,10 +215,10 @@ export function createCompanionServer(opts: ServerOptions) {
         throttle(req);
         const position = pick<Position>(body.position, ["for", "against", "unsure"]);
         const commons = await commonsFor(it);
-        const sides = otherSide(position);
-        // Enough real arguments in Commons: no need to extract more from the documents.
+        const commonsFirst = opts.commonsFirst ?? true;
+        // Enough real reasons in Commons: no need to extract more from the documents.
         const args =
-          commons.filter((a) => sides.includes(a.stance_option_id)).length >= MIN_COMMONS
+          commonsFirst && commonsSuffices(commons, position)
             ? { arguments: [], sources: buildSources(it, "fr") }
             : await argumentsFor(it, req);
         return challenge(provider, it, {
@@ -226,6 +228,7 @@ export function createCompanionServer(opts: ServerOptions) {
           sources: args.sources,
           history: history(body.history),
           commons,
+          commonsFirst,
         });
       }
       case "/api/claim": {

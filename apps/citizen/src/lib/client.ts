@@ -64,6 +64,24 @@ export class RemoteClient implements CompanionClient {
   }
 }
 
+/**
+ * One devil's-advocate turn. The server decides what is shown (`shown`) and reads the documents
+ * itself when Commons is not enough, so the app asks for the documents' arguments only when an
+ * older server sends no `shown`.
+ */
+export async function challengeTurn(
+  client: CompanionClient,
+  item: DocketItem,
+  lang: Lang,
+  position: Position,
+  history: ChatMessage[],
+  known: Argument[] | null,
+): Promise<{ turn: ChallengeTurn; args: Argument[] | null }> {
+  const turn = await client.challenge(item, lang, position, history);
+  if ((turn as Partial<ChallengeTurn>).shown !== undefined || known) return { turn, args: known };
+  return { turn, args: (await client.arguments(item)).arguments };
+}
+
 /** Runs the Companion core in the page. Results are kept for the session, like the server's cache. */
 export class LocalClient implements CompanionClient {
   private readonly provider: Provider;

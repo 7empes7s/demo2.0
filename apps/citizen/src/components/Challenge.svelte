@@ -3,7 +3,8 @@
 
   import { untrack } from "svelte";
 
-  import type { CompanionClient } from "../lib/client.ts";
+  import { challengeTurn, type CompanionClient } from "../lib/client.ts";
+  import { safeUrl } from "../lib/data.ts";
   import { errorKey } from "../lib/errors.ts";
   import type { Key } from "../lib/i18n.ts";
   import { prefs } from "../lib/prefs.ts";
@@ -44,12 +45,9 @@
       draft = "";
     }
     try {
-      const [turn, set] = await Promise.all([
-        client.challenge(item, ui.lang, stance, history),
-        args ? Promise.resolve({ arguments: args }) : client.arguments(item),
-      ]);
+      const { turn, args: known } = await challengeTurn(client, item, ui.lang, stance, history, args);
       if (mine !== generation) return;
-      args = set.arguments;
+      args = known;
       const shown = turn.shown ?? [];
       // Arguments with a link (Commons, documents) are listed with it; older servers send only ids.
       const by = shown.length
@@ -99,7 +97,7 @@
                       <span class="muted">{t("model_written")}</span> {a.text}
                     {:else}
                       {a.text} <span class="muted">({a.attribution})</span>
-                      {#if a.source_url}<a href={a.source_url} target="_blank" rel="noopener noreferrer">{t("open_source")}</a>{/if}
+                      {#if safeUrl(a.source_url)}<a href={safeUrl(a.source_url)} target="_blank" rel="noopener noreferrer">{t("open_source")}</a>{/if}
                     {/if}
                   </li>
                 {/each}
@@ -114,7 +112,7 @@
       {#if failure}<p class="error small">{t(failure)}</p>{/if}
       {#if turns.at(-1)?.role === "assistant"}<p class="sr-only">{turns.at(-1)?.content}</p>{/if}
     </div>
-    {#if args && args.length === 0 && turns.length}<p class="muted small">{t("no_arguments")}</p>{/if}
+    {#if turns.length && (args ? args.length === 0 : turns.at(-1)?.shown?.length === 0)}<p class="muted small">{t("no_arguments")}</p>{/if}
 
     {#if turns.length && stance}
       <form

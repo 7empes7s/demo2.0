@@ -8,6 +8,7 @@ most one request every 3 seconds (the pace Docket uses for every Esch host).
 from __future__ import annotations
 
 import time
+import urllib.error
 import urllib.request
 from collections.abc import Callable
 
@@ -17,6 +18,21 @@ from .library import Library
 USER_AGENT = "Democracy2-Commons/0.1 (+https://github.com/7empes7s/demo2.0)"
 ESCH_DELAY = 3.0  # minimum seconds between requests to any Esch host
 ALLOWED_HOSTS = ("https://participation.esch.lu/",)
+MAX_BYTES = 2 * 1024 * 1024  # a project page is about 200 KiB
+
+
+class _AllowlistedRedirects(urllib.request.HTTPRedirectHandler):
+    """Follows a redirect only when its target is allowlisted too, checked again on every hop."""
+
+    def __init__(self, allowed: tuple[str, ...]) -> None:
+        self.allowed = allowed
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if not newurl.startswith(self.allowed):
+            raise urllib.error.HTTPError(
+                newurl, code, f"redirect to a host that is not allowed: {newurl}", headers, fp
+            )
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
 class Fetcher:
@@ -28,18 +44,25 @@ class Fetcher:
         timeout: float = 60.0,
         clock: Callable[[], float] = time.monotonic,
         sleep: Callable[[float], None] = time.sleep,
+        allowed: tuple[str, ...] = ALLOWED_HOSTS,
+        max_bytes: int = MAX_BYTES,
     ) -> None:
         self.delay, self.timeout = delay, timeout
         self._clock, self._sleep = clock, sleep
         self._last: float | None = None
+        self.allowed, self.max_bytes = allowed, max_bytes
+        self._opener = urllib.request.build_opener(_AllowlistedRedirects(allowed))
 
     def _open(self, url: str) -> bytes:  # seam for tests
         req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-        with urllib.request.urlopen(req, timeout=self.timeout) as res:
-            return res.read()
+        with self._opener.open(req, timeout=self.timeout) as res:
+            body = res.read(self.max_bytes + 1)
+        if len(body) > self.max_bytes:
+            raise ValueError(f"response larger than {self.max_bytes} bytes: {url}")
+        return body
 
     def get(self, url: str) -> str:
-        if not url.startswith(ALLOWED_HOSTS):
+        if not url.startswith(self.allowed):
             raise ValueError(f"not an Esch participation page: {url}")
         if self._last is not None:
             wait = self._last + self.delay - self._clock()
@@ -84,7 +107,7 @@ def build(
         )
     for url, html in pages:
         try:
-            proposals = esch.proposals_from_project_page(html, url)
+            proposals = esch.proposals_from_project_page(html, url, errors)
         except ValueError as exc:
             if errors is None:
                 raise

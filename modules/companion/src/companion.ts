@@ -1,6 +1,6 @@
 /** The Companion's four abilities. Each builds a prompt, calls the provider and checks the answer. */
 
-import { type CommonsArgument, MIN_COMMONS, otherSide } from "./commons.ts";
+import { type CommonsArgument, commonsSuffices, otherSide } from "./commons.ts";
 import { argumentsSystem, challengeSystem, claimSystem, explainSystem, PROMPT_VERSION } from "./prompts.ts";
 import type { Provider } from "./provider.ts";
 import { buildSources, fence, parseJson, quoteIsIn, renderSources, verifySentence } from "./sources.ts";
@@ -157,6 +157,15 @@ export interface ChallengeTurn {
 
 /** Commons arguments shown when the model cited none of them. */
 const COMMONS_FALLBACK_SHOWN = 3;
+/** Longest Commons text and attribution put into the prompt. */
+const PROMPT_TEXT_MAX = 600;
+const PROMPT_ATTRIBUTION_MAX = 120;
+
+/** Untrusted text as one quoted line: newlines collapsed, length capped, prompt tags defused. */
+function quotedLine(text: string, max: number): string {
+  const flat = text.replace(/\s+/g, " ").trim();
+  return fence(flat.length > max ? `${flat.slice(0, max - 1)}…` : flat);
+}
 
 export async function challenge(
   provider: Provider,
@@ -169,6 +178,11 @@ export async function challenge(
     history: ChatMessage[];
     /** Every Commons argument on this item; the other side is picked from it. */
     commons?: CommonsArgument[];
+    /**
+     * Commons-first rule (default on): with enough Commons reasons on the other side, the model's
+     * own points are dropped. Turned off only by tests, as a control for the Phase 1 metric.
+     */
+    commonsFirst?: boolean;
     signal?: AbortSignal;
   },
 ): Promise<ChallengeTurn> {
@@ -176,13 +190,16 @@ export async function challenge(
   const commons = (opts.commons ?? [])
     .filter((a) => sides.includes(a.stance_option_id) && a.source_url)
     .map((a, i) => ({ key: `c${i + 1}`, arg: a }));
-  const enough = commons.length >= MIN_COMMONS;
+  const enough = (opts.commonsFirst ?? true) && commonsSuffices(commons.map((c) => c.arg), opts.position);
   const lines = [
     ...commons.map(
       ({ key, arg }) =>
-        `- ${key} [${arg.stance_option_id === "yes" ? "supports" : "opposes"}, ${arg.kind === "position" ? "position only, no reasons given" : (arg.kind ?? "argument")}] by ${arg.attribution ?? "a public source"}: ${arg.text}`,
+        `- ${key} [${arg.stance_option_id === "yes" ? "supports" : "opposes"}, ${arg.kind === "position" ? "position only, no reasons given" : (arg.kind ?? "argument")}] by ${quotedLine(arg.attribution ?? "a public source", PROMPT_ATTRIBUTION_MAX)}: ${quotedLine(arg.text, PROMPT_TEXT_MAX)}`,
     ),
-    ...opts.arguments.map((a) => `- ${a.id} [${a.stance}] by ${a.by}: ${a.summary_en} (source ${a.source}: "${a.quote}")`),
+    ...opts.arguments.map(
+      (a) =>
+        `- ${a.id} [${a.stance}] by ${quotedLine(a.by, PROMPT_ATTRIBUTION_MAX)}: ${quotedLine(a.summary_en, PROMPT_TEXT_MAX)} (source ${a.source}: "${quotedLine(a.quote, PROMPT_TEXT_MAX)}")`,
+    ),
   ];
   const list = lines.length ? lines.join("\n") : "(none found in Commons or the official documents)";
   // The conversation so far goes in as quoted data inside one user turn, never as real chat turns:
@@ -221,7 +238,7 @@ export async function challenge(
   });
   const citedCommons = argumentIds.filter((id) => byKey.has(id)).map((id) => byKey.get(id) as CommonsArgument);
   // Commons is the other side's first voice: when the model leaned on none of it, show it anyway.
-  const commonsShown = citedCommons.length || !enough ? citedCommons : commons.slice(0, COMMONS_FALLBACK_SHOWN).map((c) => c.arg);
+  const commonsShown = citedCommons.length ? citedCommons : commons.slice(0, COMMONS_FALLBACK_SHOWN).map((c) => c.arg);
   shown.push(...commonsShown.map(fromCommons));
   for (const id of argumentIds) {
     const a = docs.get(id);
