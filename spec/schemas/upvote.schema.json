@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://democracy2.dev/spec/upvote.schema.json",
+  "title": "Upvote",
+  "description": "One participant's upvote on one idea. Owned by Agora; at most one per (idea_id, voter_nym). Not published: only per-idea counts are.",
+  "type": "object",
+  "properties": {
+    "idea_id": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "voter_nym": {
+      "description": "The voter's pseudonym inside Agora, never a person.",
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["idea_id", "voter_nym", "created_at"],
+  "additionalProperties": false
+}

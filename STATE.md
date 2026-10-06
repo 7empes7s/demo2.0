@@ -2,6 +2,13 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-06: Phase 2, Agora v1
+
+- Done: `modules/agora` (`d2_agora`, AGPL): ideas (jurisdiction, topics, title and text in up to five languages), tier from Charter Scope stored with the Charter version, any extra field such as `scope_tier` refused (`unknown_field`), append-only SQLite (triggers refuse UPDATE, DELETE and REPLACE), one upvote per (idea, nym) (`409 duplicate_upvote`), queue ranked by tier queue priority, then visible upvotes, then `created_at`, then id; counts hidden and not ranked for Charter `agora.upvote_hidden_hours`. HTTP API on loopback (`:8091`, 256 KiB body, 10 s total body deadline, 32 connections), CLI `d2-agora serve`. `spec/schemas/idea.schema.json`, `upvote.schema.json`. Empty by default; tests use synthetic data only.
+- Gap: identity is the `NymSource` interface with `KeyedNyms` (nym = HMAC-SHA256 of the jurisdiction and the caller's opaque id under a server key from `AGORA_NYM_KEY_FILE`; no key, no start, unless `--dev-insecure-key`) until Door exists, so one upvote per human is not enforced yet; keep it on loopback.
+- Known gap (must close before any pilot): the proposer picks the jurisdiction, so a commune matter filed under `lu` ranks as national (queue jump). Pinned by a test. Fix needs Door eligibility or a `ScopeChallenge`; documented in the Agora and Charter READMEs.
+- Next: Record entries on promotion (`matter.created`, `matter.tier`), `POST /ideas/{id}/promote`, `ProposerRecord`, Door-backed `NymSource`, citizen app view, systemd unit.
+
 ## 2026-10-06: Commons seeded from Esch, Companion draws from it
 
 - Done: `d2_commons` 0.2.0 ingests Esch council groups' recorded votes (from a Docket snapshot) and resident proposals on participation.esch.lu into spec Arguments (new optional `kind`, `attribution`, `source_url`), with no person named and contact details removed; `seed/esch.json` (14 arguments from recorded fixtures); read API `GET /matters/{id}/arguments` and CLI `d2-commons`. Companion's devil's advocate reads Commons over HTTP (`COMMONS_URL`) first, returns each shown argument with origin and link, labels model-written points, and drops them when Commons has 2 or more reasons on the other side (recorded votes are shown but are not reasons, so on Esch point lu.esch.42063 the documents and labelled model points still supply reasons). Commons text enters the prompt as fenced one-line quoted data.
