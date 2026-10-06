@@ -1,6 +1,6 @@
 {
-  "description": "is_protected(matter): true when any topic is a protected-rights topic or sits under one. Charter 0.1.0.",
-  "charter_version": "0.1.0",
+  "description": "is_protected(matter): true when any topic is a protected-rights topic or sits under one. Charter 0.2.0.",
+  "charter_version": "0.2.0",
   "cases": [
     {
       "name": "no topics",

@@ -168,7 +168,7 @@
           <h1 class="serif" id="list-title" tabindex="-1">{t(both ? "agenda_title_both" : "agenda_title")}</h1>
           <p class="muted">{t(both ? "tagline_both" : "tagline")}</p>
           <div class="page-links">
-            <button class="btn check-open" aria-current={!selected && !checking && !readingIdeas ? "page" : undefined} onclick={() => open(null)}>{t("week_open")}</button>
+            <button class="btn check-open" aria-current={!selected && !checking && !readingIdeas && !listing ? "page" : undefined} onclick={() => open(null)}>{t("week_open")}</button>
             {#if checker}
               <button class="btn check-open" aria-current={checking ? "page" : undefined} onclick={() => open(CHECK_ROUTE)}>{t("check_open")}</button>
             {/if}

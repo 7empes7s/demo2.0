@@ -151,7 +151,7 @@
   </section>
 
   {#if list.others.length}
-    <details class="group others">
+    <details class="group others" open>
       <summary class="group-title">{t("week_others")} <span class="count">{list.others.length}</span></summary>
       {@render entries(list.others)}
     </details>

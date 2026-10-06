@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "scope": {
     "population_source": "data/lu-jurisdictions.json",
     "thresholds": [
@@ -104,6 +104,10 @@
   },
   "agora": {
     "upvote_hidden_hours": 24
+  },
+  "scope_challenge": {
+    "panel_size": 5,
+    "decision_days": 7
   },
   "arena": {
     "max_pass_rate_gap": 0.1

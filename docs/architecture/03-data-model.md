@@ -19,7 +19,7 @@ These are the contracts in `spec/schemas/*.json`. Each entity has exactly one ow
 | `Jurisdiction` | Charter | id, parent_id, kind (country, region, commune, district), name{lang}, population, geometry |
 | `Topic` | Charter | id, parent_id, name{lang} |
 | `CharterVersion` | Charter | version, params (JSON), protected_rights[], adopted_by_round_id, record_seq |
-| `ScopeChallenge` | Charter | matter_id, claimed_tier, draw_id, outcome |
+| `ScopeChallenge` | Agora (rules in Charter `scope_challenge.*`) | idea_id, proposed_jurisdiction_id, panel draw (pool, commitment, transcript), votes, outcome (jurisdiction, tier recomputed by Scope) |
 
 ## Agenda and deliberation
 

@@ -39,7 +39,7 @@ IDEA_SCHEMA = Draft202012Validator(
     format_checker=FormatChecker(),
 )
 
-ESCH = "lu-commune-esch-sur-alzette"  # local in Charter 0.1.0
+ESCH = "lu-commune-esch-sur-alzette"  # local in Charter 0.2.0
 CITY = "lu-commune-luxembourg"  # regional
 COUNTRY = "lu"  # national
 DISTRICT = "synthetic-district-1"  # minor: a test-only place with 500 people
@@ -161,18 +161,44 @@ def test_stored_ideas_and_upvotes_cannot_be_rewritten(agora):
     assert agora.idea(idea["id"])["scope_tier"] == "local"
 
 
-def test_known_gap_a_proposer_can_widen_the_jurisdiction_to_raise_the_tier(agora):
-    # KNOWN GAP, pinned on purpose (README "Not done yet", STATE.md): the proposer picks the
-    # jurisdiction, so a commune matter filed under "lu" is stored as national and jumps the
-    # queue. With Door (test_door.py) a proposer can only file in an area their credential
-    # places them in, which stops filing in someone else's commune but not widening to an area
-    # that contains their own (a resident of Esch can still file under "lu"). Closing the rest
-    # needs a ScopeChallenge; when that lands this test must change to expect a challenge.
+def test_a_widened_jurisdiction_is_challenged_back_to_its_tier(clock, lottery, open_at):
+    # The proposer picks the jurisdiction, so a commune matter filed under "lu" is stored as
+    # national and first goes to the top of the queue. With Door (test_door.py) a proposer can
+    # only file in an area their credential places them in, which stops filing in someone else's
+    # commune but not widening to an area that contains their own (an Esch resident under
+    # "lu"). What closes it: a ScopeChallenge. While open the idea keeps its tier, marked
+    # contested; a Lottery panel narrows it and Scope recomputes the tier, so it drops back
+    # among the commune's ideas (test_scope_challenge.py covers the rules in detail).
+    clock.t = open_at - timedelta(minutes=10)
+    agora = Agora(nyms=NYMS, now=clock, lottery=lottery)
     commune_matter = {**body(ESCH), "title": {"en": "Synthetic commune bench repair"}}
     honest = agora.post_idea(commune_matter)
+    clock.tick(minutes=1)
     widened = agora.post_idea({**commune_matter, "jurisdiction_id": COUNTRY})
     assert (honest["scope_tier"], widened["scope_tier"]) == ("local", "national")
     assert [i["id"] for i in agora.queue([ESCH, COUNTRY])] == [widened["id"], honest["id"]]
+
+    residents = [who(n) for n in range(10, 15)]  # the five people a panel is drawn from
+    upvotes(agora, widened, 5, start=10)
+    clock.t = open_at
+    challenge = agora.open_challenge(
+        widened["id"], {"participant": who(2), "jurisdiction_id": ESCH}
+    )
+    contested = agora.idea(widened["id"])
+    assert (contested["scope_tier"], contested["contested"]) == ("national", True)
+
+    clock.tick(minutes=61)  # the committed drand round is out: the panel is drawn
+    panel = agora.challenge(challenge["id"])["panel"]
+    by_nym = {NYMS.nym(r, f"agora:{COUNTRY}"): r for r in residents}
+    for nym in panel[:3]:
+        agora.vote_challenge(challenge["id"], {"participant": by_nym[nym], "vote": "narrow"})
+    now = agora.idea(widened["id"])
+    assert (now["jurisdiction_id"], now["scope_tier"], now["contested"]) == (ESCH, "local", False)
+    assert [i["id"] for i in agora.queue([COUNTRY])] == []
+    # Same tier now, counts still hidden: the older, honestly filed idea comes first.
+    assert [i["id"] for i in agora.queue([ESCH, COUNTRY])] == [honest["id"], widened["id"]]
+    assert [i["scope_tier"] for i in agora.queue([ESCH, COUNTRY])] == ["local", "local"]
+    agora.close()
 
 
 # --- ranking ----------------------------------------------------------------------------------
@@ -503,7 +529,7 @@ def api(agora):
 
 def test_http_api(api, clock):
     assert api("/healthz") == (200, {"ok": True, "ideas": 0, "identity": "dev"})
-    assert api("/queue") == (200, {"charter_version": "0.1.0", "ideas": []})
+    assert api("/queue") == (200, {"charter_version": d2_charter.load().version, "ideas": []})
 
     status, local = api("/ideas", body(ESCH, 1))
     assert status == 201 and local["scope_tier"] == "local"

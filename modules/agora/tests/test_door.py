@@ -21,11 +21,12 @@ import subprocess
 import threading
 import urllib.error
 import urllib.request
+from datetime import timedelta
 from pathlib import Path
 
 import d2_charter
 import pytest
-from d2_agora import Agora, Challenges, DoorNyms, IdentityError
+from d2_agora import Agora, Challenges, DoorNyms, IdentityError, LotteryCli
 from d2_agora.__main__ import main
 from d2_agora.server import make_server
 
@@ -75,6 +76,8 @@ class Door:
             f"dave:adult:{CITY_PATH}",
             "--person",
             "lu-only:adult:lu",
+            # Esch residents for a ScopeChallenge panel.
+            *(a for n in range(1, 6) for a in ("--person", f"res{n}:adult:{ESCH_PATH}")),
         )
         # Another issuer for epoch 2: Agora accepts epoch 1 only.
         self._run(
@@ -226,6 +229,73 @@ def test_same_person_same_nym_per_area_and_cannot_upvote_twice(door, api):
     assert status == 201 and national["proposer_nym"] != posted["proposer_nym"]
 
 
+# --- ScopeChallenge with Door --------------------------------------------------------------------
+
+
+def test_a_widened_idea_is_narrowed_by_a_door_panel(door, tmp_path, open_at, lottery_cmd, beacons):
+    # Alice (Esch) files a commune matter under "lu". Five Esch residents upvote it with their
+    # "lu" nyms, which puts them in the area's pool. Bob challenges; Alice cannot. The Lottery
+    # draws the panel from the recorded beacon; panel members vote with Door presentations.
+    class Clock:
+        t = open_at - timedelta(minutes=10)
+
+    agora = Agora(
+        tmp_path / "agora.db",
+        nyms=DoorNyms(door.url, epoch=1),
+        now=lambda: Clock.t,
+        lottery=LotteryCli(lottery_cmd, chain="default", beacon=beacons),
+    )
+    server = make_server(agora, port=0)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    api = _client(f"http://127.0.0.1:{server.server_address[1]}")
+    try:
+        lu = functools.partial(door.present, context=ctx(COUNTRY), levels=1)
+        _, posted = api("/ideas", idea(COUNTRY, lu("alice", challenge=challenge(api))))
+        nyms = {}
+        for who in (f"res{n}" for n in range(1, 6)):
+            p = lu(who, challenge=challenge(api))
+            nyms[nym_of(p)] = who
+            assert api(f"/ideas/{posted['id']}/upvote", {"participant": p})[0] == 201
+        Clock.t = open_at
+        contest = f"/ideas/{posted['id']}/challenges"
+        status, err = api(
+            contest, {"participant": lu("alice", challenge=challenge(api)), "jurisdiction_id": ESCH}
+        )
+        assert (status, err["code"]) == (403, "own_idea")
+        status, opened = api(
+            contest, {"participant": lu("bob", challenge=challenge(api)), "jurisdiction_id": ESCH}
+        )
+        assert status == 201, opened
+        assert sorted(opened["draw"]["pool"]) == sorted(nyms)
+        status, err = api(
+            contest, {"participant": lu("bob", challenge=challenge(api)), "jurisdiction_id": ESCH}
+        )
+        assert (status, err["code"]) == (409, "duplicate_challenge")
+        assert api(f"/ideas/{posted['id']}")[1]["contested"] is True
+
+        Clock.t = open_at + timedelta(minutes=61)
+        panel = api(f"/challenges/{opened['id']}")[1]["panel"]
+        assert sorted(panel) == sorted(nyms)  # five in the pool, five seats
+        votes = f"/challenges/{opened['id']}/votes"
+        # Dave lives in Luxembourg City: his "lu" nym is not on the panel.
+        p = lu("dave", challenge=challenge(api))
+        assert api(votes, {"participant": p, "vote": "uphold"})[1]["code"] == "not_on_panel"
+        for nym in panel[:3]:
+            p = lu(nyms[nym], challenge=challenge(api))
+            assert api(votes, {"participant": p, "vote": "narrow"})[0] == 201
+        now = api(f"/ideas/{posted['id']}")[1]
+        assert (now["jurisdiction_id"], now["scope_tier"], now["contested"]) == (
+            ESCH,
+            "local",
+            False,
+        )
+        assert now["filed_jurisdiction_id"] == COUNTRY
+    finally:
+        server.shutdown()
+        server.server_close()
+        agora.close()
+
+
 def test_agora_keeps_the_nym_and_nothing_else_of_a_presentation(door, agora_with, tmp_path, caplog):
     """Phase 2 unlinkability, Agora's side (Door's side: modules/door/tests/unlinkability.rs).
 
@@ -316,8 +386,8 @@ def test_a_jurisdiction_the_credential_does_not_cover_is_refused(door, api):
     p = door.present("alice", ctx(ESCH), challenge(api), levels=2)
     assert api("/ideas", idea(ESCH, p))[1]["code"] == "missing_disclosure"
 
-    # What remains of the widening gap: a resident may still file under an area that contains
-    # their own (Esch -> lu). Pinned in test_agora.py; closing it needs a ScopeChallenge.
+    # A resident may still file under an area that contains their own (Esch -> lu); the tier is
+    # then contested with a ScopeChallenge (test_a_widened_idea_is_narrowed_by_a_door_panel).
     p = door.present("alice", ctx(COUNTRY), challenge(api), levels=1)
     assert api("/ideas", idea(COUNTRY, p))[1]["scope_tier"] == "national"
     p = door.present("dave", ctx(CITY), challenge(api))

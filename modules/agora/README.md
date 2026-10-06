@@ -35,9 +35,72 @@ is seeded.
 - **Mixed Charter versions.** Each idea keeps the tier and `charter_version` it was filed under;
   it is never re-tiered. The queue ranks them all with the *current* Charter's queue priorities
   and hidden-hours value, and the response's top-level `charter_version` is the current one.
+- **A contested tier is decided by a panel.** See Scope challenges below. An idea's
+  `jurisdiction_id`, `scope_tier` and `charter_version` are its *current* ones: those it was filed
+  with, or those a narrowing challenge produced. `filed_jurisdiction_id` stays what the proposer
+  filed, and `contested` is true while a challenge is open.
 - **Jurisdiction filter is exact.** `GET /queue?jurisdiction=<commune>` returns ideas filed at
   that commune only, not at its parents (`lu`) or child districts. A caller that wants the whole
   picture for a resident lists every level.
+
+## Scope challenges
+
+The architecture's answer to a wrong tier (`docs/architecture/01-modules.md` section 2): contesting
+a tier opens a `ScopeChallenge` decided by a small Lottery panel. v1 closes the known gap where a
+resident files a commune matter under an area that contains their own (Esch under `lu`) to rank
+it as national.
+
+- **Who opens one.** Any participant with a nym in the idea's filed area (with Door: an adult
+  whose credential covers it), except the proposer (`403 own_idea`). Each participant challenges
+  an idea at most once, ever (`409 duplicate_challenge`), and an idea has at most one open
+  challenge at a time (`409 challenge_open`), so concurrent panels never disagree. Once a panel
+  upholds the tier against an area, no new challenge on that idea may name the same area
+  (`409 already_decided`), so nobody gets fresh draws for the same narrowing; after 3 upheld
+  challenges the idea takes no more (`409 challenge_limit`).
+- **What it says.** `jurisdiction_id`: the narrower area the idea belongs to. It must lie strictly
+  inside the idea's current jurisdiction (Charter `parent_id` chain) and Scope must give it a
+  lower tier; anything else is `400 not_narrower`. So a challenge can only lower a tier, never
+  raise one, and a narrowed idea cannot be challenged back up (it can be narrowed further).
+  Nothing else is accepted (`unknown_field`), so nobody states a tier.
+- **The panel.** Charter `scope_challenge.panel_size` (5) pseudonyms drawn by the Lottery module
+  from the pool of everyone with a nym in the idea's filed area (proposers and upvoters of ideas
+  filed there) minus the proposer and the challenger. Fewer than that many is
+  `409 panel_pool_too_small`. When the challenge opens, Agora commits the pool to a drand round
+  at least an hour ahead (`d2-lottery commit`, purpose `scope-challenge`, context
+  `agora.scope-challenge.<id>`); 61 minutes later the first read of the challenge runs
+  `d2-lottery draw`, which fetches and verifies the beacon. A failed draw is retried by a read at
+  least 60 s later (in-memory, per challenge), so reads do not run the CLI each time. The pool, commitment and transcript are published in the challenge, so anyone reproduces
+  the panel with `d2-lottery verify` or `lottery-verify`.
+- **Votes.** Only drawn members vote (`403 not_on_panel`), once each (`409 duplicate_vote`),
+  `uphold` or `narrow`, with a nym for the idea's filed area. Before the draw: `409
+  panel_not_drawn`. An absolute majority of the drawn panel (floor(size/2)+1: 3 of 5) decides
+  at once, either way. Only that majority narrows.
+- **Deadline.** Charter `scope_challenge.decision_days` (7) after opening. Without a panel
+  majority to narrow by then, the tier stands (upheld): one `narrow` vote and no others, a
+  2-to-1 split, a tie, no votes or no panel all keep it. Any read settles a due challenge;
+  later votes are `409 challenge_closed`.
+- **The result.** Narrowed: Scope computes the tier of the proposed jurisdiction under the
+  current Charter and stores it, with that version, in an outcome row; the idea moves to that
+  jurisdiction's queue. Upheld: nothing changes. If Scope cannot tier the proposed jurisdiction
+  then (the Charter changed under the challenge), the challenge is recorded as upheld with
+  `outcome.reason` and an error log line, and reads carry on. While open, the idea keeps its tier and place,
+  marked `contested`.
+- **Storage.** Challenges, draws, votes and outcomes are append-only tables like ideas and
+  upvotes; the idea row itself never changes.
+- **Identity after narrowing.** Nyms stay those of the filed area (context
+  `agora:<filed_jurisdiction_id>`), so nobody gets a second nym, and a second upvote, for the same
+  idea. It also means residents of the filed area outside the narrowed one can still upvote it.
+
+**Lottery without importing it.** Modules import only `spec` and `charter`, so Agora runs the
+Lottery's CLI in a subprocess (`sortition.py`, `LotteryCli`; `serve --lottery-cmd`, default
+`d2-lottery` or `$LOTTERY_CMD`; `--lottery-chain quicknet`). It needs that CLI installed beside
+Agora (`uv sync --all-packages`) and outbound access to a drand relay for the draw. Without it,
+opening a challenge is `503 lottery_unavailable` and nothing is stored. Tests use a recorded
+mainnet beacon (`spec/lottery/vectors/beacons.json`) and never touch the network.
+
+**Owner.** `ScopeChallenge` lives in Agora (the data model first listed it under Charter): it
+needs nyms, a store and a panel, which a rules library has none of. Charter supplies the rules
+(`scope_challenge.*`, `tier`, `jurisdiction_path`).
 
 ## Identity
 
@@ -113,6 +176,10 @@ together with `DOOR_URL` stops the start.
 | `POST /ideas` `{participant, jurisdiction_id, topic_ids?, title, text}` | `201` Idea (`spec/schemas/idea.schema.json`) |
 | `POST /ideas/<id>/upvote` `{participant}` | `201 {idea_id, upvoted: true}`; `409 duplicate_upvote`; `404 unknown_idea` |
 | `GET /ideas/<id>` | `200` Idea |
+| `POST /ideas/<id>/challenges` `{participant, jurisdiction_id}` | `201` ScopeChallenge (`spec/schemas/scope-challenge.schema.json`) |
+| `GET /ideas/<id>/challenges` | `200 {challenges}`, oldest first |
+| `GET /challenges/<id>` | `200` ScopeChallenge; draws the panel when its round is due, settles it at the deadline |
+| `POST /challenges/<id>/votes` `{participant, vote}` | `201 {challenge_id, voted: true}`; `uphold` or `narrow`, panel members only |
 | `GET /queue?jurisdiction=<id>&jurisdiction=<id>&limit=<n>` | `200 {charter_version, ideas}` in queue order; no `jurisdiction` means all |
 | `GET /healthz` | `{ok, ideas, identity}` (`door`, `dev`, or `none` when read only) |
 
@@ -138,15 +205,13 @@ separators and zero-width characters.
 
 ## Not done yet
 
-- **Jurisdiction widening (known gap, narrowed).** With Door a proposer can only file in an area
-  their credential places them in: nobody files in a commune they do not live in
-  (`test_door.py::test_a_jurisdiction_the_credential_does_not_cover_is_refused`). What remains:
-  a resident can still file a commune matter under an area that contains their own (an Esch
-  resident under `lu`), so it is stored as national and goes to the top of every queue that
-  includes `lu`. Pinned by
-  `test_known_gap_a_proposer_can_widen_the_jurisdiction_to_raise_the_tier`. Closing it needs a
-  `ScopeChallenge` or a moderation step for ideas filed wider than the proposer's own commune.
-  Required before any pilot.
+- **Scope challenges, v1 limits.** A challenge only narrows: a national subject filed under a
+  commune (the Charter's topic gap) cannot be widened by a challenge yet, since that would let a
+  challenge raise a tier. The panel is drawn from everyone active in the area, with no
+  stratification, no accept or decline step and no stipend; panel members learn they were drawn
+  only by reading the challenge. Draws are not written to Record (`draw.commit`, `draw.result`),
+  so the commit time is self-declared (Lottery's unanchored warning applies). A small area with
+  fewer than five other participants cannot challenge at all.
 - **Epoch rollover.** Agora accepts one Door epoch (`DOOR_EPOCH`) and refuses to start with
   another unless `--new-epoch` is given. Moving to the next epoch gives every holder new nyms,
   so they could upvote ideas from the old epoch again. Needs a rule (close the queue per epoch,
@@ -158,8 +223,8 @@ separators and zero-width characters.
 - **Promotion** (`POST /ideas/{id}/promote` to a `Matter`, by rule), `ProposerRecord` and
   proposer ratings.
 - **Topic-based scope.** The Charter's v0 Scope uses the jurisdiction only (see
-  `charter/README.md`, Known gaps), so a national subject filed under a commune ranks as local
-  until a `ScopeChallenge` exists.
+  `charter/README.md`, Known gaps), so a national subject filed under a commune ranks as local;
+  a ScopeChallenge cannot widen it (see above).
 - **A unit for `d2-door serve`** (`civic-door-verify.service`), which needs a release binary built
   in CI (Mulinux does not build).
 - **Posting and upvoting from the citizen app.** The app shows the queue read only (Companion

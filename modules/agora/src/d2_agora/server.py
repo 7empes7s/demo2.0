@@ -10,15 +10,23 @@ POST /ideas                {participant, jurisdiction_id, topic_ids?, title, tex
 POST /ideas/<id>/upvote    {participant} -> 201 {idea_id, upvoted: true}
                                          -> 409 {error, code: "duplicate_upvote"}
 GET  /ideas/<id>           -> 200 Idea
+POST /ideas/<id>/challenges {participant, jurisdiction_id}
+                           -> 201 ScopeChallenge (spec/schemas/scope-challenge.schema.json)
+GET  /ideas/<id>/challenges -> 200 {challenges: [ScopeChallenge, ...]} oldest first
+GET  /challenges/<id>      -> 200 ScopeChallenge (draws the panel once its drand round is due)
+POST /challenges/<id>/votes {participant, vote: "uphold" | "narrow"}
+                           -> 201 {challenge_id, voted: true} (drawn panel members only)
 GET  /queue?jurisdiction=<id>&jurisdiction=<id>&limit=<n>
                            -> 200 {charter_version, ideas: [Idea, ...]} in queue order
 GET  /healthz              -> {ok, ideas, identity: "door" | "dev" | "none"}
                               ("none": --read-only, every POST is 403 read_only)
 
 Errors are {error, code}: 400 bad input, 403 presentation refused (not adult, jurisdiction not
-covered, Door's proof checks), 404 unknown idea or path, 408 body too slow, 409 duplicate upvote,
-411 no Content-Length, 413 body over MAX_BODY, 500 internal (no details), 503 too many
-connections or Door unavailable (writes fail closed; reads do not need Door).
+covered, Door's proof checks, own idea, not on the panel), 404 unknown idea, challenge or path,
+408 body too slow, 409 duplicate upvote, challenge or vote, a challenge already open, panel not
+drawn yet, challenge closed, too few participants for a panel, 411 no Content-Length, 413 body
+over MAX_BODY, 500 internal (no details), 503 too many connections, Door or Lottery unavailable
+(writes fail closed; reads do not need Door).
 """
 
 from __future__ import annotations
@@ -41,6 +49,9 @@ TIMEOUT = 10.0  # seconds a client may take to send its whole body (and each hea
 MAX_CONNECTIONS = 32  # connections handled at once; more get 503
 _IDEA = re.compile(r"/ideas/([0-9A-Z]{26})")
 _UPVOTE = re.compile(r"/ideas/([0-9A-Z]{26})/upvote")
+_IDEA_CHALLENGES = re.compile(r"/ideas/([0-9A-Z]{26})/challenges")
+_CHALLENGE = re.compile(r"/challenges/([0-9A-Z]{26})")
+_VOTE = re.compile(r"/challenges/([0-9A-Z]{26})/votes")
 
 
 class _BoundedServer(ThreadingHTTPServer):
@@ -170,6 +181,12 @@ def make_server(
                 m = _IDEA.fullmatch(url.path)
                 if m:
                     return self._json(200, agora.idea(m.group(1)))
+                m = _IDEA_CHALLENGES.fullmatch(url.path)
+                if m:
+                    return self._json(200, {"challenges": agora.challenges_of(m.group(1))})
+                m = _CHALLENGE.fullmatch(url.path)
+                if m:
+                    return self._json(200, agora.challenge(m.group(1)))
             except AgoraError as exc:
                 return self._error(exc.status, exc.code, str(exc))
             return self._error(404, "not_found", "not found")
@@ -177,7 +194,9 @@ def make_server(
         def _post(self):
             path = urlsplit(self.path).path
             upvote = _UPVOTE.fullmatch(path)
-            if path != "/ideas" and not upvote:
+            contest = _IDEA_CHALLENGES.fullmatch(path)
+            vote = _VOTE.fullmatch(path)
+            if path != "/ideas" and not (upvote or contest or vote):
                 return self._error(404, "not_found", "not found")
             if getattr(agora.nyms, "kind", None) == "none":
                 self.close_connection = True  # the body is not read
@@ -210,6 +229,10 @@ def make_server(
                             400, "invalid_body", "body must be exactly {participant}"
                         )
                     return self._json(201, agora.upvote(upvote.group(1), body["participant"]))
+                if contest:
+                    return self._json(201, agora.open_challenge(contest.group(1), body))
+                if vote:
+                    return self._json(201, agora.vote_challenge(vote.group(1), body))
                 return self._json(201, agora.post_idea(body))
             except AgoraError as exc:
                 return self._error(exc.status, exc.code, str(exc))
