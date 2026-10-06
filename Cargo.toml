@@ -1,0 +1,14 @@
+# Root of the Rust workspace. Each Rust module under modules/ is its own crate (own licence,
+# README and changelog); this file only ties them together for dev and CI (tools/check.sh runs
+# cargo fmt, clippy and test over the whole workspace). Add one line per Rust module.
+[workspace]
+resolver = "2"
+members = ["modules/door"]
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.85"
+
+[profile.dev]
+# Pairing arithmetic is slow without optimisation; tests run in dev profile.
+opt-level = 1

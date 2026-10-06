@@ -83,3 +83,36 @@ def test_checkout_under_build_dir_still_checked(tmp_path):
 def test_node_modules_ignored(tmp_path):
     _module(tmp_path, "agora", {"node_modules/y/a.js": "require('@democracy2/door')\n"})
     assert boundaries.check(tmp_path) == []
+
+
+def test_rust_cross_module_use_fails(tmp_path):
+    _module(tmp_path, "door", {"src/lib.rs": "use d2_record::log::Entry;\n"})
+    [problem] = boundaries.check(tmp_path)
+    assert "imports module 'record'" in problem
+
+
+def test_rust_own_crate_and_shared_pass(tmp_path):
+    _module(
+        tmp_path,
+        "door",
+        {
+            "src/lib.rs": "use d2_door::x;\nlet y = d2_charter::tier();\nextern crate d2_spec;\n",
+            "Cargo.toml": '[dependencies]\nd2-charter = { path = "../../charter/rust" }\n',
+        },
+    )
+    assert boundaries.check(tmp_path) == []
+
+
+def test_rust_cargo_path_dependency_on_module_fails(tmp_path):
+    _module(
+        tmp_path,
+        "door",
+        {"Cargo.toml": '[dependencies]\nd2-record = { version = "0.1", path = "../record" }\n'},
+    )
+    [problem] = boundaries.check(tmp_path)
+    assert "path dependency on 'record'" in problem
+
+
+def test_rust_target_dir_ignored(tmp_path):
+    _module(tmp_path, "door", {"target/debug/build/x.rs": "use d2_record::x;\n"})
+    assert boundaries.check(tmp_path) == []
