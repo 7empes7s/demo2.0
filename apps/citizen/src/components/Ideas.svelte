@@ -151,7 +151,7 @@
     border: 2px solid var(--line);
     background: var(--surface);
   }
-  .reach.national { background: var(--accent); color: var(--accent-ink); }
+  .reach.national { background: var(--accent); color: var(--accent-ink); border-color: var(--accent-line); }
   .reach.regional { background: var(--surface-2); }
   .idea h3 { font-size: 1.45rem; line-height: 1.2; overflow-wrap: anywhere; }
   .text { margin: 0; max-width: 68ch; white-space: pre-line; overflow-wrap: anywhere; }
