@@ -1,0 +1,34 @@
+{
+  "about": "Recorded drand beacons, copied by hand from drand's own test suites (the network relay api.drand.sh is not reachable from the build sandbox). Each is a real beacon signed by its chain's threshold key: the BLS check in both implementations is the evidence, since nobody without that key can produce a signature that verifies.",
+  "beacons": [
+    {
+      "name": "default-mainnet-2634945",
+      "source": "github.com/drand/drand/v2@v2.1.7 crypto/schemes_test.go TestVerifyBeacon (Go module proxy), League of Entropy mainnet 'default' chain",
+      "chain": "default",
+      "beacon": {
+        "round": 2634945,
+        "randomness": "fc8f2b3561428c365ada1aeecad04ccc044ba649c6363c5f687c1989cc2c20e5",
+        "signature": "814778ed1e480406beb43b74af71ce2f0373e0ea1bfdfea8f9ed62c876c20fcbc7f0163860e3da42ed2148756015f4551451898ffe06d384b4d002245025571b6b7a752f7158b40ad92b13b6d703ad31922a617f2c7f6d960b84d56cf1d79eef",
+        "previous_signature": "8bd96294383b4d1e04e736360bd7a487f9f409f1e7bd800b720656a310d577b3bdb1e1631af6c5782a1d8979c502f395036181eff4058960fc40bb7034cdae1991d3eda518ab204a077d2f7e724974cf87b407e549bd815cf0b8e5a3832f675d"
+      }
+    },
+    {
+      "name": "walkthrough-rfc9380-38",
+      "source": "github.com/drand/drand-client master test/beacon-verification.test.ts 'signatures on G1 with DST': drand's 'walkthrough' test chain, same scheme as quicknet (bls-unchained-g1-rfc9380)",
+      "chain_info": {
+        "public_key": "81d320f220ee9c79e60e19dedc838c31e3ab919b15481e9feb52f643628c4f6a13fdc52129493875a818109d767272ca0541cbcdcea9335f2870d781b39b845ba8cbd44fdfe4967781cf72ca5917fc9398bcf97ca0548ed5a709016c4b1ff0f3",
+        "period": 3,
+        "genesis_time": 1687506816,
+        "group_hash": "02d678e93908888871b70e3f015b396a8c082bc1493ae5479f8743cb5d972b54",
+        "scheme": "bls-unchained-g1-rfc9380",
+        "beacon_id": "walkthrough"
+      },
+      "chain_hash": "af8b6fc95693b058a3a59efe586eb31c2c352fe00cf40c62a427d87c34f7a235",
+      "beacon": {
+        "round": 38,
+        "randomness": "b2fc21325a24904a6a9e81a6c63f65f6cec3f0b2400df3f4a56b214770e9ccca",
+        "signature": "95c93585c513ebbcb4777ff15599b3140e5ec0295faa0e483f3deadd88fa6d43f0d3703e3a4ce106e8fd6c6987f32126"
+      }
+    }
+  ]
+}

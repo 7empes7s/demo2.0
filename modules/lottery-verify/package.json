@@ -1,0 +1,24 @@
+{
+  "name": "@democracy2/lottery-verify",
+  "version": "0.1.0",
+  "description": "Independent verifier for Lottery draws: reproduces a panel from the pool, the commitment and the drand beacon.",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run",
+    "verify": "node --experimental-strip-types src/cli.ts"
+  },
+  "dependencies": {
+    "@noble/curves": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  }
+}
