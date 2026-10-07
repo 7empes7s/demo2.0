@@ -23,7 +23,7 @@ Environment=DESK_DB=/var/lib/civic-desk/desk.db
 Environment=HOST=127.0.0.1 PORT=8094 TRUST_PROXY=1
 # The pilot's seed (procedures, a question, a few ideas) is loaded once, into an empty store only.
 Environment=DESK_SEED=/opt/civic/current/modules/desk/seed/esch.json
-ExecStart=/usr/bin/node --experimental-strip-types --no-warnings=ExperimentalWarning modules/desk/src/server.ts
+ExecStart=/usr/bin/env node --experimental-strip-types --no-warnings=ExperimentalWarning modules/desk/src/server.ts
 Restart=on-failure
 RestartSec=3
 NoNewPrivileges=true
