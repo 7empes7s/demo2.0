@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import Codes from "../src/components/Codes.svelte";
 import { commune } from "../src/lib/commune.svelte.ts";
-import { LETTERS, letterText, siteAddress } from "../src/lib/letters.ts";
+import { LETTERS, letterLangs, letterText, siteAddress } from "../src/lib/letters.ts";
 import { LANGS } from "../src/lib/types.ts";
 import { setLang } from "../src/lib/ui.svelte.ts";
 import { button, cleanup, click, fakeDesk, show, signedInAs, signedOut, type } from "./helpers.ts";
@@ -54,13 +54,14 @@ describe("enrolment codes", () => {
     expect(calls.filter((c) => c.method === "GET").every((c) => !c.path.includes("codes/"))).toBe(true);
   });
 
-  it("prints one letter per code, in the language staff pick, and drops them when done", async () => {
+  it("prints one letter per code, each in Luxembourg's four languages plus the commune's own, and drops them when done", async () => {
     fakeDesk({
       "GET /api/desk/enrol-codes": () => ({ body: { batches: [] } }),
       "POST /api/desk/enrol-codes": () => ({ status: 201, body: { codes: THREE } }),
     });
     const printed = vi.fn();
     vi.stubGlobal("print", printed);
+    commune.languages = ["fr", "pt"];
     signedInAs("admin");
     const root = show(Codes, {});
     await vi.waitFor(() => expect(root.textContent).toContain("No batch yet."));
@@ -68,21 +69,20 @@ describe("enrolment codes", () => {
     type(root.querySelector("#batch-count"), "3");
     (root.querySelector("form") as HTMLFormElement).requestSubmit();
     await vi.waitFor(() => expect(button(root, "Print letters")).toBeTruthy());
+    expect(root.textContent).toContain("each in Luxembourgish, French, German, English, Portuguese");
 
-    // The letters sit straight under <body>, one per code, in the commune's first language.
+    // The letters sit straight under <body>, one per code, the code once and every language below it.
     const letters = () => [...document.querySelectorAll("body > .letters .letter")];
     expect(letters()).toHaveLength(3);
     expect(letters().map((l) => l.querySelector(".code-value")?.textContent)).toEqual(THREE);
-    expect(letters()[0].textContent).toContain("Votre code d'inscription");
-    expect(letters()[0].textContent).toContain("Esch-sur-Alzette vous invite");
-    expect(letters()[0].textContent).toContain(`Ouvrez ${siteAddress(location.href)}`);
-    expect(letters()[0].textContent).not.toContain("Letters, October");
-
-    const pick = root.querySelector("#letter-lang") as HTMLSelectElement;
-    expect([...pick.options].map((o) => o.value)).toEqual(["fr", "de", "lb", "en", "pt"]);
-    pick.value = "de";
-    pick.dispatchEvent(new Event("change", { bubbles: true }));
-    await vi.waitFor(() => expect(letters()[0].textContent).toContain("Ihr Anmeldecode"));
+    const first = letters()[0];
+    expect([...first.querySelectorAll(".part")].map((p) => p.getAttribute("lang"))).toEqual(["lb", "fr", "de", "en", "pt"]);
+    for (const title of ["Ären Umeldecode", "Votre code d'inscription", "Ihr Anmeldecode", "Your enrolment code", "O seu código de inscrição"]) {
+      expect(first.textContent).toContain(title);
+    }
+    expect(first.textContent).toContain("Esch-sur-Alzette vous invite");
+    expect(first.querySelector(".site")?.textContent).toBe(siteAddress(location.href));
+    expect(first.textContent).not.toContain("Letters, October");
 
     click(button(root, "Print letters"));
     expect(printed).toHaveBeenCalledOnce();
@@ -104,6 +104,12 @@ describe("enrolment letters", () => {
       expect(Object.values(filled).join(" ")).not.toMatch(/\{(commune|site)\}/);
     }
     expect(letterText("en", "  ", "x").intro.startsWith("Your commune invites")).toBe(true);
+  });
+
+  it("always carries Luxembourg's four languages, plus the commune's own", () => {
+    expect(letterLangs([])).toEqual(["lb", "fr", "de", "en"]);
+    expect(letterLangs(["fr"])).toEqual(["lb", "fr", "de", "en"]);
+    expect(letterLangs(["lb", "fr", "de", "en", "pt"])).toEqual(["lb", "fr", "de", "en", "pt"]);
   });
 
   it("points residents at the citizen app, the root of the portal's site", () => {
