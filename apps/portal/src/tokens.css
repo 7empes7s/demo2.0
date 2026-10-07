@@ -1,0 +1,250 @@
+/*
+ * Design tokens: the only source of colour. The look is Affichage (docs/design/): paper sheets
+ * pasted on a public wall. Paper, ink, amber (yours), navy (official), red (numbers, dates and
+ * alarms). No blurred shadows: what sits behind a sheet is a second sheet, offset hard. No radius.
+ *
+ * Light is the wall by day: cream plaster, paper sheets, ink. Dark is the wall with the lights
+ * off: a near-black wall, charcoal sheets, cream print, soft grey lines, and amber only where it
+ * matters (what is pressed, chosen or yours). Every sheet remaps the tokens for what is on it, so
+ * a component never has to know which mode it is in.
+ */
+:root {
+  color-scheme: light;
+  /* Fixed materials: ink and paper never change, whatever the wall. */
+  --ink: #121212;
+  --paper: #f8f3e6;
+  --navy: #1b2a4a;
+  --rule: 3px;
+
+  /* The wall and what is written on it. */
+  --bg: #efe8d6;
+  --fg: #121212;
+  --muted: #5d5a52;
+  --line: #121212;
+  --accent-fg: #121212;
+
+  /* The sheets and what is printed on them. */
+  --surface: #f8f3e6;
+  --surface-2: #e4dcc6;
+  --sheet-fg: #121212;
+  --sheet-muted: #5d5a52;
+  --sheet-line: #121212;
+  --sheet-accent-fg: #121212;
+  --sheet-green: #1f6b45;
+  --sheet-green-bg: #e3eedf;
+  --sheet-yellow: #6b4a00;
+  --sheet-yellow-bg: #fbe3b0;
+  --sheet-red: #d8321f;
+  --sheet-red-bg: #f9d9d3;
+
+  --accent: #f5a623;
+  --accent-ink: #121212;
+  --green: #1f6b45;
+  --green-bg: #e3eedf;
+  --yellow: #6b4a00;
+  --yellow-bg: #fbe3b0;
+  --red: #d8321f;
+  --red-bg: #f9d9d3;
+  --focus: #d8321f;
+
+  /* A pressed or chosen thing: ink with paper print by day, amber with ink print at night. */
+  --pressed-bg: #121212;
+  --pressed-fg: #f8f3e6;
+  --accent-line: #121212;
+
+  /* The second sheet behind a button (ink) and behind a lifted sheet (amber or navy). */
+  --backing: #121212;
+  --backing-navy: #1b2a4a;
+  --shadow: none;
+
+  --serif: "Big Shoulders Display", "Archivo Black", Impact, sans-serif;
+  --sans: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius: 0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --rule: 2px;
+    --bg: #0c0c0d;
+    --fg: #e9e4d6;
+    --muted: #9b968a;
+    --line: #3a3833;
+    --accent-fg: #f5a623;
+    --surface: #1b1a18;
+    --surface-2: #26241f;
+    --sheet-fg: #e9e4d6;
+    --sheet-muted: #9b968a;
+    --sheet-line: #55524b;
+    --sheet-accent-fg: #f5a623;
+    --sheet-green: #7fd6a4;
+    --sheet-green-bg: #1f3a2d;
+    --sheet-yellow: #f5a623;
+    --sheet-yellow-bg: #3b3415;
+    --sheet-red: #ff5a45;
+    --sheet-red-bg: #45201c;
+    --green: #7fd6a4;
+    --green-bg: #1f3a2d;
+    --yellow: #f5a623;
+    --yellow-bg: #3b3415;
+    --red: #ff5a45;
+    --red-bg: #45201c;
+    --pressed-bg: #f5a623;
+    --pressed-fg: #121212;
+    --accent-line: #f5a623;
+    --backing: #000000;
+    --backing-navy: #2f4a80;
+    --focus: #f5a623;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --rule: 2px;
+  --bg: #0c0c0d;
+  --fg: #e9e4d6;
+  --muted: #9b968a;
+  --line: #3a3833;
+  --accent-fg: #f5a623;
+  --surface: #1b1a18;
+  --surface-2: #26241f;
+  --sheet-fg: #e9e4d6;
+  --sheet-muted: #9b968a;
+  --sheet-line: #55524b;
+  --sheet-accent-fg: #f5a623;
+  --sheet-green: #7fd6a4;
+  --sheet-green-bg: #1f3a2d;
+  --sheet-yellow: #f5a623;
+  --sheet-yellow-bg: #3b3415;
+  --sheet-red: #ff5a45;
+  --sheet-red-bg: #45201c;
+  --green: #7fd6a4;
+  --green-bg: #1f3a2d;
+  --yellow: #f5a623;
+  --yellow-bg: #3b3415;
+  --red: #ff5a45;
+  --red-bg: #45201c;
+  --pressed-bg: #f5a623;
+  --pressed-fg: #121212;
+  --accent-line: #f5a623;
+  --backing: #000000;
+  --backing-navy: #2f4a80;
+  --focus: #f5a623;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+
+/* On a sheet, the tokens are the sheet's: ink on paper in both modes. */
+.card, .file, .entry, .option, .chat li, .btn, .chip, .cite, select, .icon, input, textarea, .segmented,
+.tag, .reach, .understood, .badge, .private, .notice, .closed, .offline, .verdict {
+  --fg: var(--sheet-fg);
+  --muted: var(--sheet-muted);
+  --line: var(--sheet-line);
+  --accent-fg: var(--sheet-accent-fg);
+  --green: var(--sheet-green);
+  --green-bg: var(--sheet-green-bg);
+  --yellow: var(--sheet-yellow);
+  --yellow-bg: var(--sheet-yellow-bg);
+  --red: var(--sheet-red);
+  --red-bg: var(--sheet-red-bg);
+  color: var(--fg);
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 16px/1.55 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent-fg); text-underline-offset: 2px; text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+
+/* Type: titles and labels in Big Shoulders Display, heavy and upper case; body stays Public Sans. */
+.serif { font-family: var(--serif); font-weight: 900; text-transform: uppercase; line-height: 0.95; letter-spacing: 0; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.label { font-family: var(--serif); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.02em; text-transform: uppercase; color: var(--fg); }
+
+/* Buttons: paper face, ink border, ink backing; a press flattens the face onto the backing. */
+.btn {
+  appearance: none;
+  border: var(--rule) solid var(--line);
+  background: var(--surface);
+  border-radius: 0;
+  padding: 0.5rem 0.95rem;
+  cursor: pointer;
+  font-family: var(--serif);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  box-shadow: 4px 4px 0 0 var(--backing);
+}
+.btn:active { transform: translate(4px, 4px); box-shadow: none; }
+.btn.primary { background: var(--accent); border-color: var(--accent-line); color: var(--accent-ink); }
+.btn[aria-pressed="true"] { background: var(--pressed-bg); border-color: var(--pressed-bg); color: var(--pressed-fg); }
+.btn:disabled { opacity: 0.5; cursor: progress; box-shadow: none; transform: none; }
+.btn.chip, .chip { border-width: 2px; box-shadow: none; padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+.chip:active { transform: none; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent-line); color: var(--accent-ink); }
+.btn.small { box-shadow: none; border-width: 2px; }
+
+/* Sheets: paper with an ink border, stapled at the top corners. */
+.card {
+  position: relative;
+  background: var(--surface);
+  border: var(--rule) solid var(--line);
+  border-radius: 0;
+  padding: 1.1rem 1.2rem;
+}
+.card::before, .card::after {
+  content: ""; position: absolute; top: -2px; width: 22px; height: 7px;
+  border: 2.5px solid var(--line); border-bottom: 0; pointer-events: none;
+}
+.card::before { left: 14px; transform: rotate(-6deg); }
+.card::after { right: 14px; transform: rotate(5deg); }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/*
+ * Motion. Six verbs, one job each, from docs/design/03-affichage-identity.html. Everything below
+ * is off for readers who prefer reduced motion; screen changes then switch on the spot.
+ * Paste: anything new is pasted on and settles with a slight overshoot (700 ms). Press: a button
+ * goes flat onto its backing (120 ms). Peel: the old screen peels off from its top left corner
+ * while the next one was already underneath (view transition, see lib/look.ts). Tear: a dismissed
+ * sheet is torn off sideways (nothing in the app is dismissed yet, so it is not used here).
+ * Flap: a number that appears flips like a split-flap board. March: waiting is marching ants along
+ * the cut line.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes paste { 0% { transform: scale(1.04) rotate(-1.2deg); opacity: 0; } 60% { transform: scale(0.99) rotate(0.3deg); opacity: 1; } 100% { transform: none; opacity: 1; } }
+  @keyframes peel { to { transform: rotateY(-80deg) rotateX(10deg) translateY(12px); opacity: 0.4; } }
+  @keyframes flap { 0% { transform: rotateX(0); } 50% { transform: rotateX(-90deg); } 51% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
+  @keyframes march { to { background-position: -20px 0, 0 0; } }
+
+  .card, .file, .entry, .chat li, .verdict, .intro, .done { animation: paste 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+  .file:nth-child(2), .entry:nth-child(2) { animation-delay: 0.06s; }
+  .file:nth-child(3), .entry:nth-child(3) { animation-delay: 0.12s; }
+  .file:nth-child(4), .entry:nth-child(4) { animation-delay: 0.18s; }
+  .file:nth-child(5), .entry:nth-child(5) { animation-delay: 0.24s; }
+  .file:nth-child(n + 6), .entry:nth-child(n + 6) { animation-delay: 0.3s; }
+  .card.next { animation-delay: 0.15s; }
+
+  .btn, .seg, .chip, .cite, .option { transition: transform 0.12s linear, box-shadow 0.12s linear, background-color 0.12s linear, color 0.12s linear; }
+
+  .top { view-transition-name: top; }
+  ::view-transition-old(root) { animation: peel 0.5s cubic-bezier(0.4, 0, 0.2, 1) both; transform-origin: 0 0; }
+  ::view-transition-new(root) { animation: paste 0.6s 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+  ::view-transition-group(root) { animation-duration: 0s; }
+  ::view-transition-old(top), ::view-transition-new(top) { animation: none; }
+
+  .score svg { animation: flap 0.45s ease-in-out both; transform-origin: center; }
+
+  .pulse {
+    animation: march 1s linear infinite;
+    padding-top: 0.6rem;
+    background: repeating-linear-gradient(90deg, var(--line) 0 10px, transparent 10px 20px) top / 200% 3px no-repeat;
+  }
+}
