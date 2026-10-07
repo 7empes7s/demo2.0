@@ -2,6 +2,7 @@
   import type { DocketItem } from "@democracy2/companion";
 
   import { kindOf, placeOf } from "../lib/data.ts";
+  import { langOf, tx } from "../lib/translations.svelte.ts";
   import { t } from "../lib/ui.svelte.ts";
 
   let { item }: { item: DocketItem } = $props();
@@ -13,7 +14,7 @@
   {#if item.number && kind === "chamber"}<span class="mono no">N° {item.number}</span>
   {:else if item.number && kind === "council"}<span class="mono no">{t("point_no", { n: item.number })}</span>{/if}
 </span>
-{#if item.type_label}<span class="label" lang="fr">{item.type_label}</span>{:else}<span class="label">{t(item.type === "bill" ? "type_bill" : item.type === "debate" ? "type_debate" : "type_other")}</span>{/if}
+{#if item.type_label}<span class="label" lang={langOf(item.type_label)}>{tx(item.type_label)}</span>{:else}<span class="label">{t(item.type === "bill" ? "type_bill" : item.type === "debate" ? "type_debate" : "type_other")}</span>{/if}
 
 <style>
   .who { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }

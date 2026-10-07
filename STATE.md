@@ -2,6 +2,14 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-07: Files in the resident's language, with "Show original"
+
+- Ask (Marouane, 2026-10-07): file contents stay French whatever language is picked; translate, with a way to show the original in a click.
+- Done: the Companion translates the snapshot's French text (titles, summaries, status, steps, history lines, document names, committee and theme names) into en, de, lb, pt in the background through the configured model and serves one file to every device at `/data/translations.json` (`modules/companion/src/translate.ts`); cache in `$STATE_DIRECTORY/translations.json` (`StateDirectory=civic-companion` added to the unit). The citizen app shows translations (`lib/translations.svelte.ts`) and a "Show original" switch (`components/OriginalToggle.svelte`) under a file's title and on This week.
+- Evidence: companion tests 115, citizen 119 (privacy trace also switches language and the original toggle; same requests), typecheck clean, check.sh green; phone renders in `citizen-look/translate/` in the project folder, made with a hand-written sample translations file (the cloud session cannot reach a model).
+- Mulinux (operator): reinstall `civic-companion.service` (new `StateDirectory`), `systemctl daemon-reload`, restart. Translations need `LLM_*` in `/etc/civic/companion.env`; without a model the app stays French.
+- Not done: documents are not translated (Explain already answers in the resident's language); quality of Luxembourgish depends on the model.
+
 ## 2026-10-07: Citizen app, welcome steps and settings instead of "Set up your week"
 
 - Ask (Marouane, 2026-10-07, from his phone): "Your topics" took most of the This week page; make it a setting on the user's profile, linked from the page, with a proper onboarding; the app is for residents of all ages and tech levels.

@@ -8,7 +8,7 @@ One service, `civic-companion`, serves three things from one Node process: the c
 |---|---|
 | `deploy.env.example` | `/etc/civic/deploy.env` (mode 600), read by `app-deploy@civic` |
 | `companion.env.example` | `/etc/civic/companion.env` (mode 600), read by the service |
-| `civic-companion.service` | `/etc/systemd/system/` |
+| `civic-companion.service` | `/etc/systemd/system/` (keeps the translations of the list in `/var/lib/civic-companion/translations.json`, its `StateDirectory`, so a text is translated once) |
 | `civic-provenance.service` | `/etc/systemd/system/` (`PartOf=civic-companion.service`: every deploy, and every Docket refresh, restarts it with the Companion, so it reads the same release and snapshot) |
 | `civic-agora.service` | `/etc/systemd/system/` (`PartOf=civic-companion.service`, like Provenance; its database is `/var/lib/civic-agora/agora.db`, outside the release tree, and starts empty) |
 | `civic-desk.service` | `/etc/systemd/system/` (`PartOf=civic-companion.service`; reads `/etc/civic/desk.env`, mode 600, from `desk.env.example`; its database is `/var/lib/civic-desk/desk.db`, outside the release tree, seeded once from `modules/desk/seed/esch.json`) |

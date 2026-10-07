@@ -4,8 +4,8 @@
 //     Other hashed assets are cached the first time they are fetched.
 //   - Pages: network first; the saved app page when offline or when the server answers 5xx.
 //     Only the app page itself (/ or /index.html, as HTML) is ever saved as the offline app.
-//   - The Docket snapshot: network first, the last copy when offline or on 5xx, so the list
-//     still works.
+//   - The Docket snapshot and its translations: network first, the last copy when offline or on
+//     5xx, so the list still works.
 //   - /api/* and anything not from this origin: never touched, never cached.
 const VERSION = "__VERSION__";
 const SHELL = __SHELL__;
@@ -13,6 +13,7 @@ const SHELL_CACHE = `citizen-shell-${VERSION}`;
 // The snapshot outlives app updates: a new version must not throw away the only offline copy.
 const DATA_CACHE = "citizen-data-1";
 const SNAPSHOT = "data/snapshot.json";
+const TRANSLATIONS = "data/translations.json";
 // How long to wait for the network before using a saved copy (only when one exists).
 const NETWORK_TIMEOUT_MS = 4000;
 
@@ -103,8 +104,9 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin || url.pathname.startsWith("/api/")) return;
-  if (url.href === at(SNAPSHOT)) {
-    event.respondWith(networkFirst(event, DATA_CACHE, SNAPSHOT, () => true));
+  if (url.href === at(SNAPSHOT) || url.href === at(TRANSLATIONS)) {
+    const key = url.href === at(SNAPSHOT) ? SNAPSHOT : TRANSLATIONS;
+    event.respondWith(networkFirst(event, DATA_CACHE, key, () => true));
   } else if (request.mode === "navigate") {
     // Routes live in the hash, so every page is the one index.html. Offline, any page opens the
     // app; online, only a real app page may replace the saved one (never /healthz, JSON or an icon).

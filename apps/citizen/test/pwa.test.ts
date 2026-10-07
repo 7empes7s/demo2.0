@@ -162,8 +162,10 @@ describe("service worker", () => {
     await w.lifecycle("install");
     expect(await w.request("/assets/index-abc.js")).toBe("200 shell /assets/index-abc.js");
     expect(await w.request("/data/snapshot.json")).toBe("200 net /data/snapshot.json");
+    expect(await w.request("/data/translations.json")).toBe("200 net /data/translations.json");
     w.net.mode = "offline";
     expect(await w.request("/data/snapshot.json")).toBe("200 net /data/snapshot.json");
+    expect(await w.request("/data/translations.json")).toBe("200 net /data/translations.json");
     expect(await w.request("/", { mode: "navigate" })).toBe("200 shell /");
   });
 

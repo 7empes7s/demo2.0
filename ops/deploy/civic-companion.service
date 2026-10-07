@@ -18,6 +18,8 @@ ProtectSystem=strict
 ProtectHome=true
 PrivateTmp=true
 ReadOnlyPaths=/opt/civic
+# Writable /var/lib/civic-companion for the translations cache ($STATE_DIRECTORY).
+StateDirectory=civic-companion
 MemoryMax=512M
 
 [Install]

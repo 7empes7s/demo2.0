@@ -3,6 +3,7 @@
 
   import { progressOf } from "../lib/arena.svelte.ts";
   import { groupFiles, kindOf, nextMeeting, placesOf, routeOf, stageOf, statusOf, titleOf, type Place, type TypeFilter } from "../lib/data.ts";
+  import { langOf, tx } from "../lib/translations.svelte.ts";
   import { date, t } from "../lib/ui.svelte.ts";
   import FileMeta from "./FileMeta.svelte";
   import StageTrack from "./StageTrack.svelte";
@@ -62,13 +63,13 @@
             }}
           >
             <span class="meta"><FileMeta {item} /></span>
-            <span class="title" lang="fr">{titleOf(item)}</span>
+            <span class="title" lang={langOf(titleOf(item))}>{tx(titleOf(item))}</span>
             {#if kindOf(item) === "chamber"}<StageTrack stage={stageOf(item)} compact />{/if}
             <span class="when">
               {#if meeting}
                 <span class="dot" aria-hidden="true"></span>{t("next_label")}: {date(meeting.date)}
               {:else}
-                <span class="muted">{statusOf(item) ?? t("status_unknown")}</span>
+                <span class="muted">{tx(statusOf(item)) ?? t("status_unknown")}</span>
               {/if}
               {#if progressOf(item.id)?.understood}<span class="understood" data-badge="understood">{t("arena_understood")}</span>{/if}
             </span>
