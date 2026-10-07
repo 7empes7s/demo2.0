@@ -27,6 +27,9 @@
  *   DESK_URL           the Desk service (feedback, ideas, votes, procedures, staff portals);
  *                      /api/desk/* is forwarded to it as is (default http://127.0.0.1:8094)
  *   PORTAL_DIR         the built staff portals, served under /portal/ (optional)
+ *   TRANSLATIONS_CACHE where translations of the list's French text are kept across restarts
+ *                      (default $STATE_DIRECTORY/translations.json under systemd, else memory only)
+ *   TRANSLATE_INTERVAL_MS  pause between translation requests (default 3000)
  */
 
 import { createHash } from "node:crypto";
@@ -42,6 +45,7 @@ import { AgoraInvalid, AgoraUnavailable, DEFAULT_IDEAS, type IdeasPage, JURISDIC
 import { MAX_SMALL_BYTES, readJson, UPSTREAM } from "./upstream.ts";
 import { ModelError, type Provider, providerFromEnv } from "./provider.ts";
 import { readSnapshot } from "./snapshot.ts";
+import { Translator } from "./translate.ts";
 import { buildSources, ModelAnswerError } from "./sources.ts";
 import { LANGS, type ChatMessage, type Depth, type DocketItem, type DocketSnapshot, type Lang, type Position } from "./types.ts";
 
@@ -85,6 +89,8 @@ export interface ServerOptions {
   deskSlowTimeoutMs?: number;
   /** The built staff portals, served under /portal/. */
   portalDir?: string;
+  /** Translations of the list's French text, served at /data/translations.json (empty without one). */
+  translator?: Translator;
   /** How long to wait for Agora's whole answer, in ms (default 3000). */
   agoraTimeoutMs?: number;
   /** How long one Agora answer is reused for the same query, in ms. Default 15 s. */
@@ -175,6 +181,7 @@ export function createCompanionServer(opts: ServerOptions) {
   // The snapshot can be megabytes of document text: serialise it once, not per request.
   const snapshotBody = Buffer.from(JSON.stringify(snapshot));
   const snapshotTag = `"${createHash("sha256").update(snapshotBody).digest("hex").slice(0, 32)}"`;
+  const translator = opts.translator ?? new Translator(snapshot, { provider: null });
 
   const cached = <T>(key: string, make: () => Promise<T>): Promise<T> => {
     if (!cache.has(key)) {
@@ -475,6 +482,16 @@ export function createCompanionServer(opts: ServerOptions) {
         res.writeHead(200, { "content-type": "application/json", etag: snapshotTag, "cache-control": "public, max-age=300" });
         return res.end(snapshotBody);
       }
+      if (url.pathname === "/data/translations.json") {
+        // The same file for every device: it holds every language, so asking for it says nothing.
+        const { body, tag } = translator.body();
+        if (req.headers["if-none-match"] === tag) {
+          res.writeHead(304, { etag: tag });
+          return res.end();
+        }
+        res.writeHead(200, { "content-type": "application/json", etag: tag, "cache-control": "public, max-age=60" });
+        return res.end(body);
+      }
       if (url.pathname === "/api/desk" || url.pathname.startsWith("/api/desk/")) {
         const out = await deskRoute(req, url);
         return send(res, out.status, out.body);
@@ -518,7 +535,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const provenanceUrl = process.env.PROVENANCE_URL || "http://127.0.0.1:8090";
   const agoraUrl = process.env.AGORA_URL || "http://127.0.0.1:8091";
   const deskUrl = process.env.DESK_URL || "http://127.0.0.1:8094";
-  createCompanionServer({ provider, snapshot, commons, staticDir: process.env.STATIC_DIR, portalDir: process.env.PORTAL_DIR, trustProxy, provenanceUrl, agoraUrl, deskUrl }).listen(port, host, () =>
+  const stateDir = process.env.STATE_DIRECTORY?.split(":")[0];
+  const cachePath = process.env.TRANSLATIONS_CACHE || (stateDir ? join(stateDir, "translations.json") : null);
+  const translator = new Translator(snapshot, { provider, cachePath, intervalMs: Number(process.env.TRANSLATE_INTERVAL_MS ?? 3000) || 0 });
+  await translator.load();
+  createCompanionServer({ provider, snapshot, commons, staticDir: process.env.STATIC_DIR, portalDir: process.env.PORTAL_DIR, trustProxy, provenanceUrl, agoraUrl, deskUrl, translator }).listen(port, host, () =>
     console.log(`companion listening on ${host}:${port}`),
   );
+  // In the background: the app shows the original French until a text's translation lands.
+  if (!cachePath) console.warn("translations: no TRANSLATIONS_CACHE or STATE_DIRECTORY, so they are kept in memory and redone at each start");
+  void translator.run();
 }

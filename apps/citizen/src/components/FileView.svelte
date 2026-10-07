@@ -3,12 +3,14 @@
 
   import type { CompanionClient, FactChecker } from "../lib/client.ts";
   import { historyOf, kindOf, lastMeeting, nextMeeting, safeUrl, stageOf, statusOf, titleOf, voteKey } from "../lib/data.ts";
+  import { langOf, tx } from "../lib/translations.svelte.ts";
   import { date, t, ui } from "../lib/ui.svelte.ts";
   import Challenge from "./Challenge.svelte";
   import ClaimCheck from "./ClaimCheck.svelte";
   import Explain from "./Explain.svelte";
   import FactCheck from "./FactCheck.svelte";
   import FileMeta from "./FileMeta.svelte";
+  import OriginalToggle from "./OriginalToggle.svelte";
   import StageTrack from "./StageTrack.svelte";
   import Understand from "./Understand.svelte";
 
@@ -64,18 +66,19 @@
 
   <header class="head">
     <p class="meta"><FileMeta {item} /></p>
-    <h2 class="serif title" lang="fr" id="file-title" tabindex="-1">{titleOf(item)}</h2>
-    {#if item.summary}<p class="summary" lang="fr">{item.summary}</p>{/if}
+    <h2 class="serif title" lang={langOf(titleOf(item))} id="file-title" tabindex="-1">{tx(titleOf(item))}</h2>
+    <OriginalToggle />
+    {#if item.summary}<p class="summary" lang={langOf(item.summary)}>{tx(item.summary)}</p>{/if}
     <dl class="facts">
       {#if item.author}<div><dt class="label">{t("fact_author")}</dt><dd>{item.author}</dd></div>{/if}
-      {#if item.committee}<div><dt class="label">{t("fact_committee")}</dt><dd lang="fr">{item.committee}</dd></div>{/if}
+      {#if item.committee}<div><dt class="label">{t("fact_committee")}</dt><dd lang={langOf(item.committee)}>{tx(item.committee)}</dd></div>{/if}
       {#if item.deposited}<div><dt class="label">{t("fact_filed")}</dt><dd>{date(item.deposited)}</dd></div>{/if}
       {#if item.reference}<div><dt class="label">{t("fact_reference")}</dt><dd class="mono">{item.reference}</dd></div>{/if}
-      {#if item.theme}<div><dt class="label">{t("fact_theme")}</dt><dd lang="fr">{item.theme}</dd></div>{/if}
+      {#if item.theme}<div><dt class="label">{t("fact_theme")}</dt><dd lang={langOf(item.theme)}>{tx(item.theme)}</dd></div>{/if}
       {#if item.opens}<div><dt class="label">{t("fact_opens")}</dt><dd>{date(item.opens)}</dd></div>{/if}
       {#if item.closes}<div><dt class="label">{t("fact_closes")}</dt><dd>{date(item.closes)}</dd></div>{/if}
-      {#if item.when}<div><dt class="label">{t("fact_when")}</dt><dd lang="fr">{item.when}</dd></div>{/if}
-      <div><dt class="label">{t("fact_status")}</dt><dd lang="fr">{statusOf(item) ?? t("status_unknown")}</dd></div>
+      {#if item.when}<div><dt class="label">{t("fact_when")}</dt><dd lang={langOf(item.when)}>{tx(item.when)}</dd></div>{/if}
+      <div><dt class="label">{t("fact_status")}</dt><dd lang={statusOf(item) ? langOf(statusOf(item)) : ui.lang}>{tx(statusOf(item)) ?? t("status_unknown")}</dd></div>
     </dl>
     {#if kind === "chamber"}<StageTrack stage={stageOf(item)} />{/if}
     {#if official}
@@ -90,12 +93,12 @@
         {@const m = (meeting ?? last)!}
         <p class="when">
           {m.time
-            ? t("next_meeting", { body: m.body, date: date(m.date), time: m.time })
-            : t("next_meeting_no_time", { body: m.body, date: date(m.date) })}
+            ? t("next_meeting", { body: tx(m.body), date: date(m.date), time: m.time })
+            : t("next_meeting_no_time", { body: tx(m.body), date: date(m.date) })}
         </p>
         {#if m.steps.length}
-          <ul class="steps" lang="fr">
-            {#each m.steps as step, i (i)}<li>{step}</li>{/each}
+          <ul class="steps">
+            {#each m.steps as step, i (i)}<li lang={langOf(step)}>{tx(step)}</li>{/each}
           </ul>
         {/if}
       {:else}
@@ -129,11 +132,11 @@
   {#if phases.length}
     <section aria-labelledby="phases-h">
       <h3 id="phases-h" class="serif sub">{t("phases")}</h3>
-      <ol class="history" lang="fr">
+      <ol class="history">
         {#each phases as p, i (i)}
           <li>
             <span class="small muted">{p.start ? date(p.start) : "—"}{#if p.end}{" – "}{date(p.end)}{/if}</span>
-            <span>{p.title}</span>
+            <span lang={langOf(p.title)}>{tx(p.title)}</span>
           </li>
         {/each}
       </ol>
@@ -167,7 +170,7 @@
       <ul class="docs">
         {#each docs as doc, i (i)}
           <li>
-            <a href={safeUrl(doc.url)} target="_blank" rel="noopener" lang="fr">{doc.label}</a>
+            <a href={safeUrl(doc.url)} target="_blank" rel="noopener" lang={langOf(doc.label)}>{tx(doc.label)}</a>
             {#if doc.date}<span class="muted small">{date(doc.date)}</span>{/if}
           </li>
         {/each}
@@ -180,11 +183,11 @@
   {#if history.length}
     <section aria-labelledby="hist-h">
       <h3 id="hist-h" class="serif sub">{t("history")}</h3>
-      <ol class="history" lang="fr">
+      <ol class="history">
         {#each history as a, i (i)}
           <li>
             <span class="small muted">{a.date ? date(a.date) : "—"}</span>
-            <span>{a.description}{#if a.actors.length}<span class="muted"> · {a.actors.join(", ")}</span>{/if}</span>
+            <span><span lang={langOf(a.description)}>{tx(a.description)}</span>{#if a.actors.length}<span class="muted"> · {a.actors.join(", ")}</span>{/if}</span>
           </li>
         {/each}
       </ol>

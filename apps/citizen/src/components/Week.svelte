@@ -6,6 +6,8 @@
   import { routeOf, titleOf } from "../lib/data.ts";
   import { CHARTER, pulse } from "../lib/pulse.svelte.ts";
   import { expandGroups } from "../lib/topics.ts";
+  import { langOf, tx } from "../lib/translations.svelte.ts";
+  import OriginalToggle from "./OriginalToggle.svelte";
   import { date, t, ui } from "../lib/ui.svelte.ts";
   import FileMeta from "./FileMeta.svelte";
 
@@ -54,7 +56,7 @@
           }}
         >
           <span class="meta"><FileMeta item={entry.item} /></span>
-          <span class="title" lang="fr">{titleOf(entry.item)}</span>
+          <span class="title" lang={langOf(titleOf(entry.item))}>{tx(titleOf(entry.item))}</span>
           <span class="when">
             {#if entry.when}
               <span class="dot" aria-hidden="true"></span>{t(WHEN_KEY[entry.when.kind], { date: date(entry.when.day) })}
@@ -77,6 +79,7 @@
     <p class="label">{t("week_number", { n: weekNo })} · {date(week.start)} – {date(week.end)}</p>
     <h2 class="serif" id="week-title" tabindex="-1">{t("week_title")}</h2>
     <p class="muted intro">{t("week_intro")}</p>
+    <OriginalToggle />
   </header>
 
   <div class="summary card" data-testid="week-summary">

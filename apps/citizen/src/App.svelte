@@ -22,6 +22,7 @@
   import { pulse } from "./lib/pulse.svelte.ts";
   import { findSample, SampleProvider } from "./lib/sample-provider.ts";
   import { applyTheme, theme } from "./lib/theme.svelte.ts";
+  import { loadTranslations } from "./lib/translations.svelte.ts";
   import { date, t, ui } from "./lib/ui.svelte.ts";
 
   let snapshot = $state<DocketSnapshot | null>(null);
@@ -144,6 +145,8 @@
     loadSnapshot()
       .then((s) => (snapshot = s))
       .catch(() => (loadError = true));
+    // Every language in one file, fetched by every device alike: it says nothing about the resident.
+    void loadTranslations();
 
     // In a claude.ai artifact the viewer's own Claude answers; elsewhere the Companion server does.
     findSample().then(async (sample) => {

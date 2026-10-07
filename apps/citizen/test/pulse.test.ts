@@ -17,11 +17,18 @@ import { DICTS } from "../src/lib/i18n.ts";
 import { registerServiceWorker } from "../src/lib/pwa.ts";
 import Settings from "../src/components/Settings.svelte";
 import { pulse, reloadPulse } from "../src/lib/pulse.svelte.ts";
+import { translations } from "../src/lib/translations.svelte.ts";
 import { setLang } from "../src/lib/ui.svelte.ts";
 // The recorded Docket snapshot (real chd.lu and esch.lu records).
 import recorded from "../../../modules/pulse/test/fixtures/docket-recorded.json" with { type: "json" };
 
 const SNAPSHOT = recorded as unknown as { items: DocketItem[] };
+/** What the server serves at data/translations.json: every title, in every language, for everyone. */
+const TRANSLATIONS = {
+  schema: "d2.translations/1",
+  from: "fr",
+  texts: Object.fromEntries(SNAPSHOT.items.map((i) => [i.title.fr, { en: `EN ${i.title.fr}`, de: `DE ${i.title.fr}`, lb: `LB ${i.title.fr}`, pt: `PT ${i.title.fr}` }])),
+};
 const ESCH = "lu-commune-esch-sur-alzette";
 const CITY = "lu-commune-luxembourg";
 /** Thursday of ISO week 40 of 2026: the Esch council of 2 October is in this week. */
@@ -94,6 +101,7 @@ function wireNetwork(companion = false) {
       headers: [...new Headers(init.headers ?? req?.headers).entries()].sort(),
     });
     if (url.endsWith("data/snapshot.json")) return new Response(JSON.stringify(recorded), { status: 200 });
+    if (url.endsWith("data/translations.json")) return new Response(JSON.stringify(TRANSLATIONS), { status: 200 });
     if (url.endsWith("healthz")) return new Response(JSON.stringify({ companion }), { status: 200 });
     if (companion && url.endsWith("/api/explain")) {
       const explanation = { headline: "Stub explanation", sections: [], sources: [], verified_share: 1, provenance: {} };
@@ -227,9 +235,22 @@ async function changeEverything(target: HTMLElement, companion: boolean) {
   }
   click(buttonText(target, "This week"));
   await settle();
+  // Read in another language, then show the original French: neither may reach the network.
+  click(buttonText(target, "Settings"));
+  await settle();
+  click(buttonText(target, "Deutsch"));
+  click(buttonText(target, "Diese Woche"));
+  await settle();
+  expect(target.querySelector("a.entry .title")?.textContent).toMatch(/^DE /);
+  click(buttonText(target, "Original zeigen"));
+  expect(target.querySelector("a.entry .title")?.textContent).not.toMatch(/^DE /);
 }
 
 async function traceFor(choices: Choices, companion = false) {
+  // Each run starts as a fresh device: English, nothing translated yet, translations shown.
+  setLang("en");
+  translations.texts = {};
+  translations.original = false;
   wireNetwork(companion);
   const target = await openApp(choices);
   const shown = { concerned: ids(target, "g-concerned"), topics: ids(target, "g-topics") };
@@ -243,10 +264,17 @@ async function traceFor(choices: Choices, companion = false) {
 
 describe("Pulse: the network never learns what a resident cares about", () => {
   it.each([
-    { companion: false, expected: ["serviceworker register /sw.js", "fetch GET data/snapshot.json", "fetch GET healthz"] },
+    { companion: false, expected: ["serviceworker register /sw.js", "fetch GET data/snapshot.json", "fetch GET data/translations.json", "fetch GET healthz"] },
     {
       companion: true,
-      expected: ["serviceworker register /sw.js", "fetch GET data/snapshot.json", "fetch GET healthz", "fetch POST /api/explain", "fetch POST /api/factcheck"],
+      expected: [
+        "serviceworker register /sw.js",
+        "fetch GET data/snapshot.json",
+        "fetch GET data/translations.json",
+        "fetch GET healthz",
+        "fetch POST /api/explain",
+        "fetch POST /api/factcheck",
+      ],
     },
   ])("makes exactly the same requests whatever the resident chose (Companion: $companion)", async ({ companion, expected }) => {
     const none = await traceFor({}, companion);
