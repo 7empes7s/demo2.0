@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { LANGS, type DocketItem, type DocketSnapshot, type Lang } from "@democracy2/companion";
+  import type { DocketItem, DocketSnapshot } from "@democracy2/companion";
   import { onMount, tick } from "svelte";
 
   import DeskIdeas from "./components/DeskIdeas.svelte";
@@ -9,18 +9,20 @@
   import FileView from "./components/FileView.svelte";
   import Ideas from "./components/Ideas.svelte";
   import Procedures from "./components/Procedures.svelte";
+  import Settings from "./components/Settings.svelte";
   import Votes from "./components/Votes.svelte";
   import Week from "./components/Week.svelte";
+  import Welcome from "./components/Welcome.svelte";
   import { LocalClient, RemoteClient, RemoteFactChecker, RemoteIdeas, type CompanionClient, type FactChecker, type IdeasReader } from "./lib/client.ts";
   import { weekAt } from "@democracy2/pulse";
 
   import { loadSnapshot, luxembourgToday, placeOf, routeOf, sitesOf } from "./lib/data.ts";
   import { RemoteDesk, type About, type DeskClient } from "./lib/desk.ts";
-  import { LANG_LABELS } from "./lib/i18n.ts";
   import { peel } from "./lib/look.ts";
-  import { prefs } from "./lib/prefs.ts";
+  import { pulse } from "./lib/pulse.svelte.ts";
   import { findSample, SampleProvider } from "./lib/sample-provider.ts";
-  import { date, setLang, t, ui } from "./lib/ui.svelte.ts";
+  import { applyTheme, theme } from "./lib/theme.svelte.ts";
+  import { date, t, ui } from "./lib/ui.svelte.ts";
 
   let snapshot = $state<DocketSnapshot | null>(null);
   let loadError = $state(false);
@@ -35,7 +37,6 @@
   /** What a feedback message is about, when the form was opened from a procedure or an idea. */
   let feedbackAbout = $state<{ about: About; title: string } | null>(null);
   let route = $state(readRoute());
-  let theme = $state<"light" | "dark" | null>(prefs.theme());
   let online = $state(navigator.onLine);
   const now = new Date();
   const today = luxembourgToday(now);
@@ -48,6 +49,8 @@
   const VOTES_ROUTE = "votes";
   /** `#files`: the full list on a phone. With no route the app opens on this week's list. */
   const FILES_ROUTE = "files";
+  /** `#settings`: language, appearance, where you live and the topics followed. */
+  const SETTINGS_ROUTE = "settings";
   /** Where a file's back button leads: the full list, or this week's list when opened from there. */
   let backTo = $state<string | null>(FILES_ROUTE);
   /** The row of section tabs. On a phone it scrolls sideways, so the current tab is brought into view. */
@@ -66,6 +69,11 @@
 
   /** The full list on its own (phones). On a wide screen it is always beside the other views. */
   const listing = $derived(route === FILES_ROUTE && !selected);
+  const settings = $derived(route === SETTINGS_ROUTE && !selected);
+  /** First visit: the welcome steps take the whole screen until they are finished or skipped.
+   * Read once at start, so choosing a place inside the steps does not end them early. */
+  let firstVisit = $state(!pulse.prefs.done);
+  const welcoming = $derived(firstVisit && !selected);
 
   $effect(() => {
     void route;
@@ -98,18 +106,6 @@
     }
   }
 
-  function applyTheme(value: "light" | "dark" | null) {
-    if (value) document.documentElement.dataset.theme = value;
-    else delete document.documentElement.dataset.theme;
-  }
-
-  function toggleTheme() {
-    const current = theme ?? (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
-    theme = current === "dark" ? "light" : "dark";
-    prefs.setTheme(theme);
-    applyTheme(theme);
-  }
-
   /** Open a file from the full list or from this week's list; its back button returns there. */
   function openFile(from: string | null) {
     return (target: string) => {
@@ -136,7 +132,7 @@
   }
 
   onMount(() => {
-    applyTheme(theme);
+    applyTheme(theme.value);
     document.documentElement.lang = ui.lang;
     const onHash = () => peel(document.documentElement, async () => { route = readRoute(); await tick(); });
     window.addEventListener("hashchange", onHash);
@@ -181,19 +177,14 @@
       <span class="mark" aria-hidden="true">§</span>
       <span class="serif name">{t("app_name")}</span>
     </button>
-    <div class="tools">
-      <label class="sr-only" for="lang">{t("language")}</label>
-      <select id="lang" value={ui.lang} onchange={(e) => setLang((e.currentTarget as HTMLSelectElement).value as Lang)}>
-        {#each LANGS as l (l)}
-          <option value={l}>{LANG_LABELS[l]}</option>
-        {/each}
-      </select>
-      <button class="icon" onclick={toggleTheme} aria-label={t("theme_toggle")} title={t("theme_toggle")}>
+    {#if !welcoming}
+      <button class="btn small gear" aria-current={settings ? "page" : undefined} onclick={() => open(SETTINGS_ROUTE)}>
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-          <path fill="currentColor" d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z" />
+          <path fill="currentColor" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm9 4a7.6 7.6 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7.9 7.9 0 0 0-2-1.2L16 2H8l-.5 2.6a7.9 7.9 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7.9 7.9 0 0 0 2 1.2L8 22h8l.5-2.6a7.9 7.9 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z" />
         </svg>
+        <span>{t("settings_open")}</span>
       </button>
-    </div>
+    {/if}
   </header>
 
   {#if !online}
@@ -204,6 +195,8 @@
     <p class="card notice">{t("error")}</p>
   {:else if !snapshot}
     <p class="muted pulse loading">…</p>
+  {:else if welcoming}
+    <Welcome items={snapshot.items} ondone={() => { firstVisit = false; open(null); }} />
   {:else}
     <div class="layout">
       <aside class="list-pane">
@@ -211,7 +204,7 @@
           <h1 class="serif" id="list-title" tabindex="-1">{t(both ? "agenda_title_both" : "agenda_title")}</h1>
           <p class="muted">{t(both ? "tagline_both" : "tagline")}</p>
           <div class="page-links" bind:this={tabs}>
-            <button class="btn check-open" aria-current={!selected && !checking && !readingIdeas && !deskPage && !listing ? "page" : undefined} onclick={() => open(null)}>{t("week_open")}</button>
+            <button class="btn check-open" aria-current={!selected && !checking && !readingIdeas && !deskPage && !listing && !settings ? "page" : undefined} onclick={() => open(null)}>{t("week_open")}</button>
             <button class="btn check-open files-open" aria-current={listing ? "page" : undefined} onclick={() => open(FILES_ROUTE)}>{t("back")}</button>
             {#if checker}
               <button class="btn check-open" aria-current={checking ? "page" : undefined} onclick={() => open(CHECK_ROUTE)}>{t("check_open")}</button>
@@ -244,6 +237,12 @@
             backLabel={t(backTo === FILES_ROUTE ? "back" : "week_open")}
             onback={() => open(backTo)}
           />
+        {:else if settings}
+          <article class="check-page">
+            <button class="back" onclick={() => open(null)}>← {t("week_open")}</button>
+            <h2 class="serif" id="file-title" tabindex="-1">{t("settings_title")}</h2>
+            <Settings items={snapshot.items} />
+          </article>
         {:else if checking && checker}
           <article class="check-page">
             <button class="back" onclick={() => open(FILES_ROUTE)}>← {t("back")}</button>
@@ -276,7 +275,7 @@
             {/if}
           </article>
         {:else}
-          <Week items={snapshot.items} {week} onopen={openFile(null)} onall={() => open(FILES_ROUTE)} />
+          <Week items={snapshot.items} {week} onopen={openFile(null)} onall={() => open(FILES_ROUTE)} onsettings={() => open(SETTINGS_ROUTE)} />
         {/if}
       </main>
     </div>
@@ -334,16 +333,12 @@
   .name { font-size: 1.45rem; font-family: var(--serif); font-weight: 900; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   @media (max-width: 420px) {
     .name { font-size: 1.2rem; }
-    select { max-width: 7.5rem; }
   }
-  .tools { flex: none; display: flex; gap: 8px; align-items: center; }
-  select, .icon {
-    background: var(--surface);
-    border: var(--rule) solid var(--line);
-    padding: 0.4rem 0.8rem;
-    font-size: 0.9rem;
+  .gear { flex: none; display: flex; align-items: center; gap: 6px; padding: 0.4rem 0.7rem; }
+  .gear[aria-current="page"] { background: var(--pressed-bg); border-color: var(--pressed-bg); color: var(--pressed-fg); }
+  @media (max-width: 420px) {
+    .gear span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   }
-  .icon { display: grid; place-items: center; padding: 0.35rem; cursor: pointer; }
   .layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
