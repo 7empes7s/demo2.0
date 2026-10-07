@@ -26,6 +26,7 @@ Use one word per role, and use it everywhere: in the UI, the docs and the prompt
 | where you live | jurisdiction, constituency, area, home (in the UI) | The commune, or the canton when Charter does not list the commune yet. |
 | topics you follow, your topic | interests, subscriptions, preferences, categories | Plain groups in the resident's language ("Money and budget", "Getting around") that stand for the theme and committee names the Chamber and Esch publish. The published names stay on the files themselves. |
 | settings | profile, account, preferences, options | The page with language, appearance, where you live and the topics followed. Nothing on it is an account: it all stays on the device. |
+| More (the tab) | menu, hamburger, other, extras | The tab and page that list every section not in the bottom bar, each with one line on what it is for. |
 | welcome steps | onboarding, wizard, tutorial, tour | The three questions a first visit asks. Each can be skipped. |
 | panel, drawn by lot | jury, lottery, sortition, judge | The future Lottery panels. Shown only as "not started yet". |
 | secure sign-in | Door, login, account, credential | What posting and supporting wait for. Name no product or protocol. |

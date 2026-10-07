@@ -309,7 +309,7 @@ describe("This week (Pulse view)", () => {
     setLang(lang);
     const target = document.createElement("div");
     document.body.append(target);
-    app = mount(Week, { target, props: { items: SNAPSHOT.items, week: { id: "2026-W40", start: "2026-09-28", end: "2026-10-04" }, onopen: () => {}, onall: () => {}, onsettings: () => {} } });
+    app = mount(Week, { target, props: { items: SNAPSHOT.items, week: { id: "2026-W40", start: "2026-09-28", end: "2026-10-04" }, today: "2026-10-02", intro: "On the agenda.", onopen: () => {}, onsettings: () => {} } });
     flushSync();
     return target;
   }
@@ -331,9 +331,12 @@ describe("This week (Pulse view)", () => {
     expect(target.querySelector("select")).toBeNull();
     expect(target.querySelector("[data-testid=week-private]")?.textContent).toContain("Your choices stay on this device.");
     expect(target.querySelector("#g-concerned")).toBeNull();
-    // Without a place, files on followed topics still show; panels are explained, never faked.
-    expect(target.querySelector("#g-panels")?.parentElement?.textContent).toContain("Panels have not started yet.");
-    expect(target.textContent).toContain("you will decide up to 5 files a week yourself");
+    // No empty boxes for what has not started (panels, voting): one link to topics, then the files.
+    expect(target.querySelector("#g-panels")).toBeNull();
+    expect(target.textContent).not.toContain("you will decide up to 5 files a week yourself");
+    expect(buttonText(target, "Choose topics to see more")).toBeTruthy();
+    // Without a place, everything this week is listed open, so the page is never empty.
+    expect(target.querySelector<HTMLDetailsElement>("details.others")?.open).toBe(true);
   });
 
   it("saves choices on this device only and shows the week for them", () => {
@@ -358,7 +361,15 @@ describe("This week (Pulse view)", () => {
     expect(target.querySelector("select")).toBeNull();
     expect(target.textContent).toContain("Esch-sur-Alzette");
     expect(target.querySelector("[data-testid=week-summary] dd:last-of-type")?.textContent).toBe("1");
-    expect(target.textContent).toContain("Files of Esch-sur-Alzette and of the bodies that cover it");
+    // A list stays short: the place and a plain kind, never the dossier number or the official label.
+    const first = target.querySelector('[aria-labelledby="g-concerned"] a.entry')!;
+    expect(first.querySelector(".meta")?.textContent?.replace(/\s+/g, " ").trim()).toBe("Chamber Bill");
+    expect(target.querySelector('[aria-labelledby="g-concerned"]')?.textContent).not.toContain("N°");
+    // Today's meetings stand out: a lit calendar tile that says "Today".
+    expect(target.querySelectorAll('[aria-labelledby="g-concerned"] a.entry.today')).toHaveLength(6);
+    expect(target.querySelector('[aria-labelledby="g-concerned"] a.entry.today .tile')?.textContent).toContain("Today");
+    // With a place chosen, the rest of the week is folded away under its count.
+    expect(target.querySelector<HTMLDetailsElement>("details.others")?.open ?? false).toBe(false);
     expect(target.textContent, "no placeholder left unfilled").not.toMatch(/\{\w+\}/);
     expect(ids(target, "g-concerned")).toEqual(["#8752", "#esch.42052", "#esch.42060", "#esch.42063", "#esch.42071", "#esch.42090", "#esch.42093"]);
     // "Money and budget" covers both the Esch theme and the Chamber committee on finances.

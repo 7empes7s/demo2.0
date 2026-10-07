@@ -6,16 +6,21 @@
   const reached = $derived(STAGES.indexOf(stage));
 </script>
 
-<ol class="track" class:compact aria-label={t(`stage_${stage}`)}>
-  {#each STAGES as s, i (s)}
-    <li class:done={i <= reached} class:now={i === reached}>
-      <span class="pip" aria-hidden="true"></span>
-      <span class="name" class:sr-only={compact}>{t(`stage_${s}`)}</span>
-    </li>
-  {/each}
-</ol>
+<span class="wrap" class:compact>
+  <ol class="track" aria-label={t(`stage_${stage}`)}>
+    {#each STAGES as s, i (s)}
+      <li class:done={i <= reached} class:now={i === reached}>
+        <span class="pip" aria-hidden="true"></span>
+        <span class="name" class:sr-only={compact}>{t(`stage_${s}`)}</span>
+      </li>
+    {/each}
+  </ol>
+  <!-- In a list the bars are small, so the step is also said in words. -->
+  {#if compact}<span class="step" aria-hidden="true">{t("stage_step", { i: reached + 1, n: STAGES.length, stage: t(`stage_${stage}`) })}</span>{/if}
+</span>
 
 <style>
+  .wrap { display: block; }
   .track {
     list-style: none;
     margin: 0;
@@ -29,6 +34,9 @@
   li.done .pip { background: var(--fg); }
   li.now .pip { background: var(--accent); }
   li.now .name { color: var(--fg); font-weight: 600; }
+  .compact { display: flex; align-items: center; gap: 10px; }
+  .compact .track { flex: none; width: 88px; }
   .compact li { gap: 0; }
   .compact .pip { height: 5px; }
+  .step { font-size: 0.8rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style>

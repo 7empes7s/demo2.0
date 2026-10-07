@@ -2,6 +2,12 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-07: Citizen app you can use without being shown
+
+- Ask (Marouane, 2026-10-07): the app feels hollow, nothing stands out; make it intuitive for anyone without a tour, and no walls of text until a resident opens an item.
+- Done: bottom tab bar on phones / header tabs on desktop (`App.svelte`, `components/Icon.svelte`), a "More" page with one line per section (`components/More.svelte`), brief list cards (`FileMeta brief`), calendar tiles with today lit on This week (`Week.svelte`, `shortDay` in `lib/i18n.ts`), step in words in the full list (`StageTrack compact`), folded long title and folded Phases, Documents, History on a file (`FileView.svelte`). New strings in all five languages.
+- Evidence: citizen tests (pulse test now checks brief cards, today tiles, no empty Panels box, folded others), typecheck clean, check.sh green; renders at 390 and 1440 px, day and night, in `citizen-look/intuitive/` in the project folder.
+
 ## 2026-10-07: Files in the resident's language, with "Show original"
 
 - Ask (Marouane, 2026-10-07): file contents stay French whatever language is picked; translate, with a way to show the original in a click.
