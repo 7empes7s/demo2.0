@@ -50,6 +50,8 @@
   const FILES_ROUTE = "files";
   /** Where a file's back button leads: the full list, or this week's list when opened from there. */
   let backTo = $state<string | null>(FILES_ROUTE);
+  /** The row of section tabs. On a phone it scrolls sideways, so the current tab is brought into view. */
+  let tabs = $state<HTMLDivElement | null>(null);
 
   const selected = $derived<DocketItem | null>(
     snapshot && route ? (snapshot.items.find((i) => routeOf(i) === route) ?? null) : null,
@@ -64,6 +66,19 @@
 
   /** The full list on its own (phones). On a wide screen it is always beside the other views. */
   const listing = $derived(route === FILES_ROUTE && !selected);
+
+  $effect(() => {
+    void route;
+    const row = tabs;
+    const current = row?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!row || !current || row.scrollWidth <= row.clientWidth) return;
+    // Sideways only, and only as far as needed: scrollIntoView could also move the page up or down.
+    const pad = 16;
+    const start = current.offsetLeft - pad;
+    const end = current.offsetLeft + current.offsetWidth + pad - row.clientWidth;
+    if (row.scrollLeft > start) row.scrollTo({ left: Math.max(0, start) });
+    else if (row.scrollLeft < end) row.scrollTo({ left: end });
+  });
 
   /** From a procedure or an idea to the feedback form, with the message's subject filled in. */
   function sendFeedbackAbout(about: About, title: string) {
@@ -195,8 +210,9 @@
         <div class="intro">
           <h1 class="serif" id="list-title" tabindex="-1">{t(both ? "agenda_title_both" : "agenda_title")}</h1>
           <p class="muted">{t(both ? "tagline_both" : "tagline")}</p>
-          <div class="page-links">
+          <div class="page-links" bind:this={tabs}>
             <button class="btn check-open" aria-current={!selected && !checking && !readingIdeas && !deskPage && !listing ? "page" : undefined} onclick={() => open(null)}>{t("week_open")}</button>
+            <button class="btn check-open files-open" aria-current={listing ? "page" : undefined} onclick={() => open(FILES_ROUTE)}>{t("back")}</button>
             {#if checker}
               <button class="btn check-open" aria-current={checking ? "page" : undefined} onclick={() => open(CHECK_ROUTE)}>{t("check_open")}</button>
             {/if}
@@ -212,8 +228,10 @@
             {/if}
           </div>
         </div>
-        <FileList items={snapshot.items} {today} selected={selected ? routeOf(selected) : null} onopen={openFile(FILES_ROUTE)} />
-        <p class="muted source-note">{t("data_note", { sites: sitesOf(snapshot), date: date(snapshot.generated_at) })}</p>
+        <div class="list">
+          <FileList items={snapshot.items} {today} selected={selected ? routeOf(selected) : null} onopen={openFile(FILES_ROUTE)} />
+          <p class="muted source-note">{t("data_note", { sites: sitesOf(snapshot), date: date(snapshot.generated_at) })}</p>
+        </div>
       </aside>
       <main class="detail-pane">
         {#if selected}
@@ -329,7 +347,7 @@
   .layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 32px;
+    gap: 20px;
     padding-top: 20px;
   }
   .intro { display: grid; gap: 4px; margin-bottom: 16px; }
@@ -338,6 +356,19 @@
   .intro p { margin: 0; }
   .source-note { font-size: 0.82rem; margin-top: 16px; }
   .page-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  /* Phone: the tabs are one row that scrolls sideways under the thumb, bleeding to the screen edges. */
+  @media (max-width: 959px) {
+    .page-links {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+      margin-inline: -16px;
+      padding: 4px 16px 8px;
+      scroll-padding-inline: 16px;
+    }
+    .page-links::-webkit-scrollbar { display: none; }
+    .page-links .btn { flex: none; white-space: nowrap; }
+  }
   .check-open[aria-current="page"] { background: var(--pressed-bg); border-color: var(--pressed-bg); color: var(--pressed-fg); }
   .check-page { display: grid; gap: 16px; padding-top: 4px; }
   .check-page h2 { font-size: clamp(1.6rem, 4.2vw, 2.3rem); line-height: 1.15; margin: 0; }
@@ -355,15 +386,15 @@
   .detail-pane { min-width: 0; }
   .loading, .notice { margin-top: 24px; }
 
-  /* Phone: one pane at a time. */
-  .shell.has-file .list-pane { display: none; }
+  /* Phone: one pane at a time. The agenda heading and its tabs stay above every page, as on a desktop. */
+  .shell.has-file .list { display: none; }
   .shell:not(.has-file) .detail-pane { display: none; }
 
   /* Desktop: the agenda stays on the left while a file is open on the right. */
   @media (min-width: 960px) {
     .layout { grid-template-columns: minmax(320px, 400px) minmax(0, 1fr); gap: 40px; }
-    .shell.has-file .list-pane, .shell:not(.has-file) .detail-pane { display: block; }
-    .back { display: none; }
+    .shell.has-file .list, .shell:not(.has-file) .detail-pane { display: block; }
+    .back, .files-open { display: none; }
     .list-pane { position: sticky; top: 76px; align-self: start; max-height: calc(100vh - 92px); overflow-y: auto; padding-right: 8px; }
   }
 </style>
