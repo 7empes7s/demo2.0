@@ -7,7 +7,9 @@
   import FileList from "./components/FileList.svelte";
   import FactCheck from "./components/FactCheck.svelte";
   import FileView from "./components/FileView.svelte";
+  import Icon from "./components/Icon.svelte";
   import Ideas from "./components/Ideas.svelte";
+  import More, { type Section } from "./components/More.svelte";
   import Procedures from "./components/Procedures.svelte";
   import Settings from "./components/Settings.svelte";
   import Votes from "./components/Votes.svelte";
@@ -52,10 +54,10 @@
   const FILES_ROUTE = "files";
   /** `#settings`: language, appearance, where you live and the topics followed. */
   const SETTINGS_ROUTE = "settings";
+  /** `#more`: every other page, each with one line on what it is for. */
+  const MORE_ROUTE = "more";
   /** Where a file's back button leads: the full list, or this week's list when opened from there. */
   let backTo = $state<string | null>(FILES_ROUTE);
-  /** The row of section tabs. On a phone it scrolls sideways, so the current tab is brought into view. */
-  let tabs = $state<HTMLDivElement | null>(null);
 
   const selected = $derived<DocketItem | null>(
     snapshot && route ? (snapshot.items.find((i) => routeOf(i) === route) ?? null) : null,
@@ -71,23 +73,32 @@
   /** The full list on its own (phones). On a wide screen it is always beside the other views. */
   const listing = $derived(route === FILES_ROUTE && !selected);
   const settings = $derived(route === SETTINGS_ROUTE && !selected);
+  const more = $derived(route === MORE_ROUTE && !selected);
+  /** This week's list: the page the app opens on. */
+  const atWeek = $derived(!selected && !checking && !readingIdeas && !deskPage && !listing && !settings && !more);
+  /** The pages reached from "More", which keep that tab lit and lead back to it. */
+  const inMore = $derived(more || settings || checking || !!deskPage);
+  const hasIdeas = $derived(!!ideasReader || !!desk);
+  const sections = $derived<Section[]>([
+    ...(checker ? [{ route: CHECK_ROUTE, icon: "check", title: "check_open", line: "more_check" } as const] : []),
+    ...(desk
+      ? ([
+          { route: PROCEDURES_ROUTE, icon: "procedures", title: "procedures_open", line: "more_procedures" },
+          { route: VOTES_ROUTE, icon: "votes", title: "votes_open", line: "more_votes" },
+          { route: FEEDBACK_ROUTE, icon: "feedback", title: "feedback_open", line: "more_feedback" },
+        ] as const)
+      : []),
+    { route: SETTINGS_ROUTE, icon: "settings", title: "settings_title", line: "more_settings" },
+  ]);
   /** First visit: the welcome steps take the whole screen until they are finished or skipped.
    * Read once at start, so choosing a place inside the steps does not end them early. */
   let firstVisit = $state(!pulse.prefs.done);
   const welcoming = $derived(firstVisit && !selected);
 
-  $effect(() => {
-    void route;
-    const row = tabs;
-    const current = row?.querySelector<HTMLElement>('[aria-current="page"]');
-    if (!row || !current || row.scrollWidth <= row.clientWidth) return;
-    // Sideways only, and only as far as needed: scrollIntoView could also move the page up or down.
-    const pad = 16;
-    const start = current.offsetLeft - pad;
-    const end = current.offsetLeft + current.offsetWidth + pad - row.clientWidth;
-    if (row.scrollLeft > start) row.scrollTo({ left: Math.max(0, start) });
-    else if (row.scrollLeft < end) row.scrollTo({ left: end });
-  });
+  function openSection(target: string) {
+    if (target === FEEDBACK_ROUTE) feedbackAbout = null;
+    return open(target);
+  }
 
   /** From a procedure or an idea to the feedback form, with the message's subject filled in. */
   function sendFeedbackAbout(about: About, title: string) {
@@ -174,17 +185,27 @@
   });
 </script>
 
-<div class="shell" class:has-file={!listing}>
+{#snippet nav(where: "top" | "bottom")}
+  <nav class="nav nav-{where}" aria-label={t("nav_label")}>
+    <button class="tab" aria-current={atWeek || (selected && backTo === null) ? "page" : undefined} onclick={() => open(null)}><Icon name="week" /><span>{t("week_open")}</span></button>
+    <button class="tab files-tab" aria-current={listing || (selected && backTo === FILES_ROUTE) ? "page" : undefined} onclick={() => open(FILES_ROUTE)}><Icon name="files" /><span>{t("nav_files")}</span></button>
+    {#if hasIdeas}
+      <button class="tab" aria-current={readingIdeas ? "page" : undefined} onclick={() => open(IDEAS_ROUTE)}><Icon name="ideas" /><span>{t("nav_ideas")}</span></button>
+    {/if}
+    <button class="tab" aria-current={inMore ? "page" : undefined} onclick={() => open(MORE_ROUTE)}><Icon name="more" /><span>{t("nav_more")}</span></button>
+  </nav>
+{/snippet}
+
+<div class="shell" class:has-file={!listing} class:with-nav={!welcoming && !!snapshot}>
   <header class="top">
     <button class="brand" onclick={() => open(null)}>
       <span class="mark" aria-hidden="true">§</span>
       <span class="serif name">{t("app_name")}</span>
     </button>
+    {#if !welcoming && snapshot}{@render nav("top")}{/if}
     {#if !welcoming}
       <button class="btn small gear" aria-current={settings ? "page" : undefined} onclick={() => open(SETTINGS_ROUTE)}>
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-          <path fill="currentColor" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm9 4a7.6 7.6 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7.9 7.9 0 0 0-2-1.2L16 2H8l-.5 2.6a7.9 7.9 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7.9 7.9 0 0 0 2 1.2L8 22h8l.5-2.6a7.9 7.9 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z" />
-        </svg>
+        <Icon name="settings" size={18} />
         <span>{t("settings_open")}</span>
       </button>
     {/if}
@@ -203,31 +224,9 @@
   {:else}
     <div class="layout">
       <aside class="list-pane">
-        <div class="intro">
-          <h1 class="serif" id="list-title" tabindex="-1">{t(both ? "agenda_title_both" : "agenda_title")}</h1>
-          <p class="muted">{t(both ? "tagline_both" : "tagline")}</p>
-          <div class="page-links" bind:this={tabs}>
-            <button class="btn check-open" aria-current={!selected && !checking && !readingIdeas && !deskPage && !listing && !settings ? "page" : undefined} onclick={() => open(null)}>{t("week_open")}</button>
-            <button class="btn check-open files-open" aria-current={listing ? "page" : undefined} onclick={() => open(FILES_ROUTE)}>{t("back")}</button>
-            {#if checker}
-              <button class="btn check-open" aria-current={checking ? "page" : undefined} onclick={() => open(CHECK_ROUTE)}>{t("check_open")}</button>
-            {/if}
-            {#if desk}
-              <button class="btn check-open" aria-current={deskPage === PROCEDURES_ROUTE ? "page" : undefined} onclick={() => open(PROCEDURES_ROUTE)}>{t("procedures_open")}</button>
-            {/if}
-            {#if ideasReader || desk}
-              <button class="btn check-open" aria-current={readingIdeas ? "page" : undefined} onclick={() => open(IDEAS_ROUTE)}>{t("ideas_open")}</button>
-            {/if}
-            {#if desk}
-              <button class="btn check-open" aria-current={deskPage === VOTES_ROUTE ? "page" : undefined} onclick={() => open(VOTES_ROUTE)}>{t("votes_open")}</button>
-              <button class="btn check-open" aria-current={deskPage === FEEDBACK_ROUTE ? "page" : undefined} onclick={() => { feedbackAbout = null; open(FEEDBACK_ROUTE); }}>{t("feedback_open")}</button>
-            {/if}
-          </div>
-        </div>
-        <div class="list">
-          <FileList items={snapshot.items} {today} selected={selected ? routeOf(selected) : null} onopen={openFile(FILES_ROUTE)} />
-          <p class="muted source-note">{t("data_note", { sites: sitesOf(snapshot), date: date(snapshot.generated_at) })}</p>
-        </div>
+        <h1 class="serif list-title" id="list-title" tabindex="-1">{t("back")}</h1>
+        <FileList items={snapshot.items} {today} selected={selected ? routeOf(selected) : null} onopen={openFile(FILES_ROUTE)} />
+        <p class="muted source-note">{t("data_note", { sites: sitesOf(snapshot), date: date(snapshot.generated_at) })}</p>
       </aside>
       <main class="detail-pane">
         {#if selected}
@@ -240,34 +239,37 @@
             backLabel={t(backTo === FILES_ROUTE ? "back" : "week_open")}
             onback={() => open(backTo)}
           />
+        {:else if more}
+          <article class="check-page">
+            <h2 class="serif" id="file-title" tabindex="-1">{t("nav_more")}</h2>
+            <More {sections} onopen={openSection} />
+          </article>
         {:else if settings}
           <article class="check-page">
-            <button class="back" onclick={() => open(null)}>← {t("week_open")}</button>
+            <button class="back" onclick={() => open(MORE_ROUTE)}>← {t("nav_more")}</button>
             <h2 class="serif" id="file-title" tabindex="-1">{t("settings_title")}</h2>
             <Settings items={snapshot.items} />
           </article>
         {:else if checking && checker}
           <article class="check-page">
-            <button class="back" onclick={() => open(FILES_ROUTE)}>← {t("back")}</button>
+            <button class="back" onclick={() => open(MORE_ROUTE)}>← {t("nav_more")}</button>
             <h2 class="serif" id="file-title" tabindex="-1">{t("check_open")}</h2>
             <FactCheck {checker} standalone />
             <p class="muted small">{t("never_recommend")}</p>
           </article>
         {:else if readingIdeas && desk}
           <article class="check-page">
-            <button class="back" onclick={() => open(FILES_ROUTE)}>← {t("back")}</button>
             <h2 class="serif" id="file-title" tabindex="-1">{t("ideas_open")}</h2>
             <DeskIdeas client={desk} onfeedback={sendFeedbackAbout} />
           </article>
         {:else if readingIdeas && ideasReader}
           <article class="check-page">
-            <button class="back" onclick={() => open(FILES_ROUTE)}>← {t("back")}</button>
             <h2 class="serif" id="file-title" tabindex="-1">{t("ideas_open")}</h2>
             <Ideas reader={ideasReader} />
           </article>
         {:else if deskPage && desk}
           <article class="check-page">
-            <button class="back" onclick={() => open(FILES_ROUTE)}>← {t("back")}</button>
+            <button class="back" onclick={() => open(MORE_ROUTE)}>← {t("nav_more")}</button>
             <h2 class="serif" id="file-title" tabindex="-1">{t(deskPage === PROCEDURES_ROUTE ? "procedures_open" : deskPage === VOTES_ROUTE ? "votes_open" : "feedback_open")}</h2>
             {#if deskPage === PROCEDURES_ROUTE}
               <Procedures client={desk} onfeedback={sendFeedbackAbout} />
@@ -278,10 +280,11 @@
             {/if}
           </article>
         {:else}
-          <Week items={snapshot.items} {week} onopen={openFile(null)} onall={() => open(FILES_ROUTE)} onsettings={() => open(SETTINGS_ROUTE)} />
+          <Week items={snapshot.items} {week} {today} intro={t(both ? "tagline_both" : "tagline")} onopen={openFile(null)} onsettings={() => open(SETTINGS_ROUTE)} />
         {/if}
       </main>
     </div>
+    {@render nav("bottom")}
   {/if}
 </div>
 
@@ -342,32 +345,60 @@
   @media (max-width: 420px) {
     .gear span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   }
+
+  /* The sections: a bar along the bottom of a phone, under the thumb; a row in the header on a desktop.
+     Each tab is an icon with its name under or beside it, never an icon alone. */
+  .nav { display: flex; }
+  .tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: none;
+    border: 0;
+    color: var(--fg);
+    font: 700 0.95rem/1.1 var(--sans, inherit);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .tab[aria-current="page"] { color: var(--fg); }
+  .nav-top { gap: 4px; }
+  .nav-top .tab { padding: 0.5rem 0.8rem; border: var(--rule) solid transparent; }
+  .nav-top .tab:hover { border-color: var(--line); }
+  .nav-top .tab[aria-current="page"] { background: var(--pressed-bg); border-color: var(--pressed-bg); color: var(--pressed-fg); }
+  .nav-bottom {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 6;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--bg);
+    border-top: var(--rule) solid var(--line);
+  }
+  .nav-bottom .tab {
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 62px;
+    padding: 8px 2px 6px;
+    font-size: 0.78rem;
+    position: relative;
+  }
+  .nav-bottom .tab span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  /* The lit tab: an amber bar on top and the icon on amber, readable without colour too (bold, bar). */
+  .nav-bottom .tab[aria-current="page"]::before { content: ""; position: absolute; inset: -2px 18% auto; height: 4px; background: var(--accent); border: 2px solid var(--accent-line); border-top: 0; }
+  .nav-bottom .tab[aria-current="page"] :global(.icon) { background: var(--accent); color: var(--accent-ink); outline: 3px solid var(--accent); }
+  .nav-bottom .tab:not([aria-current="page"]) { color: var(--muted); font-weight: 600; }
+
   .layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 20px;
     padding-top: 20px;
   }
-  .intro { display: grid; gap: 4px; margin-bottom: 16px; }
-  .intro h1:focus { outline: none; }
-  .intro h1 { font-size: clamp(1.9rem, 5vw, 2.4rem); line-height: 1.1; }
-  .intro p { margin: 0; }
+  .list-title { font-size: clamp(1.7rem, 5vw, 2.2rem); line-height: 1.1; margin: 0 0 14px; }
+  .list-title:focus { outline: none; }
   .source-note { font-size: 0.82rem; margin-top: 16px; }
-  .page-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-  /* Phone: the tabs are one row that scrolls sideways under the thumb, bleeding to the screen edges. */
-  @media (max-width: 959px) {
-    .page-links {
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      scrollbar-width: none;
-      margin-inline: -16px;
-      padding: 4px 16px 8px;
-      scroll-padding-inline: 16px;
-    }
-    .page-links::-webkit-scrollbar { display: none; }
-    .page-links .btn { flex: none; white-space: nowrap; }
-  }
-  .check-open[aria-current="page"] { background: var(--pressed-bg); border-color: var(--pressed-bg); color: var(--pressed-fg); }
   .check-page { display: grid; gap: 16px; padding-top: 4px; }
   .check-page h2 { font-size: clamp(1.6rem, 4.2vw, 2.3rem); line-height: 1.15; margin: 0; }
   .check-page h2:focus { outline: none; }
@@ -384,15 +415,20 @@
   .detail-pane { min-width: 0; }
   .loading, .notice { margin-top: 24px; }
 
-  /* Phone: one pane at a time. The agenda heading and its tabs stay above every page, as on a desktop. */
-  .shell.has-file .list { display: none; }
-  .shell:not(.has-file) .detail-pane { display: none; }
+  /* Phone: one page at a time, the sections at the bottom. */
+  @media (max-width: 959px) {
+    .nav-top { display: none; }
+    .shell.with-nav { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+    .shell.has-file .list-pane { display: none; }
+    .shell:not(.has-file) .detail-pane { display: none; }
+  }
 
-  /* Desktop: the agenda stays on the left while a file is open on the right. */
+  /* Desktop: every file on the left, the page on the right, the sections in the header. */
   @media (min-width: 960px) {
+    .nav-bottom, .files-tab { display: none; }
     .layout { grid-template-columns: minmax(320px, 400px) minmax(0, 1fr); gap: 40px; }
-    .shell.has-file .list, .shell:not(.has-file) .detail-pane { display: block; }
-    .back, .files-open { display: none; }
     .list-pane { position: sticky; top: 76px; align-self: start; max-height: calc(100vh - 92px); overflow-y: auto; padding-right: 8px; }
+    .list-title { font-size: 1.6rem; }
+    .shell:not(.has-file) .detail-pane { display: block; }
   }
 </style>

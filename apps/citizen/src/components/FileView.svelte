@@ -59,6 +59,14 @@
   const official = $derived(safeUrl(item.urls[ui.lang] ?? item.urls.fr));
   const docs = $derived(item.documents.filter((d) => safeUrl(d.url)));
   const history = $derived(historyOf(item));
+  /** Some official titles run to a whole paragraph: those are set in plain type and folded after a few lines. */
+  const title = $derived(tx(titleOf(item)) ?? "");
+  const long = $derived(title.length > 110);
+  let fullTitle = $state(false);
+  $effect(() => {
+    void item.id;
+    fullTitle = false;
+  });
 </script>
 
 <article class="file-page">
@@ -66,7 +74,10 @@
 
   <header class="head">
     <p class="meta"><FileMeta {item} /></p>
-    <h2 class="serif title" lang={langOf(titleOf(item))} id="file-title" tabindex="-1">{tx(titleOf(item))}</h2>
+    <h2 class={long ? "title long" : "serif title"} class:folded={long && !fullTitle} lang={langOf(titleOf(item))} id="file-title" tabindex="-1">{title}</h2>
+    {#if long}
+      <button class="more-title" aria-expanded={fullTitle} onclick={() => (fullTitle = !fullTitle)}>{t(fullTitle ? "title_less" : "title_more")}</button>
+    {/if}
     <OriginalToggle />
     {#if item.summary}<p class="summary" lang={langOf(item.summary)}>{tx(item.summary)}</p>{/if}
     <dl class="facts">
@@ -130,8 +141,8 @@
   {/if}
 
   {#if phases.length}
-    <section aria-labelledby="phases-h">
-      <h3 id="phases-h" class="serif sub">{t("phases")}</h3>
+    <details class="fold">
+      <summary><h3 id="phases-h" class="serif sub">{t("phases")}</h3><span class="n">{phases.length}</span></summary>
       <ol class="history">
         {#each phases as p, i (i)}
           <li>
@@ -140,7 +151,7 @@
           </li>
         {/each}
       </ol>
-    </section>
+    </details>
   {/if}
 
   <p class="never">{t("never_recommend")}</p>
@@ -163,8 +174,8 @@
 
   {#key item.id}<Understand {item} {items} />{/key}
 
-  <section aria-labelledby="docs-h">
-    <h3 id="docs-h" class="serif sub">{t("documents")}</h3>
+  <details class="fold">
+    <summary><h3 id="docs-h" class="serif sub">{t("documents")}</h3><span class="n">{docs.length}</span></summary>
     <p class="muted small">{t("orig_language")}</p>
     {#if docs.length}
       <ul class="docs">
@@ -178,11 +189,11 @@
     {:else}
       <p class="muted">{t("no_documents")}</p>
     {/if}
-  </section>
+  </details>
 
   {#if history.length}
-    <section aria-labelledby="hist-h">
-      <h3 id="hist-h" class="serif sub">{t("history")}</h3>
+    <details class="fold">
+      <summary><h3 id="hist-h" class="serif sub">{t("history")}</h3><span class="n">{history.length}</span></summary>
       <ol class="history">
         {#each history as a, i (i)}
           <li>
@@ -191,7 +202,7 @@
           </li>
         {/each}
       </ol>
-    </section>
+    </details>
   {/if}
 </article>
 
@@ -211,6 +222,29 @@
   .summary { margin: 0; font-size: 1.02rem; }
   .title:focus { outline: none; }
   .title { font-size: clamp(1.6rem, 4.2vw, 2.3rem); line-height: 1.15; }
+  .title.long { font-size: clamp(1.2rem, 3vw, 1.45rem); font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
+  .title.folded { display: -webkit-box; -webkit-line-clamp: 4; line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .more-title {
+    justify-self: start;
+    margin-top: -6px;
+    background: none;
+    border: 0;
+    padding: 4px 0;
+    color: var(--fg);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+  /* Long sections stay folded until asked for: the name and how many lines are inside. */
+  .fold { border-top: var(--rule) solid var(--line); padding-top: 12px; }
+  .fold > summary { display: flex; align-items: center; gap: 10px; cursor: pointer; list-style: none; }
+  .fold > summary::-webkit-details-marker { display: none; }
+  .fold > summary::after { content: "+"; margin-left: auto; font: 900 1.6rem/1 var(--serif); }
+  .fold[open] > summary::after { content: "–"; }
+  .fold > summary .sub { margin: 0; }
+  .fold .n { padding: 0 6px; border: 2px solid var(--line); font: 700 0.8rem/1.5 var(--serif); }
+  .fold[open] > summary { margin-bottom: 8px; }
   .facts { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 0; font-size: 0.92rem; }
   .facts div { display: flex; gap: 6px; align-items: baseline; }
   .facts dd { margin: 0; }

@@ -62,7 +62,7 @@
               onopen(route);
             }}
           >
-            <span class="meta"><FileMeta {item} /></span>
+            <span class="meta"><FileMeta {item} brief /></span>
             <span class="title" lang={langOf(titleOf(item))}>{tx(titleOf(item))}</span>
             {#if kindOf(item) === "chamber"}<StageTrack stage={stageOf(item)} compact />{/if}
             <span class="when">
@@ -137,12 +137,13 @@
     font-weight: 600;
     line-height: 1.35;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
   .when { font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
+  .title { overflow-wrap: anywhere; }
   .understood {
     margin-left: auto;
     flex: none;
