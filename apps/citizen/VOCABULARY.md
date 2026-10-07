@@ -27,5 +27,11 @@ Use one word per role, and use it everywhere: in the UI, the docs and the prompt
 | topics you follow, your topic | interests, subscriptions, preferences | The theme or committee names exactly as the Chamber and Esch publish them. |
 | panel, drawn by lot | jury, lottery, sortition, judge | The future Lottery panels. Shown only as "not started yet". |
 | secure sign-in | Door, login, account, credential | What posting and supporting wait for. Name no product or protocol. |
+| procedure | case, ticket, project (as the generic word), workflow | What the commune is doing and follows to the end on its desk: a decision, a project, a consultation, a budget or a request. Its own stages, dated. |
+| update (on a procedure) | news, post, comment, log entry | A dated line the commune adds to a procedure; it may change the status. |
+| feedback (send, look up) | complaint, report, ticket, contact form | What a resident tells the commune about anything, with no sign-in. It is answered, not graded. |
+| lookup code | reference, ticket number, id | The code the desk gives for a feedback message; the only way to find it again. Shown big, in mono, once. |
+| enrolment code | invite, password, token, account | The one-time code the commune hands a resident; it signs in on this device. Never a product name ("Enter the code the commune gave you"). |
+| vote on a question, ballot, option | poll, referendum, election, survey | A Desk vote is a consultation the commune opens: one ballot per resident, changeable while open, counts per option shown only once the result is published. |
 
 Never in the UI: recommend, should vote, best option, correct answer, wrong answer, streak, leaderboard, raw ids (`lu.chd.8739`, idea ids, jurisdiction ids, week ids), pseudonyms (`nym-…`, never shown at all), model names, except in the small provenance line.
