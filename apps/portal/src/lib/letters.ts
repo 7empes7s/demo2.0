@@ -1,13 +1,24 @@
 /**
- * The printed enrolment letter: one page per code, in the resident's language. The words match the
+ * The printed enrolment letter: one page per code, in every language the letter must carry
+ * (Luxembourg's four, plus any other the commune offers, such as Portuguese in Esch). The words match the
  * citizen app's sign-in sheet ("enrolment code", "the commune stores no name with the code"), so a
  * resident reads the same thing on paper and on screen. Printed in the browser; the codes never
  * leave this page.
  */
 
-import type { Lang } from "./types.ts";
+import { LANGS, type Lang } from "./types.ts";
+
+/** Every letter carries these, whatever the commune's settings say: Luxembourgish, French, German, English. */
+export const LETTER_CORE: readonly Lang[] = ["lb", "fr", "de", "en"];
+
+/** The letter's languages: the four above plus the commune's own, in the portal's usual order. */
+export function letterLangs(communeLangs: readonly Lang[]): Lang[] {
+  return LANGS.filter((l) => LETTER_CORE.includes(l) || communeLangs.includes(l));
+}
 
 const en = {
+  /** The language's own name, heading its part of the letter. */
+  name: "English",
   title: "Your enrolment code",
   intro: "{commune} invites you to post ideas, support the ideas of other residents, vote on the commune's questions and say whether its work was done.",
   step_open: "Open {site} on your phone or computer.",
@@ -24,6 +35,7 @@ export type LetterText = typeof en;
 export const LETTERS: Record<Lang, LetterText> = {
   en,
   fr: {
+    name: "Français",
     title: "Votre code d'inscription",
     intro: "{commune} vous invite à proposer des idées, soutenir celles d'autres résidents, voter sur les questions de la commune et dire si son travail a été fait.",
     step_open: "Ouvrez {site} sur votre téléphone ou votre ordinateur.",
@@ -34,6 +46,7 @@ export const LETTERS: Record<Lang, LetterText> = {
     no_commune: "Votre commune",
   },
   de: {
+    name: "Deutsch",
     title: "Ihr Anmeldecode",
     intro: "{commune} lädt Sie ein, Ideen einzureichen, die Ideen anderer Einwohner zu unterstützen, über die Fragen der Gemeinde abzustimmen und zu sagen, ob ihre Arbeit erledigt wurde.",
     step_open: "Öffnen Sie {site} auf Ihrem Telefon oder Computer.",
@@ -44,6 +57,7 @@ export const LETTERS: Record<Lang, LetterText> = {
     no_commune: "Ihre Gemeinde",
   },
   lb: {
+    name: "Lëtzebuergesch",
     title: "Ären Umeldecode",
     intro: "{commune} invitéiert Iech, Iddien anzeginn, d'Iddie vun aneren Awunner z'ënnerstëtzen, iwwer d'Froe vun der Gemeng ofzestëmmen a ze soen, ob hir Aarbecht gemaach gouf.",
     step_open: "Maacht {site} op Ärem Telefon oder Computer op.",
@@ -54,6 +68,7 @@ export const LETTERS: Record<Lang, LetterText> = {
     no_commune: "Är Gemeng",
   },
   pt: {
+    name: "Português",
     title: "O seu código de inscrição",
     intro: "{commune} convida-o a propor ideias, apoiar as ideias de outros residentes, votar nas perguntas da comuna e dizer se o seu trabalho foi feito.",
     step_open: "Abra {site} no seu telemóvel ou computador.",
