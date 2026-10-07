@@ -24,7 +24,9 @@ Use one word per role, and use it everywhere: in the UI, the docs and the prompt
 | the official text | source (in feedback), proof | The quoted passage under each answer. |
 | this week (the weekly list) | feed, inbox, timeline, for you, recommended | Pulse's view. It sorts the public list; it never ranks files by importance. |
 | where you live | jurisdiction, constituency, area, home (in the UI) | The commune, or the canton when Charter does not list the commune yet. |
-| topics you follow, your topic | interests, subscriptions, preferences | The theme or committee names exactly as the Chamber and Esch publish them. |
+| topics you follow, your topic | interests, subscriptions, preferences, categories | Plain groups in the resident's language ("Money and budget", "Getting around") that stand for the theme and committee names the Chamber and Esch publish. The published names stay on the files themselves. |
+| settings | profile, account, preferences, options | The page with language, appearance, where you live and the topics followed. Nothing on it is an account: it all stays on the device. |
+| welcome steps | onboarding, wizard, tutorial, tour | The three questions a first visit asks. Each can be skipped. |
 | panel, drawn by lot | jury, lottery, sortition, judge | The future Lottery panels. Shown only as "not started yet". |
 | secure sign-in | Door, login, account, credential | What posting and supporting wait for. Name no product or protocol. |
 | procedure | case, ticket, project (as the generic word), workflow | What the commune is doing and follows to the end on its desk: a decision, a project, a consultation, a budget or a request. Its own stages, dated. |

@@ -1,10 +1,11 @@
 <script lang="ts">
   import type { DocketItem } from "@democracy2/companion";
-  import { buildWeek, homeChoices, indexPlaces, placeName, topicList, type Entry, type Week } from "@democracy2/pulse";
+  import { buildWeek, indexPlaces, placeName, topicList, type Entry, type Week } from "@democracy2/pulse";
 
   import { progressOf } from "../lib/arena.svelte.ts";
   import { routeOf, titleOf } from "../lib/data.ts";
-  import { CHARTER, pulse, resetPulse, setHome, toggleTopic } from "../lib/pulse.svelte.ts";
+  import { CHARTER, pulse } from "../lib/pulse.svelte.ts";
+  import { expandGroups } from "../lib/topics.ts";
   import { date, t, ui } from "../lib/ui.svelte.ts";
   import FileMeta from "./FileMeta.svelte";
 
@@ -13,27 +14,27 @@
     week,
     onopen,
     onall,
+    onsettings,
   }: {
     items: DocketItem[];
     week: Week;
     onopen: (route: string) => void;
     /** Show the full list (phones only: on a wide screen it is always beside this view). */
     onall: () => void;
+    /** Open the settings page, where the place and the topics are chosen. */
+    onsettings: () => void;
   } = $props();
 
   const index = indexPlaces(CHARTER.places);
-  const choices = homeChoices(CHARTER.places);
   const topics = $derived(topicList(items));
+  /** The published names the chosen topic groups stand for, out of those in the list. */
+  const followed = $derived(expandGroups(pulse.prefs.groups, topics));
   // Everything below is computed here, from the list every device downloads. Nothing is sent.
   const list = $derived(
-    buildWeek({ items, places: CHARTER.places, prefs: pulse.prefs, week, understood: (id) => !!progressOf(id)?.understood, budget: CHARTER.budget }),
+    buildWeek({ items, places: CHARTER.places, prefs: { home: pulse.prefs.home, topics: followed }, week, understood: (id) => !!progressOf(id)?.understood, budget: CHARTER.budget }),
   );
   const homeName = $derived(pulse.prefs.home ? placeName(index.get(pulse.prefs.home), ui.lang) : "");
-  /** Only topics that are still in the list count; a topic the list dropped stays saved but is not shown. */
-  const followed = $derived(pulse.prefs.topics.filter((x) => topics.includes(x)));
-  /** The setup stays open while the resident picks, and opens by itself until a place is chosen. */
-  let editing = $state(!pulse.prefs.home);
-  const setup = $derived(editing || !pulse.prefs.home);
+  const groupCount = $derived(pulse.prefs.groups.length);
   const weekNo = $derived(Number(week.id.slice(-2)));
 
   const WHEN_KEY = { meeting: "week_when_meeting", open: "week_when_open", filed: "week_when_filed", activity: "week_when_activity" } as const;
@@ -78,58 +79,21 @@
     <p class="muted intro">{t("week_intro")}</p>
   </header>
 
-  {#if setup}
-    <div class="card setup" data-testid="week-setup">
-      <h3 class="serif">{t("week_setup_title")}</h3>
-      <div class="setup-grid">
-        <div class="field">
-          <label class="label" for="home">{t("week_home_label")}</label>
-          <select id="home" value={pulse.prefs.home ?? ""} onchange={(e) => setHome((e.currentTarget as HTMLSelectElement).value || null)}>
-            <option value="">{t("week_home_pick")}</option>
-            {#each choices.communes as p (p.id)}
-              <option value={p.id}>{placeName(p, ui.lang)}</option>
-            {/each}
-            <optgroup label={t("week_home_other")}>
-              {#each choices.regions as p (p.id)}
-                <option value={p.id}>{t("week_home_canton", { canton: placeName(p, ui.lang) })}</option>
-              {/each}
-            </optgroup>
-          </select>
-          <p class="muted hint">{t("week_home_hint")}</p>
-        </div>
-        <fieldset class="field">
-          <legend class="label">{t("week_topics_label")}</legend>
-          <p class="muted hint">{t("week_topics_hint")}</p>
-          <div class="topics">
-            {#each topics as topic (topic)}
-              <button class="btn chip" lang="fr" aria-pressed={pulse.prefs.topics.includes(topic)} onclick={() => toggleTopic(topic)}>{topic}</button>
-            {:else}
-              <p class="muted">{t("week_topics_none")}</p>
-            {/each}
-          </div>
-        </fieldset>
-      </div>
-      <p class="private" data-testid="week-private"><span aria-hidden="true">🔒</span> {t("week_private")}</p>
-      <div class="actions">
-        {#if pulse.prefs.home}
-          <button class="btn primary" onclick={() => (editing = false)}>{t("week_done")}</button>
-        {/if}
-        {#if pulse.prefs.home || pulse.prefs.topics.length}
-          <button class="btn" onclick={() => { resetPulse(); editing = true; }}>{t("week_forget")}</button>
-        {/if}
-      </div>
-    </div>
-  {:else}
-    <div class="summary card">
-      <p class="who">
-        <span class="label">{t("week_home_label")}</span>
-        <strong>{homeName}</strong>
-        <span class="muted">· {followed.length === 1 ? t("week_topics_one") : t("week_topics_many", { n: followed.length })}</span>
-      </p>
-      <button class="btn" onclick={() => (editing = true)}>{t("week_change")}</button>
-      <p class="private small" data-testid="week-private"><span aria-hidden="true">🔒</span> {t("week_private")}</p>
-    </div>
-  {/if}
+  <div class="summary card" data-testid="week-summary">
+    {#if pulse.prefs.home}
+      <dl class="who">
+        <dt class="label">{t("week_home_label")}</dt>
+        <dd><strong>{homeName}</strong></dd>
+        <dt class="label">{t("week_topics_label")}</dt>
+        <dd>{groupCount === 0 ? t("week_topics_zero") : groupCount}</dd>
+      </dl>
+      <button class="btn small" onclick={onsettings}>{t("week_change")}</button>
+    {:else}
+      <p class="who">{t("week_no_home")}</p>
+      <button class="btn primary" onclick={onsettings}>{t("week_set_up")}</button>
+    {/if}
+    <p class="private small" data-testid="week-private"><span aria-hidden="true">🔒</span> {t("week_private_short")}</p>
+  </div>
 
   {#if pulse.prefs.home}
     <section class="group" aria-labelledby="g-concerned">
@@ -176,20 +140,6 @@
   .head h2:focus { outline: none; }
   .head p { margin: 0; }
   .intro { max-width: 60ch; }
-  .setup { display: grid; gap: 16px; box-shadow: 7px 7px 0 0 var(--accent), 7px 7px 0 var(--rule) var(--backing); }
-  .setup h3 { font-size: 1.5rem; }
-  .setup-grid { display: grid; gap: 16px; }
-  .field { display: grid; gap: 6px; align-content: start; margin: 0; padding: 0; border: 0; min-width: 0; }
-  select {
-    width: 100%;
-    background: var(--surface);
-    border: var(--rule) solid var(--line);
-    padding: 0.6rem 0.8rem;
-  }
-  .hint { margin: 0; font-size: 0.85rem; }
-  .topics { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip { max-width: 100%; white-space: normal; text-align: left; }
-  .chip[aria-pressed="true"]::before { content: "✓ "; }
   .private {
     margin: 0;
     padding: 0.55rem 0.8rem;
@@ -198,10 +148,13 @@
     font-size: 0.9rem;
   }
   .private.small { font-size: 0.82rem; flex-basis: 100%; }
-  .actions { display: flex; flex-wrap: wrap; gap: 8px; }
-  .summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
-  .summary p { margin: 0; }
-  .summary .who { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+  /* One short sheet: a label and its value per line, the button beside them, the promise under. */
+  .summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; padding-block: 0.9rem; }
+  .summary p, .summary dl, .summary dd { margin: 0; }
+  .summary .who { min-width: 0; }
+  dl.who { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; align-items: baseline; }
+  dl.who dt, dl.who dd { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .summary .private { grid-column: 1 / -1; padding: 0; border: 0; background: none; color: var(--muted); }
   .group { display: grid; gap: 8px; }
   .group-title { font-size: 1.05rem; font-weight: 700; display: flex; gap: 8px; align-items: baseline; margin: 0; }
   .count { color: var(--muted); font-weight: 400; }
@@ -245,7 +198,6 @@
   .tech p { margin: 6px 0 0; color: var(--muted); }
 
   @media (min-width: 720px) {
-    .setup-grid { grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: 24px; }
     .entries { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
   }
   /* The full list is beside this view on a wide screen. */

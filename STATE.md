@@ -2,6 +2,13 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-07: Citizen app, welcome steps and settings instead of "Set up your week"
+
+- Ask (Marouane, 2026-10-07, from his phone): "Your topics" took most of the This week page; make it a setting on the user's profile, linked from the page, with a proper onboarding; the app is for residents of all ages and tech levels.
+- Done: `apps/citizen` opens a first visit on three welcome steps (`components/Welcome.svelte`: language, where you live, what you care about; one question per sheet, one choice per line, Back, Next, Skip for now), a Settings page (`components/Settings.svelte`, `#settings`, gear in the header: language, appearance, place, topics, privacy line, forget) and a four-line summary sheet on This week. Topics are plain groups in five languages (`lib/topics.ts`: word-start rules over the published French names, "Other" catches the rest; a name can sit in two groups). Storage `d2.pulse.v1` is `{home, groups, done}`; old `topics` arrays are folded into groups on load. Theme state moved to `lib/theme.svelte.ts`.
+- Evidence: citizen tests 116 (privacy trace now walks both the welcome and the settings path; new `test/settings.test.ts` for groups, steps, skip, settings); typecheck clean; `tools/check.sh` green; screenshots at 360, 390 and 1280 px, day and night, in the project folder `citizen-look/profile/`.
+- Not done: the group word lists were written against the committee names visible in Marouane's screenshot and the recorded fixture, not the live snapshot (no network from the session); a live name that matches no word lands under "Other topics", which is followable, so nothing is lost. The canton list is still the stand-in for communes Charter does not list.
+
 ## 2026-10-07: Printable enrolment letters
 
 - Done: the admin portal's Enrolment codes page prints one A4 letter per code of a fresh batch. Each letter carries the code once and the same words in six languages, two columns by three rows: Luxembourgish, French, German, English, Portuguese and Arabic (right to left). Marouane, 2026-10-07: "at least 4 (Lux, French, German, English; Portuguese for Esch)", then "add arabic next to the portugese to complete the 6/6 grid". Each part holds the commune's name, the site's address, two steps and the citizen app's "no name with the code" line. Printed in the browser (`window.print`); the codes never leave the page and disappear with "Done". `apps/portal/src/lib/letters.ts`, `components/Letters.svelte`.

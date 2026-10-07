@@ -15,7 +15,8 @@ import Week from "../src/components/Week.svelte";
 import { reloadArena, resetArena } from "../src/lib/arena.svelte.ts";
 import { DICTS } from "../src/lib/i18n.ts";
 import { registerServiceWorker } from "../src/lib/pwa.ts";
-import { pulse, reloadPulse, resetPulse } from "../src/lib/pulse.svelte.ts";
+import Settings from "../src/components/Settings.svelte";
+import { pulse, reloadPulse } from "../src/lib/pulse.svelte.ts";
 import { setLang } from "../src/lib/ui.svelte.ts";
 // The recorded Docket snapshot (real chd.lu and esch.lu records).
 import recorded from "../../../modules/pulse/test/fixtures/docket-recorded.json" with { type: "json" };
@@ -133,7 +134,7 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(NOW);
   localStorage.clear();
-  resetPulse();
+  reloadPulse();
   resetArena();
   setLang("en");
   history.replaceState(null, "", "/");
@@ -166,10 +167,10 @@ const ids = (root: ParentNode, group: string) =>
   [...root.querySelectorAll(`[aria-labelledby="${group}"] a.entry`)].map((a) => a.getAttribute("href"));
 
 /** What a resident may have told this device, in storage, before the app opens. */
-type Choices = { home?: string; topics?: string[]; understood?: string[] };
+type Choices = { home?: string; groups?: string[]; understood?: string[] };
 
 async function openApp(choices: Choices) {
-  if (choices.home !== undefined || choices.topics) localStorage.setItem("d2.pulse.v1", JSON.stringify({ home: choices.home ?? null, topics: choices.topics ?? [] }));
+  if (choices.home !== undefined || choices.groups) localStorage.setItem("d2.pulse.v1", JSON.stringify({ home: choices.home ?? null, groups: choices.groups ?? [] }));
   if (choices.understood) {
     const progress = Object.fromEntries(choices.understood.map((id) => [id, { attempts: 1, best: 3, total: 3, understood: true }]));
     localStorage.setItem("d2.arena.v1", JSON.stringify(progress));
@@ -182,23 +183,33 @@ async function openApp(choices: Choices) {
   // What main.ts does in the served build.
   registerServiceWorker();
   await settle();
-  expect(target.querySelector("#week-title"), "the app opens on this week's list").toBeTruthy();
+  // A device with no choices yet opens on the welcome steps; one that chose a place opens on the week.
+  expect(target.querySelector(choices.home ? "#week-title" : "[data-testid=welcome]")).toBeTruthy();
   return target;
 }
 
-/** Change every choice through the screen, the way a resident would. */
+/** Change every choice through the screen, the way a resident would: in the welcome steps on a
+ * first visit, on the settings page after that. */
 async function changeEverything(target: HTMLElement, companion: boolean) {
-  if (!target.querySelector("[data-testid=week-setup]")) click(buttonText(target, "Change"));
+  const welcome = !!target.querySelector("[data-testid=welcome]");
+  if (welcome) click(buttonText(target, "Next"));
+  else {
+    click(buttonText(target, "Change"));
+    await settle();
+  }
   const select = target.querySelector<HTMLSelectElement>("select#home")!;
   for (const value of [CITY, "lu-canton-wiltz", ESCH]) {
     select.value = value;
     select.dispatchEvent(new Event("change", { bubbles: true }));
     flushSync();
   }
+  if (welcome) click(buttonText(target, "Next"));
   const chips = [...target.querySelectorAll<HTMLButtonElement>(".topics button")];
   expect(chips.length).toBeGreaterThan(3);
   for (const chip of chips.slice(0, 4)) click(chip);
-  click(buttonText(target, "Show my week"));
+  click(buttonText(target, welcome ? "Show my week" : "This week"));
+  await settle();
+  expect(target.querySelector("#week-title")).toBeTruthy();
   // Open a file from the week and come back, as a resident would.
   click(target.querySelector("a.entry"));
   await settle();
@@ -239,9 +250,9 @@ describe("Pulse: the network never learns what a resident cares about", () => {
     },
   ])("makes exactly the same requests whatever the resident chose (Companion: $companion)", async ({ companion, expected }) => {
     const none = await traceFor({}, companion);
-    const esch = await traceFor({ home: ESCH, topics: ["Budget et Finances"], understood: ["lu.esch.42063"] }, companion);
-    const city = await traceFor({ home: CITY, topics: ["Développement urbain", "Commission des Finances", "Budget et Finances"], understood: ["lu.chd.8752", "lu.esch.42090"] }, companion);
-    const canton = await traceFor({ home: "lu-canton-clervaux", topics: ["Tourisme, relations internationales et jumelages, coopération transfrontalière"] }, companion);
+    const esch = await traceFor({ home: ESCH, groups: ["money"], understood: ["lu.esch.42063"] }, companion);
+    const city = await traceFor({ home: CITY, groups: ["housing", "money"], understood: ["lu.chd.8752", "lu.esch.42090"] }, companion);
+    const canton = await traceFor({ home: "lu-canton-clervaux", groups: ["culture"] }, companion);
 
     // The spy works: the public list was fetched, and nothing but public reads (and, with the
     // Companion, the resident's own clicks on the opened file) happened.
@@ -261,7 +272,7 @@ describe("Pulse: the network never learns what a resident cares about", () => {
 
     // No request carries a place, a topic or a file the resident cares about.
     const sent = JSON.stringify([esch.requests, city.requests, canton.requests]);
-    for (const secret of [ESCH, CITY, "lu-canton", "Budget", "urbain", "Commission", "42063", "d2.pulse"]) expect(sent).not.toContain(secret);
+    for (const secret of [ESCH, CITY, "lu-canton", "Budget", "urbain", "Commission", "money", "housing", "42063", "d2.pulse"]) expect(sent).not.toContain(secret);
   });
 });
 
@@ -270,14 +281,26 @@ describe("This week (Pulse view)", () => {
     setLang(lang);
     const target = document.createElement("div");
     document.body.append(target);
-    app = mount(Week, { target, props: { items: SNAPSHOT.items, week: { id: "2026-W40", start: "2026-09-28", end: "2026-10-04" }, onopen: () => {}, onall: () => {} } });
+    app = mount(Week, { target, props: { items: SNAPSHOT.items, week: { id: "2026-W40", start: "2026-09-28", end: "2026-10-04" }, onopen: () => {}, onall: () => {}, onsettings: () => {} } });
     flushSync();
     return target;
   }
 
-  it("asks where the resident lives first, and says the choices stay on the device", () => {
+  /** The settings page, where the place and the topics are chosen. */
+  function showSettings() {
+    const target = document.createElement("div");
+    document.body.append(target);
+    const settings = mount(Settings, { target, props: { items: SNAPSHOT.items } });
+    flushSync();
+    return { target, close: () => unmount(settings) };
+  }
+
+  it("asks where the resident lives in one line, and says the choices stay on the device", () => {
     const target = show();
-    expect(target.querySelector("[data-testid=week-setup]")).toBeTruthy();
+    expect(target.querySelector("[data-testid=week-summary]")?.textContent).toContain("Choose where you live to see your files first.");
+    expect(buttonText(target, "Set up")).toBeTruthy();
+    // The long setup sheet is gone from the page: no place picker, no topic chips.
+    expect(target.querySelector("select")).toBeNull();
     expect(target.querySelector("[data-testid=week-private]")?.textContent).toContain("Your choices stay on this device.");
     expect(target.querySelector("#g-concerned")).toBeNull();
     // Without a place, files on followed topics still show; panels are explained, never faked.
@@ -286,8 +309,8 @@ describe("This week (Pulse view)", () => {
   });
 
   it("saves choices on this device only and shows the week for them", () => {
-    const target = show();
-    const select = target.querySelector<HTMLSelectElement>("select#home")!;
+    const settings = showSettings();
+    const select = settings.target.querySelector<HTMLSelectElement>("select#home")!;
     // Communes first, then cantons for communes Charter does not list yet; never a raw id.
     const labels = [...select.options].map((o) => o.textContent ?? "");
     expect(labels.slice(0, 3)).toEqual(["Choose…", "Esch-sur-Alzette", "Luxembourg City"]);
@@ -297,32 +320,43 @@ describe("This week (Pulse view)", () => {
     select.value = ESCH;
     select.dispatchEvent(new Event("change", { bubbles: true }));
     flushSync();
-    click(buttonText(target, "Budget et Finances"));
-    expect(JSON.parse(localStorage.getItem("d2.pulse.v1")!)).toEqual({ home: ESCH, topics: ["Budget et Finances"] });
-    click(buttonText(target, "Show my week"));
+    // Topics are plain groups in the resident's language, never the published committee names.
+    expect(settings.target.textContent).not.toContain("Commission");
+    click(buttonText(settings.target, "Money and budget"));
+    expect(JSON.parse(localStorage.getItem("d2.pulse.v1")!)).toEqual({ home: ESCH, groups: ["money"], done: true });
+    settings.close();
 
-    expect(target.querySelector("[data-testid=week-setup]")).toBeNull();
+    const target = show();
+    expect(target.querySelector("select")).toBeNull();
     expect(target.textContent).toContain("Esch-sur-Alzette");
-    expect(target.textContent).toContain("1 topic followed");
+    expect(target.querySelector("[data-testid=week-summary] dd:last-of-type")?.textContent).toBe("1");
     expect(target.textContent).toContain("Files of Esch-sur-Alzette and of the bodies that cover it");
     expect(target.textContent, "no placeholder left unfilled").not.toMatch(/\{\w+\}/);
     expect(ids(target, "g-concerned")).toEqual(["#8752", "#esch.42052", "#esch.42060", "#esch.42063", "#esch.42071", "#esch.42090", "#esch.42093"]);
-    expect(target.querySelectorAll('[aria-labelledby="g-concerned"] [data-tag=topic]')).toHaveLength(3);
+    // "Money and budget" covers both the Esch theme and the Chamber committee on finances.
+    expect(target.querySelectorAll('[aria-labelledby="g-concerned"] [data-tag=topic]')).toHaveLength(4);
     expect(target.querySelector('[aria-labelledby="g-concerned"] a.entry')?.textContent).toContain("Updated on 30 September 2026");
 
-    click(buttonText(target, "Change"));
-    click(buttonText(target, "Forget my choices"));
-    expect(localStorage.getItem("d2.pulse.v1")).toBeNull();
-    expect(pulse.prefs).toEqual({ home: null, topics: [] });
+    const again = showSettings();
+    click(buttonText(again.target, "Forget my choices"));
+    expect(again.target.textContent).toContain("Your choices on this device were forgotten.");
+    // The welcome steps are not shown again: the resident chose to forget, not to start over.
+    expect(JSON.parse(localStorage.getItem("d2.pulse.v1")!)).toEqual({ home: null, groups: [], done: true });
+    expect(pulse.prefs).toEqual({ home: null, groups: [], done: true });
+    again.close();
   });
 
   it("works when storage is blocked, and ignores saved values it does not know", () => {
-    localStorage.setItem("d2.pulse.v1", JSON.stringify({ home: "lu-commune-nowhere", topics: ["ok", 3, "", "ok"] }));
+    localStorage.setItem("d2.pulse.v1", JSON.stringify({ home: "lu-commune-nowhere", groups: ["money", "nope", 3, "money"] }));
     reloadPulse();
-    expect(pulse.prefs).toEqual({ home: null, topics: ["ok"] });
+    expect(pulse.prefs).toEqual({ home: null, groups: ["money"], done: false });
+    // What a device saved before groups existed: the published names fall into their groups.
+    localStorage.setItem("d2.pulse.v1", JSON.stringify({ home: ESCH, topics: ["Budget et Finances", "Commission de la Mobilité et des Travaux publics"] }));
+    reloadPulse();
+    expect(pulse.prefs).toEqual({ home: ESCH, groups: ["money", "transport"], done: true });
     localStorage.setItem("d2.pulse.v1", "{not json");
     reloadPulse();
-    expect(pulse.prefs).toEqual({ home: null, topics: [] });
+    expect(pulse.prefs).toEqual({ home: null, groups: [], done: false });
 
     const blocked = {
       getItem: () => {
@@ -337,18 +371,19 @@ describe("This week (Pulse view)", () => {
     };
     vi.stubGlobal("localStorage", blocked);
     reloadPulse();
-    const target = show();
-    const select = target.querySelector<HTMLSelectElement>("select#home")!;
+    const settings = showSettings();
+    const select = settings.target.querySelector<HTMLSelectElement>("select#home")!;
     select.value = CITY;
     select.dispatchEvent(new Event("change", { bubbles: true }));
     flushSync();
-    click(buttonText(target, "Show my week"));
+    settings.close();
+    const target = show();
     expect(ids(target, "g-concerned")).toEqual(["#8752"]);
   });
 
   it("is written in all five languages", () => {
-    const keys = Object.keys(DICTS.en).filter((k) => k.startsWith("week_"));
-    expect(keys.length).toBeGreaterThan(30);
+    const keys = Object.keys(DICTS.en).filter((k) => /^(week|welcome|settings|topic|theme)_/.test(k));
+    expect(keys.length).toBeGreaterThan(60);
     for (const lang of ["fr", "de", "lb", "pt"] as const) {
       for (const k of keys) {
         const text = DICTS[lang][k as keyof typeof DICTS.en];
@@ -357,7 +392,7 @@ describe("This week (Pulse view)", () => {
         expect(text.match(/\{\w+\}/g) ?? [], `${lang}.${k}`).toEqual(DICTS.en[k as keyof typeof DICTS.en].match(/\{\w+\}/g) ?? []);
       }
       const target = show(lang);
-      expect(target.querySelector("[data-testid=week-private]")?.textContent).toContain(DICTS[lang].week_private);
+      expect(target.querySelector("[data-testid=week-private]")?.textContent).toContain(DICTS[lang].week_private_short);
       unmount(app!);
       app = null;
       document.body.innerHTML = "";
