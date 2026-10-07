@@ -218,7 +218,11 @@
   {#if loadError}
     <p class="card notice">{t("error")}</p>
   {:else if !snapshot}
-    <p class="muted pulse loading">…</p>
+    <!-- Blank sheets in the shape of the week while the list loads; the cut line marches. -->
+    <div class="skeleton" role="status" aria-label={t("loading")}>
+      <span class="sk-line pulse"></span>
+      {#each [0, 1, 2] as i (i)}<span class="sk-sheet"></span>{/each}
+    </div>
   {:else if welcoming}
     <Welcome items={snapshot.items} ondone={() => { firstVisit = false; open(null); }} />
   {:else}
@@ -413,7 +417,19 @@
     cursor: pointer;
   }
   .detail-pane { min-width: 0; }
-  .loading, .notice { margin-top: 24px; }
+  .notice { margin-top: 24px; }
+  .skeleton { display: grid; gap: 12px; padding-top: 28px; }
+  .sk-line { display: block; width: 40%; height: 2.2rem; }
+  .sk-sheet { display: block; height: 104px; border: var(--rule) solid var(--line); background: var(--surface); opacity: 0.6; }
+  .sk-sheet:nth-child(3) { opacity: 0.45; }
+  .sk-sheet:nth-child(4) { opacity: 0.3; }
+  @media (prefers-reduced-motion: no-preference) {
+    /* A tab pressed goes flat under the thumb; the tab it lights pastes its amber square on. */
+    .tab :global(.icon) { transition: transform 0.12s linear; }
+    .tab:active :global(.icon) { transform: translateY(2px); }
+    .nav-bottom .tab[aria-current="page"] :global(.icon) { animation: paste 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+    .nav-bottom .tab[aria-current="page"]::before { animation: paste 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+  }
 
   /* Phone: one page at a time, the sections at the bottom. */
   @media (max-width: 959px) {

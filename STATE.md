@@ -6,6 +6,7 @@ Handoff file for long-running work. Newest first.
 
 - Ask (Marouane, 2026-10-07): the app feels hollow, nothing stands out; make it intuitive for anyone without a tour, and no walls of text until a resident opens an item.
 - Done: bottom tab bar on phones / header tabs on desktop (`App.svelte`, `components/Icon.svelte`), a "More" page with one line per section (`components/More.svelte`), brief list cards (`FileMeta brief`), calendar tiles with today lit on This week (`Week.svelte`, `shortDay` in `lib/i18n.ts`), step in words in the full list (`StageTrack compact`), folded long title and folded Phases, Documents, History on a file (`FileView.svelte`). New strings in all five languages.
+- Motion (Marouane asked for his "brag" repo and other motion resources): no `brag` repo is reachable (not in `list_repos`, `add_repo 7empes7s/brag` says not found). Used his `aegis-design-bakeoff` brief instead (motion explains change, entrance choreography, skeletons, press feedback, reduced motion respected): stamp on today's tile, tab press and lit-tab paste, tab bar excluded from the peel, More rows and opened sections paste in, skeleton sheets while loading. All inside the existing verbs in `tokens.css`.
 - Evidence: citizen tests (pulse test now checks brief cards, today tiles, no empty Panels box, folded others), typecheck clean, check.sh green; renders at 390 and 1440 px, day and night, in `citizen-look/intuitive/` in the project folder.
 
 ## 2026-10-07: Files in the resident's language, with "Show original"

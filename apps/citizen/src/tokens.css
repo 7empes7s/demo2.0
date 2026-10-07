@@ -215,6 +215,7 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
  * goes flat onto its backing (120 ms). Peel: the old screen peels off from its top left corner
  * while the next one was already underneath (view transition, see lib/look.ts). Tear: a dismissed
  * sheet is torn off sideways (nothing in the app is dismissed yet, so it is not used here).
+ * Stamp (a paste, harder): today's date lands on its calendar tile after the sheet.
  * Flap: a number that appears flips like a split-flap board. March: waiting is marching ants along
  * the cut line.
  */
@@ -241,6 +242,15 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
   ::view-transition-old(top), ::view-transition-new(top) { animation: none; }
 
   .score svg { animation: flap 0.45s ease-in-out both; transform-origin: center; }
+
+  /* The tab bar stays put while the page under it peels, like the header. */
+  .nav-bottom { view-transition-name: tabs; }
+  ::view-transition-old(tabs), ::view-transition-new(tabs) { animation: none; }
+  /* Today's date is stamped onto its tile once the sheet has landed: the eye goes there first. */
+  @keyframes stamp { 0% { transform: scale(1.7) rotate(-9deg); opacity: 0; } 65% { transform: scale(0.94) rotate(1.5deg); opacity: 1; } 100% { transform: none; opacity: 1; } }
+  .entry.today .tile { animation: stamp 0.45s 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+  /* A section opened from its name is pasted in under it, so the change is seen, not just shown. */
+  .fold[open] > :not(summary) { animation: paste 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transform-origin: top left; }
 
   .pulse {
     animation: march 1s linear infinite;
