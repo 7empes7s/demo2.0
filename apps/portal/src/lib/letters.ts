@@ -1,20 +1,21 @@
 /**
- * The printed enrolment letter: one page per code, in every language the letter must carry
- * (Luxembourg's four, plus any other the commune offers, such as Portuguese in Esch). The words match the
+ * The printed enrolment letter: one page per code, in six languages: Luxembourg's four, plus
+ * Portuguese and Arabic, the most spoken others in Esch. The words match the
  * citizen app's sign-in sheet ("enrolment code", "the commune stores no name with the code"), so a
  * resident reads the same thing on paper and on screen. Printed in the browser; the codes never
  * leave this page.
  */
 
-import { LANGS, type Lang } from "./types.ts";
+/**
+ * The letter's languages, in print order. Wider than the portal's languages: Arabic is on the
+ * letter only, written right to left. Marouane, 2026-10-07: "Lux, French, German, English;
+ * Portuguese for Esch", then "add Arabic next to the Portuguese to complete the 6/6 grid".
+ */
+export const LETTER_LANGS = ["lb", "fr", "de", "en", "pt", "ar"] as const;
+export type LetterLang = (typeof LETTER_LANGS)[number];
 
-/** Every letter carries these, whatever the commune's settings say: Luxembourgish, French, German, English. */
-export const LETTER_CORE: readonly Lang[] = ["lb", "fr", "de", "en"];
-
-/** The letter's languages: the four above plus the commune's own, in the portal's usual order. */
-export function letterLangs(communeLangs: readonly Lang[]): Lang[] {
-  return LANGS.filter((l) => LETTER_CORE.includes(l) || communeLangs.includes(l));
-}
+/** Languages written right to left. */
+export const RTL: readonly LetterLang[] = ["ar"];
 
 const en = {
   /** The language's own name, heading its part of the letter. */
@@ -32,7 +33,7 @@ const en = {
 
 export type LetterText = typeof en;
 
-export const LETTERS: Record<Lang, LetterText> = {
+export const LETTERS: Record<LetterLang, LetterText> = {
   en,
   fr: {
     name: "Français",
@@ -78,13 +79,26 @@ export const LETTERS: Record<Lang, LetterText> = {
     private: "A comuna não guarda nenhum nome com o código. Só o seu aparelho guarda a sessão.",
     no_commune: "A sua comuna",
   },
+  ar: {
+    name: "العربية",
+    title: "رمز التسجيل الخاص بك",
+    intro: "تدعوك {commune} إلى اقتراح أفكار، ودعم أفكار السكان الآخرين، والتصويت على أسئلة البلدية، وإبداء رأيك في ما إذا كان عملها قد أُنجز.",
+    step_open: "افتح {site} على هاتفك أو حاسوبك.",
+    step_code: "في أول مرة تدعم فيها فكرة أو تصوّت، يطلب منك الموقع هذا الرمز. اكتبه مرة واحدة، وسيتذكره جهازك.",
+    code: "رمزك",
+    once: "يُستخدم الرمز مرة واحدة وهو لك وحدك. احتفظ بهذه الرسالة إلى أن تستخدمه.",
+    private: "لا تحفظ البلدية أي اسم مع الرمز. جهازك وحده يحتفظ بتسجيل الدخول.",
+    no_commune: "بلديتك",
+  },
 };
 
 /** The letter's words with the commune's name and the site's address filled in. */
-export function letterText(lang: Lang, commune: string, site: string): LetterText {
+export function letterText(lang: LetterLang, commune: string, site: string): LetterText {
   const src = LETTERS[lang];
-  const name = commune.trim() || src.no_commune;
-  const fill = (s: string) => s.replaceAll("{commune}", name).replaceAll("{site}", site);
+  // In right-to-left text, a Latin name or address is isolated so it keeps its own direction.
+  const iso = (v: string) => (RTL.includes(lang) ? `\u2068${v}\u2069` : v);
+  const name = commune.trim() ? iso(commune.trim()) : src.no_commune;
+  const fill = (s: string) => s.replaceAll("{commune}", name).replaceAll("{site}", iso(site));
   return Object.fromEntries(Object.entries(src).map(([k, v]) => [k, fill(v)])) as LetterText;
 }
 

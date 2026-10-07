@@ -6,7 +6,7 @@
   import Notice from "./Notice.svelte";
   import { get, post } from "../lib/api.ts";
   import { commune } from "../lib/commune.svelte.ts";
-  import { letterLangs, siteAddress } from "../lib/letters.ts";
+  import { LETTER_LANGS, siteAddress } from "../lib/letters.ts";
 
   // The shell hands every section the route's argument; this one has no sub-route.
   let { arg: _arg = null }: { arg?: string | null } = $props();
@@ -22,8 +22,6 @@
   /** The codes of the batch just made: shown once, never fetched again. */
   let fresh = $state<{ batch: string; codes: string[] } | null>(null);
   let copied = $state(false);
-  /** Every letter carries Luxembourg's four languages plus the commune's own (Portuguese in Esch). */
-  const lettersIn = $derived(letterLangs(commune.languages));
 
   async function load() {
     listError = null;
@@ -96,8 +94,8 @@
         <button class="btn" onclick={print}>{t("codes_print")}</button>
         <button class="btn" onclick={() => (fresh = null)}>{t("codes_done")}</button>
       </div>
-      <p class="muted hint">{t("codes_print_hint", { langs: lettersIn.map((l) => t(`lang_${l}`)).join(", ") })}</p>
-      <Letters codes={fresh.codes} langs={lettersIn} commune={commune.name} site={siteAddress(location.href)} />
+      <p class="muted hint">{t("codes_print_hint", { langs: LETTER_LANGS.map((l) => t(`lang_${l}`)).join(", ") })}</p>
+      <Letters codes={fresh.codes} commune={commune.name} site={siteAddress(location.href)} />
       <textarea class="mono codes" readonly rows={Math.min(fresh.codes.length + 1, 14)} value={asText()}></textarea>
     </section>
   {/if}

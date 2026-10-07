@@ -1,16 +1,15 @@
 <script lang="ts">
   /**
-   * The printable enrolment letters of a fresh batch: one A4 page per code, carrying every language
-   * in `langs` (the code once, then the same words in each language). Hidden on screen; when
+   * The printable enrolment letters of a fresh batch: one A4 page per code, the code once, then the
+   * same words in each of the six letter languages, two columns by three rows. Hidden on screen; when
    * printing, the page shows only these letters (portal.css hides the rest). Moved to <body> so the
    * print rule can hide every other child of it.
    */
-  import { letterText } from "../lib/letters.ts";
-  import type { Lang } from "../lib/types.ts";
+  import { LETTER_LANGS, letterText, RTL } from "../lib/letters.ts";
 
-  let { codes, langs, commune, site }: { codes: string[]; langs: Lang[]; commune: string; site: string } = $props();
+  let { codes, commune, site }: { codes: string[]; commune: string; site: string } = $props();
 
-  const texts = $derived(langs.map((l) => ({ lang: l, text: letterText(l, commune, site) })));
+  const texts = $derived(LETTER_LANGS.map((l) => ({ lang: l, dir: (RTL.includes(l) ? "rtl" : "ltr") as "rtl" | "ltr", text: letterText(l, commune, site) })));
   const heading = $derived(commune.trim() || texts[0]?.text.no_commune || "");
 
   function toBody(node: HTMLElement) {
@@ -27,12 +26,12 @@
         <p class="site">{site}</p>
       </header>
       <div class="code">
-        <span class="code-label">{texts.map((x) => x.text.code).join(" · ")}</span>
+        <span class="code-label">{#each texts as { lang, dir, text }, i (lang)}{#if i}{" · "}{/if}<bdi {dir} lang={lang}>{text.code}</bdi>{/each}</span>
         <span class="code-value">{code}</span>
       </div>
       <div class="parts">
-        {#each texts as { lang, text } (lang)}
-          <section class="part" lang={lang}>
+        {#each texts as { lang, dir, text } (lang)}
+          <section class="part" lang={lang} {dir}>
             <h2><span class="lang">{text.name}</span>{text.title}</h2>
             <p>{text.intro}</p>
             <ol>
@@ -70,6 +69,11 @@
   .code-value { font-family: var(--mono); font-size: 24pt; font-weight: 700; letter-spacing: 0.08em; }
   .parts { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm 7mm; }
   .part { break-inside: avoid; }
+  /* Public Sans and the title face have no Arabic letters: name faces that do, before the browser's own. */
+  .part:lang(ar), bdi:lang(ar) { font-family: "Noto Naskh Arabic", "Noto Sans Arabic", "Segoe UI", Tahoma, "Geeza Pro", sans-serif; }
+  .part:lang(ar) { font-size: 10.5pt; }
+  .part:lang(ar) h2, .part:lang(ar) .lang { font-family: inherit; letter-spacing: 0; }
+  .part[dir="rtl"] ol { padding-left: 0; padding-right: 1.3em; }
   h2 { font-family: var(--serif); text-transform: uppercase; font-size: 14pt; line-height: 1.1; margin: 0 0 1.5mm; }
   .lang { display: block; font-family: var(--sans); font-size: 7.5pt; font-weight: 700; letter-spacing: 0.08em; color: var(--navy); margin-bottom: 0.8mm; }
   p { margin: 0 0 1.5mm; }
