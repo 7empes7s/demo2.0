@@ -124,3 +124,10 @@ pre.payload { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-fa
   .back { display: none; }
   .fields.two { grid-template-columns: 1fr 1fr; }
 }
+
+/* Printing enrolment letters: while a batch's letters are on the page (Letters.svelte puts them
+   straight under <body>), the printout is those letters and nothing else. */
+@media print {
+  body:has(> .letters) > :not(.letters) { display: none !important; }
+  body:has(> .letters) { background: none; }
+}

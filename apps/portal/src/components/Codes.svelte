@@ -2,12 +2,15 @@
   /** Enrolment codes: a new batch, shown once with copy and download, and every batch with issued and used counts. */
   import { onMount } from "svelte";
 
+  import Letters from "./Letters.svelte";
   import Notice from "./Notice.svelte";
   import { get, post } from "../lib/api.ts";
+  import { commune } from "../lib/commune.svelte.ts";
+  import { siteAddress } from "../lib/letters.ts";
 
   // The shell hands every section the route's argument; this one has no sub-route.
   let { arg: _arg = null }: { arg?: string | null } = $props();
-  import { type EnrolBatch } from "../lib/types.ts";
+  import { type EnrolBatch, type Lang } from "../lib/types.ts";
   import { date, failure, t } from "../lib/ui.svelte.ts";
 
   let batches = $state<EnrolBatch[] | null>(null);
@@ -19,6 +22,9 @@
   /** The codes of the batch just made: shown once, never fetched again. */
   let fresh = $state<{ batch: string; codes: string[] } | null>(null);
   let copied = $state(false);
+  /** The letters' language: the commune's first language until staff pick another. */
+  let letterLang = $state<Lang | null>(null);
+  const lettersIn = $derived(letterLang ?? commune.languages[0] ?? "fr");
 
   async function load() {
     listError = null;
@@ -60,6 +66,10 @@
     }
   }
 
+  function print() {
+    window.print();
+  }
+
   function download() {
     if (!fresh) return;
     const blob = new Blob([asText()], { type: "text/plain" });
@@ -86,6 +96,17 @@
         <button class="btn" onclick={download}>{t("codes_download")}</button>
         <button class="btn" onclick={() => (fresh = null)}>{t("codes_done")}</button>
       </div>
+      <div class="row letters-row">
+        <div class="field">
+          <label class="label" for="letter-lang">{t("codes_letter_lang")}</label>
+          <select id="letter-lang" value={lettersIn} onchange={(e) => (letterLang = (e.currentTarget as HTMLSelectElement).value as Lang)}>
+            {#each commune.languages as l (l)}<option value={l}>{t(`lang_${l}`)}</option>{/each}
+          </select>
+        </div>
+        <button class="btn" onclick={print}>{t("codes_print")}</button>
+      </div>
+      <p class="muted hint">{t("codes_print_hint")}</p>
+      <Letters codes={fresh.codes} lang={lettersIn} commune={commune.name} site={siteAddress(location.href)} />
       <textarea class="mono codes" readonly rows={Math.min(fresh.codes.length + 1, 14)} value={asText()}></textarea>
     </section>
   {/if}
@@ -131,4 +152,7 @@
 <style>
   .fresh { border-left: 8px solid var(--accent); }
   .codes { font-size: 0.9rem; }
+  .letters-row { align-items: end; }
+  .letters-row .field { min-width: 12rem; }
+  .hint { margin: 0; font-size: 0.86rem; }
 </style>
