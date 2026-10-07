@@ -1,6 +1,17 @@
 {
   "name": "democracy2",
   "private": true,
-  "workspaces": ["charter/ts", "modules/arena", "modules/pulse", "modules/companion", "modules/lottery-verify", "modules/record-verify", "apps/*"],
-  "engines": { "node": ">=22" }
+  "workspaces": [
+    "charter/ts",
+    "modules/arena",
+    "modules/pulse",
+    "modules/companion",
+    "modules/desk",
+    "modules/lottery-verify",
+    "modules/record-verify",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  }
 }

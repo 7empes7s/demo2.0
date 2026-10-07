@@ -1,0 +1,37 @@
+[Unit]
+Description=Civic Desk: feedback, ideas, votes and official procedures, with the staff portals' API
+After=network-online.target
+Wants=network-online.target
+# Deployed with the Companion: a deploy (or a stop or restart of civic-companion) restarts this
+# service too, so both run the same release.
+PartOf=civic-companion.service
+
+[Service]
+User=civic
+Group=civic
+WorkingDirectory=/opt/civic/current
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+# Secrets and the model endpoint: /etc/civic/desk.env, mode 600 (see desk.env.example).
+EnvironmentFile=/etc/civic/desk.env
+# The Desk database lives outside the release tree: /var/lib/civic-desk, created by systemd for
+# the civic user. The log is append only and hash chained; back the file up, never edit it.
+StateDirectory=civic-desk
+StateDirectoryMode=0700
+Environment=DESK_DB=/var/lib/civic-desk/desk.db
+# Loopback only; the Companion forwards /api/desk/* to it (DESK_URL in companion.env) and is the
+# one proxy in front, so TRUST_PROXY=1.
+Environment=HOST=127.0.0.1 PORT=8094 TRUST_PROXY=1
+# The pilot's seed (procedures, a question, a few ideas) is loaded once, into an empty store only.
+Environment=DESK_SEED=/opt/civic/current/modules/desk/seed/esch.json
+ExecStart=/usr/bin/node --experimental-strip-types --no-warnings=ExperimentalWarning modules/desk/src/server.ts
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+ReadOnlyPaths=/opt/civic
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target civic-companion.service

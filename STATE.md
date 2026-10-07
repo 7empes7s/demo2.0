@@ -2,6 +2,15 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-06/07: Desk, the commune's loop (feedback, ideas, votes, procedures) with staff portals
+
+- Ask (Marouane, overnight): a full app with admin, operator, audit and end-user portals, any AI provider, kept to feedback, ideas, votes and official procedures' follow-up. Pitch target Esch-sur-Alzette.
+- Done, three PRs: `modules/desk` + Companion forwarding + deploy files (#42, `claude/desk`), the resident pages in the citizen app (`claude/desk-citizen`, stacked on #42), the staff portals `apps/portal` (`claude/desk-portal`, stacked on #42). Spec: `docs/product/desk.md`. Desk is one Node service over SQLite with an append-only hash-chained event log (triggers forbid UPDATE/DELETE on events and ballots), enrolment codes as the pilot identity, open consultative ballots, three model helpers over any OpenAI-compatible endpoint (`LLM_*`). The Companion forwards `/api/desk/*` (`DESK_URL`), serves `/portal/` (`PORTAL_DIR`) and reports `desk` in `/healthz`.
+- Evidence: all workspace typechecks and tests green locally (desk 14, companion 110, citizen 111, portal 25); live chain checked in a cloud session (desk + companion + both built apps, screenshots at 375 and 1280 px, light and dark).
+- Blocked: GitHub Actions refused to start jobs ("recent account payments have failed or your spending limit needs to be increased"), so CI and the merge gate are stuck until the GitHub billing is fixed. Not a code problem.
+- Mulinux (operator queue, after the merges): install `ops/deploy/civic-desk.service`, create `/etc/civic/desk.env` from `desk.env.example` (`DESK_BOOTSTRAP_PASSWORD`, the `LLM_*` lines), add `DESK_URL` and `PORTAL_DIR` to `companion.env`, `systemctl enable civic-desk`, then sign in at `/portal/` as `admin`, change the password, create staff and an enrolment code batch.
+- Next: Record checkpoints of the event chain head; Door instead of enrolment codes; Booth for secret ballots; a printable enrolment letter; notifications are out of scope (feedback is looked up by code).
+
 ## 2026-10-06: Companion model-agnostic (OpenAI-compatible API)
 
 - Decision (Marouane): no reliance on hosted model APIs the project does not control; AI goes local/open-weight, a free tier is only a bridge; the Anthropic API is too expensive.

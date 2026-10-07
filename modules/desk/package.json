@@ -1,0 +1,21 @@
+{
+  "name": "@democracy2/desk",
+  "version": "0.1.0",
+  "description": "Desk: where residents file feedback, post ideas, vote on the commune's questions and follow official procedures, and where the commune's staff answer. One service with an append-only, hash-chained log that the audit portal verifies.",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run",
+    "serve": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/server.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

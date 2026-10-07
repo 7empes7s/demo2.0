@@ -1,0 +1,132 @@
+{
+  "schema": "d2.desk.seed/1",
+  "settings": {
+    "commune.name": "Esch-sur-Alzette",
+    "commune.languages": "fr,lb,de,en,pt",
+    "commune.intro": "{\"fr\":\"Exemples fictifs pour la démonstration. Les procédures réelles de la commune apparaîtront ici.\",\"en\":\"Made-up examples for the demonstration. The commune's real procedures will appear here.\",\"de\":\"Erfundene Beispiele für die Vorführung. Die echten Verfahren der Gemeinde erscheinen hier.\",\"lb\":\"Erfonnt Beispiller fir d'Demonstratioun. Déi richteg Prozeduren vun der Gemeng kommen hei hin.\",\"pt\":\"Exemplos fictícios para a demonstração. Os procedimentos reais da comuna aparecerão aqui.\"}"
+  },
+  "procedures": [
+    {
+      "key": "budget",
+      "kind": "budget",
+      "status": "in_progress",
+      "owner": "Service Participation citoyenne (exemple)",
+      "title": {"fr": "Budget participatif 2026 (exemple)", "en": "Participatory budget 2026 (example)", "de": "Bürgerhaushalt 2026 (Beispiel)", "lb": "Biergerbudget 2026 (Beispill)", "pt": "Orçamento participativo 2026 (exemplo)"},
+      "body": {"fr": "Exemple fictif. Les résidents proposent des projets jusqu'à 250 000 € au total; un jury citoyen présélectionne, puis un vote départage.", "en": "Made-up example. Residents propose projects up to 250,000 € in total; a residents' panel shortlists them, then a vote decides."},
+      "started_on": "2026-03-01",
+      "due_on": "2026-12-15",
+      "stages": [
+        {"name": {"fr": "Appel à projets", "en": "Call for projects"}, "planned": "2026-03-01", "done": "2026-04-30"},
+        {"name": {"fr": "Présélection", "en": "Shortlist"}, "planned": "2026-06-15", "done": "2026-06-20"},
+        {"name": {"fr": "Vote des résidents", "en": "Residents' vote"}, "planned": "2026-10-20"},
+        {"name": {"fr": "Réalisation", "en": "Delivery"}, "planned": "2026-12-15"}
+      ],
+      "links": [{"label": "participation.esch.lu", "url": "https://participation.esch.lu"}],
+      "updates": [
+        {"text": {"fr": "12 projets présélectionnés par le jury citoyen. Le vote ouvrira le 20 octobre.", "en": "12 projects shortlisted by the residents' panel. The vote opens on 20 October."}, "status": "in_progress"}
+      ]
+    },
+    {
+      "key": "rue",
+      "kind": "project",
+      "status": "done",
+      "owner": "Service Voirie (exemple)",
+      "title": {"fr": "Réfection de la rue de l'Exemple", "en": "Resurfacing of rue de l'Exemple", "de": "Erneuerung der rue de l'Exemple"},
+      "body": {"fr": "Exemple fictif. Remplacement du revêtement et des trottoirs entre la place et le n° 40.", "en": "Made-up example. New surface and pavements between the square and number 40."},
+      "started_on": "2026-05-04",
+      "due_on": "2026-09-30",
+      "stages": [
+        {"name": {"fr": "Travaux", "en": "Works"}, "planned": "2026-05-04", "done": "2026-09-12"},
+        {"name": {"fr": "Réception", "en": "Handover"}, "planned": "2026-09-30", "done": "2026-09-25"}
+      ],
+      "links": [],
+      "updates": [
+        {"text": {"fr": "Travaux terminés et réceptionnés le 25 septembre. Dites-nous si quelque chose ne va pas.", "en": "Works finished and signed off on 25 September. Tell us if something is wrong."}, "status": "done"}
+      ]
+    },
+    {
+      "key": "zone30",
+      "kind": "decision",
+      "status": "stalled",
+      "owner": "Service Mobilité (exemple)",
+      "title": {"fr": "Zone 30 dans le quartier de l'Exemple", "en": "30 km/h zone in the Exemple district"},
+      "body": {"fr": "Exemple fictif. Décision du conseil communal: passer le quartier en zone 30 avant l'été. La signalisation attend l'avis du ministère.", "en": "Made-up example. Council decision: make the district a 30 km/h zone before summer. The signage awaits the ministry's opinion."},
+      "started_on": "2026-02-10",
+      "due_on": "2026-06-30",
+      "stages": [
+        {"name": {"fr": "Décision du conseil", "en": "Council decision"}, "planned": "2026-02-10", "done": "2026-02-10"},
+        {"name": {"fr": "Avis du ministère", "en": "Ministry's opinion"}, "planned": "2026-05-01"},
+        {"name": {"fr": "Pose de la signalisation", "en": "Signs put up"}, "planned": "2026-06-30"}
+      ],
+      "links": [],
+      "updates": [
+        {"text": {"fr": "L'avis du ministère n'est pas arrivé. Relance envoyée le 1er septembre.", "en": "The ministry's opinion has not arrived. Reminder sent on 1 September."}, "status": "stalled"}
+      ]
+    },
+    {
+      "key": "consult",
+      "kind": "consultation",
+      "status": "planned",
+      "owner": "Service Urbanisme (exemple)",
+      "title": {"fr": "Consultation sur le parc de l'Exemple", "en": "Consultation on Exemple park"},
+      "body": {"fr": "Exemple fictif. Réunion publique et questionnaire sur le réaménagement du parc.", "en": "Made-up example. Public meeting and questionnaire on the park's redesign."},
+      "started_on": "2026-11-05",
+      "due_on": "2026-12-20",
+      "stages": [
+        {"name": {"fr": "Réunion publique", "en": "Public meeting"}, "planned": "2026-11-05"},
+        {"name": {"fr": "Questionnaire", "en": "Questionnaire"}, "planned": "2026-11-20"},
+        {"name": {"fr": "Synthèse publiée", "en": "Summary published"}, "planned": "2026-12-20"}
+      ],
+      "links": []
+    },
+    {
+      "key": "bancs",
+      "kind": "request",
+      "status": "in_progress",
+      "owner": "Service Espaces verts (exemple)",
+      "title": {"fr": "Bancs supplémentaires le long de l'Alzette", "en": "More benches along the Alzette"},
+      "body": {"fr": "Exemple fictif. Idée de résidents reprise par la commune: six bancs entre le pont et le parc.", "en": "Made-up example. Residents' idea taken up by the commune: six benches between the bridge and the park."},
+      "started_on": "2026-09-15",
+      "due_on": "2026-11-30",
+      "stages": [
+        {"name": {"fr": "Commande", "en": "Order"}, "planned": "2026-09-30", "done": "2026-09-28"},
+        {"name": {"fr": "Pose", "en": "Installation"}, "planned": "2026-11-30"}
+      ],
+      "links": []
+    }
+  ],
+  "ideas": [
+    {"lang": "fr", "title": "Des bancs le long de l'Alzette (exemple)", "text": "Exemple fictif. Entre le pont et le parc il n'y a aucun endroit pour s'asseoir. Six bancs suffiraient, surtout pour les personnes âgées.", "supporters": 14, "status": "taken_up", "procedure_key": "bancs", "answer": {"fr": "Idée reprise: six bancs sont commandés, pose avant fin novembre.", "en": "Taken up: six benches are ordered, installed by the end of November."}},
+    {"lang": "lb", "title": "Méi Vëlosbéigel bei der Gare (Beispill)", "text": "Erfonnt Beispill. Moies sinn all Béigel bei der Gare voll. Nach 20 Plazen op der Säit vum Parking géifen hëllefen.", "supporters": 9},
+    {"lang": "pt", "title": "Horário da recolha de lixo no sábado (exemplo)", "text": "Exemplo fictício. A recolha às 6h de sábado acorda todo o bairro. Poderia começar às 8h?", "supporters": 6},
+    {"lang": "de", "title": "Trinkbrunnen auf dem Spielplatz (Beispiel)", "text": "Erfundenes Beispiel. Im Sommer gibt es auf dem Spielplatz kein Wasser für die Kinder. Ein Trinkbrunnen wäre günstig.", "supporters": 3},
+    {"lang": "en", "title": "Later opening of the library on Thursdays (example)", "text": "Made-up example. Many of us work until 18:00. Opening until 20:00 one evening a week would help.", "supporters": 2, "status": "declined", "answer": {"en": "Not possible this year: the staff plan is fixed until 2027. It is noted for the next plan.", "fr": "Pas possible cette année: le plan du personnel est fixé jusqu'en 2027. Noté pour le prochain plan."}}
+  ],
+  "feedback": [
+    {"lang": "fr", "text": "Exemple fictif. Les trottoirs de la rue de l'Exemple sont très bien, mais la plaque d'égout devant le n° 12 bouge quand on passe dessus.", "category": "roads", "about_procedure_key": "rue", "answer": "Merci. L'entreprise repasse la semaine prochaine pour fixer la plaque devant le n° 12.", "publish": true}
+  ],
+  "rounds": [
+    {
+      "key": "parc",
+      "state": "open",
+      "question": {"fr": "Que faire de l'ancien kiosque du parc de l'Exemple? (exemple)", "en": "What should become of the old bandstand in Exemple park? (example)"},
+      "detail": {"fr": "Exemple fictif. Le kiosque est hors d'usage. Trois options sont possibles dans le budget actuel.", "en": "Made-up example. The bandstand is out of use. Three options fit the current budget."},
+      "options": [
+        {"fr": "Le restaurer comme scène", "en": "Restore it as a stage"},
+        {"fr": "Le transformer en abri avec tables", "en": "Turn it into a shelter with tables"},
+        {"fr": "Le démonter et planter des arbres", "en": "Take it down and plant trees"}
+      ],
+      "about_procedure_key": "consult",
+      "closes_at": "2026-11-30T23:00:00Z",
+      "ballots": [0, 1, 1, 2, 1, 0, 1]
+    },
+    {
+      "key": "marche",
+      "state": "published",
+      "question": {"fr": "Le marché du samedi: place de l'Exemple ou devant la gare? (exemple)", "en": "The Saturday market: place de l'Exemple or in front of the station? (example)"},
+      "detail": {"fr": "Exemple fictif.", "en": "Made-up example."},
+      "options": [{"fr": "Place de l'Exemple", "en": "Place de l'Exemple"}, {"fr": "Devant la gare", "en": "In front of the station"}],
+      "ballots": [0, 0, 1, 0, 1, 0, 0, 1, 0]
+    }
+  ]
+}

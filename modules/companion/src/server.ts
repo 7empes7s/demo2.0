@@ -24,6 +24,9 @@
  *   AGORA_URL          the Agora service whose queue GET /api/ideas reads
  *                      (default http://127.0.0.1:8091, its `serve` default). Read only: posting
  *                      and supporting ideas are never proxied until secure sign-in exists.
+ *   DESK_URL           the Desk service (feedback, ideas, votes, procedures, staff portals);
+ *                      /api/desk/* is forwarded to it as is (default http://127.0.0.1:8094)
+ *   PORTAL_DIR         the built staff portals, served under /portal/ (optional)
  */
 
 import { createHash } from "node:crypto";
@@ -34,6 +37,7 @@ import { basename, extname, join, normalize, resolve, sep } from "node:path";
 import { type CommonsArgument, type CommonsClient, commonsSuffices, HttpCommons } from "./commons.ts";
 import { challenge, checkClaim, explain, extractArguments } from "./companion.ts";
 import { CheckerInvalid, CheckerUnavailable, gradeClaim, MAX_CLAIM } from "./factcheck.ts";
+import { DESK_BODY, DeskUnavailable, forwardToDesk } from "./desk.ts";
 import { AgoraInvalid, AgoraUnavailable, DEFAULT_IDEAS, type IdeasPage, JURISDICTION, MAX_IDEAS, MAX_JURISDICTIONS, readQueue } from "./ideas.ts";
 import { MAX_SMALL_BYTES, readJson, UPSTREAM } from "./upstream.ts";
 import { ModelError, type Provider, providerFromEnv } from "./provider.ts";
@@ -74,6 +78,13 @@ export interface ServerOptions {
   provenanceTimeoutMs?: number;
   /** Base URL of the Agora service. Without it /api/ideas answers 503. */
   agoraUrl?: string;
+  /** Base URL of the Desk service. Without it /api/desk/* answers 503. */
+  deskUrl?: string;
+  /** Deadline for a Desk answer, in ms (default 10 s; model-backed Desk routes 150 s). */
+  deskTimeoutMs?: number;
+  deskSlowTimeoutMs?: number;
+  /** The built staff portals, served under /portal/. */
+  portalDir?: string;
   /** How long to wait for Agora's whole answer, in ms (default 3000). */
   agoraTimeoutMs?: number;
   /** How long one Agora answer is reused for the same query, in ms. Default 15 s. */
@@ -159,6 +170,7 @@ export function createCompanionServer(opts: ServerOptions) {
   const ideasHits = new Map<string, number[]>();
   const ideasLimit = opts.ideasPerMinute ?? 60;
   const staticRoot = opts.staticDir ? resolve(opts.staticDir) : undefined;
+  const portalRoot = opts.portalDir ? resolve(opts.portalDir) : undefined;
   const trustProxy = opts.trustProxy ?? 0;
   // The snapshot can be megabytes of document text: serialise it once, not per request.
   const snapshotBody = Buffer.from(JSON.stringify(snapshot));
@@ -285,6 +297,35 @@ export function createCompanionServer(opts: ServerOptions) {
   };
   const provenanceUp = healthProbe(opts.provenanceUrl);
   const agoraUp = healthProbe(opts.agoraUrl);
+  const deskUp = healthProbe(opts.deskUrl);
+
+  /** Reads a request body as bytes, up to a cap, to pass on unchanged. */
+  async function readRaw(req: IncomingMessage, limit: number): Promise<Buffer | null> {
+    let size = 0;
+    const chunks: Buffer[] = [];
+    for await (const chunk of req) {
+      size += (chunk as Buffer).length;
+      if (size > limit) throw new HttpError(413, "request too large");
+      chunks.push(chunk as Buffer);
+    }
+    return chunks.length ? Buffer.concat(chunks) : null;
+  }
+
+  /** /api/desk/<path>: the Desk's answer, status and all. 503 when Desk is unreachable. */
+  async function deskRoute(req: IncomingMessage, url: URL): Promise<{ status: number; body: unknown }> {
+    if (!opts.deskUrl) throw new HttpError(503, "the desk is not configured on this server");
+    const path = url.pathname.slice("/api/desk".length) || "/";
+    const body = req.method === "GET" ? null : await readRaw(req, DESK_BODY);
+    try {
+      return await forwardToDesk(opts.deskUrl, req, path, url.search, body, clientOf(req), { timeoutMs: opts.deskTimeoutMs, slowTimeoutMs: opts.deskSlowTimeoutMs });
+    } catch (e) {
+      if (e instanceof DeskUnavailable) {
+        console.error(`desk: ${e.message}`);
+        throw new HttpError(503, "the desk is unavailable");
+      }
+      throw e;
+    }
+  }
 
   /**
    * GET /api/ideas?jurisdiction=<id>&jurisdiction=<id>&limit=<n>: Agora's queue, read only.
@@ -391,17 +432,23 @@ export function createCompanionServer(opts: ServerOptions) {
   }
 
   async function serveStatic(path: string, res: ServerResponse) {
+    // The staff portals are a second built app under /portal/, with their own fallback page.
+    if (portalRoot && (path === "/portal" || path.startsWith("/portal/"))) return serveFrom(portalRoot, path.slice("/portal".length) || "/", res);
     if (!staticRoot) throw new HttpError(404, "not found");
+    return serveFrom(staticRoot, path, res);
+  }
+
+  async function serveFrom(root: string, path: string, res: ServerResponse) {
     let decoded: string;
     try {
       decoded = decodeURIComponent(path);
     } catch {
       throw new HttpError(400, "bad path");
     }
-    let file = resolve(staticRoot, "." + normalize(decoded));
-    if (file !== staticRoot && !file.startsWith(staticRoot + sep)) throw new HttpError(404, "not found");
+    let file = resolve(root, "." + normalize(decoded));
+    if (file !== root && !file.startsWith(root + sep)) throw new HttpError(404, "not found");
     const info = await stat(file).catch(() => null);
-    if (!info || info.isDirectory()) file = join(staticRoot, "index.html");
+    if (!info || info.isDirectory()) file = join(root, "index.html");
     const data = await readFile(file).catch(() => null);
     if (!data) throw new HttpError(404, "not found");
     const headers: Record<string, string> = { "content-type": MIME[extname(file)] ?? "application/octet-stream" };
@@ -416,9 +463,9 @@ export function createCompanionServer(opts: ServerOptions) {
     const url = new URL(req.url ?? "/", "http://localhost");
     try {
       if (url.pathname === "/healthz") {
-        const [provenance, agora] = await Promise.all([provenanceUp(), agoraUp()]);
+        const [provenance, agora, desk] = await Promise.all([provenanceUp(), agoraUp(), deskUp()]);
         const model = opts.provider ? { kind: opts.provider.kind ?? "unknown", name: opts.provider.model } : null;
-        return send(res, 200, { ok: true, items: items.size, companion: !!opts.provider, model, provenance, agora });
+        return send(res, 200, { ok: true, items: items.size, companion: !!opts.provider, model, provenance, agora, desk });
       }
       if (url.pathname === "/data/snapshot.json") {
         if (req.headers["if-none-match"] === snapshotTag) {
@@ -427,6 +474,10 @@ export function createCompanionServer(opts: ServerOptions) {
         }
         res.writeHead(200, { "content-type": "application/json", etag: snapshotTag, "cache-control": "public, max-age=300" });
         return res.end(snapshotBody);
+      }
+      if (url.pathname === "/api/desk" || url.pathname.startsWith("/api/desk/")) {
+        const out = await deskRoute(req, url);
+        return send(res, out.status, out.body);
       }
       if (url.pathname === "/api/ideas" || url.pathname.startsWith("/api/ideas/")) {
         // Read only. Posting and supporting ideas stay off until secure sign-in (Door) exists:
@@ -466,7 +517,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const commons = process.env.COMMONS_URL ? new HttpCommons(process.env.COMMONS_URL) : null;
   const provenanceUrl = process.env.PROVENANCE_URL || "http://127.0.0.1:8090";
   const agoraUrl = process.env.AGORA_URL || "http://127.0.0.1:8091";
-  createCompanionServer({ provider, snapshot, commons, staticDir: process.env.STATIC_DIR, trustProxy, provenanceUrl, agoraUrl }).listen(port, host, () =>
+  const deskUrl = process.env.DESK_URL || "http://127.0.0.1:8094";
+  createCompanionServer({ provider, snapshot, commons, staticDir: process.env.STATIC_DIR, portalDir: process.env.PORTAL_DIR, trustProxy, provenanceUrl, agoraUrl, deskUrl }).listen(port, host, () =>
     console.log(`companion listening on ${host}:${port}`),
   );
 }
