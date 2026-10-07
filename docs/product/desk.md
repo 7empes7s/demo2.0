@@ -58,7 +58,7 @@ Per model call: triage ≈ 600 input + 80 output tokens; draft ≈ 900 + 300; tr
 | 1 Desk service (PR #42) | `modules/desk`, Companion forwarding, deploy files | `tools/check.sh` green; `GET /audit/verify` ok after the seed and 100 mixed writes; UPDATE/DELETE on `events` or `ballots` raise; `curl /healthz` on Mulinux reports `desk: true`. |
 | 2 Resident pages | citizen app pages | At 375 px and 1280 px: file feedback and read it back by code; enrol, post an idea, support another; cast then change a ballot; give a verdict on a finished procedure. No raw id in `document.body.textContent` (test). |
 | 3 Portals | `apps/portal` | Sign in as operator, admin, auditor; an auditor never sees the inbox; triage/draft/translate return labelled text; verify shows ok; recount equals the published tally. |
-| 4 Pilot on Mulinux | operator queue entry | `civic-desk` enabled, `/etc/civic/desk.env` set, first admin created, a code batch printed, the deploy's live check passes. |
+| 4 Pilot on Mulinux | a message to the operator on Mulinux | `civic-desk` enabled, `/etc/civic/desk.env` set, first admin created, a code batch printed, the deploy's live check passes. |
 | 5 Trust core swap (later) | Door for codes, Booth for secret ballots, Record checkpoints of `events.hash` | Each swap changes no resident-facing route. |
 
 ## 7. Not in scope
