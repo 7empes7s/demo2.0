@@ -106,6 +106,7 @@ const en = {
   lang_de: "German",
   lang_en: "English",
   lang_pt: "Portuguese",
+  lang_ar: "Arabic",
 
   /* ideas */
   ideas_title: "Ideas",
@@ -409,6 +410,7 @@ const fr: Dict = {
   lang_de: "allemand",
   lang_en: "anglais",
   lang_pt: "portugais",
+  lang_ar: "arabe",
 
   ideas_title: "Idées",
   ideas_empty: "Aucune idée avec ce statut.",

@@ -4,8 +4,8 @@ Handoff file for long-running work. Newest first.
 
 ## 2026-10-07: Printable enrolment letters
 
-- Done: the admin portal's Enrolment codes page prints one A4 letter per code of a fresh batch. Each letter carries the code once and the same words in Luxembourgish, French, German and English always, plus any other language the commune offers (Portuguese in Esch; Marouane, 2026-10-07: "at least 4"): the commune's name, the site's address, two steps, and the citizen app's "no name with the code" line. Printed in the browser (`window.print`); the codes never leave the page and disappear with "Done". `apps/portal/src/lib/letters.ts`, `components/Letters.svelte`.
-- Evidence: portal tests 29 (new: letters per code with all five languages, print, removal; every language has every line; the four languages always present); typecheck clean; printed to PDF from the built portal behind a local Companion and Desk, light and dark screen themes give the same ink-on-paper page.
+- Done: the admin portal's Enrolment codes page prints one A4 letter per code of a fresh batch. Each letter carries the code once and the same words in six languages, two columns by three rows: Luxembourgish, French, German, English, Portuguese and Arabic (right to left). Marouane, 2026-10-07: "at least 4 (Lux, French, German, English; Portuguese for Esch)", then "add arabic next to the portugese to complete the 6/6 grid". Each part holds the commune's name, the site's address, two steps and the citizen app's "no name with the code" line. Printed in the browser (`window.print`); the codes never leave the page and disappear with "Done". `apps/portal/src/lib/letters.ts`, `components/Letters.svelte`.
+- Evidence: portal tests 29 (letters per code with six parts in print order, Arabic right to left, every language has every line, Latin names isolated inside Arabic, print, removal); typecheck clean; printed to PDF from the built portal behind a local Companion and Desk: one page per code, light and dark screen themes give the same ink-on-paper page.
 
 ## 2026-10-06/07: Desk, the commune's loop (feedback, ideas, votes, procedures) with staff portals
 

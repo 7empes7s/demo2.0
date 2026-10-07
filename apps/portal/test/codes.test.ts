@@ -3,8 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import Codes from "../src/components/Codes.svelte";
 import { commune } from "../src/lib/commune.svelte.ts";
-import { LETTERS, letterLangs, letterText, siteAddress } from "../src/lib/letters.ts";
-import { LANGS } from "../src/lib/types.ts";
+import { LETTER_LANGS, LETTERS, letterText, siteAddress } from "../src/lib/letters.ts";
 import { setLang } from "../src/lib/ui.svelte.ts";
 import { button, cleanup, click, fakeDesk, show, signedInAs, signedOut, type } from "./helpers.ts";
 
@@ -54,14 +53,13 @@ describe("enrolment codes", () => {
     expect(calls.filter((c) => c.method === "GET").every((c) => !c.path.includes("codes/"))).toBe(true);
   });
 
-  it("prints one letter per code, each in Luxembourg's four languages plus the commune's own, and drops them when done", async () => {
+  it("prints one letter per code, each in six languages, and drops them when done", async () => {
     fakeDesk({
       "GET /api/desk/enrol-codes": () => ({ body: { batches: [] } }),
       "POST /api/desk/enrol-codes": () => ({ status: 201, body: { codes: THREE } }),
     });
     const printed = vi.fn();
     vi.stubGlobal("print", printed);
-    commune.languages = ["fr", "pt"];
     signedInAs("admin");
     const root = show(Codes, {});
     await vi.waitFor(() => expect(root.textContent).toContain("No batch yet."));
@@ -69,15 +67,17 @@ describe("enrolment codes", () => {
     type(root.querySelector("#batch-count"), "3");
     (root.querySelector("form") as HTMLFormElement).requestSubmit();
     await vi.waitFor(() => expect(button(root, "Print letters")).toBeTruthy());
-    expect(root.textContent).toContain("each in Luxembourgish, French, German, English, Portuguese");
+    expect(root.textContent).toContain("each in Luxembourgish, French, German, English, Portuguese, Arabic");
 
     // The letters sit straight under <body>, one per code, the code once and every language below it.
     const letters = () => [...document.querySelectorAll("body > .letters .letter")];
     expect(letters()).toHaveLength(3);
     expect(letters().map((l) => l.querySelector(".code-value")?.textContent)).toEqual(THREE);
     const first = letters()[0];
-    expect([...first.querySelectorAll(".part")].map((p) => p.getAttribute("lang"))).toEqual(["lb", "fr", "de", "en", "pt"]);
-    for (const title of ["Ären Umeldecode", "Votre code d'inscription", "Ihr Anmeldecode", "Your enrolment code", "O seu código de inscrição"]) {
+    expect([...first.querySelectorAll(".part")].map((p) => p.getAttribute("lang"))).toEqual(["lb", "fr", "de", "en", "pt", "ar"]);
+    expect(first.querySelector('.part[lang="ar"]')?.getAttribute("dir")).toBe("rtl");
+    expect(first.querySelector('.part[lang="fr"]')?.getAttribute("dir")).toBe("ltr");
+    for (const title of ["Ären Umeldecode", "Votre code d'inscription", "Ihr Anmeldecode", "Your enrolment code", "O seu código de inscrição", "رمز التسجيل الخاص بك"]) {
       expect(first.textContent).toContain(title);
     }
     expect(first.textContent).toContain("Esch-sur-Alzette vous invite");
@@ -96,7 +96,7 @@ describe("enrolment codes", () => {
 describe("enrolment letters", () => {
   it("has every line in every language, and fills the commune and the address", () => {
     const keys = Object.keys(LETTERS.en).sort();
-    for (const l of LANGS) {
+    for (const l of LETTER_LANGS) {
       expect(Object.keys(LETTERS[l]).sort()).toEqual(keys);
       expect(LETTERS[l].intro).toContain("{commune}");
       expect(LETTERS[l].step_open).toContain("{site}");
@@ -106,10 +106,11 @@ describe("enrolment letters", () => {
     expect(letterText("en", "  ", "x").intro.startsWith("Your commune invites")).toBe(true);
   });
 
-  it("always carries Luxembourg's four languages, plus the commune's own", () => {
-    expect(letterLangs([])).toEqual(["lb", "fr", "de", "en"]);
-    expect(letterLangs(["fr"])).toEqual(["lb", "fr", "de", "en"]);
-    expect(letterLangs(["lb", "fr", "de", "en", "pt"])).toEqual(["lb", "fr", "de", "en", "pt"]);
+  it("keeps a Latin name and address in their own direction inside the Arabic text", () => {
+    const ar = letterText("ar", "Esch-sur-Alzette", "cracia.example");
+    expect(ar.intro).toContain("\u2068Esch-sur-Alzette\u2069");
+    expect(ar.step_open).toContain("\u2068cracia.example\u2069");
+    expect(letterText("fr", "Esch-sur-Alzette", "cracia.example").intro).not.toContain("\u2068");
   });
 
   it("points residents at the citizen app, the root of the portal's site", () => {
