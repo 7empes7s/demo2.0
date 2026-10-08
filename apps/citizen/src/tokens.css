@@ -219,42 +219,42 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
  * Flap: a number that appears flips like a split-flap board. March: waiting is marching ants along
  * the cut line.
  */
-@media (prefers-reduced-motion: no-preference) {
-  @keyframes paste { 0% { transform: scale(1.04) rotate(-1.2deg); opacity: 0; } 60% { transform: scale(0.99) rotate(0.3deg); opacity: 1; } 100% { transform: none; opacity: 1; } }
-  @keyframes peel { to { transform: rotateY(-80deg) rotateX(10deg) translateY(12px); opacity: 0.4; } }
-  @keyframes flap { 0% { transform: rotateX(0); } 50% { transform: rotateX(-90deg); } 51% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
-  @keyframes march { to { background-position: -20px 0, 0 0; } }
+/* Motion runs only under <html data-motion="on">: the device does not ask for reduced motion, or the
+   resident turned it on in Settings (lib/motion.svelte.ts). */
+@keyframes paste { 0% { transform: scale(1.04) rotate(-1.2deg); opacity: 0; } 60% { transform: scale(0.99) rotate(0.3deg); opacity: 1; } 100% { transform: none; opacity: 1; } }
+@keyframes peel { to { transform: rotateY(-80deg) rotateX(10deg) translateY(12px); opacity: 0.4; } }
+@keyframes flap { 0% { transform: rotateX(0); } 50% { transform: rotateX(-90deg); } 51% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
+@keyframes march { to { background-position: -20px 0, 0 0; } }
+@keyframes stamp { 0% { transform: scale(1.7) rotate(-9deg); opacity: 0; } 65% { transform: scale(0.94) rotate(1.5deg); opacity: 1; } 100% { transform: none; opacity: 1; } }
 
-  .card, .file, .entry, .chat li, .verdict, .intro, .done { animation: paste 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
-  .file:nth-child(2), .entry:nth-child(2) { animation-delay: 0.06s; }
-  .file:nth-child(3), .entry:nth-child(3) { animation-delay: 0.12s; }
-  .file:nth-child(4), .entry:nth-child(4) { animation-delay: 0.18s; }
-  .file:nth-child(5), .entry:nth-child(5) { animation-delay: 0.24s; }
-  .file:nth-child(n + 6), .entry:nth-child(n + 6) { animation-delay: 0.3s; }
-  .card.next { animation-delay: 0.15s; }
+:root[data-motion="on"] :is(.card, .file, .entry, .chat li, .verdict, .intro, .done) { animation: paste 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+:root[data-motion="on"] :is(.file, .entry):nth-child(2) { animation-delay: 0.06s; }
+:root[data-motion="on"] :is(.file, .entry):nth-child(3) { animation-delay: 0.12s; }
+:root[data-motion="on"] :is(.file, .entry):nth-child(4) { animation-delay: 0.18s; }
+:root[data-motion="on"] :is(.file, .entry):nth-child(5) { animation-delay: 0.24s; }
+:root[data-motion="on"] :is(.file, .entry):nth-child(n + 6) { animation-delay: 0.3s; }
+:root[data-motion="on"] .card.next { animation-delay: 0.15s; }
 
-  .btn, .seg, .chip, .cite, .option { transition: transform 0.12s linear, box-shadow 0.12s linear, background-color 0.12s linear, color 0.12s linear; }
+:root[data-motion="on"] :is(.btn, .seg, .chip, .cite, .option) { transition: transform 0.12s linear, box-shadow 0.12s linear, background-color 0.12s linear, color 0.12s linear; }
 
-  .top { view-transition-name: top; }
-  ::view-transition-old(root) { animation: peel 0.5s cubic-bezier(0.4, 0, 0.2, 1) both; transform-origin: 0 0; }
-  ::view-transition-new(root) { animation: paste 0.6s 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
-  ::view-transition-group(root) { animation-duration: 0s; }
-  ::view-transition-old(top), ::view-transition-new(top) { animation: none; }
+:root[data-motion="on"] .top { view-transition-name: top; }
+:root[data-motion="on"]::view-transition-old(root) { animation: peel 0.5s cubic-bezier(0.4, 0, 0.2, 1) both; transform-origin: 0 0; }
+:root[data-motion="on"]::view-transition-new(root) { animation: paste 0.6s 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+:root[data-motion="on"]::view-transition-group(root) { animation-duration: 0s; }
+:root[data-motion="on"]::view-transition-old(top), :root[data-motion="on"]::view-transition-new(top) { animation: none; }
 
-  .score svg { animation: flap 0.45s ease-in-out both; transform-origin: center; }
+:root[data-motion="on"] .score svg { animation: flap 0.45s ease-in-out both; transform-origin: center; }
 
-  /* The tab bar stays put while the page under it peels, like the header. */
-  .nav-bottom { view-transition-name: tabs; }
-  ::view-transition-old(tabs), ::view-transition-new(tabs) { animation: none; }
-  /* Today's date is stamped onto its tile once the sheet has landed: the eye goes there first. */
-  @keyframes stamp { 0% { transform: scale(1.7) rotate(-9deg); opacity: 0; } 65% { transform: scale(0.94) rotate(1.5deg); opacity: 1; } 100% { transform: none; opacity: 1; } }
-  .entry.today .tile { animation: stamp 0.45s 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
-  /* A section opened from its name is pasted in under it, so the change is seen, not just shown. */
-  .fold[open] > :not(summary) { animation: paste 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transform-origin: top left; }
+/* The tab bar stays put while the page under it peels, like the header. */
+:root[data-motion="on"] .nav-bottom { view-transition-name: tabs; }
+:root[data-motion="on"]::view-transition-old(tabs), :root[data-motion="on"]::view-transition-new(tabs) { animation: none; }
+/* Today's date is stamped onto its tile once the sheet has landed: the eye goes there first. */
+:root[data-motion="on"] .entry.today .tile { animation: stamp 0.45s 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+/* A section opened from its name is pasted in under it, so the change is seen, not just shown. */
+:root[data-motion="on"] .fold[open] > :not(summary) { animation: paste 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transform-origin: top left; }
 
-  .pulse {
-    animation: march 1s linear infinite;
-    padding-top: 0.6rem;
-    background: repeating-linear-gradient(90deg, var(--line) 0 10px, transparent 10px 20px) top / 200% 3px no-repeat;
-  }
+:root[data-motion="on"] .pulse {
+  animation: march 1s linear infinite;
+  padding-top: 0.6rem;
+  background: repeating-linear-gradient(90deg, var(--line) 0 10px, transparent 10px 20px) top / 200% 3px no-repeat;
 }

@@ -290,15 +290,13 @@
   .done[data-result="all"] .fill { stroke: var(--green); }
   .num { fill: var(--fg); font: 900 18px var(--serif); }
 
-  @media (prefers-reduced-motion: no-preference) {
-    .option[data-state="text"], .option[data-state="miss"] { animation: pop 260ms ease-out; }
-    .feedback { animation: rise 240ms ease-out; }
-    .fill { transition: stroke-dashoffset 700ms ease-out; animation: draw 900ms ease-out; }
-    .badge.big { animation: pop 420ms 300ms ease-out both; }
-    @keyframes pop { 0% { transform: scale(0.97); } 60% { transform: scale(1.02); } 100% { transform: scale(1); } }
-    @keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-    @keyframes draw { from { stroke-dashoffset: 213.6; } }
-  }
+  :global([data-motion="on"]) .option[data-state="text"], :global([data-motion="on"]) .option[data-state="miss"] { animation: pop 260ms ease-out; }
+  :global([data-motion="on"]) .feedback { animation: rise 240ms ease-out; }
+  :global([data-motion="on"]) .fill { transition: stroke-dashoffset 700ms ease-out; animation: draw 900ms ease-out; }
+  :global([data-motion="on"]) .badge.big { animation: pop 420ms 300ms ease-out both; }
+  @keyframes pop { 0% { transform: scale(0.97); } 60% { transform: scale(1.02); } 100% { transform: scale(1); } }
+  @keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @keyframes draw { from { stroke-dashoffset: 213.6; } }
   @media (min-width: 960px) {
     .arena { padding: 1.4rem 1.6rem; }
     .options { grid-template-columns: minmax(0, 1fr); }

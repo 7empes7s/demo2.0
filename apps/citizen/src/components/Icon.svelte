@@ -19,10 +19,10 @@
   let { name, size = 22 }: { name: IconName; size?: number } = $props();
 </script>
 
-<svg class="icon" viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
+<svg class="glyph" viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
   <path d={PATHS[name]} />
 </svg>
 
 <style>
-  .icon { flex: none; display: block; }
+  .glyph { flex: none; display: block; }
 </style>
