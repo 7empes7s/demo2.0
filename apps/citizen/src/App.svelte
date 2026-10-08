@@ -23,6 +23,7 @@
   import { peel } from "./lib/look.ts";
   import { pulse } from "./lib/pulse.svelte.ts";
   import { findSample, SampleProvider } from "./lib/sample-provider.ts";
+  import { applyMotion, watchMotion } from "./lib/motion.svelte.ts";
   import { applyTheme, theme } from "./lib/theme.svelte.ts";
   import { loadTranslations } from "./lib/translations.svelte.ts";
   import { date, t, ui } from "./lib/ui.svelte.ts";
@@ -145,6 +146,8 @@
 
   onMount(() => {
     applyTheme(theme.value);
+    applyMotion();
+    const unwatchMotion = watchMotion();
     document.documentElement.lang = ui.lang;
     const onHash = () => peel(document.documentElement, async () => { route = readRoute(); await tick(); });
     window.addEventListener("hashchange", onHash);
@@ -181,6 +184,7 @@
       window.removeEventListener("popstate", onHash);
       window.removeEventListener("online", onNetwork);
       window.removeEventListener("offline", onNetwork);
+      unwatchMotion();
     };
   });
 </script>
@@ -423,13 +427,12 @@
   .sk-sheet { display: block; height: 104px; border: var(--rule) solid var(--line); background: var(--surface); opacity: 0.6; }
   .sk-sheet:nth-child(3) { opacity: 0.45; }
   .sk-sheet:nth-child(4) { opacity: 0.3; }
-  @media (prefers-reduced-motion: no-preference) {
-    /* A tab pressed goes flat under the thumb; the tab it lights pastes its amber square on. */
-    .tab :global(.glyph) { transition: transform 0.12s linear; }
-    .tab:active :global(.glyph) { transform: translateY(2px); }
-    .nav-bottom .tab[aria-current="page"] :global(.glyph) { animation: paste 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
-    .nav-bottom .tab[aria-current="page"]::before { animation: paste 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
-  }
+  /* A tab pressed goes flat under the thumb; the tab it lights pastes its mark on. */
+  :global([data-motion="on"]) .tab :global(.glyph) { transition: transform 0.12s linear; }
+  :global([data-motion="on"]) .tab:active :global(.glyph) { transform: translateY(2px); }
+  :global([data-motion="on"]) .tab[aria-current="page"] :global(.glyph) { animation: paste 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+  :global([data-motion="on"]) .nav-bottom .tab[aria-current="page"]::before { animation: paste 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+  :global([data-motion="on"]) .nav-top .tab[aria-current="page"] { animation: paste 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
 
   /* Phone: one page at a time, the sections at the bottom. */
   @media (max-width: 959px) {

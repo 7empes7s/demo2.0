@@ -71,11 +71,9 @@
   @media (min-width: 720px) {
     .sections { grid-template-columns: 1fr 1fr; }
   }
-  @media (prefers-reduced-motion: no-preference) {
-    .section { animation: paste 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
-    li:nth-child(2) .section { animation-delay: 0.06s; }
-    li:nth-child(3) .section { animation-delay: 0.12s; }
-    li:nth-child(4) .section { animation-delay: 0.18s; }
-    li:nth-child(n + 5) .section { animation-delay: 0.24s; }
-  }
+  :global([data-motion="on"]) .section { animation: paste 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+  :global([data-motion="on"]) li:nth-child(2) .section { animation-delay: 0.06s; }
+  :global([data-motion="on"]) li:nth-child(3) .section { animation-delay: 0.12s; }
+  :global([data-motion="on"]) li:nth-child(4) .section { animation-delay: 0.18s; }
+  :global([data-motion="on"]) li:nth-child(n + 5) .section { animation-delay: 0.24s; }
 </style>

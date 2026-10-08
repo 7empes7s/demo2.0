@@ -4,6 +4,7 @@
 
   import { LANG_LABELS } from "../lib/i18n.ts";
   import { CHARTER, pulse, resetPulse, setHome, toggleGroup } from "../lib/pulse.svelte.ts";
+  import { motion, setMotion, type Motion } from "../lib/motion.svelte.ts";
   import { setTheme, theme, type Theme } from "../lib/theme.svelte.ts";
   import { GROUP_LABEL, groupsIn } from "../lib/topics.ts";
   import { setLang, t, ui } from "../lib/ui.svelte.ts";
@@ -16,6 +17,11 @@
     { value: null, key: "theme_auto" },
     { value: "light", key: "theme_light" },
     { value: "dark", key: "theme_dark" },
+  ];
+  const MOTIONS: { value: Motion; key: "motion_auto" | "motion_on" | "motion_off" }[] = [
+    { value: null, key: "motion_auto" },
+    { value: "on", key: "motion_on" },
+    { value: "off", key: "motion_off" },
   ];
   let forgotten = $state(false);
 
@@ -42,6 +48,16 @@
         <button class="btn choice" aria-pressed={theme.value === o.value} onclick={() => setTheme(o.value)}>{t(o.key)}</button>
       {/each}
     </div>
+  </section>
+
+  <section class="card" aria-labelledby="s-motion">
+    <h3 class="label" id="s-motion">{t("settings_motion")}</h3>
+    <div class="row" role="group" aria-labelledby="s-motion">
+      {#each MOTIONS as o (o.key)}
+        <button class="btn choice" aria-pressed={motion.value === o.value} onclick={() => setMotion(o.value)}>{t(o.key)}</button>
+      {/each}
+    </div>
+    <p class="muted hint">{t("motion_hint")}</p>
   </section>
 
   <section class="card" aria-labelledby="s-home">
