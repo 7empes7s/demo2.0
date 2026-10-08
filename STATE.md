@@ -2,6 +2,11 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-08: Operator queue moved into this repo
+
+- Ask (Marouane, 2026-10-08): pick up the cracia operator queue that was removed from the keel repo.
+- Done: `ops/operator-queue.md` is the queue now. Steps still go to the operator session on Mulinux as a message; the file records what is open and the evidence for what is done. Carried over: the Groq model switch (open, waits only on Marouane's Groq key; #40 is merged and live per #48). Recorded as done with evidence: deploy (#12), Ideas and Commons (#25), Desk (#48). Also listed as open: the Companion unit reinstall for translations, not yet confirmed on the box.
+
 ## 2026-10-07: Citizen app you can use without being shown
 
 - Ask (Marouane, 2026-10-07): the app feels hollow, nothing stands out; make it intuitive for anyone without a tour, and no walls of text until a resident opens an item.
@@ -14,7 +19,7 @@ Handoff file for long-running work. Newest first.
 - Ask (Marouane, 2026-10-07): file contents stay French whatever language is picked; translate, with a way to show the original in a click.
 - Done: the Companion translates the snapshot's French text (titles, summaries, status, steps, history lines, document names, committee and theme names) into en, de, lb, pt in the background through the configured model and serves one file to every device at `/data/translations.json` (`modules/companion/src/translate.ts`); cache in `$STATE_DIRECTORY/translations.json` (`StateDirectory=civic-companion` added to the unit). The citizen app shows translations (`lib/translations.svelte.ts`) and a "Show original" switch (`components/OriginalToggle.svelte`) under a file's title and on This week.
 - Evidence: companion tests 115, citizen 119 (privacy trace also switches language and the original toggle; same requests), typecheck clean, check.sh green; phone renders in `citizen-look/translate/` in the project folder, made with a hand-written sample translations file (the cloud session cannot reach a model).
-- Mulinux (operator): reinstall `civic-companion.service` (new `StateDirectory`), `systemctl daemon-reload`, restart. Translations need `LLM_*` in `/etc/civic/companion.env`; without a model the app stays French.
+- Mulinux (operator, open in `ops/operator-queue.md`): reinstall `civic-companion.service` (new `StateDirectory`), `systemctl daemon-reload`, restart. Translations need `LLM_*` in `/etc/civic/companion.env`; without a model the app stays French.
 - Not done: documents are not translated (Explain already answers in the resident's language); quality of Luxembourgish depends on the model.
 
 ## 2026-10-07: Citizen app, welcome steps and settings instead of "Set up your week"
@@ -35,7 +40,7 @@ Handoff file for long-running work. Newest first.
 - Done, three PRs: `modules/desk` + Companion forwarding + deploy files (#42, `claude/desk`), the resident pages in the citizen app (`claude/desk-citizen`, stacked on #42), the staff portals `apps/portal` (`claude/desk-portal`, stacked on #42). Spec: `docs/product/desk.md`. Desk is one Node service over SQLite with an append-only hash-chained event log (triggers forbid UPDATE/DELETE on events and ballots), enrolment codes as the pilot identity, open consultative ballots, three model helpers over any OpenAI-compatible endpoint (`LLM_*`). The Companion forwards `/api/desk/*` (`DESK_URL`), serves `/portal/` (`PORTAL_DIR`) and reports `desk` in `/healthz`.
 - Evidence: all workspace typechecks and tests green locally (desk 14, companion 110, citizen 111, portal 25); live chain checked in a cloud session (desk + companion + both built apps, screenshots at 375 and 1280 px, light and dark).
 - Merged 2026-10-07 (#42, #43, #44) once the repo went public (Actions billing); #46 fixed two deploy gaps (Desk started the system Node, which has no `node:sqlite`; `BUILD_CMD` did not build the portals).
-- Mulinux (Marouane, 2026-10-07: send these to the operator session on Mulinux as a message; it does the server work and confirms with live checks): install `ops/deploy/civic-desk.service`, create `/etc/civic/desk.env` from `desk.env.example` (`DESK_BOOTSTRAP_PASSWORD`, the `LLM_*` lines), add `DESK_URL` and `PORTAL_DIR` to `companion.env`, `systemctl enable civic-desk`, then sign in at `/portal/` as `admin`, change the password, create staff and an enrolment code batch.
+- Mulinux (Marouane, 2026-10-07: send these to the operator session on Mulinux as a message; it does the server work and confirms with live checks): install `ops/deploy/civic-desk.service`, create `/etc/civic/desk.env` from `desk.env.example` (`DESK_BOOTSTRAP_PASSWORD`, the `LLM_*` lines), add `DESK_URL` and `PORTAL_DIR` to `companion.env`, `systemctl enable civic-desk`, then sign in at `/portal/` as `admin`, change the password, create staff and an enrolment code batch. Server part done 2026-10-07 (#48, `ops/operator-queue.md`); the password change is Marouane's.
 - Next: Record checkpoints of the event chain head; Door instead of enrolment codes; Booth for secret ballots; notifications are out of scope (feedback is looked up by code).
 
 ## 2026-10-06: Companion model-agnostic (OpenAI-compatible API)
