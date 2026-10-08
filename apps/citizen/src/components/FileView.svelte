@@ -4,6 +4,7 @@
   import type { CompanionClient, FactChecker } from "../lib/client.ts";
   import { historyOf, kindOf, lastMeeting, nextMeeting, safeUrl, stageOf, statusOf, titleOf, voteKey } from "../lib/data.ts";
   import { langOf, tx } from "../lib/translations.svelte.ts";
+  import type { Key } from "../lib/i18n.ts";
   import { date, t, ui } from "../lib/ui.svelte.ts";
   import Challenge from "./Challenge.svelte";
   import ClaimCheck from "./ClaimCheck.svelte";
@@ -66,7 +67,63 @@
   $effect(() => {
     void item.id;
     fullTitle = false;
+    openFacts = [];
+    clipped = [];
   });
+
+  /**
+   * The file's details as label and value tiles. A long value takes the whole row (short tiles fill
+   * the gaps it leaves); a very long one, such as a list of every proposer, folds after three lines.
+   */
+  interface Fact {
+    label: Key;
+    value: string;
+    lang?: string;
+    mono?: boolean;
+    status?: boolean;
+  }
+  const WIDE = 30;
+  const FOLD = 140;
+  const facts = $derived.by(() => {
+    const out: Fact[] = [];
+    const add = (label: Key, raw: string | null | undefined, extra: Partial<Fact> = {}) => {
+      if (raw) out.push({ label, value: raw, ...extra });
+    };
+    add("fact_author", item.author);
+    add("fact_committee", tx(item.committee), { lang: langOf(item.committee) });
+    add("fact_filed", item.deposited && date(item.deposited));
+    add("fact_reference", item.reference, { mono: true });
+    add("fact_theme", tx(item.theme), { lang: langOf(item.theme) });
+    add("fact_opens", item.opens && date(item.opens));
+    add("fact_closes", item.closes && date(item.closes));
+    add("fact_when", tx(item.when), { lang: langOf(item.when) });
+    // Where the file stands comes first; the rest in the order the file went through them.
+    const status = statusOf(item);
+    out.unshift({ label: "fact_status", value: tx(status) ?? t("status_unknown"), lang: status ? langOf(status) : ui.lang, status: true });
+    return out;
+  });
+  let openFacts = $state<Key[]>([]);
+  /** Folded values that really are cut off at this width: only those get a "Show all" button. */
+  let clipped = $state<Key[]>([]);
+  function clipWatch(el: HTMLElement, fact: Fact) {
+    let label = fact.label;
+    const check = () => {
+      if (!el.classList.contains("folded")) return;
+      const cut = el.scrollHeight > el.clientHeight + 1;
+      if (cut !== clipped.includes(label)) clipped = cut ? [...clipped, label] : clipped.filter((k) => k !== label);
+    };
+    const watcher = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(check);
+    watcher?.observe(el);
+    check();
+    return {
+      // Another file, or the same one in another language: measure again once it is drawn.
+      update: (next: Fact) => {
+        label = next.label;
+        requestAnimationFrame(check);
+      },
+      destroy: () => watcher?.disconnect(),
+    };
+  }
 </script>
 
 <article class="file-page">
@@ -81,15 +138,16 @@
     <OriginalToggle />
     {#if item.summary}<p class="summary" lang={langOf(item.summary)}>{tx(item.summary)}</p>{/if}
     <dl class="facts">
-      {#if item.author}<div><dt class="label">{t("fact_author")}</dt><dd>{item.author}</dd></div>{/if}
-      {#if item.committee}<div><dt class="label">{t("fact_committee")}</dt><dd lang={langOf(item.committee)}>{tx(item.committee)}</dd></div>{/if}
-      {#if item.deposited}<div><dt class="label">{t("fact_filed")}</dt><dd>{date(item.deposited)}</dd></div>{/if}
-      {#if item.reference}<div><dt class="label">{t("fact_reference")}</dt><dd class="mono">{item.reference}</dd></div>{/if}
-      {#if item.theme}<div><dt class="label">{t("fact_theme")}</dt><dd lang={langOf(item.theme)}>{tx(item.theme)}</dd></div>{/if}
-      {#if item.opens}<div><dt class="label">{t("fact_opens")}</dt><dd>{date(item.opens)}</dd></div>{/if}
-      {#if item.closes}<div><dt class="label">{t("fact_closes")}</dt><dd>{date(item.closes)}</dd></div>{/if}
-      {#if item.when}<div><dt class="label">{t("fact_when")}</dt><dd lang={langOf(item.when)}>{tx(item.when)}</dd></div>{/if}
-      <div><dt class="label">{t("fact_status")}</dt><dd lang={statusOf(item) ? langOf(statusOf(item)) : ui.lang}>{tx(statusOf(item)) ?? t("status_unknown")}</dd></div>
+      {#each facts as f (f.label)}
+        {@const folds = f.value.length > FOLD}
+        <div class="fact" class:wide={f.value.length > WIDE} class:status={f.status}>
+          <dt>{t(f.label)}</dt>
+          <dd class:mono={f.mono} class:folded={folds && !openFacts.includes(f.label)} lang={f.lang} use:clipWatch={f}>{f.value}</dd>
+          {#if folds && (clipped.includes(f.label) || openFacts.includes(f.label))}
+            <button class="more-fact" aria-expanded={openFacts.includes(f.label)} onclick={() => (openFacts = openFacts.includes(f.label) ? openFacts.filter((k) => k !== f.label) : [...openFacts, f.label])}>{t(openFacts.includes(f.label) ? "title_less" : "fact_more")}</button>
+          {/if}
+        </div>
+      {/each}
     </dl>
     {#if kind === "chamber"}<StageTrack stage={stageOf(item)} />{/if}
     {#if official}
@@ -245,9 +303,15 @@
   .fold > summary .sub { margin: 0; }
   .fold .n { padding: 0 6px; border: 2px solid var(--line); font: 700 0.8rem/1.5 var(--serif); }
   .fold[open] > summary { margin-bottom: 8px; }
-  .facts { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 0; font-size: 0.92rem; }
-  .facts div { display: flex; gap: 6px; align-items: baseline; }
-  .facts dd { margin: 0; }
+  /* Details as tiles: the label small above, the value below, one bordered box each so it is clear which is which. */
+  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 1fr)); grid-auto-flow: row dense; gap: 8px; margin: 4px 0 0; }
+  .fact { display: grid; align-content: start; gap: 4px; min-width: 0; padding: 8px 12px 10px; border: 2px solid var(--line); background: var(--surface); }
+  .fact.wide { grid-column: 1 / -1; }
+  .fact.status { border-left: 8px solid var(--accent); }
+  .fact dt { font: 700 0.72rem/1.2 var(--serif); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .fact dd { margin: 0; font-weight: 600; font-size: 0.98rem; line-height: 1.35; overflow-wrap: anywhere; hyphens: auto; }
+  .fact dd.folded { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
+  .more-fact { justify-self: start; padding: 0; border: 0; background: none; color: var(--fg); font: inherit; font-size: 0.85rem; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
   .links { margin: 0; }
   .next { display: grid; gap: 6px; box-shadow: 7px 7px 0 0 var(--backing-navy), 7px 7px 0 var(--rule) var(--backing); }
   .next p { margin: 0; }
