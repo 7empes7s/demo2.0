@@ -391,7 +391,7 @@
   .nav-bottom .tab span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
   /* The lit tab: an amber bar on top and the icon on amber, readable without colour too (bold, bar). */
   .nav-bottom .tab[aria-current="page"]::before { content: ""; position: absolute; inset: -2px 18% auto; height: 4px; background: var(--accent); border: 2px solid var(--accent-line); border-top: 0; }
-  .nav-bottom .tab[aria-current="page"] :global(.icon) { background: var(--accent); color: var(--accent-ink); outline: 3px solid var(--accent); }
+  .nav-bottom .tab[aria-current="page"] :global(.glyph) { background: var(--accent); color: var(--accent-ink); outline: 3px solid var(--accent); }
   .nav-bottom .tab:not([aria-current="page"]) { color: var(--muted); font-weight: 600; }
 
   .layout {
@@ -425,9 +425,9 @@
   .sk-sheet:nth-child(4) { opacity: 0.3; }
   @media (prefers-reduced-motion: no-preference) {
     /* A tab pressed goes flat under the thumb; the tab it lights pastes its amber square on. */
-    .tab :global(.icon) { transition: transform 0.12s linear; }
-    .tab:active :global(.icon) { transform: translateY(2px); }
-    .nav-bottom .tab[aria-current="page"] :global(.icon) { animation: paste 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+    .tab :global(.glyph) { transition: transform 0.12s linear; }
+    .tab:active :global(.glyph) { transform: translateY(2px); }
+    .nav-bottom .tab[aria-current="page"] :global(.glyph) { animation: paste 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
     .nav-bottom .tab[aria-current="page"]::before { animation: paste 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
   }
 
@@ -443,7 +443,10 @@
   @media (min-width: 960px) {
     .nav-bottom, .files-tab { display: none; }
     .layout { grid-template-columns: minmax(320px, 400px) minmax(0, 1fr); gap: 40px; }
-    .list-pane { position: sticky; top: 76px; align-self: start; max-height: calc(100vh - 92px); overflow-y: auto; padding-right: 8px; }
+    /* The list runs to the bottom edge of the window, and the page keeps its breathing room on the right. */
+    .shell { padding-bottom: 0; }
+    .list-pane { position: sticky; top: 76px; align-self: start; max-height: calc(100vh - 76px); overflow-y: auto; padding-right: 8px; padding-bottom: 24px; }
+    .detail-pane { padding-bottom: 48px; }
     .list-title { font-size: 1.6rem; }
     .shell:not(.has-file) .detail-pane { display: block; }
   }
