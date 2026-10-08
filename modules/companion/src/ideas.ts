@@ -111,9 +111,10 @@ export async function readQueue(base: string, query: { jurisdictions?: string[];
   const params = new URLSearchParams();
   for (const j of query.jurisdictions ?? []) params.append("jurisdiction", j);
   params.set("limit", String(query.limit));
+  const signal = AbortSignal.timeout(opts.timeoutMs ?? 3_000);
   let res: Response;
   try {
-    res = await doFetch(`${base.replace(/\/+$/, "")}/queue?${params}`, { ...UPSTREAM, signal: AbortSignal.timeout(opts.timeoutMs ?? 3_000) });
+    res = await doFetch(`${base.replace(/\/+$/, "")}/queue?${params}`, { ...UPSTREAM, signal });
   } catch (e) {
     throw new AgoraUnavailable(`agora unreachable: ${(e as Error).message}`);
   }
@@ -123,7 +124,7 @@ export async function readQueue(base: string, query: { jurisdictions?: string[];
   }
   let body: unknown;
   try {
-    body = await readJson(res, opts.maxBytes ?? MAX_UPSTREAM_BYTES);
+    body = await readJson(res, opts.maxBytes ?? MAX_UPSTREAM_BYTES, signal);
   } catch (e) {
     if (isTimeout(e)) throw new AgoraUnavailable("agora timed out while sending its answer");
     if (e instanceof TooLarge) throw new AgoraInvalid(`agora's ${e.message}`);
