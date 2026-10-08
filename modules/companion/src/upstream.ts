@@ -18,8 +18,10 @@ export class TooLarge extends Error {}
 /**
  * Parses a JSON body of at most `maxBytes` bytes. Throws TooLarge past the cap (and cancels the
  * rest of the stream), a SyntaxError when it is not JSON, and the fetch's own error on a timeout.
+ * Pass the fetch's `signal` to be sure a body that stalls after the headers is cut off when it
+ * fires: fetch does not always error a body stream it has already handed over.
  */
-export async function readJson(res: Response, maxBytes = MAX_UPSTREAM_BYTES): Promise<unknown> {
+export async function readJson(res: Response, maxBytes = MAX_UPSTREAM_BYTES, signal?: AbortSignal): Promise<unknown> {
   if (Number(res.headers.get("content-length")) > maxBytes) {
     await res.body?.cancel().catch(() => {});
     throw new TooLarge(`answer is larger than ${maxBytes} bytes`);
@@ -28,15 +30,23 @@ export async function readJson(res: Response, maxBytes = MAX_UPSTREAM_BYTES): Pr
   let size = 0;
   if (res.body) {
     const reader = res.body.getReader();
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      size += value.byteLength;
-      if (size > maxBytes) {
-        await reader.cancel().catch(() => {});
-        throw new TooLarge(`answer is larger than ${maxBytes} bytes`);
+    // Cancelling ends a pending read with done, so the abort is rethrown below.
+    const stop = () => void reader.cancel(signal?.reason).catch(() => {});
+    signal?.addEventListener("abort", stop, { once: true });
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        signal?.throwIfAborted();
+        if (done) break;
+        size += value.byteLength;
+        if (size > maxBytes) {
+          await reader.cancel().catch(() => {});
+          throw new TooLarge(`answer is larger than ${maxBytes} bytes`);
+        }
+        chunks.push(value);
       }
-      chunks.push(value);
+    } finally {
+      signal?.removeEventListener("abort", stop);
     }
   }
   const all = new Uint8Array(size);
