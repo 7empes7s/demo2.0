@@ -16,7 +16,7 @@ History: from 2026-10-05 to 2026-10-07 this queue lived in the keel repo (`ops/o
 ### 2026-10-09: remove the Desk bootstrap password
 
 - Why: the `admin` password was changed on 2026-10-09, so the initial one must not stay on the box (#48).
-- Steps: delete `/etc/civic/desk-admin.initial`; blank `DESK_BOOTSTRAP_PASSWORD` in `/etc/civic/desk.env`; restart `civic-desk`.
+- Steps: ~~delete `/etc/civic/desk-admin.initial`~~ (done by Marouane, 2026-10-09); blank `DESK_BOOTSTRAP_PASSWORD` in `/etc/civic/desk.env`; restart `civic-desk`.
 - Done when: the file is gone, `grep -c '^DESK_BOOTSTRAP_PASSWORD=$' /etc/civic/desk.env` prints 1, and `curl -s 127.0.0.1:8094/healthz` answers `"ok":true`.
 
 ### 2026-10-07: reinstall the Companion unit for translations
