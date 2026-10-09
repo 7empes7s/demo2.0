@@ -23,7 +23,7 @@ afterEach(() => {
 async function start(opts: { seed?: boolean; ai?: Ai; now?: () => string } = {}) {
   const store = new Store(":memory:", opts.now ?? clock());
   if (opts.seed) loadSeed(store, seedFile as Seed);
-  const server = createDeskServer({ store, ai: opts.ai, trustProxy: 0, writesPerMinute: 1000, readsPerMinute: 10_000 });
+  const server = createDeskServer({ store, ai: opts.ai, trustProxy: 0, writesPerMinute: 1000, readsPerMinute: 10_000, letterRequestsPerMinute: 1000 });
   await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
   servers.push(server);
   const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
@@ -126,6 +126,82 @@ describe("staff and residents", () => {
     expect(dump).not.toContain(code);
     expect(dump).not.toContain(first.body.token);
     expect((await ctx.call("GET", "/enrol-codes", undefined, ctx.adminAuth)).body.batches).toEqual([{ batch: "counter", created_at: expect.any(String), issued: 3, used: 1 }]);
+  });
+});
+
+describe("a code by post", () => {
+  /** Every value in every table and every event, as one string: what the box would hand over. */
+  const everything = (store: Store) => {
+    const tables = (store.db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as { name: string }[]).map((t) => t.name);
+    return tables.map((t) => JSON.stringify(store.db.prepare(`SELECT * FROM ${t}`).all())).join("\n");
+  };
+
+  it("takes a request from anyone, prints it once for an admin, then forgets the name and address", async () => {
+    const ctx = await start();
+    const asked = await ctx.call("POST", "/enrol-requests", { name: "Maria  Lopes", street: "12, rue de l'Alzette", extra: "2e étage", postcode: "L-4011" });
+    expect(asked).toEqual({ status: 201, body: { received: true, already: false } });
+    // The same person typed differently is the same request.
+    expect((await ctx.call("POST", "/enrol-requests", { name: "maria lopes", street: "12 Rue de l’Alzette", postcode: "4011" })).body).toEqual({ received: true, already: true });
+    await ctx.call("POST", "/enrol-requests", { name: "Jean Weber", street: "3 boulevard Kennedy", postcode: "4170" });
+    expect((await ctx.call("POST", "/enrol-requests", { name: "Jean Weber", street: "3 boulevard Kennedy", postcode: "41700" })).status).toBe(400);
+    expect((await ctx.call("POST", "/enrol-requests", { name: "J", street: "3 boulevard Kennedy", postcode: "4170" })).status).toBe(400);
+    expect((await ctx.call("POST", "/enrol-requests", { name: "Jean Weber", street: "", postcode: "4170" })).status).toBe(400);
+
+    // Only an admin sees the list; the log never holds a name or an address.
+    const op = await staffAuth(ctx, "operator");
+    expect((await ctx.call("GET", "/enrol-requests", undefined, op)).status).toBe(403);
+    expect((await ctx.call("GET", "/enrol-requests")).status).toBe(401);
+    const list = await ctx.call("GET", "/enrol-requests", undefined, ctx.adminAuth);
+    expect(list.body.requests.map((r: any) => [r.name, r.street, r.extra, r.postcode, r.sent_before])).toEqual([
+      ["Maria Lopes", "12, rue de l'Alzette", "2e étage", "4011", false],
+      ["Jean Weber", "3 boulevard Kennedy", "", "4170", false],
+    ]);
+    const log = JSON.stringify(ctx.store.events({ kind: "enrol" }));
+    expect(log).not.toMatch(/Maria|Lopes|Alzette|Weber|Kennedy|4011|4170/);
+
+    // Printing makes one code per letter in the month's batch and deletes what identified the person.
+    const ids = list.body.requests.map((r: any) => r.id);
+    const printed = await ctx.call("POST", "/enrol-requests/print", { ids }, ctx.adminAuth);
+    expect(printed.status).toBe(200);
+    expect(printed.body.letters.map((l: any) => l.name).sort()).toEqual(["Jean Weber", "Maria Lopes"]);
+    const code = printed.body.letters.find((l: any) => l.name === "Maria Lopes").code;
+    expect(code).toMatch(/^[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}$/);
+    expect((await ctx.call("GET", "/enrol-requests", undefined, ctx.adminAuth)).body.requests).toEqual([]);
+    expect((await ctx.call("POST", "/enrol-requests/print", { ids }, ctx.adminAuth)).status).toBe(404);
+    expect((await ctx.call("GET", "/enrol-codes", undefined, ctx.adminAuth)).body.batches).toEqual([{ batch: "by post 2026-10", created_at: expect.any(String), issued: 2, used: 0 }]);
+
+    // The letter's code signs a resident in like any other; nothing on the box links them to a name.
+    const r = await ctx.call("POST", "/enrol", { code });
+    expect(r.status).toBe(200);
+    const all = everything(ctx.store);
+    expect(all).not.toMatch(/Maria|Lopes|Alzette|Weber|Kennedy|4011|4170/i);
+    expect(all).not.toContain(code);
+    expect(ctx.store.verify().ok).toBe(true);
+
+    // Asking again after the letter went shows the admin it was sent before (lost, or asked twice).
+    await ctx.call("POST", "/enrol-requests", { name: "MARIA LOPES", street: "12 rue de l'Alzette", postcode: "L 4011" });
+    const again = (await ctx.call("GET", "/enrol-requests", undefined, ctx.adminAuth)).body.requests;
+    expect(again).toHaveLength(1);
+    expect(again[0].sent_before).toBe(true);
+    expect((await ctx.call("POST", `/enrol-requests/${again[0].id}/decline`, {}, op)).status).toBe(403);
+    expect((await ctx.call("POST", `/enrol-requests/${again[0].id}/decline`, {}, ctx.adminAuth)).status).toBe(200);
+    expect((await ctx.call("GET", "/enrol-requests", undefined, ctx.adminAuth)).body.requests).toEqual([]);
+    expect(ctx.store.events({ kind: "enrol.letter" }).map((e) => e.kind)).toEqual(["enrol.letter_requested", "enrol.letter_requested", "enrol.letters_printed", "enrol.letter_requested", "enrol.letter_declined"]);
+    expect((await ctx.call("GET", "/audit/summary", undefined, ctx.adminAuth)).body.counts.letters_waiting).toBe(0);
+  });
+
+  it("limits requests per client", async () => {
+    const store = new Store(":memory:", clock());
+    const server = createDeskServer({ store, trustProxy: 0, writesPerMinute: 1000 });
+    await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
+    servers.push(server);
+    const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
+    const statuses: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      const res = await fetch(`${base}/enrol-requests`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: `Person ${i}`, street: "1 rue X", postcode: "4000" }) });
+      statuses.push(res.status);
+    }
+    expect(statuses).toEqual([201, 201, 201, 201, 201, 429]);
   });
 });
 

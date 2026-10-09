@@ -17,6 +17,12 @@ CREATE TABLE IF NOT EXISTS staff (
 );
 CREATE TABLE IF NOT EXISTS staff_sessions (token_hash TEXT PRIMARY KEY, staff_id TEXT NOT NULL, created_at TEXT NOT NULL, expires_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS enrol_codes (code_hash TEXT PRIMARY KEY, batch TEXT NOT NULL, created_at TEXT NOT NULL, used_at TEXT);
+-- Letter requests live only while they wait (letters.ts); a sent letter leaves a keyed hash, no date, no row order.
+CREATE TABLE IF NOT EXISTS letter_requests (
+  id TEXT PRIMARY KEY, name TEXT NOT NULL, street TEXT NOT NULL, extra TEXT NOT NULL, postcode TEXT NOT NULL,
+  person_key TEXT NOT NULL, created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS letters_sent (person_key TEXT PRIMARY KEY) WITHOUT ROWID;
 CREATE TABLE IF NOT EXISTS residents (id TEXT PRIMARY KEY, token_hash TEXT NOT NULL UNIQUE, code_hash TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS procedures (
   id TEXT PRIMARY KEY, kind TEXT NOT NULL, status TEXT NOT NULL, title TEXT NOT NULL, body TEXT NOT NULL,

@@ -93,6 +93,61 @@ describe("enrolment codes", () => {
   });
 });
 
+describe("codes asked for by post", () => {
+  const REQUESTS = [
+    { id: "r1", name: "Maria Lopes", street: "12 rue de l'Alzette", extra: "2e étage", postcode: "4011", created_at: "2026-10-08T09:00:00.000Z", sent_before: false, duplicate: false },
+    { id: "r2", name: "Jean Weber", street: "3 boulevard Kennedy", extra: "", postcode: "4170", created_at: "2026-10-08T10:00:00.000Z", sent_before: true, duplicate: false },
+  ];
+
+  it("lists waiting requests, prints addressed letters for the ticked ones, and declines another", async () => {
+    let waiting = REQUESTS;
+    const { calls } = fakeDesk({
+      "GET /api/desk/enrol-codes": () => ({ body: { batches: [] } }),
+      "GET /api/desk/enrol-requests": () => ({ body: { requests: waiting } }),
+      "POST /api/desk/enrol-requests/print": () => {
+        waiting = waiting.filter((r) => r.id !== "r1");
+        return { body: { letters: [{ name: "Maria Lopes", street: "12 rue de l'Alzette", extra: "2e étage", postcode: "4011", code: "ab12-cd34-ef56" }] } };
+      },
+      "POST /api/desk/enrol-requests/r2/decline": () => {
+        waiting = [];
+        return { body: { ok: true } };
+      },
+    });
+    const printed = vi.fn();
+    vi.stubGlobal("print", printed);
+    signedInAs("admin");
+    const root = show(Codes, {});
+    await vi.waitFor(() => expect(root.querySelectorAll("[data-request]")).toHaveLength(2));
+    const rows = [...root.querySelectorAll("[data-request]")];
+    expect(rows[0].textContent).toContain("12 rue de l'Alzette, 2e étage, L-4011");
+    // A request for someone who already got a letter is flagged and left unticked.
+    expect(rows[1].textContent).toContain("A letter already went to this name and address.");
+    expect((rows[0].querySelector("input[type=checkbox]") as HTMLInputElement).checked).toBe(true);
+    expect((rows[1].querySelector("input[type=checkbox]") as HTMLInputElement).checked).toBe(false);
+
+    click(button(root, "Print letters (1)"));
+    await vi.waitFor(() => expect(root.querySelector("[data-state=posted]")).toBeTruthy());
+    expect(calls.find((c) => c.path === "/api/desk/enrol-requests/print")?.body).toEqual({ ids: ["r1"] });
+    expect(root.querySelector("[data-state=posted]")?.textContent).toContain("Letters ready: 1.");
+    // The letter carries the window address and the code; no code list to copy for posted letters.
+    const letter = document.querySelector("body > .letters .letter")!;
+    expect([...letter.querySelectorAll(".to span")].map((l) => l.textContent)).toEqual(["Maria Lopes", "12 rue de l'Alzette", "2e étage", "L-4011 Esch-sur-Alzette"]);
+    expect(letter.querySelector(".code-value")?.textContent).toBe("ab12-cd34-ef56");
+    expect(root.querySelector("textarea.codes")).toBeNull();
+    click(button(root, "Print letters"));
+    expect(printed).toHaveBeenCalledOnce();
+    click(button(root, "Done, I have them"));
+    expect(document.querySelector(".letters")).toBeNull();
+    expect(document.body.textContent).not.toContain("Maria Lopes");
+
+    await vi.waitFor(() => expect(root.querySelectorAll("[data-request]")).toHaveLength(1));
+    vi.stubGlobal("confirm", () => true);
+    click(button(root, "Decline"));
+    await vi.waitFor(() => expect(root.textContent).toContain("No request is waiting."));
+    expect(calls.some((c) => c.method === "POST" && c.path === "/api/desk/enrol-requests/r2/decline")).toBe(true);
+  });
+});
+
 describe("enrolment letters", () => {
   it("has every line in every language, and fills the commune and the address", () => {
     const keys = Object.keys(LETTERS.en).sort();

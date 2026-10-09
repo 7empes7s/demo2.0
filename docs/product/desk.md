@@ -28,9 +28,10 @@ browser (portals, /portal/) ─┼──> civic-companion :8787 ──/api/desk/
 | `ideas`, `supports` | one idea per resident per hour; one support per (idea, resident), never the proposer's; status `open | taken_up | answered | declined | merged`. |
 | `feedback` | `code` (lookup code, 10 chars from an unambiguous alphabet), optional `resident_id`, `about_kind`/`about_id`, `category`, `status`, `summary`, `answer`, `answer_public`. |
 | `rounds` | localized `question`/`detail`, `options` JSON (frozen at open), `status draft | open | closed | published`, `closes_at`, `result` JSON `{counts, ballots_sha256, voters}` set at close. |
+| `letter_requests`, `letters_sent` | a request holds name, street, extra line, postcode, a keyed hash of them (`person_key`) and its time, only while it waits; `letters_sent` holds `person_key` alone (`WITHOUT ROWID`: no date, no insertion order). |
 | `staff`, `staff_sessions`, `enrol_codes`, `residents`, `settings`, `ai_calls` | scrypt password hashes; code and token hashes only; `ai_calls` holds purpose, model, prompt hash, sizes, timing, outcome, never text. |
 
-Event kinds: `procedure.created|updated|update_posted|verdict`, `idea.posted|supported|unsupported|decided`, `feedback.filed|updated|answered`, `round.created|updated|opened|ballot|closed|published`, `staff.created|updated|login|logout`, `enrol.batch|resident`, `settings.updated`, `ai.call`, `seed.loaded`.
+Event kinds: `procedure.created|updated|update_posted|verdict`, `idea.posted|supported|unsupported|decided`, `feedback.filed|updated|answered`, `round.created|updated|opened|ballot|closed|published`, `staff.created|updated|login|logout`, `enrol.batch|resident|letter_requested|letters_printed|letter_declined`, `settings.updated`, `ai.call`, `seed.loaded`.
 
 ## 3. APIs
 
@@ -61,6 +62,39 @@ Per model call: triage ≈ 600 input + 80 output tokens; draft ≈ 900 + 300; tr
 | 4 Pilot on Mulinux | a message to the operator on Mulinux | `civic-desk` enabled, `/etc/civic/desk.env` set, first admin created, a code batch printed, the deploy's live check passes. |
 | 5 Trust core swap (later) | Door for codes, Booth for secret ballots, Record checkpoints of `events.hash` | Each swap changes no resident-facing route. |
 
-## 7. Not in scope
+## 7. Resident sign-up beyond printed codes (2026-10-09)
+
+Before: a resident could only take part with a code from a letter the commune printed in bulk or handed out at the counter. Someone who never got one had no way in.
+
+Picked (the default, of three): **a self-service request in the citizen app, answered by post.** The other two were a counter visit only (no change to the software, but no way in for people who cannot go) and real eID now (below; not buildable in the pilot).
+
+```
+citizen app: sign-in sheet ── "No code yet? Get one by post" ── name, street, flat/floor, postcode
+      │ POST /api/desk/enrol-requests (no token)
+      ▼
+Desk: letter_requests (waits) ──admin: check against the residents' register──┐
+      │                                                                       │
+      ├─ decline: row deleted, event enrol.letter_declined                    │
+      └─ print: one code per request in batch "by post YYYY-MM",               │
+         rows deleted, person_key kept in letters_sent, event enrol.letters_printed
+      ▼
+portal: A4 letter, address in the left window, code once, six languages ──> post ──> resident types the code
+```
+
+| Property | How |
+|---|---|
+| Desk never holds a name next to a code | Codes are hashes; the request row is deleted in the same transaction that makes the codes; the printed letters are returned once, shuffled, and never stored. |
+| The log never names who asked | `enrol.letter_requested` (actor `anonymous`, empty payload), `enrol.letters_printed` (`{batch, count, requests: [ids]}`), `enrol.letter_declined` (empty payload). Tested: no name, street or postcode in any table or event after printing. |
+| Asking twice is visible, not blocked | The same normalised name, street and postcode while waiting answers `already: true`; after a letter went, `letters_sent` flags `sent_before` and the portal leaves it unticked. The admin decides (a lost letter is a real case). |
+| Abuse | Five requests per client per minute on top of the write limit; at most 5000 waiting (503 after). The real check is the commune's residents' register, done by a person. |
+| Ages and tech levels | Four plain fields with browser autofill, one link from the sheet a resident already sees, the date of the request kept on the device and shown on the sheet, five languages. |
+
+What it does not do: the admin who prints sees the name next to the code, as at a counter, and codes printed in a small month batch narrow down who could hold them. Ballots stay open ballots (section on identity in `modules/desk/README.md`). Only Door's blind issuance removes both.
+
+Later path, not built: **Door with a real identity provider.** The letter code becomes one way into Door, LuxTrust and the Luxembourg eID (through the EU Digital Identity Wallet, OpenID4VP) the other (`docs/architecture/02-protocols.md` section 1). The resident proves residence once; Door computes the uniqueness key from the national identifier and issues a blind-signed credential that names no one, so the commune can no longer link a resident to their votes even with the letter in hand. Needs: a relying-party agreement with LuxTrust or the state's eID service, Door's HTTP issuance wired to Desk (`POST /enrol` accepting a Door presentation instead of a code), and the external audit Door's README requires before binding use.
+
+Accepted when (this phase): `tools/check.sh` green; Desk tests show request, repeat, print, decline, the per-client limit, and no name, street or postcode anywhere in the database or log after printing; citizen tests show the form, the postcode error, the date-only trace on the device; portal tests show the list, the flags, printing with the window address and declining; one printed A4 page per letter.
+
+## 8. Not in scope
 
 Secret ballots (Booth), delegation, panels drawn by lot, photo proof, payments, notifications by email or SMS (feedback is looked up by code instead), and any ranking beyond "most supported first".
