@@ -38,7 +38,7 @@ def test_charter_matches_schema():
         lambda d: d["protected_rights"][0].pop("source"),
         lambda d: d["protected_rights"][0].update(basis="whim"),
         lambda d: d["provenance"]["door.epoch_months"]["source"].update(status="maybe"),
-        lambda d: d["provenance"]["charter_change.majority"]["source"].update(status="verified"),
+        lambda d: d["provenance"]["charter_change.majority"]["source"].pop("article"),
         lambda d: d["provenance"].update({"door": {"basis": "project", "source": {}}}),
     ],
     ids=[
@@ -177,9 +177,12 @@ def test_constitution_is_the_source_for_protected_rights():
             continue
         assert right["basis"] == "constitution", right["id"]
         assert right["source"]["instrument"] == "lu_constitution_2023", right["id"]
-    assert DATA["sources"]["lu_constitution_2023"]["consulted"] is False, (
-        "flip to_verify entries to verified in the same change that marks the text consulted"
-    )
+    # The text was consulted in the same change that flipped its citations, so none may wait.
+    assert DATA["sources"]["lu_constitution_2023"]["consulted"] is True
+    for key, _, src in every_source():
+        for c in [src, *src.get("cross_references", [])]:
+            if c["instrument"] in ("lu_constitution_2023", "echr"):
+                assert c["status"] == "verified", key
 
 
 def test_jurisdictions_match_spec_schema():

@@ -6,7 +6,7 @@
     param("tiers.local.review_panel")  # {"min": 5, "max": 9}
     is_protected({"jurisdiction_id": "lu", "topic_ids": ["rights.expression"]})  # True
     basis("charter_change.majority")  # "constitution"
-    source("protected_rights.freedom_of_expression_and_press")["status"]  # "to_verify"
+    source("protected_rights.freedom_of_expression_and_press")["status"]  # "verified"
 
 A matter is any mapping with `jurisdiction_id` (str) and `topic_ids` (list of str). Every other
 field, including a proposer's own tier label, is ignored.

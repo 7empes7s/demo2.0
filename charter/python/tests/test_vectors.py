@@ -65,8 +65,8 @@ def test_source_and_basis(case):
 
 
 def test_source_returns_a_copy():
-    source("charter_change.majority")["status"] = "verified"
-    assert source("charter_change.majority")["status"] == "to_verify"
+    source("charter_change.majority")["status"] = "to_verify"
+    assert source("charter_change.majority")["status"] == "verified"
 
 
 def test_param_returns_a_copy():

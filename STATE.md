@@ -2,6 +2,13 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-09: Charter citations checked against the Constitution
+
+- Ask (Marouane, 2026-10-09): check the Luxembourg Constitution article numbers cited in the Charter, for the Esch pitch.
+- Done: Charter 0.4.0. The 8 constitutional protected rights and `charter_change.majority` cite 2023 articles and are `verified`; ECHR cross-references `verified`; `lu_constitution_2023` and `echr` `consulted: true`. Corrections: the vote and secret ballot sit in Arts. 63 and 122 (Chapitres IV and IX), not Chapitre II; there is no right to life as such (Arts. 12-13 plus ECHR Art. 2). `charter_change.quorum_share_of_electorate` became `basis: project` (Art. 131 sets no turnout condition). No rule value changed.
+- Source read: Chambre des Députés edition of the 2023 text (21 April 2023), plus the 16 June 2026 alinéa in Art. 15(3). Legilux refuses automated access (robots), so its coordinated page was not read; cloud sessions cannot reach it.
+- Open: electoral law for `eligibility.outsiders`; the Legilux ELI reference by hand; Marouane's call on two-thirds vs simple majority for `charter_change.majority` (Art. 131's referendum route is a simple majority) and on adding more Chapitre II rights.
+
 ## 2026-10-08: Operator queue moved into this repo
 
 - Ask (Marouane, 2026-10-08): pick up the cracia operator queue that was removed from the keel repo.
