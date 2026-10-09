@@ -1,6 +1,6 @@
 {
-  "description": "source(key) and basis(key): the provenance of a rule, by the dotted key param reads, or protected_rights.<id> for a protected right. A key that names no rule, a section, a value inside a rule or the provenance section itself is unknown_key. Charter 0.3.0.",
-  "charter_version": "0.3.0",
+  "description": "source(key) and basis(key): the provenance of a rule, by the dotted key param reads, or protected_rights.<id> for a protected right. A key that names no rule, a section, a value inside a rule or the provenance section itself is unknown_key. Charter 0.4.0.",
+  "charter_version": "0.4.0",
   "cases": [
     {
       "key": "charter_change.majority",
@@ -8,21 +8,22 @@
         "basis": "constitution",
         "source": {
           "instrument": "lu_constitution_2023",
-          "chapter": "chapter on the revision of the Constitution",
-          "status": "to_verify",
-          "note": "The decision of 2026-10-06 makes the Charter the Constitution for the Luxembourg version, so changing it must follow the constitutional revision procedure. The two-thirds majority of votes cast is provisional until the revision chapter is read; it is expected to set a qualified majority of the Chambre des Députés, possibly with a referendum. The rule becomes project-chosen if the chapter sets no majority a citizen vote can mirror."
+          "article": "Article 131",
+          "chapter": "Chapitre XI, De la révision de la Constitution",
+          "status": "verified",
+          "note": "The decision of 2026-10-06 makes the Charter the Constitution for the Luxembourg version, so changing it follows the constitutional revision procedure. Article 131 has the Chambre des Députés adopt a revision in two votes at least three months apart, each with at least two thirds of the votes and no proxy votes. Within two months of the first vote, more than a quarter of the deputies or 25,000 registered electors can ask for a referendum, which replaces the second vote and passes by a majority of valid votes. The Charter's two-thirds majority of votes cast mirrors the Chambre's threshold. Mirroring the referendum route instead would mean a simple majority, which is a decision for Marouane, not a provenance change."
         }
       }
     },
     {
       "key": "charter_change.quorum_share_of_electorate",
       "expect": {
-        "basis": "constitution",
+        "basis": "project",
         "source": {
-          "instrument": "lu_constitution_2023",
-          "chapter": "chapter on the revision of the Constitution",
-          "status": "to_verify",
-          "note": "Kept only if the revision procedure or the referendum rules set a turnout condition; otherwise this rule becomes project-chosen."
+          "instrument": "d2_architecture",
+          "article": "docs/architecture/02-protocols.md, section 4 (Record, signing roles)",
+          "status": "none",
+          "note": "Placeholder. Article 131 of the Constitution sets no turnout condition (its referendum passes by a majority of valid votes), so the quorum is this project's own choice. The nearest constitutional figure, 25,000 registered electors, is what it takes to ask for a referendum, not a quorum."
         }
       }
     },
@@ -34,7 +35,7 @@
           "instrument": "lu_electoral_law",
           "chapter": "provisions on the right to vote in legislative and communal elections (nationality, residence, registration)",
           "status": "to_verify",
-          "note": "Who votes where follows the electoral law (nationality for national elections, residence for communal ones). The Charter only adds that non-voters may advise."
+          "note": "Who votes where follows the electoral law (nationality for national elections, residence for communal ones). The Charter only adds that non-voters may advise. The Constitution frames it (Article 64 requires Luxembourg nationality and age 18 to vote for the Chambre, and Article 10 lets the law give political rights to non-Luxembourgers), but the electoral law itself has not been read yet."
         }
       }
     },
@@ -91,14 +92,15 @@
         "basis": "constitution",
         "source": {
           "instrument": "lu_constitution_2023",
-          "chapter": "Chapitre 2, Des droits et libertés",
+          "article": "Article 23",
+          "chapter": "Chapitre II, Des droits et libertés, section 3 (Des libertés publiques)",
           "right": "freedom of expression and of the press",
-          "status": "to_verify",
+          "status": "verified",
           "cross_references": [
             {
               "instrument": "echr",
               "article": "Article 10",
-              "status": "to_verify"
+              "status": "verified"
             }
           ]
         }
@@ -110,14 +112,16 @@
         "basis": "constitution",
         "source": {
           "instrument": "lu_constitution_2023",
-          "chapter": "Chapitre 2, Des droits et libertés, and the chapter on the Chambre des Députés (elections)",
+          "article": "Articles 63 and 122",
+          "chapter": "Chapitre IV, De la Chambre des Députés, and Chapitre IX, Des communes",
           "right": "universal suffrage and the secret ballot",
-          "status": "to_verify",
+          "status": "verified",
+          "note": "Article 63, deputies are elected directly by universal suffrage and the vote is compulsory and secret. Article 122, communal councils are elected directly by universal suffrage and secret vote. Who votes, Article 10 (political rights) and Article 64 (electors for the Chambre). The rule sits in these chapters, not in Chapitre II as first assumed.",
           "cross_references": [
             {
               "instrument": "echr",
               "article": "Protocol 1, Article 3",
-              "status": "to_verify"
+              "status": "verified"
             }
           ]
         }

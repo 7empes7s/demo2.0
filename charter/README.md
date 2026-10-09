@@ -4,7 +4,7 @@ The rules of the game as versioned data (`charter.yaml`) and the Scope library t
 
 | Path | What lives there |
 |---|---|
-| `charter.yaml` | Every tunable rule, version `0.3.0`, each with its `basis` and `source` |
+| `charter.yaml` | Every tunable rule, version `0.4.0`, each with its `basis` and `source` |
 | `charter.schema.json` | JSON Schema (draft 2020-12) for `charter.yaml`; `tests/` validates it |
 | `CONSTITUTION.md` | How each rule ties to the Luxembourg Constitution: method, every rule with its basis and status, the Legilux lookups still open |
 | `data/lu-jurisdictions.json` | Luxembourg reference data: country, 12 cantons, the capital and Esch-sur-Alzette, with populations |
@@ -57,8 +57,8 @@ A source's `status` is `verified` only once the official text was read for this 
 
 ## Known gaps in v0
 
-- **No citation is verified yet.** All 11 legal citations (8 protected rights, the two `charter_change` rules, `eligibility.outsiders`) are `to_verify`: they name a chapter or the right in words, not a 2023 article number. A Scout research request for the official Legilux text is open in `7empes7s/brain`; `CONSTITUTION.md` lists what to read for each entry. Until it lands, the protected-rights list is a conservative reading, not a transcription of the Constitution.
-- **The Charter's own rights list may be incomplete.** The chapter on rights and freedoms likely guarantees more than the eight rights listed (for example education, property, the right to work or to housing). Which of those a vote may never touch is a decision for Marouane once the text is read.
+- **One citation is still to verify.** The 8 constitutional rights and `charter_change.majority` cite their 2023 article numbers and are `verified` (read on 2026-10-09 in the Chambre des Députés edition of the 2023 text; see `CONSTITUTION.md` for what was read and what was not). `eligibility.outsiders` stays `to_verify` until the electoral law is read.
+- **The Charter's own rights list may be incomplete.** Chapitre II guarantees more than the eight rights listed (for example asylum, education and property, Articles 32, 33 and 36). Which of those a vote may never touch is a decision for Marouane.
 
 - **Scope uses the jurisdiction only, not the topic.** The architecture says Scope computes affected population "from jurisdiction and topic". v0 ignores topics for the tier, so a national subject (say a national tax rate) filed under a commune comes out `local`. Since the proposer picks the jurisdiction, this is a way to shrink a matter's tier. A `ScopeChallenge` v1 only narrows and never raises a tier, so this stays open until topics widen scope or a widening challenge is designed. Open question for Marouane: which topics, if any, always count as national.
 - **The proposer can also widen the jurisdiction.** Scope trusts the jurisdiction it is given, so a commune matter filed under `lu` comes out `national`. Charter cannot tell; the fix sits with the caller. Agora with Door binds the jurisdiction to the proposer's credential, so nobody files outside the areas they live in, and a resident who files under an area containing their own (Esch under `lu`) can be contested with a `ScopeChallenge` (Agora, see `modules/agora/README.md`, Scope challenges): a Lottery panel of `scope_challenge.panel_size` decides within `scope_challenge.decision_days`, and when it narrows, `tier` is recomputed for the narrower jurisdiction. Closed in Agora; the inflated tier holds while a challenge is open, and in an area with too few participants for a panel.

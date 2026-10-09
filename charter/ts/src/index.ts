@@ -4,7 +4,7 @@
 //   param("tiers.local.review_panel") // { min: 5, max: 9 }
 //   isProtected({ jurisdiction_id: "lu", topic_ids: ["rights.expression"] }) // true
 //   basis("charter_change.majority") // "constitution"
-//   source("protected_rights.freedom_of_expression_and_press").status // "to_verify"
+//   source("protected_rights.freedom_of_expression_and_press").status // "verified"
 //
 // A matter is any object with `jurisdiction_id` (string) and `topic_ids` (string[]). Every other
 // field, including a proposer's own tier label, is ignored. Mirrors the Python d2_charter.

@@ -18,11 +18,12 @@
 #   basis: project       a choice this project makes; a charter_change vote may change it
 # A source's `status` is `verified` only once a reviewer with the official text (Legilux) in hand
 # has confirmed the article; `to_verify` cites a chapter or a right in words and waits for that
-# check; `none` means no legal instrument applies. No article number below is a guess: where the
-# 2023 numbering is not certain, the entry names the chapter and is `to_verify`.
-# charter/CONSTITUTION.md explains the method and lists the exact lookups still open.
+# check; `none` means no legal instrument applies. No article number below is a guess: every
+# Constitution article cited was read in the 2023 text (Chambre des Députés edition of 21 April
+# 2023), and an entry not yet read stays `to_verify` and names its chapter instead.
+# charter/CONSTITUTION.md explains the method, what was read and the lookups still open.
 
-version: "0.3.0"
+version: "0.4.0"
 
 # Scope: a matter's tier comes from its affected population, never from a proposer's label.
 # A matter takes the first tier, from the top, whose min_population it reaches.
@@ -136,7 +137,8 @@ treasury:
   max_tranche_share: 0.5 # placeholder: decision needed
 
 # Changing this file: a constitution-class Booth round with a two-thirds majority of votes cast.
-# Constitution-bound (to_verify): must mirror the Constitution's revision procedure, see provenance.
+# The majority mirrors the Constitution's revision rule (Article 131); the quorum is this project's
+# own choice, because Article 131 sets no turnout condition. See provenance.
 charter_change:
   majority: { numerator: 2, denominator: 3 }
   quorum_share_of_electorate: 0.2 # placeholder: decision needed
@@ -145,90 +147,104 @@ charter_change:
 # one of these topics or sits under one (topic ids are dotted paths, e.g. rights.expression.press).
 # The list as a whole is a placeholder: decision needed. Eight entries restate rights the
 # Luxembourg Constitution guarantees (basis: constitution) and cross-reference the ECHR; the ninth
-# (anonymity of participation) is this project's own rule (basis: project). Article numbers in
-# the 2023 constitutional numbering are not cited until verified against Legilux: each entry names
-# the chapter on rights and freedoms and the right in words, status to_verify.
+# (anonymity of participation) is this project's own rule (basis: project). Each constitutional
+# entry cites the 2023 articles it was checked against (status verified).
 protected_rights:
   - id: life_and_bodily_integrity
     topics: [rights.life, rights.bodily_integrity]
     basis: constitution
     source:
       instrument: lu_constitution_2023
-      chapter: Chapitre 2, Des droits et libertés
-      right: right to life and to physical and mental integrity; prohibition of torture and inhuman or degrading treatment
-      status: to_verify
+      article: Articles 12 and 13
+      chapter: Chapitre II, Des droits et libertés, section 2 (Des droits fondamentaux)
+      right: right to physical and mental integrity; prohibition of torture and inhuman or degrading treatment; no death penalty; human dignity
+      status: verified
+      note: The 2023 text names no right to life as such. Article 13 guarantees physical and mental integrity, prohibits torture and inhuman or degrading treatment and bars the death penalty; Article 12 makes human dignity inviolable. The right to life itself rests on the ECHR cross-reference.
       cross_references:
-        - { instrument: echr, article: "Articles 2 and 3", status: to_verify }
+        - { instrument: echr, article: "Articles 2 and 3", status: verified }
   - id: equality_and_non_discrimination
     topics: [rights.equality]
     basis: constitution
     source:
       instrument: lu_constitution_2023
-      chapter: Chapitre 2, Des droits et libertés
+      article: Article 15, paragraphs 1 and 2
+      chapter: Chapitre II, Des droits et libertés, section 3 (Des libertés publiques)
       right: equality before the law; prohibition of discrimination
-      status: to_verify
+      status: verified
+      note: Paragraph 1 says Luxembourgers are equal before the law; Article 16 gives non-Luxembourgers the protection granted to persons and property. The June 2026 revision adds an alinéa to paragraph 3 of this article (freedom to have an abortion) and leaves paragraphs 1 and 2 as they are.
       cross_references:
-        - { instrument: echr, article: "Article 14 and Protocol 12", status: to_verify }
+        - { instrument: echr, article: "Article 14 and Protocol 12", status: verified }
   - id: freedom_of_expression_and_press
     topics: [rights.expression]
     basis: constitution
     source:
       instrument: lu_constitution_2023
-      chapter: Chapitre 2, Des droits et libertés
+      article: Article 23
+      chapter: Chapitre II, Des droits et libertés, section 3 (Des libertés publiques)
       right: freedom of expression and of the press
-      status: to_verify
+      status: verified
       cross_references:
-        - { instrument: echr, article: "Article 10", status: to_verify }
+        - { instrument: echr, article: "Article 10", status: verified }
   - id: freedom_of_assembly_and_association
     topics: [rights.assembly, rights.association]
     basis: constitution
     source:
       instrument: lu_constitution_2023
-      chapter: Chapitre 2, Des droits et libertés
+      article: Articles 25 and 26
+      chapter: Chapitre II, Des droits et libertés, section 3 (Des libertés publiques)
       right: freedom of peaceful assembly and freedom of association
-      status: to_verify
+      status: verified
+      note: Article 25, peaceful assembly. Article 26, association.
       cross_references:
-        - { instrument: echr, article: "Article 11", status: to_verify }
+        - { instrument: echr, article: "Article 11", status: verified }
   - id: freedom_of_conscience_and_religion
     topics: [rights.conscience]
     basis: constitution
     source:
       instrument: lu_constitution_2023
-      chapter: Chapitre 2, Des droits et libertés
+      article: Articles 14 and 24
+      chapter: Chapitre II, Des droits et libertés, sections 2 and 3
       right: freedom of thought, conscience and religion
-      status: to_verify
+      status: verified
+      note: Article 14, freedom of thought, conscience and religion. Article 24, freedom of worship and of its exercise.
       cross_references:
-        - { instrument: echr, article: "Article 9", status: to_verify }
+        - { instrument: echr, article: "Article 9", status: verified }
   - id: privacy_and_data_protection
     topics: [rights.privacy]
     basis: constitution
     source:
       instrument: lu_constitution_2023
-      chapter: Chapitre 2, Des droits et libertés
+      article: Articles 20, 21, 30 and 31, and Article 15, paragraph 4
+      chapter: Chapitre II, Des droits et libertés, section 3 (Des libertés publiques)
       right: respect for private and family life, the home and correspondence; protection of personal data
-      status: to_verify
+      status: verified
+      note: Article 20, private life. Article 21, the home. Article 30, communications. Article 31, informational self-determination and personal data. Article 15, paragraph 4, family life.
       cross_references:
-        - { instrument: echr, article: "Article 8", status: to_verify }
+        - { instrument: echr, article: "Article 8", status: verified }
   - id: fair_trial_and_due_process
     topics: [rights.fair_trial]
     basis: constitution
     source:
       instrument: lu_constitution_2023
-      chapter: Chapitre 2, Des droits et libertés
+      article: Articles 18, 19 and 110
+      chapter: Chapitre II, Des droits et libertés, and Chapitre VII, De la Justice, section 4 (Des garanties du justiciable)
       right: access to a court and a fair trial; no removal from the judge the law assigns; legality of offences and penalties
-      status: to_verify
+      status: verified
+      note: Article 18, the judge the law assigns. Article 19, no penalty without law. Article 110, fair and impartial proceedings within a reasonable time and the rights of the defence. Related, Article 17 (individual liberty, presumption of innocence) and Articles 108 and 109 (public hearings, reasoned judgments).
       cross_references:
-        - { instrument: echr, article: "Articles 6 and 7", status: to_verify }
+        - { instrument: echr, article: "Articles 6 and 7", status: verified }
   - id: right_to_vote_and_secret_ballot
     topics: [rights.vote, democracy.ballot_secrecy]
     basis: constitution
     source:
       instrument: lu_constitution_2023
-      chapter: Chapitre 2, Des droits et libertés, and the chapter on the Chambre des Députés (elections)
+      article: Articles 63 and 122
+      chapter: Chapitre IV, De la Chambre des Députés, and Chapitre IX, Des communes
       right: universal suffrage and the secret ballot
-      status: to_verify
+      status: verified
+      note: Article 63, deputies are elected directly by universal suffrage and the vote is compulsory and secret. Article 122, communal councils are elected directly by universal suffrage and secret vote. Who votes, Article 10 (political rights) and Article 64 (electors for the Chambre). The rule sits in these chapters, not in Chapitre II as first assumed.
       cross_references:
-        - { instrument: echr, article: "Protocol 1, Article 3", status: to_verify }
+        - { instrument: echr, article: "Protocol 1, Article 3", status: verified }
   - id: anonymity_of_participation
     topics: [democracy.participant_anonymity]
     basis: project
@@ -238,14 +254,14 @@ protected_rights:
       status: none
       note: This project's extension of ballot secrecy to every act of participation (upvotes, panels, challenges). No legal instrument requires it.
 
-# Instruments the sources above and below refer to. `consulted: false` until the official text is
-# in the repo (a Scout report in 7empes7s/brain research/ is requested).
+# Instruments the sources above and below refer to. `consulted: true` once the official text has
+# been read for this repo; the note says which edition.
 sources:
   lu_constitution_2023:
     name: Constitution du Grand-Duché de Luxembourg (révision 2023, texte en vigueur depuis le 1er juillet 2023)
     publisher: Legilux (legilux.public.lu)
-    consulted: false
-    note: Cited by chapter until the 2023 article numbering is verified. Pre-2023 article numbers are not used.
+    consulted: true
+    note: Read on 2026-10-09 in the Chambre des Députés edition "Constitution en 3 langues" of 21 April 2023 (French text, which the brochure says is authoritative only as published in the Journal officiel), https://www.chd.lu/sites/default/files/2023-04/Constitution_en%203%20langues.pdf. 12 chapters, Articles 1 to 132. Later change taken into account, the revision adopted on 16 June 2026 that adds an alinéa on abortion to Article 15, paragraph 3, with no renumbering. The Legilux coordinated text refuses automated access and was not read. Pre-2023 article numbers are not used.
   lu_electoral_law:
     name: Loi électorale modifiée du 18 février 2003
     publisher: Legilux (legilux.public.lu)
@@ -254,8 +270,8 @@ sources:
   echr:
     name: Convention européenne des droits de l'homme (ECHR) and its protocols
     publisher: Council of Europe
-    consulted: false
-    note: Cross-reference only. Luxembourg is bound by it; the Constitution is the primary source here.
+    consulted: true
+    note: Cross-reference only. Luxembourg is bound by it; the Constitution is the primary source here. Article headings read on 2026-10-09 in the Council of Europe's English text, https://www.echr.coe.int/documents/d/echr/convention_ENG.
   d2_architecture:
     name: Democracy2.0 architecture documents (docs/architecture/)
     publisher: this repository
@@ -271,16 +287,10 @@ provenance:
     basis: constitution
     source:
       instrument: lu_constitution_2023
-      chapter: chapter on the revision of the Constitution
-      status: to_verify
-      note: The decision of 2026-10-06 makes the Charter the Constitution for the Luxembourg version, so changing it must follow the constitutional revision procedure. The two-thirds majority of votes cast is provisional until the revision chapter is read; it is expected to set a qualified majority of the Chambre des Députés, possibly with a referendum. The rule becomes project-chosen if the chapter sets no majority a citizen vote can mirror.
-  charter_change.quorum_share_of_electorate:
-    basis: constitution
-    source:
-      instrument: lu_constitution_2023
-      chapter: chapter on the revision of the Constitution
-      status: to_verify
-      note: Kept only if the revision procedure or the referendum rules set a turnout condition; otherwise this rule becomes project-chosen.
+      article: Article 131
+      chapter: Chapitre XI, De la révision de la Constitution
+      status: verified
+      note: The decision of 2026-10-06 makes the Charter the Constitution for the Luxembourg version, so changing it follows the constitutional revision procedure. Article 131 has the Chambre des Députés adopt a revision in two votes at least three months apart, each with at least two thirds of the votes and no proxy votes. Within two months of the first vote, more than a quarter of the deputies or 25,000 registered electors can ask for a referendum, which replaces the second vote and passes by a majority of valid votes. The Charter's two-thirds majority of votes cast mirrors the Chambre's threshold. Mirroring the referendum route instead would mean a simple majority, which is a decision for Marouane, not a provenance change.
   # Law-bound (basis: law). Changed by the legislature, not by a charter_change vote.
   eligibility.outsiders:
     basis: law
@@ -288,8 +298,11 @@ provenance:
       instrument: lu_electoral_law
       chapter: provisions on the right to vote in legislative and communal elections (nationality, residence, registration)
       status: to_verify
-      note: Who votes where follows the electoral law (nationality for national elections, residence for communal ones). The Charter only adds that non-voters may advise.
+      note: Who votes where follows the electoral law (nationality for national elections, residence for communal ones). The Charter only adds that non-voters may advise. The Constitution frames it (Article 64 requires Luxembourg nationality and age 18 to vote for the Chambre, and Article 10 lets the law give political rights to non-Luxembourgers), but the electoral law itself has not been read yet.
   # Project-chosen (basis: project). The architecture documents are the source; a charter_change vote may change them.
+  charter_change.quorum_share_of_electorate:
+    basis: project
+    source: { instrument: d2_architecture, article: "docs/architecture/02-protocols.md, section 4 (Record, signing roles)", status: none, note: "Placeholder. Article 131 of the Constitution sets no turnout condition (its referendum passes by a majority of valid votes), so the quorum is this project's own choice. The nearest constitutional figure, 25,000 registered electors, is what it takes to ask for a referendum, not a quorum." }
   scope.thresholds:
     basis: project
     source: { instrument: d2_architecture, article: "docs/architecture/01-modules.md, section 2", status: none, note: "Population thresholds between tiers. Placeholders." }
