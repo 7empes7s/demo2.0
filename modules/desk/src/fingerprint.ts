@@ -274,6 +274,8 @@ export interface FingerprintRow {
 
 export class Fingerprints {
   private tree: MerkleTree | null = null;
+  /** The log head the cached tree was built at: a rewrite that keeps the count changes the head. */
+  private treeHead = "";
   readonly store: Store;
   readonly signer: Signer;
   readonly opts: { calendars?: string[]; fetcher?: typeof fetch };
@@ -290,10 +292,11 @@ export class Fingerprints {
 
   /** The tree over the whole log as it is now; rebuilt when the log has grown. */
   currentTree(): MerkleTree {
-    const n = this.store.head().seq;
-    if (this.tree?.size !== n) {
+    const head = this.store.head();
+    if (this.tree?.size !== head.seq || this.treeHead !== head.hash) {
       const rows = this.store.db.prepare("SELECT hash FROM events ORDER BY seq ASC").all() as { hash: string }[];
       this.tree = new MerkleTree(rows.map((r) => leafHash(r.hash)));
+      this.treeHead = head.hash;
     }
     return this.tree;
   }

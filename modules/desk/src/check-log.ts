@@ -17,6 +17,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 
 import { type Checkpoint, openCheckpoint, parseVerifier, verifyConsistency } from "./fingerprint.ts";
@@ -115,7 +116,8 @@ async function main() {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// pathToFileURL: a checkout under a path with spaces must still run the check, never exit 0 silently.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((e) => {
     console.error(`fail: ${e instanceof Error ? e.message : e}`);
     process.exit(1);

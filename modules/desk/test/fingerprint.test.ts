@@ -7,7 +7,7 @@ import { createHash } from "node:crypto";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { checkPublished, type Published } from "../src/check-log.ts";
-import { Store } from "../src/db.ts";
+import { eventHash, type EventRow, Store } from "../src/db.ts";
 import { checkpointBody, encodeSigner, encodeVerifier, Fingerprints, generateSigner, MerkleTree, openCheckpoint, openNote, parseSigner, parseVerifier, signNote, stampDigest, verifyConsistency } from "../src/fingerprint.ts";
 import { createDeskServer, fingerprintsFromEnv } from "../src/server.ts";
 
@@ -111,6 +111,26 @@ describe("daily fingerprints", () => {
     expect(() => store.db.prepare("DELETE FROM fingerprints").run()).toThrow(/append only/);
     store.db.prepare("UPDATE fingerprints SET ots = ?, ots_calendar = 'c' WHERE day = ?").run(Buffer.from("a"), row.day);
     expect(() => store.db.prepare("UPDATE fingerprints SET ots = ? WHERE day = ?").run(Buffer.from("b"), row.day)).toThrow(/once/);
+  });
+
+  it("sees a rewrite that keeps the count and a valid chain, in the same process", () => {
+    const store = new Store(":memory:", clock());
+    const fp = new Fingerprints(store, generateSigner("example.org/desk"), { calendars: [] });
+    write(store, 5);
+    fp.signDue();
+    expect(fp.audit().ok).toBe(true);
+    // Someone with the file rewrites entry 3 and recomputes every hash after it.
+    store.db.exec("DROP TRIGGER events_no_update");
+    const rows = store.db.prepare("SELECT * FROM events ORDER BY seq").all() as unknown as EventRow[];
+    let prev = rows[1].hash;
+    for (const r of rows.slice(2)) {
+      const e = { ...r, prev_hash: prev, payload: r.seq === 3 ? '{"i":"changed"}' : r.payload };
+      const hash = eventHash(e);
+      store.db.prepare("UPDATE events SET payload = ?, prev_hash = ?, hash = ? WHERE seq = ?").run(e.payload, prev, hash, r.seq);
+      prev = hash;
+    }
+    expect(store.verify().ok).toBe(true);
+    expect(fp.audit()).toEqual({ checked: 1, ok: false, mismatch_day: "2026-10-07" });
   });
 
   it("refuses to sign a broken chain", () => {
