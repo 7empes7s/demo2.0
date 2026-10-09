@@ -107,18 +107,21 @@ export function staffFromToken(store: Store, token: string | null): Staff | null
 export function createEnrolCodes(store: Store, by: string, batch: string, count: number): string[] {
   if (!Number.isInteger(count) || count < 1 || count > 5000) throw new DeskError(400, "count must be 1 to 5000");
   const label = batch.trim().slice(0, 80) || "batch";
+  return store.append("enrol.codes_issued", by, `batch:${label}`, { batch: label, count }, () => insertEnrolCodes(store, label, count)).result;
+}
+
+/** Inserts `count` fresh codes into a batch, inside the caller's event. Returns them in plain text, once. */
+export function insertEnrolCodes(store: Store, label: string, count: number): string[] {
   const codes: string[] = [];
   const at = store.now();
-  store.append("enrol.codes_issued", by, `batch:${label}`, { batch: label, count }, () => {
-    const insert = store.db.prepare("INSERT INTO enrol_codes (code_hash, batch, created_at) VALUES (?, ?, ?)");
-    for (let i = 0; i < count; i++) {
-      // 12 base32 characters, grouped by 4 for reading aloud at a counter: xxxx-xxxx-xxxx.
-      const raw = newId(12);
-      const code = `${raw.slice(0, 4)}-${raw.slice(4, 8)}-${raw.slice(8, 12)}`;
-      insert.run(sha256(code), label, at);
-      codes.push(code);
-    }
-  });
+  const insert = store.db.prepare("INSERT INTO enrol_codes (code_hash, batch, created_at) VALUES (?, ?, ?)");
+  for (let i = 0; i < count; i++) {
+    // 12 base32 characters, grouped by 4 for reading aloud at a counter: xxxx-xxxx-xxxx.
+    const raw = newId(12);
+    const code = `${raw.slice(0, 4)}-${raw.slice(4, 8)}-${raw.slice(8, 12)}`;
+    insert.run(sha256(code), label, at);
+    codes.push(code);
+  }
   return codes;
 }
 

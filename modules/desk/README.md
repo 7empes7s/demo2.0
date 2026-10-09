@@ -8,15 +8,17 @@ Desk is the pilot shape of three architecture modules in one: Agora (ideas), Del
 |---|---|
 | A resident (end-user portal, in the citizen app) | Read every procedure and its updates; say whether a finished one was **done**, **needs work** or **not done**; post an idea and support others' (one support per resident); send feedback about anything and look it up later with its code; cast and change a ballot while a vote is open; read the published tally |
 | An operator | Keep procedures current (stages, dates, status, dated updates); read the feedback inbox, sort it, answer privately or publish the answer on the procedure or idea it is about; decide on ideas (taken up as a procedure, answered, declined, merged); create votes, open, close and publish them; ask the model to sort a message, draft an answer or translate an update, then edit what it wrote |
-| An admin | Staff accounts and roles; batches of one-time enrolment codes for residents; the commune's name, languages and intro; the model endpoint (any OpenAI-compatible address, model name, key) with a test button |
+| An admin | Staff accounts and roles; residents' requests for a code by post (check each against the residents' register, print addressed letters, or decline); batches of one-time enrolment codes for residents; the commune's name, languages and intro; the model endpoint (any OpenAI-compatible address, model name, key) with a test button |
 | An auditor | The whole event log with its hash chain and a verify button; every vote's ballots (numbered voters, never identities) with a recount against the published tally; every model call Desk made (purpose, model, prompt hash, sizes, timing, outcome, never text) |
 
 ## What is honest about it
 
-- **Identity is a pilot stand-in.** A resident is an enrolment code the commune handed out once (at a counter, by letter), turned into a token the browser keeps. Desk stores hashes only, never a name, and cannot tell two residents apart beyond the code's batch. One code, one resident, so one support per idea and one voice per vote, as far as the code distribution is honest. Secure sign-in (Door) replaces this later without changing the API.
+- **Identity is a pilot stand-in.** A resident is an enrolment code the commune handed out once (at a counter, by letter, or by post on request), turned into a token the browser keeps. Desk stores hashes only, never a name, and cannot tell two residents apart beyond the code's batch. One code, one resident, so one support per idea and one voice per vote, as far as the code distribution is honest. Secure sign-in (Door) replaces this later without changing the API.
 - **Votes are open ballots, not secret ones.** A ballot is stored under the resident's id. Staff never see ids next to ballots (the auditor sees voter numbers), but the database holds the link. Re-voting is allowed while the vote is open and the last ballot counts; every earlier ballot stays on record. Live counts are not shown while a vote is open. Binding, secret, receipt-free ballots are Booth's job; Desk votes are consultations.
 - **The log is append only and hash chained.** Every write goes with one event in the same transaction; the chain is replayed by `GET /audit/verify`. It is Desk's own log on Desk's own disk: it proves nothing was changed *through Desk*, not that the operator of the box did not rewrite the file. Publishing checkpoints to Record is the next step.
 - **A model never speaks to a resident.** It sorts, drafts and translates for staff; every output is labelled as the model's and edited by a person. Resident text enters prompts as quoted data. Every call is logged without its text.
+
+- **A code by post forgets the address.** A resident without a code asks for one with a name and an address. The request waits with them until an admin prints the letter or declines it; either deletes the name and address. The log records that a request came in and how it ended, never who asked. What stays is a keyed hash of the name and address with no date and no row order, so a second request shows "a letter already went to this name and address". The admin who prints sees a name next to a code, as at a counter; Desk never stores the two together, and every code printed in a month shares the batch "by post YYYY-MM".
 
 ## Run
 
@@ -37,6 +39,10 @@ All JSON. Staff send `Authorization: Staff <token>` (from `POST /staff/login`), 
 | `GET /healthz` | anyone | counts, the model's name, the log head |
 | `GET /settings/public` | anyone | commune name, languages, intro, whether a model is set |
 | `POST /enrol {code}` | anyone | one-time code -> `{token, resident_id}` |
+| `POST /enrol-requests {name, street, extra?, postcode}` | anyone | asks for a code by post -> `{received, already}`; a postcode is four digits (`L-4002` is fine); five per client per minute; 503 past 5000 waiting |
+| `GET /enrol-requests` | admin | the waiting requests, each with `sent_before` and `duplicate` |
+| `POST /enrol-requests/print {ids}` | admin | one code per request in the month's "by post" batch -> `{letters: [{name, street, extra, postcode, code}]}`, shuffled, shown once; the requests are deleted |
+| `POST /enrol-requests/:id/decline` | admin | deletes the request; no letter |
 | `GET /me` | resident | `{enrolled, since}` |
 | `GET /procedures?status=&kind=`, `GET /procedures/:id` | anyone | procedures with updates, verdict counts, published answers, linked ideas; `my_verdict` for a resident |
 | `POST /procedures/:id/verdict {verdict}` | resident | done, needs_work, not_done; only on a finished, stalled or cancelled procedure; the last one counts |

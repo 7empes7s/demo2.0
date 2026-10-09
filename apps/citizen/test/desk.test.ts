@@ -139,6 +139,11 @@ class FakeDesk implements DeskClient {
   signOut() {
     this.signed = false;
   }
+  async requestLetter(input: { name: string; street: string; extra: string; postcode: string }) {
+    this.note("requestLetter", input);
+    if (!/^(L-?)?\d{4}$/i.test(input.postcode)) throw new Error("a postcode has four digits");
+    return { already: false };
+  }
   async procedures() {
     return [BUDGET, RUE];
   }
@@ -192,6 +197,7 @@ afterEach(() => {
   document.body.innerHTML = "";
   vi.unstubAllGlobals();
   prefs.setDeskToken(null);
+  prefs.setLetterAsked(null);
 });
 
 const settle = async () => {
@@ -433,6 +439,38 @@ describe("Votes page", () => {
     expect(published.textContent).toContain("9 residents voted.");
   });
 
+  it("lets a resident without a code ask for one by post, and keeps only the date on the device", async () => {
+    const desk = new FakeDesk();
+    const target = await show(Votes, { client: desk });
+    click(target.querySelector("[data-option='1']"));
+    const sheet = target.querySelector("[data-state=signin]")!;
+    expect(target.querySelector("[data-state=letter]")).toBeNull();
+    click([...sheet.querySelectorAll("button")].find((b) => b.textContent === "No code yet? Get one by post"));
+    const letter = target.querySelector("[data-state=letter]")!;
+    expect(letter.textContent).toContain("Get your code by post");
+    const fields = [...letter.querySelectorAll("input")];
+    expect(fields.map((f) => target.querySelector(`label[for="${f.id}"]`)?.textContent)).toEqual(["Your full name", "Street and house number", "Flat, floor or c/o (if needed)", "Postcode"]);
+    const fill = (values: string[]) => {
+      fields.forEach((f, i) => {
+        f.value = values[i];
+        f.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      letter.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    };
+    fill(["Maria Lopes", "12 rue de l'Alzette", "", "40111"]);
+    await settle();
+    expect(letter.querySelector("[role=alert]")?.textContent).toContain("A postcode has four digits");
+    fill(["Maria Lopes", "12 rue de l'Alzette", "2e étage", "L-4011"]);
+    await settle();
+    expect(desk.calls.at(-1)).toEqual({ what: "requestLetter", args: [{ name: "Maria Lopes", street: "12 rue de l'Alzette", extra: "2e étage", postcode: "L-4011" }] });
+    expect(target.querySelector("[data-state=letter] [role=status]")?.textContent).toContain("The commune will post your letter.");
+    expect(sheet.querySelector("[data-state=letter-asked]")?.textContent).toMatch(/^You asked for a letter on \d{1,2} \w+ \d{4}\. When it arrives, type its code here\.$/);
+    // The device keeps the date only, never the name or the address.
+    const stored = Object.keys(localStorage).map((k) => localStorage.getItem(k)).join("\n");
+    expect(stored).not.toMatch(/Maria|Alzette|4011/);
+    expect(desk.signed).toBe(false);
+  });
+
   it("asks for the code before a ballot, then sends the option, and lets a signed-in resident change it", async () => {
     const desk = new FakeDesk();
     const target = await show(Votes, { client: desk });
@@ -541,6 +579,20 @@ describe("RemoteDesk", () => {
     expect(desk.signedIn()).toBe(true);
     desk.signOut();
     expect(desk.signedIn()).toBe(false);
+  });
+
+  it("asks for a letter without sending the token, and reports a refused address as an error", async () => {
+    prefs.setDeskToken("tok-123");
+    const asked = answer(201, { received: true, already: true });
+    vi.stubGlobal("fetch", asked);
+    const desk = new RemoteDesk();
+    const input = { name: "Maria Lopes", street: "12 rue de l'Alzette", extra: "", postcode: "L-4011" };
+    expect(await desk.requestLetter(input)).toEqual({ already: true });
+    expect(asked).toHaveBeenCalledWith("/api/desk/enrol-requests", expect.objectContaining({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input) }));
+    vi.stubGlobal("fetch", answer(400, { error: "a postcode has four digits, such as L-4002" }));
+    await expect(desk.requestLetter({ ...input, postcode: "x" })).rejects.toThrow("four digits");
+    vi.stubGlobal("fetch", answer(503, { error: "too many requests are waiting" }));
+    await expect(desk.requestLetter(input)).rejects.toMatchObject({ kind: "unavailable" });
   });
 
   it("maps 429 to busy, 401 and 403 to signin (dropping the token), 404 to not found, 5xx and outages and bad shapes to unavailable", async () => {

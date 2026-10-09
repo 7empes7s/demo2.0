@@ -193,3 +193,24 @@ export interface Summary {
   counts: Record<string, number>;
   staff: { id: string; name: string; role: Role; disabled: boolean }[];
 }
+
+/** A resident's request for a code by post, while it waits. Printing or declining deletes it. */
+export interface LetterRequest {
+  id: string;
+  name: string;
+  street: string;
+  extra: string;
+  postcode: string;
+  created_at: string;
+  sent_before: boolean;
+  duplicate: boolean;
+}
+
+/** One printed letter: the address and the fresh code, shown once. */
+export interface PostedLetter {
+  name: string;
+  street: string;
+  extra: string;
+  postcode: string;
+  code: string;
+}

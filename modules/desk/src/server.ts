@@ -23,6 +23,7 @@ import { createEnrolCodes, createStaff, DeskError, enrol, enrolBatches, listStaf
 import type { Role } from "./db.ts";
 import { Store } from "./db.ts";
 import * as desk from "./desk.ts";
+import { declineLetter, letterRequests, pendingLetters, printLetters, requestLetter } from "./letters.ts";
 import { loadSeed } from "./seed.ts";
 
 export interface ServerOptions {
@@ -32,6 +33,8 @@ export interface ServerOptions {
   /** Requests per client per minute on writes (default 30) and reads (default 240). */
   writesPerMinute?: number;
   readsPerMinute?: number;
+  /** Letter requests per client per minute (default 5), on top of the write limit. */
+  letterRequestsPerMinute?: number;
 }
 
 const MAX_BODY = 64 * 1024;
@@ -69,6 +72,7 @@ export function createDeskServer(opts: ServerOptions) {
   const writes = new Map<string, number[]>();
   const reads = new Map<string, number[]>();
   const logins = new Map<string, number[]>();
+  const letterAsks = new Map<string, number[]>();
 
   const clientOf = (req: IncomingMessage): string => {
     const socket = req.socket.remoteAddress ?? "?";
@@ -286,6 +290,26 @@ export function createDeskServer(opts: ServerOptions) {
       }
     }
 
+    /* ---- a code by post: anyone asks, an admin prints or declines */
+    if (path === "/enrol-requests" && method === "POST") {
+      // A household asks for a few letters, a script for thousands.
+      throttle(req, letterAsks, opts.letterRequestsPerMinute ?? 5);
+      return ok(requestLetter(store, body), 201);
+    }
+    if (path === "/enrol-requests" && method === "GET") {
+      needStaff(who, "admin");
+      return ok({ requests: letterRequests(store) });
+    }
+    if (path === "/enrol-requests/print" && method === "POST") {
+      const admin = needStaff(who, "admin");
+      return ok({ letters: printLetters(store, by(admin), body.ids) });
+    }
+    if (parts[0] === "enrol-requests" && parts.length === 3 && parts[2] === "decline" && method === "POST") {
+      const admin = needStaff(who, "admin");
+      declineLetter(store, by(admin), parts[1]);
+      return ok({ ok: true });
+    }
+
     /* ---- enrolment codes (admin) */
     if (path === "/enrol-codes" && method === "POST") {
       const admin = needStaff(who, "admin");
@@ -336,6 +360,7 @@ export function createDeskServer(opts: ServerOptions) {
             residents: n("SELECT COUNT(*) AS n FROM residents"),
             codes_issued: n("SELECT COUNT(*) AS n FROM enrol_codes"),
             codes_used: n("SELECT COUNT(*) AS n FROM enrol_codes WHERE used_at IS NOT NULL"),
+            letters_waiting: pendingLetters(store),
             procedures: n("SELECT COUNT(*) AS n FROM procedures"),
             ideas: n("SELECT COUNT(*) AS n FROM ideas"),
             feedback: n("SELECT COUNT(*) AS n FROM feedback"),

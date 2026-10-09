@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- No code yet? The sign-in sheet has "No code yet? Get one by post", which opens four plain fields (full name, street and house number, flat or floor if needed, postcode) and a line on what happens to them. The commune checks the address and posts a letter; the sheet then says "You asked for a letter on 9 October 2026. When it arrives, type its code here." The device keeps only that date (`d2.desk.letter`), never the name or the address. All five languages.
+
 - File details are a grid of tiles: one bordered box per detail, the label small above and the value below, where the file stands first (marked in amber). A value longer than about 30 characters takes a whole row and the short tiles fill the gaps; a value longer than about 140 characters (a list of every proposer) folds after three lines with "Show all", shown only when the text is really cut off at that width. Values wrap anywhere, so a long name never runs off a phone.
 - Fixed: the lit tab in the desktop header lost its icon (the icon took the global `.icon` sheet colour, ink on ink); the icons are now `.glyph` and follow the tab's text. On a desktop the file list now runs to the bottom of the window instead of stopping above an empty band.
 - Animations: a new row in Settings (Like my device, On, Off). Many computers turn animations off (Windows "Animation effects", remote desktops), which the browser reports as reduced motion, so the app showed none on a desktop; On now plays them anyway, Off stops them on any device. The choice is written on `<html data-motion>` before the first paint (`lib/motion.svelte.ts`, kept in `localStorage` as `d2.motion`), every animation is written for `[data-motion="on"]`, and the lit tab in the desktop header pastes on like the bottom bar's.

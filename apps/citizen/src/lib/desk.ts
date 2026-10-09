@@ -130,10 +130,19 @@ export interface RoundDetail extends Round {
   my_ballot: { option: number; at: string } | null;
 }
 
+export interface LetterRequest {
+  name: string;
+  street: string;
+  extra: string;
+  postcode: string;
+}
+
 export interface DeskClient {
   /** Whether a token is on this device. The desk may still refuse it; the sheet then asks for a code again. */
   signedIn(): boolean;
   enrol(code: string): Promise<void>;
+  /** Asks the commune to post a code. `already` when the same name and address are waiting already. */
+  requestLetter(input: LetterRequest): Promise<{ already: boolean }>;
   signOut(): void;
   procedures(): Promise<Procedure[]>;
   procedure(id: string): Promise<ProcedureDetail>;
@@ -239,6 +248,12 @@ export class RemoteDesk implements DeskClient {
     const body = await this.call("POST", "enrol", { code }, false);
     if (!isObject(body) || !isText(body.token) || !body.token) throw new CompanionFailure("unavailable");
     prefs.setDeskToken(body.token);
+  }
+
+  async requestLetter(input: LetterRequest) {
+    const body = await this.call("POST", "enrol-requests", { ...input }, false);
+    if (!isObject(body) || body.received !== true) throw new CompanionFailure("unavailable");
+    return { already: body.already === true };
   }
 
   private async call(method: "GET" | "POST" | "DELETE", path: string, body?: Record<string, unknown>, auth = true): Promise<unknown> {

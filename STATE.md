@@ -2,6 +2,15 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-09: Resident sign-up beyond printed codes
+
+- Ask (Marouane, 2026-10-09, "do all three" on the coordinator's list): real resident sign-up beyond the printed codes, for the Esch pitch.
+- Picked: a self-service request answered by post. The citizen app's sign-in sheet has "No code yet? Get one by post" (name, street, flat or floor, postcode); Desk keeps the request until an admin prints or declines it on the portal's Enrolment codes page ("Asked by post"), then deletes the name and address. Letters carry the address in a left-window position, one A4 page each. Spec: `docs/product/desk.md` section 7. Real eID (LuxTrust, Luxembourg eID through Door) is written there as the later path, not built.
+- Code: `modules/desk/src/letters.ts` (+ routes in `server.ts`, tables in `db.ts`, `insertEnrolCodes` in `auth.ts`), `apps/citizen/src/components/LetterRequest.svelte` + `SignIn.svelte`, `apps/portal/src/components/Codes.svelte` + `Letters.svelte`.
+- Evidence: desk 16 tests (no name, street or postcode in any table or event after printing), citizen 124, portal 30, typechecks clean, `tools/check.sh` green; renders at 360, 390 and 1280 px day and night and the printed PDF in the project folder `citizen-look/sign-up/`.
+- Mulinux: nothing to install; the next deploy carries it (new tables are created on start).
+- Not done: no notice to the resident when a request is declined (Desk keeps no way to reach them by design); Esch's postcode range is not checked (the register check is a person's).
+
 ## 2026-10-09: Charter citations checked against the Constitution
 
 - Ask (Marouane, 2026-10-09): check the Luxembourg Constitution article numbers cited in the Charter, for the Esch pitch.
