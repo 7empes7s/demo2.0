@@ -13,12 +13,6 @@ History: from 2026-10-05 to 2026-10-07 this queue lived in the keel repo (`ops/o
 
 ## Open
 
-### 2026-10-09: remove the Desk bootstrap password
-
-- Why: the `admin` password was changed on 2026-10-09, so the initial one must not stay on the box (#48).
-- Steps: delete `/etc/civic/desk-admin.initial`; blank `DESK_BOOTSTRAP_PASSWORD` in `/etc/civic/desk.env`; restart `civic-desk`.
-- Done when: the file is gone, `grep -c '^DESK_BOOTSTRAP_PASSWORD=$' /etc/civic/desk.env` prints 1, and `curl -s 127.0.0.1:8094/healthz` answers `"ok":true`.
-
 ### 2026-10-07: reinstall the Companion unit for translations
 
 - Why: the translations PR added `StateDirectory=civic-companion` to `ops/deploy/civic-companion.service` (see STATE.md, "Files in the resident's language").
@@ -39,6 +33,7 @@ History: from 2026-10-05 to 2026-10-07 this queue lived in the keel repo (`ops/o
 
 | Date (UTC) | Entry | Evidence |
 |---|---|---|
+| 2026-10-09 | Desk bootstrap password removed: `/etc/civic/desk-admin.initial` deleted, `DESK_BOOTSTRAP_PASSWORD` blanked in `/etc/civic/desk.env` | Marouane, in the project chat, 2026-10-09 (after changing the `admin` password) |
 | 2026-10-07 09:12 | Desk and the staff portals: `civic-desk` on 127.0.0.1:8094, `/etc/civic/desk.env`, `DESK_URL` and `PORTAL_DIR` in `companion.env`, portals built and served at `/portal/` | #48 (comment of 2026-10-07). Marouane changed the `admin` password on 2026-10-09. No backup job for `/var/lib/civic-desk/desk.db` yet. |
 | 2026-10-06 03:33 | Commons argument library: `civic-commons` on 127.0.0.1:8093, `COMMONS_URL` in `companion.env` | #25 (second comment) |
 | 2026-10-06 03:15 | Claim checker and read-only Ideas list: `civic-provenance` (8090) and `civic-agora --read-only` (8091), `PROVENANCE_URL` and `AGORA_URL` in `companion.env` | #25 (first comment) |

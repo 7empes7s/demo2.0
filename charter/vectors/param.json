@@ -1,10 +1,10 @@
 {
-  "description": "param(key, version?): a dotted key into the Charter; list items are not addressable by index. Charter 0.3.0.",
-  "charter_version": "0.3.0",
+  "description": "param(key, version?): a dotted key into the Charter; list items are not addressable by index. Charter 0.4.0.",
+  "charter_version": "0.4.0",
   "cases": [
     {
       "key": "version",
-      "expect": "0.3.0"
+      "expect": "0.4.0"
     },
     {
       "key": "tiers.national.review_panel",
@@ -31,7 +31,7 @@
     },
     {
       "key": "tiers.regional.queue_priority",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "expect": 2
     },
     {
@@ -150,6 +150,11 @@
     {
       "key": "tiers.local.queue_priority",
       "version": "0.1.0",
+      "expect_error": "unknown_version"
+    },
+    {
+      "key": "tiers.local.queue_priority",
+      "version": "0.3.0",
       "expect_error": "unknown_version"
     }
   ]

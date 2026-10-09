@@ -1,6 +1,6 @@
 {
-  "description": "tier(matter) and affected_population(matter). The tier follows the affected population only; labels a proposer adds are input, never output. Thresholds are Charter 0.3.0: national >= 300000, regional >= 50000, local >= 1000, minor below. Pass extra_jurisdictions to the library alongside the Luxembourg reference data.",
-  "charter_version": "0.3.0",
+  "description": "tier(matter) and affected_population(matter). The tier follows the affected population only; labels a proposer adds are input, never output. Thresholds are Charter 0.4.0: national >= 300000, regional >= 50000, local >= 1000, minor below. Pass extra_jurisdictions to the library alongside the Luxembourg reference data.",
+  "charter_version": "0.4.0",
   "extra_jurisdictions": [
     {
       "id": "test-pop-0",

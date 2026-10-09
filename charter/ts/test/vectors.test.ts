@@ -105,8 +105,8 @@ describe("source and basis", () => {
   });
 
   it("returns a copy", () => {
-    source("charter_change.majority").status = "verified";
-    expect(source("charter_change.majority").status).toBe("to_verify");
+    source("charter_change.majority").status = "to_verify";
+    expect(source("charter_change.majority").status).toBe("verified");
   });
 });
 
