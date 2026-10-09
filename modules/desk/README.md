@@ -15,8 +15,21 @@ Desk is the pilot shape of three architecture modules in one: Agora (ideas), Del
 
 - **Identity is a pilot stand-in.** A resident is an enrolment code the commune handed out once (at a counter, by letter), turned into a token the browser keeps. Desk stores hashes only, never a name, and cannot tell two residents apart beyond the code's batch. One code, one resident, so one support per idea and one voice per vote, as far as the code distribution is honest. Secure sign-in (Door) replaces this later without changing the API.
 - **Votes are open ballots, not secret ones.** A ballot is stored under the resident's id. Staff never see ids next to ballots (the auditor sees voter numbers), but the database holds the link. Re-voting is allowed while the vote is open and the last ballot counts; every earlier ballot stays on record. Live counts are not shown while a vote is open. Binding, secret, receipt-free ballots are Booth's job; Desk votes are consultations.
-- **The log is append only and hash chained.** Every write goes with one event in the same transaction; the chain is replayed by `GET /audit/verify`. It is Desk's own log on Desk's own disk: it proves nothing was changed *through Desk*, not that the operator of the box did not rewrite the file. Publishing checkpoints to Record is the next step.
+- **The log is append only and hash chained.** Every write goes with one event in the same transaction; the chain is replayed by `GET /audit/verify`. On its own that proves nothing was changed *through Desk*, not that the operator of the box did not rewrite the file. The daily public fingerprint (below) closes that gap for anyone who keeps a copy: a rewrite of anything already fingerprinted shows up as a failed check.
 - **A model never speaks to a resident.** It sorts, drafts and translates for staff; every output is labelled as the model's and edited by a person. Resident text enters prompts as quoted data. Every call is logged without its text.
+
+## Daily public fingerprint
+
+With `DESK_LOG_NAME` set, Desk signs one checkpoint of its log per UTC day (at the first hourly tick after midnight) and publishes every one of them, with no sign-in:
+
+- **What is signed:** a Merkle tree (RFC 9162) whose leaves are the events' chain hashes, `leaf data = "d2.desk.event/1\n" <event hash, 64 hex> "\n"`, as a C2SP signed note in Record's checkpoint format (`spec/record/README.md`, sections 2 to 4): the log's name, the number of entries, the root, `timestamp <unix seconds>`, signed with Ed25519. Desk refuses to sign when the chain does not replay.
+- **What is published:** `GET /fingerprints` (every day: size, root, the signed note, its OpenTimestamps receipt) and `GET /fingerprints/consistency?from=&to=` (an RFC 9162 proof that the first `from` entries are unchanged in the first `to`). Hashes of hashes only: no event, no event hash, no name, no text.
+- **Timestamp:** each checkpoint's SHA-256 goes to the public OpenTimestamps calendars (`DESK_OTS_CALENDARS`; the first that answers gives the receipt, retried hourly). The receipt is a standard detached `.ots` file over the note, pending until the calendar's Bitcoin transaction confirms; `ots upgrade` then `ots verify` (or `d2-record upgrade-anchor` / `verify-anchor`) finish and check it.
+- **The key:** `DESK_LOG_KEY` (default `log.key` next to the database), made on first start with mode 600 and never replaced; a key made for another name stops Desk instead. Back it up with the database. Its public half is in `GET /fingerprints` and in Desk's start-up log.
+- **Anyone's check:** `node --experimental-strip-types modules/desk/src/check-log.ts --url <site>/api/desk --vkey <key> --keep saved.json [--out dir]` checks every signature, that each day's log contains the day before's unchanged, and (with `--keep`) that every checkpoint saved by an earlier run is still published word for word; `--out` writes `<day>.txt` and `<day>.ots` for `ots verify` and for `record-verify consistency`, which accepts Desk's checkpoints and proofs as they are. The citizen app's "Checking the record" page shows the latest fingerprint, offers the copy to keep, and gives the command.
+- **The auditor's check:** `GET /audit/verify` also replays every published root against the log as it is now (`fingerprints: {checked, ok, mismatch_day}`), shown under "Verify the chain" in the audit portal.
+
+What it does not prove: anything about a day before the first fingerprint, or a change made the same day before signing; that is what the next day's check is for. It does not show what an entry says; that stays with the auditors.
 
 ## Run
 
@@ -24,7 +37,7 @@ Desk is the pilot shape of three architecture modules in one: Agora (ideas), Del
 DESK_DB=desk.db DESK_BOOTSTRAP_PASSWORD='choose-a-long-one' DESK_SEED=seed/esch.json npm run serve -w @democracy2/desk
 ```
 
-Settings: `DESK_DB` (default `desk.db`), `PORT` (8094), `HOST` (127.0.0.1), `TRUST_PROXY` (1: the Companion forwards to it), `DESK_BOOTSTRAP_PASSWORD` and `DESK_BOOTSTRAP_LOGIN` (create the first admin when no staff exists), `DESK_SEED` (loaded once into an empty store), `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_TIMEOUT_MS` (the model, unless an admin set one in the portal).
+Settings: `DESK_DB` (default `desk.db`), `PORT` (8094), `HOST` (127.0.0.1), `TRUST_PROXY` (1: the Companion forwards to it), `DESK_BOOTSTRAP_PASSWORD` and `DESK_BOOTSTRAP_LOGIN` (create the first admin when no staff exists), `DESK_SEED` (loaded once into an empty store), `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_TIMEOUT_MS` (the model, unless an admin set one in the portal), `DESK_LOG_NAME` (the log's public name, such as `example.org/desk`; turns the daily fingerprint on), `DESK_LOG_KEY` (its signing key file), `DESK_OTS_CALENDARS` (comma separated, `off` for none; default the public pool).
 
 The shipped seed (`seed/esch.json`) is made-up data in the shape of Esch-sur-Alzette's procedures, marked as examples in every text. The citizen app, the portals and the Companion server (`/api/desk/*`) talk to it; the browser never reaches Desk directly.
 
@@ -35,6 +48,7 @@ All JSON. Staff send `Authorization: Staff <token>` (from `POST /staff/login`), 
 | Route | Who | What |
 |---|---|---|
 | `GET /healthz` | anyone | counts, the model's name, the log head |
+| `GET /fingerprints`, `GET /fingerprints/consistency?from=&to=` | anyone | the daily signed checkpoints with their timestamp receipts; a proof that one day's log holds an earlier one unchanged |
 | `GET /settings/public` | anyone | commune name, languages, intro, whether a model is set |
 | `POST /enrol {code}` | anyone | one-time code -> `{token, resident_id}` |
 | `GET /me` | resident | `{enrolled, since}` |
@@ -59,6 +73,6 @@ All JSON. Staff send `Authorization: Staff <token>` (from `POST /staff/login`), 
 | `GET /enrol-codes` | admin, auditor | batches with issued and used counts |
 | `GET /settings`, `PATCH /settings` | admin | commune, languages, intro, model (`ai.base_url`, `ai.model`, `ai.api_key`, `ai.timeout_ms`); the key is never returned |
 | `POST /ai/test` | admin | one tiny call to the model |
-| `GET /audit/verify`, `GET /audit/events?from=&kind=&subject=&limit=`, `GET /audit/summary`, `GET /audit/ai-calls` | auditor, admin | the chain, the entries, counts, the model calls |
+| `GET /audit/verify` (with the fingerprints replayed), `GET /audit/events?from=&kind=&subject=&limit=`, `GET /audit/summary`, `GET /audit/ai-calls` | auditor, admin | the chain, the entries, counts, the model calls |
 
 Licence: AGPL-3.0-or-later (see LICENSE).

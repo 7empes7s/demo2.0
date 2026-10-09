@@ -11,6 +11,7 @@
   import Ideas from "./components/Ideas.svelte";
   import More, { type Section } from "./components/More.svelte";
   import Procedures from "./components/Procedures.svelte";
+  import DeskRecord from "./components/DeskRecord.svelte";
   import Settings from "./components/Settings.svelte";
   import Votes from "./components/Votes.svelte";
   import Week from "./components/Week.svelte";
@@ -51,6 +52,8 @@
   const PROCEDURES_ROUTE = "procedures";
   const FEEDBACK_ROUTE = "feedback";
   const VOTES_ROUTE = "votes";
+  /** `#record`: the desk's daily fingerprint and how anyone checks it. */
+  const RECORD_ROUTE = "record";
   /** `#files`: the full list on a phone. With no route the app opens on this week's list. */
   const FILES_ROUTE = "files";
   /** `#settings`: language, appearance, where you live and the topics followed. */
@@ -69,7 +72,7 @@
   /** `#ideas`: the ideas residents posted, on the commune's desk when it is up, else Agora's read-only list. */
   const readingIdeas = $derived(route === IDEAS_ROUTE && (!!desk || !!ideasReader) && !selected);
   /** The desk's own pages: `#procedures`, `#feedback`, `#votes`. */
-  const deskPage = $derived(desk && !selected && (route === PROCEDURES_ROUTE || route === FEEDBACK_ROUTE || route === VOTES_ROUTE) ? route : null);
+  const deskPage = $derived(desk && !selected && (route === PROCEDURES_ROUTE || route === FEEDBACK_ROUTE || route === VOTES_ROUTE || route === RECORD_ROUTE) ? route : null);
 
   /** The full list on its own (phones). On a wide screen it is always beside the other views. */
   const listing = $derived(route === FILES_ROUTE && !selected);
@@ -87,6 +90,7 @@
           { route: PROCEDURES_ROUTE, icon: "procedures", title: "procedures_open", line: "more_procedures" },
           { route: VOTES_ROUTE, icon: "votes", title: "votes_open", line: "more_votes" },
           { route: FEEDBACK_ROUTE, icon: "feedback", title: "feedback_open", line: "more_feedback" },
+          { route: RECORD_ROUTE, icon: "record", title: "record_open", line: "more_record" },
         ] as const)
       : []),
     { route: SETTINGS_ROUTE, icon: "settings", title: "settings_title", line: "more_settings" },
@@ -278,11 +282,13 @@
         {:else if deskPage && desk}
           <article class="check-page">
             <button class="back" onclick={() => open(MORE_ROUTE)}>← {t("nav_more")}</button>
-            <h2 class="serif" id="file-title" tabindex="-1">{t(deskPage === PROCEDURES_ROUTE ? "procedures_open" : deskPage === VOTES_ROUTE ? "votes_open" : "feedback_open")}</h2>
+            <h2 class="serif" id="file-title" tabindex="-1">{t(deskPage === PROCEDURES_ROUTE ? "procedures_open" : deskPage === VOTES_ROUTE ? "votes_open" : deskPage === RECORD_ROUTE ? "record_open" : "feedback_open")}</h2>
             {#if deskPage === PROCEDURES_ROUTE}
               <Procedures client={desk} onfeedback={sendFeedbackAbout} />
             {:else if deskPage === VOTES_ROUTE}
               <Votes client={desk} />
+            {:else if deskPage === RECORD_ROUTE}
+              <DeskRecord client={desk} />
             {:else}
               <Feedback client={desk} about={feedbackAbout} onclearabout={() => (feedbackAbout = null)} />
             {/if}

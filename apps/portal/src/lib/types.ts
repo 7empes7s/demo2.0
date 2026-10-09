@@ -156,6 +156,8 @@ export interface Verification {
   entries: number;
   head: string;
   broken_at: number | null;
+  /** The published daily fingerprints replayed against the log; null when the desk publishes none. */
+  fingerprints?: { checked: number; ok: boolean; mismatch_day: string | null } | null;
 }
 
 export interface AiCall {

@@ -56,6 +56,15 @@ CREATE TRIGGER IF NOT EXISTS events_no_update BEFORE UPDATE ON events BEGIN SELE
 CREATE TRIGGER IF NOT EXISTS events_no_delete BEFORE DELETE ON events BEGIN SELECT RAISE(ABORT, 'events are append only'); END;
 CREATE TRIGGER IF NOT EXISTS ballots_no_update BEFORE UPDATE ON ballots BEGIN SELECT RAISE(ABORT, 'ballots are append only'); END;
 CREATE TRIGGER IF NOT EXISTS ballots_no_delete BEFORE DELETE ON ballots BEGIN SELECT RAISE(ABORT, 'ballots are append only'); END;
+-- One signed checkpoint of the log per day (fingerprint.ts). The checkpoint never changes; the
+-- Bitcoin timestamp receipt is added once, later.
+CREATE TABLE IF NOT EXISTS fingerprints (
+  day TEXT PRIMARY KEY, size INTEGER NOT NULL, root TEXT NOT NULL, note TEXT NOT NULL, signed_at TEXT NOT NULL,
+  ots BLOB, ots_calendar TEXT
+);
+CREATE TRIGGER IF NOT EXISTS fingerprints_no_change BEFORE UPDATE OF day, size, root, note, signed_at ON fingerprints BEGIN SELECT RAISE(ABORT, 'fingerprints are append only'); END;
+CREATE TRIGGER IF NOT EXISTS fingerprints_ots_once BEFORE UPDATE OF ots, ots_calendar ON fingerprints WHEN OLD.ots IS NOT NULL BEGIN SELECT RAISE(ABORT, 'a receipt is stored once'); END;
+CREATE TRIGGER IF NOT EXISTS fingerprints_no_delete BEFORE DELETE ON fingerprints BEGIN SELECT RAISE(ABORT, 'fingerprints are append only'); END;
 `;
 
 export const GENESIS = "0".repeat(64);

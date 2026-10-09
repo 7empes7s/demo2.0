@@ -130,6 +130,23 @@ export interface RoundDetail extends Round {
   my_ballot: { option: number; at: string } | null;
 }
 
+/** One day's signed fingerprint of the desk's record, as the desk publishes it. */
+export interface FingerprintDay {
+  day: string;
+  size: number;
+  root: string;
+  signed_at: string;
+  note: string;
+  ots: string | null;
+}
+
+/** The desk's daily fingerprints; `enabled: false` when the desk does not publish any. */
+export interface Fingerprints {
+  enabled: boolean;
+  key: string | null;
+  days: FingerprintDay[];
+}
+
 export interface DeskClient {
   /** Whether a token is on this device. The desk may still refuse it; the sheet then asks for a code again. */
   signedIn(): boolean;
@@ -146,6 +163,7 @@ export interface DeskClient {
   rounds(): Promise<Round[]>;
   round(id: string): Promise<RoundDetail>;
   ballot(id: string, option: number): Promise<{ option: number }>;
+  fingerprints(): Promise<Fingerprints>;
 }
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -153,6 +171,8 @@ const isText = (v: unknown): v is string => typeof v === "string";
 const isLocalized = (v: unknown): v is Localized => isObject(v) && Object.values(v).every(isText);
 const oneOf = <T extends string>(v: unknown, allowed: readonly T[]): v is T => allowed.includes(v as T);
 const isCounts = (v: unknown): v is Record<Verdict, number> => isObject(v) && VERDICTS.every((k) => typeof v[k] === "number");
+const dayOk = (v: unknown): v is FingerprintDay =>
+  isObject(v) && isText(v.day) && typeof v.size === "number" && isText(v.root) && isText(v.signed_at) && isText(v.note) && (v.ots === null || isText(v.ots));
 const answerOk = (v: unknown): v is PublishedAnswer => isObject(v) && isText(v.answer) && isText(v.answered_at);
 
 function procedureOk(v: unknown): v is Procedure {
@@ -315,6 +335,11 @@ export class RemoteDesk implements DeskClient {
   }
   ballot(id: string, option: number) {
     return this.one("POST", `rounds/${encodeURIComponent(id)}/ballots`, (v): v is { option: number } => isObject(v) && typeof v.option === "number", { option });
+  }
+  async fingerprints(): Promise<Fingerprints> {
+    const body = await this.call("GET", "fingerprints", undefined, false);
+    if (!isObject(body) || typeof body.enabled !== "boolean" || !Array.isArray(body.days) || !body.days.every(dayOk)) throw new CompanionFailure("unavailable");
+    return { enabled: body.enabled, key: isText(body.key) ? body.key : null, days: body.days };
   }
 }
 

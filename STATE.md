@@ -2,6 +2,14 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-09: Daily public fingerprint of the Desk log
+
+- Ask (Marouane, 2026-10-09): a public daily fingerprint of the Desk log, so anyone can check that nothing was changed afterwards.
+- Done: `modules/desk/src/fingerprint.ts` signs one checkpoint per UTC day in Record's format (RFC 9162 tree over the events' chain hashes, C2SP signed note, Ed25519), keeps them append only in a `fingerprints` table, sends each to an OpenTimestamps calendar, and serves `GET /fingerprints` and `GET /fingerprints/consistency` to anyone (hashes only). `src/check-log.ts` is the outside check (signatures, day-to-day consistency, a saved copy still published). `GET /audit/verify` replays the published roots; the audit portal shows it. Citizen app: "Checking the record" page in More (`DeskRecord.svelte`), five languages. On with `DESK_LOG_NAME`; key made on first start next to the database.
+- Evidence: desk tests (fingerprint suite: RFC 6962 vectors, Record's own checkpoints read with Record's key, a rewritten and re-signed log caught), citizen and portal tests, `tools/check.sh`; end to end in the session: a two-day log served by Desk, `check-log.ts` exit 0, `record-verify consistency` (the independent verifier) exit 0 on Desk's notes and proof, `d2-record verify-anchor --offline` reads Desk's `.ots` as pending (exit 3, a local fake calendar).
+- Mulinux (operator, open in `ops/operator-queue.md`): set `DESK_LOG_NAME`, restart, back up the key, post the public key so it can be pinned here.
+- Not done: the public key is not pinned in the repo yet (it does not exist until the box makes it); receipts are not upgraded to the Bitcoin path by Desk (`ots upgrade` or `d2-record upgrade-anchor` does it for anyone); no witness co-signing.
+
 ## 2026-10-08: Operator queue moved into this repo
 
 - Ask (Marouane, 2026-10-08): pick up the cracia operator queue that was removed from the keel repo.

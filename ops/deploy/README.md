@@ -55,6 +55,8 @@ The model is any OpenAI-compatible endpoint (`LLM_BASE_URL`, `LLM_API_KEY`, `LLM
 
 ## Health
 
+Desk's daily public fingerprint is on when `DESK_LOG_NAME` is set in `desk.env` (`cracia.techinsiderbytes.com/desk` on Mulinux). Desk then makes its signing key `/var/lib/civic-desk/log.key` on first start (mode 600; back it up with `desk.db`, losing it means a new key and a new log name), signs one checkpoint per UTC day and sends each one to the public OpenTimestamps calendars over outbound HTTPS. Anyone reads them at `https://<site>/api/desk/fingerprints`; `modules/desk/README.md` says how to check them. Nothing else to install: no timer, no unit change.
+
 `GET /healthz` returns `{"ok":true,"items":N,"companion":true|false,"model":{"kind":"openai|anthropic","name":"..."}|null,"provenance":true|false,"agora":true|false,"desk":true|false}` (never a key). The service also logs `companion model: <kind> <name> at <scheme://host>` at start, host only. The deployer checks it (`HEALTH_URLS`) and requires five healthy checks in a row before a release counts as live.
 
 The claim checker is optional and does not gate deploys. `provenance` says whether `civic-provenance` answered its own `/healthz` (checked at most every 30 s, waiting at most 1 s); `false` never fails the Companion's health check, and the app then says the checker is unavailable. To see why it is down: `curl -s 127.0.0.1:8090/healthz` (`{"ok": true, "items": N, "sentences": M}`) and `journalctl -u civic-provenance`.

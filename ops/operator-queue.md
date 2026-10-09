@@ -13,6 +13,12 @@ History: from 2026-10-05 to 2026-10-07 this queue lived in the keel repo (`ops/o
 
 ## Open
 
+### 2026-10-09: turn on the Desk log's daily public fingerprint
+
+- Why: the daily public fingerprint of the Desk log (PR "Daily public fingerprint of the Desk log") is off until the log has a name.
+- Steps: once that PR is deployed, add `DESK_LOG_NAME=cracia.techinsiderbytes.com/desk` to `/etc/civic/desk.env`, restart `civic-desk`, and copy `/var/lib/civic-desk/log.key` to wherever `desk.db` is backed up (there is no backup job yet, see Done). Post the `key` value from `/fingerprints` on the PR so it can be pinned in the repo.
+- Done when: the start-up log reads `daily fingerprint on, key cracia.techinsiderbytes.com/desk+...` and `fingerprint <today>: N entries`; `curl -s https://cracia.techinsiderbytes.com/api/desk/fingerprints` shows `"enabled":true` with today's day; within an hour that day's `ots` is not null (the calendars are reachable); and `node --experimental-strip-types /opt/civic/current/modules/desk/src/check-log.ts --url https://cracia.techinsiderbytes.com/api/desk --vkey '<key>'` exits 0.
+
 ### 2026-10-09: remove the Desk bootstrap password
 
 - Why: the `admin` password was changed on 2026-10-09, so the initial one must not stay on the box (#48).

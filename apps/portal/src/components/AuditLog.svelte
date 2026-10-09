@@ -71,6 +71,11 @@
       <p class="notice" class:ok={verification.ok} class:error={!verification.ok} role="status">
         {verification.ok ? t("audit_ok", { n: verification.entries, head: short(verification.head, 12) }) : t("audit_broken", { n: verification.broken_at ?? 0 })}
       </p>
+      {#if verification.fingerprints}
+        <p class="notice" class:ok={verification.fingerprints.ok} class:error={!verification.fingerprints.ok} role="status" data-testid="prints">
+          {verification.fingerprints.ok ? t("audit_prints_ok", { n: verification.fingerprints.checked }) : t("audit_prints_bad", { day: verification.fingerprints.mismatch_day ?? "" })}
+        </p>
+      {/if}
     {/if}
   </section>
 

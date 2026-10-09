@@ -9,6 +9,9 @@
  *   DESK_BOOTSTRAP_PASSWORD  with an empty staff table, creates the admin "admin" with it on start
  *   DESK_SEED                a JSON file loaded once into an empty store (see seed.ts)
  *   LLM_BASE_URL, LLM_MODEL, LLM_API_KEY, LLM_TIMEOUT_MS   the model, unless the admin set one in Desk
+ *   DESK_LOG_NAME            the log's public name (e.g. example.org/desk); turns on the daily fingerprint
+ *   DESK_LOG_KEY             its signing key file (default log.key next to DESK_DB; made on first start, mode 600)
+ *   DESK_OTS_CALENDARS       OpenTimestamps calendars, comma separated ("off" for none; default the public pool)
  *
  * Who is asking: staff carry `Authorization: Staff <token>` (from POST /staff/login); residents
  * carry `Authorization: Resident <token>` (from POST /enrol). Nothing is a cookie, so a page on
@@ -16,18 +19,23 @@
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 
 import { Ai, CATEGORIES, LANGS, type Lang } from "./ai.ts";
 import { createEnrolCodes, createStaff, DeskError, enrol, enrolBatches, listStaff, login, logout, residentFromToken, type Staff, staffFromToken, updateStaff } from "./auth.ts";
 import type { Role } from "./db.ts";
 import { Store } from "./db.ts";
 import * as desk from "./desk.ts";
+import { DEFAULT_CALENDARS, encodeSigner, Fingerprints, generateSigner, LEAF_FORMAT, parseSigner, publicDay } from "./fingerprint.ts";
 import { loadSeed } from "./seed.ts";
 
 export interface ServerOptions {
   store: Store;
   ai?: Ai;
+  /** The daily public fingerprint; without it /fingerprints says it is not set up. */
+  fingerprints?: Fingerprints;
   trustProxy?: number;
   /** Requests per client per minute on writes (default 30) and reads (default 240). */
   writesPerMinute?: number;
@@ -316,10 +324,29 @@ export function createDeskServer(opts: ServerOptions) {
       return ok({ translations: await ai.translate(textToTranslate.slice(0, 4000), from, to, staff.id), labelled: "A model wrote these; an operator checks them before they are shown." });
     }
 
+    /* ---- the daily fingerprint (anyone) */
+    if (parts[0] === "fingerprints" && method === "GET") {
+      const fp = opts.fingerprints;
+      if (parts.length === 1) {
+        if (!fp) return ok({ enabled: false, days: [] });
+        return ok({ enabled: true, key: fp.verifierKey, origin: fp.signer.name, leaf_format: LEAF_FORMAT, size_now: store.head().seq, days: fp.all().map(publicDay) });
+      }
+      if (parts[1] === "consistency" && parts.length === 2) {
+        if (!fp) throw new DeskError(404, "the daily fingerprint is not set up on this server");
+        const from = Number(q.get("from"));
+        const to = Number(q.get("to"));
+        // Proofs between published sizes only: that is all a check needs.
+        const max = Math.max(0, ...fp.all().map((d) => d.size));
+        if (!Number.isSafeInteger(from) || !Number.isSafeInteger(to) || from <= 0 || from > to || to > max) throw new DeskError(400, `need 0 < from <= to <= ${max}, the largest published size`);
+        const tree = fp.publishedTree();
+        return ok({ from, to, proof: tree.consistency(from, to).map((h) => h.toString("base64")) });
+      }
+    }
+
     /* ---- audit (auditor, admin) */
     if (parts[0] === "audit") {
       needStaff(who, "auditor", "admin");
-      if (parts[1] === "verify" && method === "GET") return ok(store.verify());
+      if (parts[1] === "verify" && method === "GET") return ok({ ...store.verify(), fingerprints: opts.fingerprints?.audit() ?? null });
       if (parts[1] === "events" && method === "GET") {
         return ok({ events: store.events({ from: Number(q.get("from")) || undefined, kind: q.get("kind") ?? undefined, subject: q.get("subject") ?? undefined, limit: Number(q.get("limit")) || undefined }).map((e) => ({ ...e, payload: JSON.parse(e.payload) })) });
       }
@@ -425,6 +452,45 @@ export function bootstrap(store: Store, env: Record<string, string | undefined> 
   } else if (n === 0) console.warn("no staff yet and DESK_BOOTSTRAP_PASSWORD is not set: nobody can sign in to the portals");
 }
 
+/**
+ * The fingerprint signer from the environment: none without DESK_LOG_NAME. The key file is made
+ * on first start (mode 600) and kept; a key made for another name is refused, never replaced.
+ */
+export function fingerprintsFromEnv(store: Store, env: Record<string, string | undefined> = process.env): Fingerprints | undefined {
+  const name = env.DESK_LOG_NAME?.trim();
+  if (!name) return undefined;
+  const db = env.DESK_DB || "desk.db";
+  const path = env.DESK_LOG_KEY || join(db === ":memory:" ? "." : dirname(db), "log.key");
+  let signer;
+  if (existsSync(path)) {
+    signer = parseSigner(readFileSync(path, "utf8"));
+    if (signer.name !== name) throw new Error(`${path} is the key of "${signer.name}", not "${name}"`);
+  } else {
+    signer = generateSigner(name);
+    writeFileSync(path, encodeSigner(signer) + "\n", { mode: 0o600, flag: "wx" });
+    console.log(`made the log's signing key ${path}`);
+  }
+  const cal = env.DESK_OTS_CALENDARS?.trim();
+  const calendars = !cal ? DEFAULT_CALENDARS : cal === "off" ? [] : cal.split(",").map((c) => c.trim()).filter(Boolean);
+  return new Fingerprints(store, signer, { calendars });
+}
+
+/** Signs today's checkpoint if due, then sends unstamped ones to a calendar. Never throws. */
+export async function fingerprintTick(fp: Fingerprints) {
+  try {
+    const row = fp.signDue();
+    if (row) console.log(`fingerprint ${row.day}: ${row.size} entries, root ${row.root}`);
+  } catch (e) {
+    console.error(`fingerprint: ${e instanceof Error ? e.message : e}`);
+  }
+  try {
+    const n = await fp.anchorPending();
+    if (n) console.log(`fingerprint: ${n} receipt(s) from the timestamp calendar`);
+  } catch (e) {
+    console.error(`fingerprint timestamp: ${e instanceof Error ? e.message : e}`);
+  }
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   const store = new Store(process.env.DESK_DB || "desk.db");
   bootstrap(store);
@@ -434,7 +500,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
   const port = Number(process.env.PORT ?? 8094);
   const host = process.env.HOST || "127.0.0.1";
-  const server = createDeskServer({ store, trustProxy: Number(process.env.TRUST_PROXY ?? 1) || 0 });
+  const fingerprints = fingerprintsFromEnv(store);
+  if (fingerprints) console.log(`daily fingerprint on, key ${fingerprints.verifierKey}`);
+  else console.log("daily fingerprint off (DESK_LOG_NAME is not set)");
+  const server = createDeskServer({ store, fingerprints, trustProxy: Number(process.env.TRUST_PROXY ?? 1) || 0 });
   // Votes close on time even when nobody is reading.
   setInterval(() => {
     try {
@@ -443,5 +512,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       console.error(e);
     }
   }, 60_000).unref();
+  // One checkpoint per UTC day, signed at the first tick of the day; receipts retried hourly.
+  if (fingerprints) {
+    void fingerprintTick(fingerprints);
+    setInterval(() => void fingerprintTick(fingerprints), 3_600_000).unref();
+  }
   server.listen(port, host, () => console.log(`desk listening on ${host}:${port}`));
 }
