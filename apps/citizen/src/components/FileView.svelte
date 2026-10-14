@@ -60,10 +60,24 @@
   const official = $derived(safeUrl(item.urls[ui.lang] ?? item.urls.fr));
   const docs = $derived(item.documents.filter((d) => safeUrl(d.url)));
   const history = $derived(historyOf(item));
-  /** Some official titles run to a whole paragraph: those are set in plain type and folded after a few lines. */
+  /** Some official titles run to a whole paragraph: those are set smaller and folded after a few lines. */
   const title = $derived(tx(titleOf(item)) ?? "");
   const long = $derived(title.length > 110);
   let fullTitle = $state(false);
+  /** Whether the folded title really is cut off at this width: only then is "Show the full title" offered. */
+  let titleCut = $state(false);
+  function titleWatch(el: HTMLElement, _title: string) {
+    const check = () => {
+      if (el.classList.contains("folded")) titleCut = el.scrollHeight > el.clientHeight + 1;
+    };
+    const watcher = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(check);
+    watcher?.observe(el);
+    check();
+    return {
+      update: () => requestAnimationFrame(check),
+      destroy: () => watcher?.disconnect(),
+    };
+  }
   $effect(() => {
     void item.id;
     fullTitle = false;
@@ -134,8 +148,8 @@
     <span class="tack" aria-hidden="true"></span>
     <div class="torn title-sheet">
     <p class="meta"><FileMeta {item} /></p>
-    <h2 class={long ? "title long" : "serif title"} class:folded={long && !fullTitle} lang={langOf(titleOf(item))} id="file-title" tabindex="-1">{title}</h2>
-    {#if long}
+    <h2 class={long ? "title long" : "serif title"} class:folded={long && !fullTitle} lang={langOf(titleOf(item))} id="file-title" tabindex="-1" use:titleWatch={title}>{title}</h2>
+    {#if long && (titleCut || fullTitle)}
       <button class="more-title" aria-expanded={fullTitle} onclick={() => (fullTitle = !fullTitle)}>{t(fullTitle ? "title_less" : "title_more")}</button>
     {/if}
     <OriginalToggle />
@@ -288,7 +302,8 @@
   .title-sheet { display: grid; gap: 12px; padding: 1.1rem 1.2rem 1.8rem; }
   .title:focus { outline: none; }
   .title { font-size: clamp(1.6rem, 4.2vw, 2.3rem); line-height: 1.15; }
-  .title.long { font-size: clamp(1.2rem, 3vw, 1.45rem); font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
+  /* A paragraph-long official title keeps the poster face, in mixed case so it stays easy to read. */
+  .title.long { font-family: var(--serif); font-size: clamp(1.55rem, 3.4vw, 2rem); font-weight: 800; line-height: 1.1; letter-spacing: 0.005em; overflow-wrap: anywhere; }
   .title.folded { display: -webkit-box; -webkit-line-clamp: 4; line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
   .more-title {
     justify-self: start;
