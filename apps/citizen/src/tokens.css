@@ -64,6 +64,7 @@
   --back-official: #1b2a4a;
   --back-dated: #d8321f;
   --back-line: #121212;
+  --scroll-thumb: #121212;
   /* Paper grain on the wall: a vector noise, never an image. */
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.75' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
   --grain-opacity: 0.55;
@@ -111,6 +112,7 @@
     --back-official: #2f4a80;
     --back-dated: #8f2b20;
     --back-line: #55524b;
+    --scroll-thumb: #55524b;
     --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.75' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
     --grain-opacity: 0.5;
   }
@@ -152,6 +154,7 @@
   --back-official: #2f4a80;
   --back-dated: #8f2b20;
   --back-line: #55524b;
+  --scroll-thumb: #55524b;
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.75' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
   --grain-opacity: 0.5;
 }
@@ -314,7 +317,8 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 @keyframes back-in { from { transform: translate(0, 0) rotate(0); opacity: 0; } to { opacity: 1; } }
 @keyframes tack-land { 0% { transform: translateX(-50%) translateY(-14px) scale(1.8); opacity: 0; } 70% { transform: translateX(-50%) scale(0.9); opacity: 1; } 100% { transform: translateX(-50%); opacity: 1; } }
 @keyframes tear { to { clip-path: inset(0 0 0 100%); transform: translateX(16px) rotate(2deg); opacity: 0; } }
-@keyframes ticker { to { transform: translateX(-50%); } }
+@keyframes ticker { to { transform: translateX(-100%); } }
+@keyframes blink { 50% { opacity: 0.25; } }
 @keyframes grow { from { transform: scaleX(0); } }
 
 /* Pasted sheets fill backwards only: once settled they carry no transform, so a hover can still
@@ -373,3 +377,15 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 @keyframes stamp-tilt { 0% { transform: scale(1.7) rotate(-12deg); opacity: 0; } 65% { transform: scale(0.94) rotate(-1deg); opacity: 1; } 100% { transform: rotate(-3deg); opacity: 1; } }
 [data-badge="understood"] { transform: rotate(-3deg); }
 :root[data-motion="on"] [data-badge="understood"] { animation: stamp-tilt 0.45s 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards; }
+
+/* Scrollbars: an ink bar in a cut along the wall, amber under the pointer, square like everything
+   else. Chromium and Safari draw the pseudo-elements; Firefox takes the two colours. */
+::-webkit-scrollbar { width: 14px; height: 14px; }
+::-webkit-scrollbar-track { background: transparent; }
+html::-webkit-scrollbar-track { background: var(--bg); border-left: 2px solid var(--line); }
+::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border: 3px solid var(--bg); border-radius: 0; min-height: 40px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+::-webkit-scrollbar-corner { background: var(--bg); }
+@supports not selector(::-webkit-scrollbar) {
+  * { scrollbar-color: var(--scroll-thumb) transparent; }
+}
