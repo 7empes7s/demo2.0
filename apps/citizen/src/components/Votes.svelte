@@ -126,7 +126,7 @@
         <h3 id="{uid}-open" class="serif group-title">{t("vote_open")}</h3>
         <ol class="list" data-state="open">
           {#each open as r (r.id)}
-            <li class="card round" aria-labelledby="{uid}-{r.id}">
+            <li class="card round official" aria-labelledby="{uid}-{r.id}">
               <div class="meta">
                 <span class="tag open">{t("vote_open")}</span>
                 {#if r.closes_at}<span class="muted">{t("vote_closes", { date: date(r.closes_at) })}</span>{/if}
@@ -135,7 +135,7 @@
               <div class="options" role="group" aria-label={t("vote_pick")}>
                 {#each r.options as o, i (i)}
                   {@const label = localizedText(o, ui.lang)}
-                  <button class="btn option" aria-pressed={mine[r.id] === i} disabled={casting === r.id} onclick={() => cast(r, i)} data-option={i} lang={label?.lang}>
+                  <button class="btn option pin" aria-pressed={mine[r.id] === i} disabled={casting === r.id} onclick={() => cast(r, i)} data-option={i} lang={label?.lang}>
                     {label?.text ?? ""}
                   </button>
                 {/each}
@@ -155,7 +155,7 @@
         <ol class="list" data-state="closed">
           {#each closed as r (r.id)}
             {@const pct = r.result ? shares(r.result.counts) : null}
-            <li class="card round" aria-labelledby="{uid}-{r.id}" data-status={r.status}>
+            <li class="card round official" aria-labelledby="{uid}-{r.id}" data-status={r.status}>
               <div class="meta">
                 <span class="tag">{t(r.status === "published" ? "vote_published" : "vote_closed")}</span>
                 {#if r.closes_at}<span class="muted">{t("vote_closed_on", { date: date(r.closes_at) })}</span>{/if}

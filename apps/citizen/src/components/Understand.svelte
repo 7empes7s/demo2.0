@@ -81,7 +81,7 @@
 </script>
 
 {#if quiz}
-  <section class="arena card" aria-labelledby="{uid}-h" data-phase={phase}>
+  <section class="arena card official" aria-labelledby="{uid}-h" data-phase={phase}>
     {#if phase === "intro"}
       <div class="intro">
         <div class="head">

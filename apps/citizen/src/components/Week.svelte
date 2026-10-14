@@ -43,6 +43,17 @@
   const groupCount = $derived(pulse.prefs.groups.length);
   const weekNo = $derived(Number(week.id.slice(-2)));
 
+  /** The dated files of this week, soonest first, for the strip under the header. */
+  const ticker = $derived.by(() => {
+    const dated = [...list.concerned, ...list.knowledgeable, ...list.others].filter((e) => !!e.when?.day);
+    dated.sort((a, b) => a.when!.day.localeCompare(b.when!.day));
+    const ahead = dated.filter((e) => e.when!.day >= today);
+    return (ahead.length ? ahead : dated).slice(0, 8);
+  });
+  function short(text: string): string {
+    return text.length > 56 ? `${text.slice(0, 54).trimEnd()}…` : text;
+  }
+
   const WHEN_KEY = { meeting: "week_when_meeting", open: "week_when_open", filed: "week_when_filed", activity: "week_when_activity" } as const;
 </script>
 
@@ -93,14 +104,21 @@
 {/snippet}
 
 <section class="week" aria-labelledby="week-title">
-  <header class="head">
-    <p class="label">{t("week_number", { n: weekNo })} · {date(week.start)} – {date(week.end)}</p>
-    <h2 class="serif" id="week-title" tabindex="-1">{t("week_title")}</h2>
-    <p class="muted intro">{intro}</p>
-    <OriginalToggle />
-  </header>
+  <div class="lead">
+  <div class="poster">
+    <span class="tack" aria-hidden="true"></span>
+    <header class="head torn">
+      <div class="when-row">
+        <span class="flaps" aria-hidden="true">{#each String(weekNo).padStart(2, "0").split("") as d, i (i)}<span class="flap"><span>{d}</span></span>{/each}</span>
+        <p class="label">{t("week_number", { n: weekNo })} · {date(week.start)} – {date(week.end)}</p>
+      </div>
+      <h2 class="serif" id="week-title" tabindex="-1">{t("week_title")}</h2>
+      <p class="muted intro">{intro}</p>
+      <OriginalToggle />
+    </header>
+  </div>
 
-  <div class="summary card" data-testid="week-summary">
+  <div class="summary card yours" data-testid="week-summary">
     {#if pulse.prefs.home}
       <dl class="who">
         <dt class="label">{t("week_home_label")}</dt>
@@ -115,6 +133,22 @@
     {/if}
     <p class="private small" data-testid="week-private"><span aria-hidden="true">🔒</span> {t("week_private_short")}</p>
   </div>
+  </div>
+
+  {#if ticker.length}
+    <!-- The dates ahead run along a strip like a station board. Every one is in the lists below, so
+         readers of the page skip the strip. -->
+    <div class="ticker" aria-hidden="true">
+      <div class="run">
+        {#each [0, 1] as copy (copy)}
+          {#each ticker as e (e.item.id)}
+            {@const d = shortDay(ui.lang, e.when!.day)}
+            <span class="tick"><b>{d.day} {d.month}</b> {short(tx(titleOf(e.item)))}</span>
+          {/each}
+        {/each}
+      </div>
+    </div>
+  {/if}
 
   {#if pulse.prefs.home}
     <section class="group" aria-labelledby="g-concerned">
@@ -149,9 +183,14 @@
 </section>
 
 <style>
-  .week { display: grid; gap: 20px; padding-top: 4px; }
-  .head { display: grid; gap: 6px; }
-  .head h2 { font-size: clamp(1.9rem, 5vw, 2.6rem); line-height: 1.1; }
+  .week { display: grid; gap: 22px; padding-top: 8px; }
+  /* The week's header is a poster: a torn sheet held by a tack, the week number on flaps. */
+  .lead { display: grid; gap: 22px; }
+  .poster { position: relative; }
+  .head { display: grid; gap: 8px; padding: 1.1rem 1.2rem 1.7rem; }
+  .when-row { display: flex; align-items: center; gap: 12px; }
+  .when-row .flaps { font-size: 2.6rem; }
+  .head h2 { font-size: clamp(2.3rem, 7vw, 3.4rem); line-height: 0.92; }
   .head h2:focus { outline: none; }
   .head p { margin: 0; }
   .intro { max-width: 60ch; }
@@ -163,7 +202,14 @@
   dl.who dt, dl.who dd { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .summary .private { grid-column: 1 / -1; font-size: 0.82rem; color: var(--muted); }
   .group { display: grid; gap: 10px; }
-  .group-title { font-size: 1.15rem; font-weight: 700; display: flex; gap: 8px; align-items: baseline; margin: 0; }
+  /* Group names are poster bands: the label face, a heavy rule under. */
+  .group-title { font: 900 1.35rem/1 var(--serif); text-transform: uppercase; display: flex; gap: 10px; align-items: baseline; margin: 0; padding-bottom: 6px; border-bottom: var(--rule) solid var(--line); }
+  .ticker { overflow: hidden; border: var(--rule) solid var(--line); background: var(--ink); color: var(--paper); }
+  .run { display: flex; width: max-content; }
+  .tick { flex: none; padding: 0.45rem 1.2rem; font: 700 0.95rem/1.2 var(--serif); text-transform: uppercase; letter-spacing: 0.02em; white-space: nowrap; border-right: 2px solid currentColor; }
+  .tick b { color: var(--accent); margin-right: 0.4em; }
+  :global([data-motion="on"]) .run { animation: ticker 40s linear infinite; }
+  :global([data-motion="on"]) .ticker:hover .run { animation-play-state: paused; }
   .count {
     display: inline-grid;
     place-items: center;
@@ -244,5 +290,14 @@
 
   @media (min-width: 720px) {
     .entries { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+  }
+  /* Desktop: the poster and your summary side by side, the poster headline at full size. */
+  @media (min-width: 1100px) {
+    .lead { grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); align-items: end; gap: 28px; }
+    .head { padding: 1.4rem 1.6rem 2rem; }
+    .head h2 { font-size: 4.6rem; }
+    .when-row .flaps { font-size: 3.2rem; }
+    .summary { align-self: stretch; align-content: center; grid-template-columns: minmax(0, 1fr); justify-items: start; }
+    dl.who dt, dl.who dd { white-space: normal; }
   }
 </style>

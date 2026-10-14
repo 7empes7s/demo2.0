@@ -71,7 +71,7 @@
   {#if !busy && !failure && ideas.length}
     <ol class="list" data-state="list">
       {#each ideas as { idea, title, text, age } (idea.id)}
-        <li class="card idea" data-tier={idea.scope_tier} aria-labelledby="{uid}-{idea.id}">
+        <li class="card idea yours" data-tier={idea.scope_tier} aria-labelledby="{uid}-{idea.id}">
           <div class="meta">
             <span class="reach {idea.scope_tier}">{t(`reach_${idea.scope_tier}`)}</span>
             <span class="muted">{t(age.key, { n: age.n ?? 0, date: date(idea.created_at) })}</span>

@@ -66,12 +66,14 @@
     color: var(--accent-ink);
   }
   .text { flex: 1 1 auto; min-width: 0; display: grid; gap: 2px; }
-  .title { font-weight: 700; font-size: 1.05rem; }
+  .title { font: 900 1.35rem/1 var(--serif); text-transform: uppercase; }
   .line { color: var(--muted); font-size: 0.9rem; line-height: 1.35; }
   @media (min-width: 720px) {
     .sections { grid-template-columns: 1fr 1fr; }
   }
-  :global([data-motion="on"]) .section { animation: paste 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+  :global([data-motion="on"]) .section { animation: paste 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards; transition: transform 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.2), box-shadow 0.16s linear; }
+  :global([data-motion="on"]) .section:hover { transform: translate(-3px, -3px) rotate(-0.4deg); }
+  :global([data-motion="on"]) .section:hover .badge { animation: flap 0.45s ease-in-out; }
   :global([data-motion="on"]) li:nth-child(2) .section { animation-delay: 0.06s; }
   :global([data-motion="on"]) li:nth-child(3) .section { animation-delay: 0.12s; }
   :global([data-motion="on"]) li:nth-child(4) .section { animation-delay: 0.18s; }
