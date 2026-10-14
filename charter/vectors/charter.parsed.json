@@ -1,5 +1,5 @@
 {
-  "version": "0.4.0",
+  "version": "0.4.1",
   "scope": {
     "population_source": "data/lu-jurisdictions.json",
     "thresholds": [
@@ -352,7 +352,7 @@
         "article": "Article 131",
         "chapter": "Chapitre XI, De la révision de la Constitution",
         "status": "verified",
-        "note": "The decision of 2026-10-06 makes the Charter the Constitution for the Luxembourg version, so changing it follows the constitutional revision procedure. Article 131 has the Chambre des Députés adopt a revision in two votes at least three months apart, each with at least two thirds of the votes and no proxy votes. Within two months of the first vote, more than a quarter of the deputies or 25,000 registered electors can ask for a referendum, which replaces the second vote and passes by a majority of valid votes. The Charter's two-thirds majority of votes cast mirrors the Chambre's threshold. Mirroring the referendum route instead would mean a simple majority, which is a decision for Marouane, not a provenance change."
+        "note": "The decision of 2026-10-06 makes the Charter the Constitution for the Luxembourg version, so changing it follows the constitutional revision procedure. Article 131 has the Chambre des Députés adopt a revision in two votes at least three months apart, each with at least two thirds of the votes and no proxy votes. Within two months of the first vote, more than a quarter of the deputies or 25,000 registered electors can ask for a referendum, which replaces the second vote and passes by a majority of valid votes. The Charter's two-thirds majority of votes cast mirrors the Chambre's threshold. Marouane decided on 2026-10-14 to keep two thirds rather than mirror the referendum route's simple majority."
       }
     },
     "eligibility.outsiders": {
