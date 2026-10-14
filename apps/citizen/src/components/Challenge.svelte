@@ -66,7 +66,7 @@
   <h3 id="ch-h" class="serif sub">{t("stand_title")}</h3>
   <div class="stances" role="group" aria-label={t("group_stance")}>
     {#each [["for", "stand_for"], ["against", "stand_against"], ["unsure", "stand_unsure"]] as const as [value, key] (value)}
-      <button class="btn" aria-pressed={stance === value} onclick={() => choose(value)}>{t(key)}</button>
+      <button class="btn pin" aria-pressed={stance === value} onclick={() => choose(value)}>{t(key)}</button>
     {/each}
   </div>
   <p class="muted small">{t("stand_private")}</p>

@@ -162,7 +162,7 @@
       {#each ideas as idea (idea.id)}
         {@const age = ageOf(idea.created_at, now())}
         {@const answer = localizedText(idea.answer, ui.lang)}
-        <li class="card idea" data-status={idea.status} aria-labelledby="{uid}-{idea.id}">
+        <li class="card idea yours" data-status={idea.status} aria-labelledby="{uid}-{idea.id}">
           <div class="meta">
             <span class="tag {idea.status}">{t(`idea_status_${idea.status}`)}</span>
             {#if idea.mine}<span class="tag mine">{t("idea_yours")}</span>{/if}

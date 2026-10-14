@@ -130,6 +130,9 @@
   <button class="back" onclick={onback}>← {backLabel}</button>
 
   <header class="head">
+    <div class="poster">
+    <span class="tack" aria-hidden="true"></span>
+    <div class="torn title-sheet">
     <p class="meta"><FileMeta {item} /></p>
     <h2 class={long ? "title long" : "serif title"} class:folded={long && !fullTitle} lang={langOf(titleOf(item))} id="file-title" tabindex="-1">{title}</h2>
     {#if long}
@@ -137,6 +140,8 @@
     {/if}
     <OriginalToggle />
     {#if item.summary}<p class="summary" lang={langOf(item.summary)}>{tx(item.summary)}</p>{/if}
+    </div>
+    </div>
     <dl class="facts">
       {#each facts as f (f.label)}
         {@const folds = f.value.length > FOLD}
@@ -156,7 +161,7 @@
   </header>
 
   {#if kind !== "consultation"}
-    <section class="card next" aria-labelledby="next-h">
+    <section class="card next dated" aria-labelledby="next-h">
       <h3 id="next-h" class="label">{t(meeting || !last ? "next_label" : "last_label")}</h3>
       {#if meeting ?? last}
         {@const m = (meeting ?? last)!}
@@ -177,7 +182,7 @@
   {/if}
 
   {#if votes}
-    <section class="card votes" aria-labelledby="votes-h">
+    <section class="card votes official" aria-labelledby="votes-h">
       <h3 id="votes-h" class="label">{t("votes_title")}</h3>
       <p class="when">{tally(votes.counts)}</p>
       <ul class="parties">
@@ -277,7 +282,10 @@
   }
   .head { display: grid; gap: 14px; }
   .meta { display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; margin: 0; }
-  .summary { margin: 0; font-size: 1.02rem; }
+  .summary { margin: 0; font-size: 1.02rem; border-left: 6px solid var(--accent); padding-left: 12px; }
+  /* The file's name is a poster: a torn sheet held by a tack. */
+  .poster { position: relative; }
+  .title-sheet { display: grid; gap: 12px; padding: 1.1rem 1.2rem 1.8rem; }
   .title:focus { outline: none; }
   .title { font-size: clamp(1.6rem, 4.2vw, 2.3rem); line-height: 1.15; }
   .title.long { font-size: clamp(1.2rem, 3vw, 1.45rem); font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
@@ -313,7 +321,7 @@
   .fact dd.folded { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
   .more-fact { justify-self: start; padding: 0; border: 0; background: none; color: var(--fg); font: inherit; font-size: 0.85rem; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
   .links { margin: 0; }
-  .next { display: grid; gap: 6px; box-shadow: 7px 7px 0 0 var(--backing-navy), 7px 7px 0 var(--rule) var(--backing); }
+  .next { display: grid; gap: 6px; --tilt: 1deg; }
   .next p { margin: 0; }
   .when { font-weight: 600; }
   .steps { margin: 4px 0 0; padding-left: 1.2rem; color: var(--muted); }
@@ -325,7 +333,10 @@
   details[open] summary { margin-bottom: 6px; }
   .never {
     margin: 0;
-    font-size: 0.88rem;
+    font: 700 1rem/1.2 var(--serif);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: center;
     color: var(--fg);
     border-top: var(--rule) solid var(--line);
     border-bottom: var(--rule) solid var(--line);

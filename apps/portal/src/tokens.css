@@ -57,6 +57,17 @@
   --backing-navy: #1b2a4a;
   --shadow: none;
 
+  /* The second sheet pasted behind a card: plain plaster paper by default, amber for what is
+     yours, navy for what is official, red for the thing with a date on it. Its border line. */
+  --back-sheet: #e4dcc6;
+  --back-yours: #f5a623;
+  --back-official: #1b2a4a;
+  --back-dated: #d8321f;
+  --back-line: #121212;
+  /* Paper grain on the wall: a vector noise, never an image. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.75' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain-opacity: 0.55;
+
   --serif: "Big Shoulders Display", "Archivo Black", Impact, sans-serif;
   --sans: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -95,6 +106,13 @@
     --backing: #000000;
     --backing-navy: #2f4a80;
     --focus: #f5a623;
+    --back-sheet: #26241f;
+    --back-yours: #8a5d12;
+    --back-official: #2f4a80;
+    --back-dated: #8f2b20;
+    --back-line: #55524b;
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.75' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    --grain-opacity: 0.5;
   }
 }
 :root[data-theme="dark"] {
@@ -129,6 +147,13 @@
   --backing: #000000;
   --backing-navy: #2f4a80;
   --focus: #f5a623;
+  --back-sheet: #26241f;
+  --back-yours: #8a5d12;
+  --back-official: #2f4a80;
+  --back-dated: #8f2b20;
+  --back-line: #55524b;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.75' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain-opacity: 0.5;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -157,6 +182,11 @@ body {
   font: 400 16px/1.55 var(--sans);
   -webkit-font-smoothing: antialiased;
 }
+/* The wall's grain sits over everything and catches no clicks. */
+body::before { content: ""; position: fixed; inset: 0; z-index: 100; pointer-events: none; background: var(--grain); opacity: var(--grain-opacity); mix-blend-mode: multiply; }
+:root[data-theme="dark"] body::before { mix-blend-mode: screen; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body::before { mix-blend-mode: screen; } }
+@media print { body::before { display: none; } }
 a { color: var(--accent-fg); text-underline-offset: 2px; text-decoration-thickness: 2px; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 h1, h2, h3 { text-wrap: balance; margin: 0; }
@@ -191,7 +221,9 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent-line); color: var(--accent-ink); }
 .btn.small { box-shadow: none; border-width: 2px; }
 
-/* Sheets: paper with an ink border, stapled at the top corners. */
+/* Sheets: paper with an ink border, stapled at the top corners, with a second sheet pasted behind
+   and turned a degree (--card-back, --tilt). No shadow: depth comes from paper layers. A card
+   nested in another sheet hides its second sheet behind that sheet's paper. */
 .card {
   position: relative;
   background: var(--surface);
@@ -199,12 +231,57 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
   border-radius: 0;
   padding: 1.1rem 1.2rem;
 }
-.card::before, .card::after {
-  content: ""; position: absolute; top: -2px; width: 22px; height: 7px;
-  border: 2.5px solid var(--line); border-bottom: 0; pointer-events: none;
+.card::before {
+  content: ""; position: absolute; inset: calc(-1 * var(--rule)); z-index: -1; pointer-events: none;
+  background: var(--card-back, var(--back-sheet));
+  border: var(--rule) solid var(--back-line);
+  transform: translate(7px, 7px) rotate(calc(var(--tilt, -0.6deg) * var(--tilt-k, 1)));
 }
-.card::before { left: 14px; transform: rotate(-6deg); }
-.card::after { right: 14px; transform: rotate(5deg); }
+.card:nth-of-type(even) { --tilt: 0.5deg; }
+/* A wide sheet turns less, so its second sheet still peeks out evenly. */
+@media (min-width: 960px) { .card { --tilt-k: 0.4; } }
+.card.yours { --card-back: var(--back-yours); }
+.card.official { --card-back: var(--back-official); }
+.card.dated { --card-back: var(--back-dated); }
+.card.flat::before { display: none; }
+/* Two staples, drawn with the line colour. */
+.card::after {
+  content: ""; position: absolute; top: -3px; left: 14px; right: 14px; height: 8px; pointer-events: none;
+  background:
+    linear-gradient(var(--line), var(--line)) 0 0 / 22px 2.5px no-repeat,
+    linear-gradient(var(--line), var(--line)) 0 0 / 2.5px 8px no-repeat,
+    linear-gradient(var(--line), var(--line)) 19.5px 0 / 2.5px 8px no-repeat,
+    linear-gradient(var(--line), var(--line)) 100% 0 / 22px 2.5px no-repeat,
+    linear-gradient(var(--line), var(--line)) 100% 0 / 2.5px 8px no-repeat,
+    linear-gradient(var(--line), var(--line)) calc(100% - 19.5px) 0 / 2.5px 8px no-repeat;
+}
+
+/* A red tack holding a sheet or marking where something stands. */
+.tack {
+  position: absolute; top: -9px; left: 50%; width: 18px; height: 18px; z-index: 2;
+  border-radius: 50%; background: var(--red); border: 3px solid var(--ink);
+  transform: translateX(-50%); pointer-events: none;
+}
+.tack::after { content: ""; position: absolute; left: 3px; top: 2px; width: 4px; height: 4px; border-radius: 50%; background: var(--paper); }
+
+/* A header sheet torn along the bottom. The tear is a clip path, so it costs nothing. */
+.torn {
+  background: var(--surface);
+  border: var(--rule) solid var(--line);
+  border-bottom: 0;
+  padding-bottom: 1.6rem;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), 97% 100%, 93% calc(100% - 7px), 88% 100%, 83% calc(100% - 9px), 78% 100%, 72% calc(100% - 6px), 66% 100%, 60% calc(100% - 10px), 54% 100%, 48% calc(100% - 7px), 42% 100%, 36% calc(100% - 9px), 30% 100%, 24% calc(100% - 6px), 18% 100%, 12% calc(100% - 10px), 6% 100%, 0 calc(100% - 7px));
+}
+
+/* Split-flap digits, like a station board: a number that changes flips (see Motion). */
+.flaps { display: inline-flex; gap: 4px; perspective: 400px; }
+.flap {
+  position: relative; display: grid; place-items: center; overflow: hidden;
+  width: 0.72em; height: 1.08em; background: var(--ink); color: var(--paper);
+  font: 900 1em/1 var(--serif); border: 2px solid var(--ink);
+}
+.flap::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--bg); opacity: 0.6; }
+.flap > span { display: block; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -224,13 +301,29 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
   @keyframes flap { 0% { transform: rotateX(0); } 50% { transform: rotateX(-90deg); } 51% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
   @keyframes march { to { background-position: -20px 0, 0 0; } }
 
-  .card, .file, .entry, .chat li, .verdict, .intro, .done { animation: paste 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
-  .file:nth-child(2), .entry:nth-child(2) { animation-delay: 0.06s; }
-  .file:nth-child(3), .entry:nth-child(3) { animation-delay: 0.12s; }
-  .file:nth-child(4), .entry:nth-child(4) { animation-delay: 0.18s; }
-  .file:nth-child(5), .entry:nth-child(5) { animation-delay: 0.24s; }
-  .file:nth-child(n + 6), .entry:nth-child(n + 6) { animation-delay: 0.3s; }
-  .card.next { animation-delay: 0.15s; }
+  @keyframes back-in { from { transform: translate(0, 0) rotate(0); opacity: 0; } to { opacity: 1; } }
+  @keyframes tack-land { 0% { transform: translateX(-50%) translateY(-14px) scale(1.8); opacity: 0; } 70% { transform: translateX(-50%) scale(0.9); opacity: 1; } 100% { transform: translateX(-50%); opacity: 1; } }
+  @keyframes grow { from { transform: scaleX(0); } }
+
+  /* Pasted sheets fill backwards only: once settled they carry no transform, so a hover can still
+     lift them and their second sheet stays behind their paper. --paste-delay staggers a group. */
+  .card, .file, .entry, .chat li, .verdict, .intro, .done { animation: paste 0.7s var(--paste-delay, 0s) cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards; }
+  :is(li:nth-child(2) > .entry, .file:nth-child(2), .card:nth-child(2)) { --paste-delay: 0.06s; }
+  :is(li:nth-child(3) > .entry, .file:nth-child(3), .card:nth-child(3)) { --paste-delay: 0.12s; }
+  :is(li:nth-child(4) > .entry, .file:nth-child(4), .card:nth-child(4)) { --paste-delay: 0.18s; }
+  :is(li:nth-child(5) > .entry, .file:nth-child(5), .card:nth-child(5)) { --paste-delay: 0.24s; }
+  :is(li:nth-child(n + 6) > .entry, .file:nth-child(n + 6), .card:nth-child(n + 6)) { --paste-delay: 0.3s; }
+  /* The second sheet slides out from behind once its sheet has landed. */
+  .card::before { animation: back-in 0.35s calc(var(--paste-delay, 0s) + 0.6s) cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards; }
+  .tack { animation: tack-land 0.35s 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) backwards; }
+  .flap > span { animation: flap 0.45s 0.2s ease-in-out backwards; }
+  .flap:nth-child(2) > span { animation-delay: 0.32s; }
+  .flap:nth-child(3) > span { animation-delay: 0.44s; }
+  /* Lists of sheets lift under the pointer: the paper rises off its backing. */
+  @media (hover: hover) {
+    .entry { transition: transform 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.2), background-color 0.12s linear; }
+    .entry:hover { transform: translate(-3px, -3px) rotate(-0.4deg); }
+  }
 
   .btn, .seg, .chip, .cite, .option { transition: transform 0.12s linear, box-shadow 0.12s linear, background-color 0.12s linear, color 0.12s linear; }
 
@@ -245,6 +338,9 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
   .pulse {
     animation: march 1s linear infinite;
     padding-top: 0.6rem;
-    background: repeating-linear-gradient(90deg, var(--line) 0 10px, transparent 10px 20px) top / 200% 3px no-repeat;
+    background-image: repeating-linear-gradient(90deg, var(--line) 0 10px, transparent 10px 20px);
+    background-position: top;
+    background-size: 200% 3px;
+    background-repeat: no-repeat;
   }
 }

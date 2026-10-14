@@ -206,6 +206,7 @@
       <span class="mark" aria-hidden="true">§</span>
       <span class="serif name">{t("app_name")}</span>
     </button>
+    <span class="top-spacer"></span>
     {#if !welcoming && snapshot}{@render nav("top")}{/if}
     {#if !welcoming}
       <button class="btn small gear" aria-current={settings ? "page" : undefined} onclick={() => open(SETTINGS_ROUTE)}>
@@ -333,20 +334,24 @@
     padding: 0;
     cursor: pointer;
   }
+  /* The wordmark: the § cut in an ink tile, the name on a paper strip, one bordered piece. */
+  .brand { gap: 0; flex: 0 1 auto; border: var(--rule) solid var(--line); background: var(--surface); color: var(--fg); perspective: 300px; }
   .mark {
     flex: none;
     display: grid;
     place-items: center;
-    width: 32px;
-    height: 32px;
-    border: var(--rule) solid var(--ink);
-    background: var(--accent);
-    color: var(--accent-ink);
-    font: 900 1.1rem/1 var(--serif);
+    width: 38px;
+    align-self: stretch;
+    background: var(--ink);
+    color: var(--accent);
+    font: 900 1.6rem/1 var(--serif);
   }
-  .name { font-size: 1.45rem; font-family: var(--serif); font-weight: 900; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .name { padding: 5px 10px 4px; font-size: 1.35rem; line-height: 1; font-family: var(--serif); font-weight: 900; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .top-spacer { flex: 1 1 auto; }
+  /* The § flips like a board digit when the wordmark is pointed at or pressed. */
+  :global([data-motion="on"]) .brand:hover .mark, :global([data-motion="on"]) .brand:active .mark { animation: flap 0.45s ease-in-out; }
   @media (max-width: 420px) {
-    .name { font-size: 1.2rem; }
+    .name { font-size: 1.1rem; }
   }
   .gear { flex: none; display: flex; align-items: center; gap: 6px; padding: 0.4rem 0.7rem; }
   .gear[aria-current="page"] { background: var(--pressed-bg); border-color: var(--pressed-bg); color: var(--pressed-fg); }
@@ -371,9 +376,19 @@
   }
   .tab[aria-current="page"] { color: var(--fg); }
   .nav-top { gap: 4px; }
-  .nav-top .tab { padding: 0.5rem 0.8rem; border: var(--rule) solid transparent; }
-  .nav-top .tab:hover { border-color: var(--line); }
+  /* Desktop tabs: pointing at one wipes amber up from its foot, like a fresh sheet pasted on. */
+  .nav-top .tab {
+    padding: 0.5rem 0.8rem;
+    border: var(--rule) solid transparent;
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    background: linear-gradient(var(--accent), var(--accent)) bottom / 100% 0 no-repeat;
+  }
+  .nav-top .tab:hover { border-color: var(--line); background-size: 100% 100%; color: var(--accent-ink); }
   .nav-top .tab[aria-current="page"] { background: var(--pressed-bg); border-color: var(--pressed-bg); color: var(--pressed-fg); }
+  :global([data-motion="on"]) .nav-top .tab { transition: background-size 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.2), border-color 0.12s linear, color 0.12s linear; }
   .nav-bottom {
     position: fixed;
     inset: auto 0 0 0;
@@ -404,11 +419,11 @@
     gap: 20px;
     padding-top: 20px;
   }
-  .list-title { font-size: clamp(1.7rem, 5vw, 2.2rem); line-height: 1.1; margin: 0 0 14px; }
+  .list-title { font-size: clamp(1.9rem, 5vw, 2.4rem); line-height: 1; margin: 0 0 14px; padding-bottom: 8px; border-bottom: var(--rule) solid var(--line); }
   .list-title:focus { outline: none; }
   .source-note { font-size: 0.82rem; margin-top: 16px; }
   .check-page { display: grid; gap: 16px; padding-top: 4px; }
-  .check-page h2 { font-size: clamp(1.6rem, 4.2vw, 2.3rem); line-height: 1.15; margin: 0; }
+  .check-page h2 { font-size: clamp(2.2rem, 6vw, 3.6rem); line-height: 0.95; margin: 0; padding-bottom: 10px; border-bottom: var(--rule) solid var(--line); }
   .check-page h2:focus { outline: none; }
   .check-page .small { font-size: 0.88rem; margin: 0; }
   .back {
@@ -450,7 +465,7 @@
     .shell { padding-bottom: 0; }
     .list-pane { position: sticky; top: 76px; align-self: start; max-height: calc(100vh - 76px); overflow-y: auto; padding-right: 8px; padding-bottom: 24px; }
     .detail-pane { padding-bottom: 48px; }
-    .list-title { font-size: 1.6rem; }
+    .list-title { font-size: 2rem; }
     .shell:not(.has-file) .detail-pane { display: block; }
   }
 </style>

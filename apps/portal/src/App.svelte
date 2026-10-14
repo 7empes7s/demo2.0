@@ -129,9 +129,15 @@
     background: var(--bg);
     border-bottom: var(--rule) solid var(--line);
   }
-  .brand { min-width: 0; flex: 1 1 auto; display: flex; align-items: center; gap: 10px; }
-  .mark { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border: var(--rule) solid var(--ink); background: var(--accent); color: var(--accent-ink); font: 900 1.1rem/1 var(--serif); }
-  .name { font-size: 1.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* The wordmark, as in the citizen app: the § cut in an ink tile, the commune's name on a paper strip. */
+  .brand { min-width: 0; flex: 0 1 auto; display: flex; align-items: stretch; border: var(--rule) solid var(--line); background: var(--surface); color: var(--fg); perspective: 300px; }
+  .mark { flex: none; display: grid; place-items: center; width: 38px; background: var(--ink); color: var(--accent); font: 900 1.6rem/1 var(--serif); }
+  .name { padding: 5px 10px 4px; font-size: 1.35rem; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media (prefers-reduced-motion: no-preference) {
+    .brand:hover .mark { animation: flap 0.45s ease-in-out; }
+    .nav a { transition: background-size 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.2), border-color 0.12s linear, color 0.12s linear; }
+    .nav a[aria-current="page"] { animation: paste 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards; }
+  }
   .tools { flex: none; display: flex; gap: 8px; align-items: center; }
   .who { font-size: 0.85rem; color: var(--muted); display: none; }
   .narrow { width: auto; padding-block: 0.35rem; }
@@ -164,8 +170,10 @@
     .nav { display: grid; gap: 18px; align-content: start; position: sticky; top: 72px; }
     .group { display: grid; gap: 6px; }
     .group-label { display: block; color: var(--muted); }
-    .nav a { display: block; border: 0; border-left: 4px solid transparent; background: none; padding: 0.25rem 0.6rem; font-size: 0.95rem; }
-    .nav a:hover { border-left-color: var(--line); }
-    .nav a[aria-current="page"] { background: none; color: var(--fg); border-left-color: var(--accent); }
+    /* The rail: pointing at a section wipes amber in from the left; the open one is an ink strip. */
+    .nav a { display: block; border: 0; border-left: 4px solid transparent; padding: 0.3rem 0.6rem; font-size: 1.05rem; background: linear-gradient(var(--accent), var(--accent)) left / 0 100% no-repeat; }
+    .nav a:hover { border-left-color: var(--line); background-size: 100% 100%; color: var(--accent-ink); }
+    .nav a[aria-current="page"] { background: var(--pressed-bg); color: var(--pressed-fg); border-left-color: var(--accent); }
+    .group-label { padding-bottom: 4px; border-bottom: 2px solid var(--line); }
   }
 </style>

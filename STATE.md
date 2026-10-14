@@ -2,6 +2,13 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-10-14: The apps come alive (Affichage, complete)
+
+- Ask (Marouane, 2026-10-14): the portal feels lifeless, especially on desktop, and lacks things shown in the styling directions; add animation. Took "portal" as the resident app first (desktop), then the admin portal in the same language.
+- Done: the pieces of the identity page that never landed, as tokens and classes in both `tokens.css`: paper grain (`--grain`), the turned second sheet behind every `.card` (`--card-back`, `.yours`, `.official`, `.dated`, `--tilt`), staples, `.tack`, `.torn`, split-flap `.flaps`, `.btn.pin`. This week's poster header with flaps, a dates strip, poster group bands; the file page poster, stage tack and fill; wordmark; desktop tab hover; portal rail, titles, empty slot. Paste now fills `backwards` so settled sheets have no transform (hover lifts work, second sheets stay behind).
+- Evidence: `tools/check.sh` green (citizen 124, portal 30). Before/after at 390 and 1440 px, day and night, plus two desktop motion videos, in the project folder `citizen-look/alive/` (clock fixed to 7 Oct 2026 so the recorded fixture's week has files).
+- Not done: Tear (dismiss) has a class (`.tearing`) but nothing in the app is dismissed yet; the community screens (arguments, moderation, debate rooms) are not built, so their designs are not in the app.
+
 ## 2026-10-09: Resident sign-up beyond printed codes
 
 - Ask (Marouane, 2026-10-09, "do all three" on the coordinator's list): real resident sign-up beyond the printed codes, for the Esch pitch.

@@ -26,7 +26,8 @@
 </script>
 
 <div class="signin">
-  <form class="card sheet" onsubmit={submit}>
+  <form class="card sheet official" onsubmit={submit}>
+    <span class="tack" aria-hidden="true"></span>
     <p class="label">{commune.name || t("app_name")}</p>
     <h1 class="serif">{t("sign_in")}</h1>
     <p class="intro">{t("sign_in_intro")}</p>
@@ -50,6 +51,6 @@
 <style>
   .signin { display: grid; justify-items: center; padding-top: 32px; }
   .sheet { width: min(100%, 440px); display: grid; gap: 14px; }
-  .sheet h1 { font-size: 2.4rem; }
+  .sheet h1 { font-size: 3.4rem; line-height: 0.95; }
   .intro { margin: 0; color: var(--muted); }
 </style>

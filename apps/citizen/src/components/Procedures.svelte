@@ -194,7 +194,7 @@
           <p class="muted">{t("proc_verdict_hint")}</p>
           <div class="choices" role="group" aria-label={t("proc_verdict_title")}>
             {#each VERDICTS as v (v)}
-              <button class="btn" aria-pressed={open.my_verdict === v} disabled={verdictBusy} onclick={() => give(v)} data-verdict={v}>
+              <button class="btn pin" aria-pressed={open.my_verdict === v} disabled={verdictBusy} onclick={() => give(v)} data-verdict={v}>
                 {t(`verdict_${v}`)} <span class="n mono">{count(open.verdicts[v])}</span>
               </button>
             {/each}
@@ -233,7 +233,7 @@
             {#each g.items as p (p.id)}
               {@const name = title(p)}
               <li>
-                <button class="card proc" onclick={() => show(p)}>
+                <button class="card proc official" onclick={() => show(p)}>
                   <span class="marks"><span class="tag">{t(`proc_kind_${p.kind}`)}</span>{#if p.due_on}<span class="when mono">{t("proc_due_short", { date: date(p.due_on) })}</span>{/if}</span>
                   <span class="serif name" lang={name?.lang}>{name?.text ?? ""}</span>
                   {#if p.stages.length}{@render track(p.stages, false)}{/if}
