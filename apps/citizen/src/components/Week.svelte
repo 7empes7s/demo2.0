@@ -3,7 +3,7 @@
   import { buildWeek, indexPlaces, placeName, topicList, type Entry, type Week } from "@democracy2/pulse";
 
   import { progressOf } from "../lib/arena.svelte.ts";
-  import { routeOf, titleOf } from "../lib/data.ts";
+  import { placeOf, routeOf, titleOf } from "../lib/data.ts";
   import { CHARTER, pulse } from "../lib/pulse.svelte.ts";
   import { expandGroups } from "../lib/topics.ts";
   import { langOf, tx } from "../lib/translations.svelte.ts";
@@ -43,16 +43,19 @@
   const groupCount = $derived(pulse.prefs.groups.length);
   const weekNo = $derived(Number(week.id.slice(-2)));
 
-  /** The dated files of this week, soonest first, for the strip under the header. */
+  /** The dated files of this week for the headline ticker: what is still ahead, soonest first, or,
+   * once the week's dates are past, the whole week. */
   const ticker = $derived.by(() => {
     const dated = [...list.concerned, ...list.knowledgeable, ...list.others].filter((e) => !!e.when?.day);
     dated.sort((a, b) => a.when!.day.localeCompare(b.when!.day));
     const ahead = dated.filter((e) => e.when!.day >= today);
-    return (ahead.length ? ahead : dated).slice(0, 8);
+    return { ahead: ahead.length > 0, entries: (ahead.length ? ahead : dated).slice(0, 8) };
   });
-  function short(text: string): string {
-    return text.length > 56 ? `${text.slice(0, 54).trimEnd()}…` : text;
+  function headline(text: string): string {
+    return text.length > 110 ? `${text.slice(0, 108).trimEnd()}…` : text;
   }
+  /** One pass across the window takes longer the more there is to read. */
+  const tickerSeconds = $derived(Math.max(18, Math.round(ticker.entries.reduce((n, e) => n + Math.min(110, titleOf(e.item).length) + 24, 0) * 0.11)));
 
   const WHEN_KEY = { meeting: "week_when_meeting", open: "week_when_open", filed: "week_when_filed", activity: "week_when_activity" } as const;
 </script>
@@ -135,17 +138,22 @@
   </div>
   </div>
 
-  {#if ticker.length}
-    <!-- The dates ahead run along a strip like a station board. Every one is in the lists below, so
-         readers of the page skip the strip. -->
-    <div class="ticker" aria-hidden="true">
-      <div class="run">
-        {#each [0, 1] as copy (copy)}
-          {#each ticker as e (e.item.id)}
+  {#if ticker.entries.length}
+    <!-- A news ticker: the week's dated files run across once each, behind a fixed label. Every one
+         is in the lists below, so screen readers skip it. -->
+    <div class="ticker" aria-hidden="true" style="--ticker-time: {tickerSeconds}s">
+      <span class="flag"><span class="dot"></span>{t(ticker.ahead ? "ticker_label" : "week_title")}</span>
+      <div class="window">
+        <div class="run">
+          {#each ticker.entries as e (e.item.id)}
             {@const d = shortDay(ui.lang, e.when!.day)}
-            <span class="tick"><b>{d.day} {d.month}</b> {short(tx(titleOf(e.item)))}</span>
+            <span class="tick">
+              <b>{e.when!.day === today ? t("week_today") : `${d.day} ${d.month}`}</b>
+              <i>{t(placeOf(e.item) === "esch" ? "place_esch" : "place_chamber")}</i>
+              <span lang={langOf(titleOf(e.item))}>{headline(tx(titleOf(e.item)))}</span>
+            </span>
           {/each}
-        {/each}
+        </div>
       </div>
     </div>
   {/if}
@@ -204,12 +212,24 @@
   .group { display: grid; gap: 10px; }
   /* Group names are poster bands: the label face, a heavy rule under. */
   .group-title { font: 900 1.35rem/1 var(--serif); text-transform: uppercase; display: flex; gap: 10px; align-items: baseline; margin: 0; padding-bottom: 6px; border-bottom: var(--rule) solid var(--line); }
-  .ticker { overflow: hidden; border: var(--rule) solid var(--line); background: var(--ink); color: var(--paper); }
-  .run { display: flex; width: max-content; }
-  .tick { flex: none; padding: 0.45rem 1.2rem; font: 700 0.95rem/1.2 var(--serif); text-transform: uppercase; letter-spacing: 0.02em; white-space: nowrap; border-right: 2px solid currentColor; }
-  .tick b { color: var(--accent); margin-right: 0.4em; }
-  :global([data-motion="on"]) .run { animation: ticker 40s linear infinite; }
+  /* The ticker: a fixed amber label on the left, the headlines running right to left behind it. */
+  .ticker { display: flex; align-items: stretch; overflow: hidden; border: var(--rule) solid var(--line); background: var(--ink); color: var(--paper); }
+  .flag { flex: none; display: flex; align-items: center; gap: 8px; padding: 0.5rem 0.9rem; background: var(--accent); color: var(--accent-ink); font: 900 1rem/1 var(--serif); text-transform: uppercase; letter-spacing: 0.03em; border-right: var(--rule) solid var(--ink); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--red); border: 2px solid var(--ink); }
+  .window { flex: 1 1 auto; min-width: 0; overflow: hidden; display: flex; align-items: center; }
+  .run { display: flex; width: max-content; white-space: nowrap; }
+  .tick { flex: none; display: inline-flex; align-items: baseline; gap: 0.55em; padding: 0.5rem 0 0.5rem 1rem; font-size: 0.95rem; font-weight: 600; }
+  .tick + .tick::before { content: "§"; margin-right: 0.4em; color: var(--accent); font: 900 1rem/1 var(--serif); }
+  .tick b { color: var(--accent); font: 900 1rem/1 var(--serif); text-transform: uppercase; letter-spacing: 0.02em; }
+  .tick i { font-style: normal; font: 700 0.8rem/1 var(--serif); text-transform: uppercase; letter-spacing: 0.03em; opacity: 0.75; }
+  /* With motion, each pass starts just past the right edge and ends once the last headline has left. */
+  :global([data-motion="on"]) .run { padding-left: 100%; animation: ticker var(--ticker-time, 30s) linear infinite; }
   :global([data-motion="on"]) .ticker:hover .run { animation-play-state: paused; }
+  :global([data-motion="on"]) .dot { animation: blink 1.6s ease-in-out infinite; }
+  @media (max-width: 420px) {
+    .flag { padding: 0.45rem 0.6rem; font-size: 0.85rem; gap: 6px; }
+    .tick { font-size: 0.9rem; }
+  }
   .count {
     display: inline-grid;
     place-items: center;

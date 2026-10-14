@@ -314,7 +314,8 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 @keyframes back-in { from { transform: translate(0, 0) rotate(0); opacity: 0; } to { opacity: 1; } }
 @keyframes tack-land { 0% { transform: translateX(-50%) translateY(-14px) scale(1.8); opacity: 0; } 70% { transform: translateX(-50%) scale(0.9); opacity: 1; } 100% { transform: translateX(-50%); opacity: 1; } }
 @keyframes tear { to { clip-path: inset(0 0 0 100%); transform: translateX(16px) rotate(2deg); opacity: 0; } }
-@keyframes ticker { to { transform: translateX(-50%); } }
+@keyframes ticker { to { transform: translateX(-100%); } }
+@keyframes blink { 50% { opacity: 0.25; } }
 @keyframes grow { from { transform: scaleX(0); } }
 
 /* Pasted sheets fill backwards only: once settled they carry no transform, so a hover can still
