@@ -72,3 +72,77 @@ Desk's idea form (`apps/citizen/src/components/DeskIdeas.svelte`) asks for langu
 | Consents and declarations (8-14) | none | missing: a required checkbox list, wording from the town's règlement |
 | Project questions (15-23) | free text only | missing: structured questions; 19 is yes/no, 20-21 optional |
 | Age 14 or more | not checked | the register check is a person's (as for enrolment letters) |
+
+## 4. Draft answers for Democracy2.0 (cracia), to paste
+
+In French, as the form asks. Facts come from this repo as of 2026-10-15; the budget is an estimate to adjust. Fields 1-7 and the boxes 8-14 are Marouane's own (see section 5).
+
+**Title**
+
+Cracia : suivre, proposer et donner son avis sur la vie d'Esch, au même endroit
+
+**Description** (6 phrases)
+
+Cracia est une application web gratuite, en cinq langues (luxembourgeois, français, allemand, anglais, portugais), qui rassemble au même endroit ce que la Ville et la Chambre décident pour Esch. Chaque semaine, elle montre aux résidents les dossiers qui concernent leur quartier et leurs sujets, expliqués simplement, avec un lien vers le texte officiel. Les résidents peuvent y proposer des idées, soutenir celles des autres, envoyer une remarque à la commune et suivre la réponse grâce à un code. La commune y publie l'avancement de ses projets, étape par étape, et répond publiquement. Chacun peut participer sans créer de compte : la commune remet un code personnel par courrier, et aucun nom n'est conservé à côté des avis ou des idées. Une première version fonctionne déjà en ligne ; le budget servirait à la lancer officiellement à Esch pendant un an.
+
+**Location:** no pin; the project covers the whole commune.
+
+**Images:** screenshots of This week, a file page, Ideas and Send feedback, phone and desktop (from `citizen-look/` in the project folder).
+
+### Projet
+
+**15. But du projet : quels sont les résultats attendus ?**
+
+Rendre la vie communale lisible et ouverte à tous les résidents, y compris ceux qui ne votent pas aux élections nationales, en lien avec la vision « Ensemble pour une Ville plus Solidaire ». Résultats attendus après un an : au moins 1 000 résidents inscrits ; les projets de la commune suivis publiquement, étape par étape, avec leurs dates ; chaque idée et chaque remarque reçoit une réponse publique ; un bilan chiffré publié à la fin (participation par quartier et par langue, délais de réponse), pour décider avec la commune s'il faut continuer.
+
+**16. Localisation / Endroit / Adresse du projet**
+
+Toute la commune d'Esch-sur-Alzette, en ligne (sur téléphone et ordinateur). Pour les personnes sans smartphone : demande du code par courrier, et une aide possible au guichet de l'Hôtel de Ville ou dans les maisons de quartier si la commune le souhaite.
+
+**17. Public cible**
+
+Tous les résidents d'Esch à partir de 14 ans, de tous âges et de tous niveaux numériques, en particulier les résidents étrangers (plus de la moitié de la population) et les personnes qui ne lisent pas facilement le français administratif.
+
+**18. Main d'oeuvre et matériel requis**
+
+L'application existe déjà et son code est ouvert. Il faut : un serveur hébergé dans l'UE ; l'impression et l'envoi des lettres avec les codes personnels ; une relecture des traductions luxembourgeoise et portugaise par des locuteurs natifs ; des affiches et dépliants en cinq langues ; deux ou trois séances de présentation dans les quartiers. Le développement et la maintenance sont faits bénévolement par le porteur du projet.
+
+**19. Participation des citoyens ou activité participative**
+
+Oui. Le projet est lui-même une activité participative : les résidents proposent des idées, soutiennent celles des autres, envoient leurs remarques, donnent leur avis sur les projets terminés (« fait », « à revoir », « pas fait ») et répondent aux consultations ouvertes par la commune. Des résidents volontaires testent l'application et relisent les traductions.
+
+**20. Tâches demandées aux équipes de l'Administration Communale d'Esch-sur-Alzette**
+
+- Désigner une personne de contact qui publie l'avancement des projets et répond aux idées et remarques sur le portail de la commune (environ deux heures par semaine).
+- Vérifier les demandes de code par courrier dans le registre des résidents, puis envoyer les lettres (le portail les imprime, une page A4 par lettre).
+- Valider avec le délégué à la protection des données la façon dont les données sont traitées.
+- Annoncer le lancement dans les canaux de la Ville.
+
+**21. Votre participation à la réalisation du projet**
+
+Je construis l'application et je m'occupe de l'installation, de la mise à jour, de la sécurité et du support technique pendant toute la durée du projet, bénévolement. Je forme la personne de contact de la commune et j'anime les séances de présentation. Je publie le bilan à la fin de l'année.
+
+**22. Budget estimatif, frais de fonctionnement inclus**
+
+Environ 10 000 € pour un an :
+- Hébergement dans l'UE et sauvegardes, 12 mois : 1 200 €
+- Impression et envoi des lettres avec les codes (environ 3 000 lettres) : 3 600 €
+- Relecture des traductions (luxembourgeois, portugais) : 1 500 €
+- Affiches et dépliants en cinq langues : 1 500 €
+- Séances de présentation dans les quartiers (salles, matériel) : 700 €
+- Réserve pour imprévus (15 %) : 1 500 €
+
+Aucun montant n'est versé au porteur du projet ; les factures sont payées directement aux prestataires.
+
+**23. Suivi**
+
+Pendant un an, j'assure la maintenance (mises à jour, sécurité, sauvegardes) et la commune publie l'avancement des projets. Le code est ouvert et documenté : la commune peut à tout moment reprendre l'hébergement elle-même ou le confier à un prestataire, sans dépendre de moi. À la fin de l'année, un bilan est publié et la commune décide de continuer, d'adapter ou d'arrêter ; si elle arrête, les données sont exportées pour la commune puis supprimées.
+
+**24. Illustration du projet:** the same screenshots as above plus one A4 enrolment letter (PDF) from `citizen-look/sign-up/`.
+
+## 5. Before ticking boxes 8-14 (Marouane's call)
+
+- **Box 10, no conflict of interest.** Ticking it is only true if the budget pays nobody connected to Marouane. The answers above say so (hosting, printing and proofreading paid to third parties, no pay for him). Two things still read as an advantage: the architecture plans paid offers to communes (`docs/architecture/00-overview.md`, e.g. "SaaS for municipalities"), and the Companion and Arena modules are "All rights reserved", not open. Either state this in the form, or put the parts Esch would run under an open licence first.
+- **Box 12, no exclusive right.** Fits the AGPL modules. It does not fit Companion and Arena while they are "All rights reserved", and the citizen app relies on the Companion.
+- **Box 9, name published.** Required: ticking it means Marouane's first and last name appear with the project.
+- **Age 14 or more.** "Public cible" says 14+, but the app does not check age today; the commune's register check covers residence, not age.
