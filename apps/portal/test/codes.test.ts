@@ -149,6 +149,8 @@ describe("codes asked for by post", () => {
     expect([...select.options].map((o) => o.textContent)).toEqual(["Not in the residents' register", "Address outside the commune", "Asked twice, or a letter already went", "Address incomplete"]);
     expect(select.value).toBe("asked_twice");
     expect(picker.textContent).toContain("The resident's device shows the reason on its next visit.");
+    expect(picker.querySelector("h3")?.textContent).toBe("Decline the request from Jean Weber");
+    await vi.waitFor(() => expect(document.activeElement).toBe(select));
     // Keeping it closes the picker and sends nothing.
     click(button(picker, "Keep it"));
     expect(root.querySelector("[data-state=declining]")).toBeNull();

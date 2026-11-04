@@ -32,6 +32,7 @@
   /** The request being declined, and the reason the admin picked for it. */
   let declining = $state<string | null>(null);
   let reason = $state<DeclineReason>("not_in_register");
+  let reasonField = $state<HTMLSelectElement | null>(null);
 
   async function load() {
     listError = null;
@@ -88,6 +89,8 @@
   function startDecline(r: LetterRequest) {
     declining = r.id;
     reason = r.outside ? "outside_commune" : r.sent_before || r.duplicate ? "asked_twice" : "not_in_register";
+    // The picker sits under the list: bring it into view on a phone.
+    queueMicrotask(() => reasonField?.focus());
   }
 
   async function decline(r: LetterRequest) {
@@ -208,28 +211,29 @@
                   {#if r.outside}<span class="flag" data-state="outside">{t("letters_outside")}</span>{/if}
                 </td>
                 <td>{date(r.created_at)}</td>
-                <td>
-                  {#if declining === r.id}
-                    <div class="decline" data-state="declining">
-                      <label class="label" for="reason-{r.id}">{t("letters_decline_reason")}</label>
-                      <select id="reason-{r.id}" bind:value={reason}>
-                        {#each DECLINE_REASONS as x (x)}<option value={x}>{t(`letters_reason_${x}`)}</option>{/each}
-                      </select>
-                      <p class="muted hint">{t("letters_decline_hint")}</p>
-                      <div class="actions">
-                        <button class="btn small primary" onclick={() => decline(r)} disabled={busy}>{t("letters_decline_go")}</button>
-                        <button class="btn small" onclick={() => (declining = null)} disabled={busy}>{t("letters_decline_keep")}</button>
-                      </div>
-                    </div>
-                  {:else}
-                    <button class="btn small" onclick={() => startDecline(r)} disabled={busy}>{t("letters_decline")}</button>
-                  {/if}
-                </td>
+                <td><button class="btn small" onclick={() => startDecline(r)} disabled={busy} aria-expanded={declining === r.id}>{t("letters_decline")}</button></td>
               </tr>
             {/each}
           </tbody>
         </table>
       </div>
+      {@const target = requests.find((r) => r.id === declining)}
+      {#if target}
+        <div class="decline" data-state="declining">
+          <h3 class="serif">{t("letters_decline_title", { name: target.name })}</h3>
+          <div class="field">
+            <label class="label" for="decline-reason">{t("letters_decline_reason")}</label>
+            <select id="decline-reason" bind:this={reasonField} bind:value={reason}>
+              {#each DECLINE_REASONS as x (x)}<option value={x}>{t(`letters_reason_${x}`)}</option>{/each}
+            </select>
+          </div>
+          <p class="muted hint">{t("letters_decline_hint")}</p>
+          <div class="actions">
+            <button class="btn primary" onclick={() => decline(target)} disabled={busy}>{t("letters_decline_go")}</button>
+            <button class="btn" onclick={() => (declining = null)} disabled={busy}>{t("letters_decline_keep")}</button>
+          </div>
+        </div>
+      {/if}
       <div class="actions"><button class="btn primary" onclick={printRequests} disabled={busy || !picked.size}>{busy ? t("busy") : t("letters_print", { count: picked.size })}</button></div>
     {/if}
   </section>
@@ -277,6 +281,7 @@
   .codes { font-size: 0.9rem; }
   .hint { margin: 0; font-size: 0.86rem; }
   .flag { display: block; font-size: 0.82rem; font-weight: 700; color: var(--red); }
-  .decline { display: grid; gap: 6px; min-width: 14rem; }
-  .decline .actions { gap: 6px; }
+  .decline { display: grid; gap: 10px; padding: 14px; border: var(--rule) solid var(--line); border-left: 8px solid var(--red); background: var(--surface); }
+  .decline h3 { margin: 0; font-size: 1.15rem; }
+  .decline select { max-width: 24rem; }
 </style>
