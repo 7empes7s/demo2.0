@@ -2,6 +2,13 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-11-04: Old PRs #62, #64 and #73 landed or closed (issue #75)
+
+- Ask (Mimoun, issue #75): every open PR lands through office QA or is closed.
+- #62 landed: the operator queue's Companion unit entry now records the unit part as done (keel-operator's live checks on #61, 2026-10-08 08:32 UTC). The entry stays open: translations still wait on the Groq key.
+- #64 closed: already on master in #65. Only its evidence link was missing, so the Done row for the Desk bootstrap password now also cites keel-operator's live checks on #48.
+- #73 landed as `docs/product/esch-budget-participatif-2026.md`, marked **draft, not submitted**. Nothing was sent to Esch-sur-Alzette. It now opens with nine open questions for the manager (who files, licence of the held modules, conflict of interest, targets, a year of unpaid work, budget, work asked of the commune, age check, explanations off on the live app) and a sources and claims table. One claim has no source (share of foreign residents) and is marked `[à vérifier]`; the règlement has not been read.
+
 ## 2026-10-14: The apps come alive (Affichage, complete)
 
 - Ask (Marouane, 2026-10-14): the portal feels lifeless, especially on desktop, and lacks things shown in the styling directions; add animation. Took "portal" as the resident app first (desktop), then the admin portal in the same language.

@@ -18,7 +18,8 @@ History: from 2026-10-05 to 2026-10-07 this queue lived in the keel repo (`ops/o
 - Why: the translations PR added `StateDirectory=civic-companion` to `ops/deploy/civic-companion.service` (see STATE.md, "Files in the resident's language").
 - Steps: copy the unit from the live release to `/etc/systemd/system/` (keep the `node22.conf` drop-in), `systemctl daemon-reload`, restart `civic-companion`.
 - Done when: `systemctl show -p StateDirectory civic-companion` names `civic-companion`, and once a model key is set (next entry) `/data/translations.json` is served.
-- Status: not yet confirmed on the box.
+- Status: unit part done (keel-operator, 2026-10-08 08:32 UTC): `StateDirectory=civic-companion`, `/var/lib/civic-companion`
+  exists, service active (#61). `/data/translations.json` is served but `texts` stays empty until the Groq entry below is done.
 
 ### 2026-10-06: switch the Companion to a free-tier open-weight model (Groq)
 
@@ -33,7 +34,7 @@ History: from 2026-10-05 to 2026-10-07 this queue lived in the keel repo (`ops/o
 
 | Date (UTC) | Entry | Evidence |
 |---|---|---|
-| 2026-10-09 | Desk bootstrap password removed: `/etc/civic/desk-admin.initial` deleted, `DESK_BOOTSTRAP_PASSWORD` blanked in `/etc/civic/desk.env` | Marouane, in the project chat, 2026-10-09 (after changing the `admin` password) |
+| 2026-10-09 | Desk bootstrap password removed: `/etc/civic/desk-admin.initial` deleted, `DESK_BOOTSTRAP_PASSWORD` blanked in `/etc/civic/desk.env` | Marouane, in the project chat, 2026-10-09 (after changing the `admin` password). Live checks by keel-operator at 09:10 UTC: file gone, `DESK_BOOTSTRAP_PASSWORD` blank, `civic-desk` restarted 09:07 and healthy: #48 (comment of 2026-10-09) |
 | 2026-10-07 09:12 | Desk and the staff portals: `civic-desk` on 127.0.0.1:8094, `/etc/civic/desk.env`, `DESK_URL` and `PORTAL_DIR` in `companion.env`, portals built and served at `/portal/` | #48 (comment of 2026-10-07). Marouane changed the `admin` password on 2026-10-09. No backup job for `/var/lib/civic-desk/desk.db` yet. |
 | 2026-10-06 03:33 | Commons argument library: `civic-commons` on 127.0.0.1:8093, `COMMONS_URL` in `companion.env` | #25 (second comment) |
 | 2026-10-06 03:15 | Claim checker and read-only Ideas list: `civic-provenance` (8090) and `civic-agora --read-only` (8091), `PROVENANCE_URL` and `AGORA_URL` in `companion.env` | #25 (first comment) |
