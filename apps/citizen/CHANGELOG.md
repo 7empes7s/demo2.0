@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Tear: what you dismiss is torn off sideways (500 ms), then removed: the sheets "Forget my choices" clears (where you live, your topics; they come back blank), the subject of a feedback message ("Not about this"), a claim's verdict once you edit the claim, and the "Supported" mark when you withdraw your support. With motion off it goes at once; if the browser never reports the end of the animation it goes anyway after 750 ms. The keyboard lands somewhere useful afterwards (the "forgotten" note, the message box, the support button). The same data is cleared or sent as before.
 - A paragraph-long file title keeps the poster face (Big Shoulders Display, in mixed case so it stays easy to read) instead of switching to plain type. "Show the full title" appears only when the title is really cut off at that width; before, it showed on every long title and did nothing when the title already fit.
 - Scrollbars match the wall: a square ink bar (grey at night) in a cut along the page, amber under the pointer; Firefox takes the same two colours. Same in the admin portal.
 - The date strip under This week is a news ticker: a fixed amber "Coming up" label with a blinking red dot, then the week's dated files running right to left, each once per pass, as a headline (the day or "Today", the place, then the title in the resident's language). Once the week's dates are past the label reads "This week". It pauses under the pointer, takes longer to cross the more there is to read, and stands still with motion off. New string in all five languages.

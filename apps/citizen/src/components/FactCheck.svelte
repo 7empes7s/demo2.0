@@ -5,6 +5,7 @@
   import { safeUrl } from "../lib/data.ts";
   import { CompanionFailure } from "../lib/errors.ts";
   import type { Key } from "../lib/i18n.ts";
+  import { tear } from "../lib/tear.ts";
   import { t } from "../lib/ui.svelte.ts";
 
   /** With an item, the claim is checked against that file; without, against every file. */
@@ -42,10 +43,18 @@
     }
   }
 
-  /** A verdict belongs to the claim it answered: editing the claim clears it. */
+  let verdict = $state<HTMLElement>();
+
+  /**
+   * A verdict belongs to the claim it answered: editing the claim clears it. A graded verdict is
+   * torn off first; the resident keeps typing in the claim box meanwhile.
+   */
   function edited() {
-    result = null;
     failure = null;
+    const torn = result;
+    if (torn?.result === "graded") {
+      if (!verdict?.classList.contains("tearing")) void tear(verdict, () => { if (result === torn) result = null; });
+    } else result = null;
   }
 
   const graded = $derived(result?.result === "graded" ? result.grade : null);
@@ -75,7 +84,7 @@
     {#if graded}<p class="sr-only">{t(`grade_${graded.grade}`)}. {t(`check_reason_${graded.grade}`)}</p>{/if}
   </div>
   {#if graded}
-    <div class="verdict {graded.grade}" data-state="graded" data-grade={graded.grade}>
+    <div class="verdict {graded.grade}" data-state="graded" data-grade={graded.grade} bind:this={verdict}>
       <p class="grade"><span class="swatch" aria-hidden="true"></span>{t(`grade_${graded.grade}`)}</p>
       <p>{t(`check_reason_${graded.grade}`)}</p>
       <h4 class="label">{t("evidence")}</h4>

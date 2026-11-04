@@ -102,6 +102,28 @@ describe("FactCheck component", () => {
     }
   });
 
+  it("tears the verdict off when the claim is edited with motion on, keeping the claim box in use", async () => {
+    document.documentElement.dataset.motion = "on";
+    try {
+      const { target } = await submit(new FakeChecker(async () => ({ result: "graded", grade: grade("red") })));
+      const verdict = target.querySelector("[data-state=graded]")!;
+      const box = target.querySelector("textarea")!;
+      for (const text of ["Déposé le 16", "Déposé le 16 mai"]) {
+        box.value = text;
+        box.dispatchEvent(new Event("input", { bubbles: true }));
+        flushSync();
+      }
+      expect(verdict.classList.contains("tearing")).toBe(true);
+      expect(target.querySelector("[data-state=graded]")).toBe(verdict);
+      verdict.dispatchEvent(Object.assign(new Event("animationend"), { animationName: "tear" }));
+      flushSync();
+      expect(target.querySelector("[data-state=graded]")).toBeNull();
+      expect(target.querySelector(".status")?.textContent?.trim()).toBe("");
+    } finally {
+      delete document.documentElement.dataset.motion;
+    }
+  });
+
   it("does not show an answer under a claim edited while it was being checked", async () => {
     let release!: (r: FactCheckResult) => void;
     const checker = new FakeChecker(() => new Promise((r) => (release = r)));

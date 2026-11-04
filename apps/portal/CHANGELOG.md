@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Tear: "Done, I have them" tears the codes shown once off the page, and a declined request is torn off the "Asked by post" list (500 ms, same as the citizen app; at once with reduced motion). The keyboard then goes to the page title, or to the next request's Decline (the list title when none is left).
 - The portal shares the citizen app's wall: paper grain, cards with a turned second sheet and two staples (the sign-in sheet navy, with a tack), the wordmark (the § in an ink tile beside the commune's name), page titles as poster bands, a side rail that wipes amber in on hover and lights the open section in ink, list entries that lift under the pointer, and an empty slot (a dashed cut line around a faint §) where nothing is picked yet. Motion is off for reduced motion.
 - Enrolment codes opens on "Asked by post": the residents' waiting requests (name, address, date), each ticked for printing unless a letter already went to that name and address or it was asked twice. "Print letters (n)" makes the codes and shows the letters once; each carries its address where a left-window envelope (C5/6 or DL) shows it, 20 mm from the left and about 47 mm from the top, beside the commune and the code, then the six languages, one A4 page per letter. "Decline" removes a request without a letter.
 
