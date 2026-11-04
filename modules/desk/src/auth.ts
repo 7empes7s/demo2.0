@@ -158,8 +158,11 @@ export function residentFromToken(store: Store, token: string | null): { id: str
 
 export class DeskError extends Error {
   readonly status: number;
-  constructor(status: number, message: string) {
+  /** A plain word a client can branch on, such as `outside_commune`, next to the sentence. */
+  readonly code: string | undefined;
+  constructor(status: number, message: string, code?: string) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }

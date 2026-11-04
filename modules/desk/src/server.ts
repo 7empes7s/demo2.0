@@ -23,7 +23,7 @@ import { createEnrolCodes, createStaff, DeskError, enrol, enrolBatches, listStaf
 import type { Role } from "./db.ts";
 import { Store } from "./db.ts";
 import * as desk from "./desk.ts";
-import { declineLetter, letterRequests, pendingLetters, printLetters, requestLetter } from "./letters.ts";
+import { communePostcodes, declineLetter, expireLetterStatus, letterRequests, letterStatus, parsePostcodes, pendingLetters, printLetters, requestLetter } from "./letters.ts";
 import { loadSeed } from "./seed.ts";
 
 export interface ServerOptions {
@@ -35,6 +35,8 @@ export interface ServerOptions {
   readsPerMinute?: number;
   /** Letter requests per client per minute (default 5), on top of the write limit. */
   letterRequestsPerMinute?: number;
+  /** Request status checks per client per minute (default 10), on top of the write limit. */
+  letterStatusPerMinute?: number;
 }
 
 const MAX_BODY = 64 * 1024;
@@ -73,6 +75,7 @@ export function createDeskServer(opts: ServerOptions) {
   const reads = new Map<string, number[]>();
   const logins = new Map<string, number[]>();
   const letterAsks = new Map<string, number[]>();
+  const statusChecks = new Map<string, number[]>();
 
   const clientOf = (req: IncomingMessage): string => {
     const socket = req.socket.remoteAddress ?? "?";
@@ -296,6 +299,11 @@ export function createDeskServer(opts: ServerOptions) {
       throttle(req, letterAsks, opts.letterRequestsPerMinute ?? 5);
       return ok(requestLetter(store, body), 201);
     }
+    if (path === "/enrol-requests/status" && method === "POST") {
+      // A POST, so the request code never sits in a URL or an access log. Guessing codes is slow.
+      throttle(req, statusChecks, opts.letterStatusPerMinute ?? 10);
+      return ok(letterStatus(store, body.code));
+    }
     if (path === "/enrol-requests" && method === "GET") {
       needStaff(who, "admin");
       return ok({ requests: letterRequests(store) });
@@ -306,7 +314,7 @@ export function createDeskServer(opts: ServerOptions) {
     }
     if (parts[0] === "enrol-requests" && parts.length === 3 && parts[2] === "decline" && method === "POST") {
       const admin = needStaff(who, "admin");
-      declineLetter(store, by(admin), parts[1]);
+      declineLetter(store, by(admin), parts[1], body.reason);
       return ok({ ok: true });
     }
 
@@ -389,6 +397,7 @@ export function createDeskServer(opts: ServerOptions) {
     const s = publicSettings();
     return {
       ...s,
+      postcodes: communePostcodes(store),
       ai: { ...s.ai, base_url: store.setting("ai.base_url") ?? "", key_set: !!store.setting("ai.api_key"), from_env: !store.setting("ai.base_url") && !!process.env.LLM_BASE_URL },
     };
   }
@@ -407,6 +416,11 @@ export function createDeskServer(opts: ServerOptions) {
         if (!langs.length) throw new DeskError(400, "languages must list at least one of lb, fr, de, en, pt");
         store.setSetting("commune.languages", langs.join(","));
         changes["commune.languages"] = langs;
+      }
+      if (body.postcodes !== undefined) {
+        const postcodes = parsePostcodes(body.postcodes);
+        store.setSetting("commune.postcodes", JSON.stringify(postcodes));
+        changes["commune.postcodes"] = postcodes;
       }
       if (body.intro !== undefined) {
         const intro = desk.localized(body.intro, "intro", 600, false);
@@ -436,7 +450,7 @@ export function createDeskServer(opts: ServerOptions) {
     } catch (e) {
       const status = e instanceof DeskError ? e.status : 500;
       if (status === 500) console.error(e);
-      send(res, status, { error: e instanceof DeskError ? e.message : "something went wrong" });
+      send(res, status, e instanceof DeskError ? { error: e.message, ...(e.code ? { code: e.code } : {}) } : { error: "something went wrong" });
     }
   });
 }
@@ -460,10 +474,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const port = Number(process.env.PORT ?? 8094);
   const host = process.env.HOST || "127.0.0.1";
   const server = createDeskServer({ store, trustProxy: Number(process.env.TRUST_PROXY ?? 1) || 0 });
-  // Votes close on time even when nobody is reading.
+  // Votes close on time even when nobody is reading; request status rows go on their Monday.
   setInterval(() => {
     try {
       desk.closeDueRounds(store);
+      expireLetterStatus(store);
     } catch (e) {
       console.error(e);
     }

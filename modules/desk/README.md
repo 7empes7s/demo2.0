@@ -18,7 +18,7 @@ Desk is the pilot shape of three architecture modules in one: Agora (ideas), Del
 - **The log is append only and hash chained.** Every write goes with one event in the same transaction; the chain is replayed by `GET /audit/verify`. It is Desk's own log on Desk's own disk: it proves nothing was changed *through Desk*, not that the operator of the box did not rewrite the file. Publishing checkpoints to Record is the next step.
 - **A model never speaks to a resident.** It sorts, drafts and translates for staff; every output is labelled as the model's and edited by a person. Resident text enters prompts as quoted data. Every call is logged without its text.
 
-- **A code by post forgets the address.** A resident without a code asks for one with a name and an address. The request waits with them until an admin prints the letter or declines it; either deletes the name and address. The log records that a request came in and how it ended, never who asked. What stays is a keyed hash of the name and address with no date and no row order, so a second request shows "a letter already went to this name and address". The admin who prints sees a name next to a code, as at a counter; Desk never stores the two together, and every code printed in a month shares the batch "by post YYYY-MM".
+- **A code by post forgets the address.** A resident without a code asks for one with a name and an address. The request waits with them until an admin prints the letter or declines it; either deletes the name and address. The log records that a request came in and how it ended, never who asked. What stays is a keyed hash of the name and address with no date and no row order, so a second request shows "a letter already went to this name and address". The asking device keeps a random request code; Desk keeps only its keyed hash with the outcome (waiting, sent, declined and why) for 60 days, so the device can learn a decline without Desk keeping any way to reach the resident. The admin who prints sees a name next to a code, as at a counter; Desk never stores the two together, and every code printed in a month shares the batch "by post YYYY-MM".
 
 ## Run
 
@@ -39,10 +39,11 @@ All JSON. Staff send `Authorization: Staff <token>` (from `POST /staff/login`), 
 | `GET /healthz` | anyone | counts, the model's name, the log head |
 | `GET /settings/public` | anyone | commune name, languages, intro, whether a model is set |
 | `POST /enrol {code}` | anyone | one-time code -> `{token, resident_id}` |
-| `POST /enrol-requests {name, street, extra?, postcode}` | anyone | asks for a code by post -> `{received, already}`; a postcode is four digits (`L-4002` is fine); five per client per minute; 503 past 5000 waiting |
-| `GET /enrol-requests` | admin | the waiting requests, each with `sent_before` and `duplicate` |
-| `POST /enrol-requests/print {ids}` | admin | one code per request in the month's "by post" batch -> `{letters: [{name, street, extra, postcode, code}]}`, shuffled, shown once; the requests are deleted |
-| `POST /enrol-requests/:id/decline` | admin | deletes the request; no letter |
+| `POST /enrol-requests {name, street, extra?, postcode}` | anyone | asks for a code by post -> `{received, already, request_code?}`; a postcode is four digits (`L-4002` is fine) and, when `commune.postcodes` is set, in its ranges (else 400 with `code: "outside_commune"`); five per client per minute; 503 past 5000 waiting |
+| `POST /enrol-requests/status {code}` | anyone with the request code | `{status: "waiting" \| "sent"}` or `{status: "declined", reason}`; 404 for any other code; ten per client per minute |
+| `GET /enrol-requests` | admin | the waiting requests, each with `sent_before`, `duplicate` and `outside` |
+| `POST /enrol-requests/print {ids}` | admin | one code per request in the month's "by post" batch -> `{letters: [{name, street, extra, postcode, code}]}`, shuffled, shown once; the requests are deleted; 409 if one is outside the commune's postcodes |
+| `POST /enrol-requests/:id/decline {reason}` | admin | deletes the request, no letter; `reason` is `not_in_register`, `outside_commune`, `asked_twice` or `address_incomplete`, shown to the asking device |
 | `GET /me` | resident | `{enrolled, since}` |
 | `GET /procedures?status=&kind=`, `GET /procedures/:id` | anyone | procedures with updates, verdict counts, published answers, linked ideas; `my_verdict` for a resident |
 | `POST /procedures/:id/verdict {verdict}` | resident | done, needs_work, not_done; only on a finished, stalled or cancelled procedure; the last one counts |
@@ -63,7 +64,7 @@ All JSON. Staff send `Authorization: Staff <token>` (from `POST /staff/login`), 
 | `GET /staff`, `POST /staff`, `PATCH /staff/:id` | admin | the last admin cannot be demoted or disabled |
 | `POST /enrol-codes {batch, count}` | admin | up to 5000 codes, shown once |
 | `GET /enrol-codes` | admin, auditor | batches with issued and used counts |
-| `GET /settings`, `PATCH /settings` | admin | commune, languages, intro, model (`ai.base_url`, `ai.model`, `ai.api_key`, `ai.timeout_ms`); the key is never returned |
+| `GET /settings`, `PATCH /settings` | admin | commune, languages, intro, `postcodes` (ranges such as `4001-4398`; empty: no check), model (`ai.base_url`, `ai.model`, `ai.api_key`, `ai.timeout_ms`); the key is never returned |
 | `POST /ai/test` | admin | one tiny call to the model |
 | `GET /audit/verify`, `GET /audit/events?from=&kind=&subject=&limit=`, `GET /audit/summary`, `GET /audit/ai-calls` | auditor, admin | the chain, the entries, counts, the model calls |
 
