@@ -41,6 +41,8 @@ DESK_DB=desk.db DESK_BOOTSTRAP_PASSWORD='choose-a-long-one' DESK_SEED=seed/esch.
 
 Settings: `DESK_DB` (default `desk.db`), `PORT` (8094), `HOST` (127.0.0.1), `TRUST_PROXY` (1: the Companion forwards to it), `DESK_BOOTSTRAP_PASSWORD` and `DESK_BOOTSTRAP_LOGIN` (create the first admin when no staff exists), `DESK_SEED` (loaded once into an empty store), `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_TIMEOUT_MS` (the model, unless an admin set one in the portal), `DESK_LOG_NAME` (the log's public name, such as `example.org/desk`; turns the daily fingerprint on), `DESK_LOG_KEY` (its signing key file), `DESK_OTS_CALENDARS` (comma separated, `off` for none; default the public pool).
 
+Backups: `src/backup.ts` copies the database with SQLite's online backup (never a plain `cp`: the file is in WAL mode), checks the copy read only (`PRAGMA integrity_check` and the same chain replay as `GET /audit/verify`) and keeps 7 days. On Mulinux the `civic-backup` timer runs it nightly for Desk and Agora; the restore drill is in `ops/deploy/README.md`.
+
 The shipped seed (`seed/esch.json`) is made-up data in the shape of Esch-sur-Alzette's procedures, marked as examples in every text. The citizen app, the portals and the Companion server (`/api/desk/*`) talk to it; the browser never reaches Desk directly.
 
 ## API

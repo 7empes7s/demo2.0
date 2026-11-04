@@ -15,6 +15,7 @@ Server work the operator still has to do on Mulinux, and the evidence for what i
 | `civic-agora.service` | `/etc/systemd/system/` (`PartOf=civic-companion.service`, like Provenance; its database is `/var/lib/civic-agora/agora.db`, outside the release tree, and starts empty) |
 | `civic-desk.service` | `/etc/systemd/system/` (`PartOf=civic-companion.service`; reads `/etc/civic/desk.env`, mode 600, from `desk.env.example`; its database is `/var/lib/civic-desk/desk.db`, outside the release tree, seeded once from `modules/desk/seed/esch.json`) |
 | `civic-commons.service` | `/etc/systemd/system/` (`PartOf=civic-companion.service`, like Provenance; serves the release's seed library read only, nothing is written) |
+| `civic-backup.service`, `civic-backup.timer` | `/etc/systemd/system/` (nightly copy of the Desk and Agora databases into `/var/backups/civic/YYYY-MM-DD/`, checked, kept 7 days; see [Backups and the restore drill](#backups-and-the-restore-drill)) |
 | `civic-docket.service`, `civic-docket.timer` | `/etc/systemd/system/` (refreshes Chamber and Esch-sur-Alzette data twice a day; the Esch part reads at 1 request per 3 seconds, so a run takes several minutes) |
 | `cloudflared.yml`, `publish-cloudflare.sh` | public URL `https://cracia.techinsiderbytes.com` through a Cloudflare Tunnel (no open port) |
 | `Caddyfile` | only if Caddy serves this site instead of the dedicated tunnel (on Mulinux it does, behind the main tunnel) |
@@ -35,7 +36,7 @@ chown -R civic: /opt/civic
 cp brain/templates/deploy/deploy.sh /usr/local/bin/app-deploy
 cp brain/templates/deploy/app-deploy@.* /etc/systemd/system/
 # This repo's units and settings
-cp ops/deploy/civic-*.service ops/deploy/civic-docket.timer /etc/systemd/system/
+cp ops/deploy/civic-*.service ops/deploy/civic-*.timer /etc/systemd/system/
 install -m 600 ops/deploy/deploy.env.example /etc/civic/deploy.env       # then fill GH_TOKEN
 install -m 600 ops/deploy/companion.env.example /etc/civic/companion.env # then fill LLM_API_KEY (and LLM_BASE_URL, LLM_MODEL)
 systemctl daemon-reload
@@ -46,7 +47,8 @@ systemctl start civic-docket.service           # first real snapshot (needs /opt
 curl -s 127.0.0.1:8090/healthz                 # {"ok": true, "items": N, "sentences": M}
 curl -s 127.0.0.1:8091/healthz                 # {"ok": true, "ideas": 0, "identity": "none"}
 curl -s 127.0.0.1:8093/healthz                 # {"ok": true, "arguments": 14, "matters": 2} (the seed library)
-systemctl enable --now app-deploy@civic.timer civic-docket.timer
+systemctl enable --now app-deploy@civic.timer civic-docket.timer civic-backup.timer
+systemctl start civic-backup.service && journalctl -u civic-backup -n 5   # first backup: "desk: ... chain ok"
 # Once the deployer has made the first release live (curl 127.0.0.1:8787/healthz):
 ops/deploy/publish-cloudflare.sh       # tunnel + DNS for cracia.techinsiderbytes.com (reads PORT from companion.env)
 ```
@@ -67,10 +69,53 @@ Opening posts and upvotes later needs, in this order: a `civic-door-verify.servi
 
 The argument library is optional in the same way and is not in `HEALTH_URLS`. The Companion does not report it in `/healthz`: when `civic-commons` is down or slow (2 s), the devil's advocate argues from the file's documents only and logs `commons unavailable`. To see why it is down: `curl -s 127.0.0.1:8093/healthz` (`{"ok": true, "arguments": N, "matters": M}`) and `journalctl -u civic-commons`.
 
+## Backups and the restore drill
+
+`civic-backup.timer` runs `civic-backup.service` every night at 03:15 (Luxembourg time; a night missed while the box was off runs at the next boot). It runs `modules/desk/src/backup.ts` from the live release:
+
+- It copies `/var/lib/civic-desk/desk.db` and `/var/lib/civic-agora/agora.db` with SQLite's online backup, never a plain `cp` (Desk's file is in WAL mode). The copy is one read transaction, so Desk's writes go on meanwhile.
+- It opens each copy read only and checks it: `PRAGMA integrity_check`, and for Desk the same chain replay `GET /audit/verify` runs. Only when every copy passes is the folder renamed to `/var/backups/civic/YYYY-MM-DD/` (`desk.db`, `agora.db`, `manifest.json` with each copy's size, sha256 and, for Desk, entries and head hash).
+- A failed check or a missing database exits 1. The unit then shows in `systemctl --failed` and `journalctl -u civic-backup` says why. Nothing else is touched: the previous good backup stays.
+- After a good run, folders 7 or more days old are removed, never the newest one.
+- Folders are mode 700 and files mode 600, owned by `civic`. The Desk copy holds waiting letter requests (names, addresses) and the `letters.key` secret: never copy a backup off the box unencrypted and never into Git (`*.db` is git-ignored). `docs/product/desk.md` section 7 states the 7 days to residents.
+
+Check a copy at any time (as `civic`, from `/opt/civic/current`, with Node 22: `sudo` resets `PATH`, so on Mulinux use `/opt/node22/bin/node`):
+
+```sh
+cd /opt/civic/current
+sudo -u civic /opt/node22/bin/node --experimental-strip-types --no-warnings=ExperimentalWarning modules/desk/src/backup.ts --check /var/backups/civic/YYYY-MM-DD/desk.db --chain
+# {"ok":true,"integrity":"ok","chain":{"ok":true,"entries":N,"head":"...","broken_at":null}}
+```
+
+**Restore drill** (run it once after installing, then whenever the backup changes; the app is down for about a minute, so pick a quiet hour). The drill restores a copy taken a moment before, so nothing is lost. A real restore is the same with an older day, and loses what was written since that copy.
+
+```sh
+cd /opt/civic/current
+CHECK="/opt/node22/bin/node --experimental-strip-types --no-warnings=ExperimentalWarning modules/desk/src/backup.ts --check"
+systemctl start civic-backup.service                      # a fresh copy
+D=/var/backups/civic/$(date -u +%F); jq '.copies[] | {name, chain}' $D/manifest.json   # note Desk's entries and head
+systemctl stop civic-companion.service                    # PartOf: stops civic-desk and civic-agora too
+# Set the live files aside, -wal and -shm included: a stale -wal next to a restored file corrupts it.
+A=/var/lib/civic-desk/before-restore-$(date -u +%FT%H%M); install -d -m 700 -o civic -g civic $A
+mv /var/lib/civic-desk/desk.db* $A/
+install -m 600 -o civic -g civic $D/desk.db /var/lib/civic-desk/desk.db
+B=/var/lib/civic-agora/before-restore-$(date -u +%FT%H%M); install -d -m 700 -o civic -g civic $B
+mv /var/lib/civic-agora/agora.db* $B/
+install -m 600 -o civic -g civic $D/agora.db /var/lib/civic-agora/agora.db
+systemctl start civic-companion.service                   # starts civic-desk and civic-agora with it
+sudo -u civic $CHECK /var/lib/civic-desk/desk.db --chain   # ok, the manifest's head (more entries only if someone wrote since)
+sudo -u civic $CHECK /var/lib/civic-agora/agora.db         # ok
+curl -s 127.0.0.1:8787/healthz                            # "desk":true,"agora":true
+# The audit portal's Verify page shows the same head. Once all is well, delete $A and $B
+# (they hold the same personal data as the live file).
+```
+
+If a check fails after a restore, stop the Companion again and move the files from `$A` and `$B` back.
+
 ## Mulinux notes
 
 The live install (2026-10-05) differs from the steps above in three ways. Keep these when changing the files here.
 
 - **Companion on port 8788.** Another service already listens on `127.0.0.1:8787`. `/etc/civic/companion.env` has `PORT=8788`, `/etc/civic/deploy.env` has `HEALTH_URLS="http://127.0.0.1:8788/healthz"`, and the Caddy upstream is `127.0.0.1:8788`. Every `8787` in this README means 8788 there. The loopback ports of the other services (8090, 8091, 8093) do not change.
-- **Node 22 from `/opt/node22`.** The system Node is older and other services use it, so it stays. Drop-ins `civic-companion.service.d/node22.conf`, `civic-docket.service.d/node22.conf` and `civic-desk.service.d/node22.conf` put Node 22 first on `PATH` (Desk needs Node 22's `node:sqlite`, so its unit starts `node` from `PATH` like the Companion), and `deploy.env` does the same for the build. `BUILD_CMD` builds the citizen app and the staff portals (`apps/portal/dist`, served under `/portal/`). `uv` is in `/usr/local/bin`.
+- **Node 22 from `/opt/node22`.** The system Node is older and other services use it, so it stays. Drop-ins `civic-companion.service.d/node22.conf`, `civic-docket.service.d/node22.conf`, `civic-desk.service.d/node22.conf` and `civic-backup.service.d/node22.conf` (the backup also needs `node:sqlite`) put Node 22 first on `PATH` (Desk needs Node 22's `node:sqlite`, so its unit starts `node` from `PATH` like the Companion), and `deploy.env` does the same for the build. `BUILD_CMD` builds the citizen app and the staff portals (`apps/portal/dist`, served under `/portal/`). `uv` is in `/usr/local/bin`.
 - **Public URL through the host's main tunnel and Caddy, not a `cracia` tunnel.** `publish-cloudflare.sh` and `cloudflared.yml` were not used. The main tunnel has an ingress rule `cracia.techinsiderbytes.com -> http://localhost:80` with a proxied CNAME, and the host Caddyfile has a host block for the site that reverse-proxies to `127.0.0.1:8788` with the headers from `Caddyfile` here.

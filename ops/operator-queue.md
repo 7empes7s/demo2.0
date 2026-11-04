@@ -13,6 +13,16 @@ History: from 2026-10-05 to 2026-10-07 this queue lived in the keel repo (`ops/o
 
 ## Open
 
+### 2026-11-04: install the nightly backup and run the first restore drill
+
+- Why: nothing backed up `/var/lib/civic-desk/desk.db` (the hash-chained log, ballots, staff accounts) or `/var/lib/civic-agora/agora.db` (issue #82).
+- Waits on: the release with `modules/desk/src/backup.ts` being live (any deploy after the PR merges).
+- Steps (details in `ops/deploy/README.md`, "Backups and the restore drill"):
+  1. Copy `civic-backup.service` and `civic-backup.timer` from the live release to `/etc/systemd/system/`, and add the drop-in `civic-backup.service.d/node22.conf` (same content as `civic-desk.service.d/node22.conf`).
+  2. `systemctl daemon-reload && systemctl enable --now civic-backup.timer && systemctl start civic-backup.service`.
+  3. Run the restore drill once, at a quiet hour.
+- Done when: `systemctl list-timers civic-backup.timer` shows the next run; `journalctl -u civic-backup -n 5` shows `desk: ... integrity ok, chain ok, N entries` and `agora: ... integrity ok`; `ls -l /var/backups/civic/<today>` shows three files, mode `-rw-------`, owner `civic`; after the drill, the `--check` of the restored `desk.db` shows `"ok":true` with the manifest's head, and `/healthz` shows `"desk":true,"agora":true`. Post that output on #82.
+
 ### 2026-11-04: set Esch-sur-Alzette's postcodes on the Desk portal (issue #81)
 
 - Why: Desk can now refuse a request for a code by post from outside the commune, but only once an admin sets the commune's postcodes. Until then every four-digit postcode is accepted (the old behaviour). The ranges are not hard-coded: they must come from Post Luxembourg's official list of postcodes for Esch-sur-Alzette, which this PR could not cite.
@@ -22,7 +32,7 @@ History: from 2026-10-05 to 2026-10-07 this queue lived in the keel repo (`ops/o
 ### 2026-11-04: turn on the Desk log's daily public fingerprint
 
 - Why: the daily public fingerprint of the Desk log (issue #74, which superseded PR #67) is off until the log has a name.
-- Steps: once that PR is deployed, add `DESK_LOG_NAME=cracia.techinsiderbytes.com/desk` to `/etc/civic/desk.env`, restart `civic-desk`, and copy `/var/lib/civic-desk/log.key` to wherever `desk.db` is backed up (there is no backup job yet, see Done). Post the `key` value from `/fingerprints` on the PR so it can be pinned in the repo.
+- Steps: once that PR is deployed, add `DESK_LOG_NAME=cracia.techinsiderbytes.com/desk` to `/etc/civic/desk.env`, restart `civic-desk`, and keep an offline copy of `/var/lib/civic-desk/log.key` (mode 600; the nightly `civic-backup` copies only the databases, not this key). Post the `key` value from `/fingerprints` on the PR so it can be pinned in the repo.
 - Done when: the start-up log reads `daily fingerprint on, key cracia.techinsiderbytes.com/desk+...` and `fingerprint <today>: N entries`; `curl -s https://cracia.techinsiderbytes.com/api/desk/fingerprints` shows `"enabled":true` with today's day; within an hour that day's `ots` is not null (the calendars are reachable); and `node --experimental-strip-types /opt/civic/current/modules/desk/src/check-log.ts --url https://cracia.techinsiderbytes.com/api/desk --vkey '<key>'` exits 0.
 
 ### 2026-10-07: reinstall the Companion unit for translations

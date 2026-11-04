@@ -199,17 +199,32 @@ export class Store {
   }
 
   /** Replays the whole chain. Returns the first broken entry, if any. */
-  verify(): { ok: boolean; entries: number; head: string; broken_at: number | null } {
-    const rows = this.db.prepare("SELECT * FROM events ORDER BY seq ASC").all() as unknown as EventRow[];
-    let prev = GENESIS;
-    let expectSeq = 1;
-    for (const row of rows) {
-      if (row.seq !== expectSeq || row.prev_hash !== prev || eventHash(row) !== row.hash) {
-        return { ok: false, entries: rows.length, head: prev, broken_at: row.seq };
-      }
-      prev = row.hash;
-      expectSeq++;
-    }
-    return { ok: true, entries: rows.length, head: prev, broken_at: null };
+  verify(): ChainCheck {
+    return verifyChain(this.db);
   }
+}
+
+export interface ChainCheck {
+  ok: boolean;
+  entries: number;
+  head: string;
+  broken_at: number | null;
+}
+
+/**
+ * Replays the events chain of any open Desk database (the live store, or a backup opened read
+ * only). `GET /audit/verify` and the nightly backup check both run this.
+ */
+export function verifyChain(db: DatabaseSync): ChainCheck {
+  const rows = db.prepare("SELECT * FROM events ORDER BY seq ASC").all() as unknown as EventRow[];
+  let prev = GENESIS;
+  let expectSeq = 1;
+  for (const row of rows) {
+    if (row.seq !== expectSeq || row.prev_hash !== prev || eventHash(row) !== row.hash) {
+      return { ok: false, entries: rows.length, head: prev, broken_at: row.seq };
+    }
+    prev = row.hash;
+    expectSeq++;
+  }
+  return { ok: true, entries: rows.length, head: prev, broken_at: null };
 }
