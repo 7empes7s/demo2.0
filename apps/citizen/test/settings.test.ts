@@ -9,6 +9,7 @@ import { flushSync, mount, unmount } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "../src/App.svelte";
+import { setMotion } from "../src/lib/motion.svelte.ts";
 import { pulse, reloadPulse } from "../src/lib/pulse.svelte.ts";
 import { expandGroups, groupsIn, groupsOf } from "../src/lib/topics.ts";
 import { setLang } from "../src/lib/ui.svelte.ts";
@@ -30,6 +31,7 @@ const click = (el: Element | null | undefined) => {
   (el as HTMLElement).click();
   flushSync();
 };
+const ended = (el: Element) => el.dispatchEvent(Object.assign(new Event("animationend"), { animationName: "tear" }));
 const buttonText = (root: ParentNode, text: string) => [...root.querySelectorAll("button")].find((b) => b.textContent?.trim().includes(text));
 
 async function openApp() {
@@ -201,5 +203,70 @@ describe("Settings page", () => {
     click(buttonText(page, "Deutsch"));
     expect(target.textContent).toContain("Einstellungen");
     expect(localStorage.getItem("d2.lang")).toBe("de");
+  });
+
+  async function openSettings() {
+    localStorage.setItem("d2.pulse.v1", JSON.stringify({ home: ESCH, groups: ["money"], done: true }));
+    reloadPulse();
+    const target = await openApp();
+    click(buttonText(target, "Settings"));
+    await settle();
+    const page = target.querySelector("[data-testid=settings]")!;
+    const sheets = () => ["s-home", "s-topics"].map((id) => page.querySelector(`[aria-labelledby=${id}].card`)!);
+    return { page, sheets };
+  }
+
+  it("tears off each sheet it clears with motion on, and forgets the choices once they are torn", async () => {
+    const { page, sheets } = await openSettings();
+    setMotion("on");
+    click(buttonText(page, "Forget my choices"));
+    expect(sheets().map((s) => s.classList.contains("tearing"))).toEqual([true, true]);
+    // Nothing is cleared while the sheets are still coming off.
+    expect(pulse.prefs.home).toBe(ESCH);
+    expect(page.querySelector("[aria-labelledby=s-lang]")?.classList.contains("tearing")).toBe(false);
+    sheets().forEach(ended);
+    await settle();
+    expect(pulse.prefs).toMatchObject({ home: null, groups: [] });
+    expect(sheets().map((s) => s.classList.contains("tearing"))).toEqual([false, false]);
+    // The button is now disabled, so the keyboard lands on the note saying what happened.
+    const note = page.querySelector("[role=status]");
+    expect(note?.textContent).toBeTruthy();
+    expect(document.activeElement).toBe(note);
+  });
+
+  it("tears only the sheet that holds a choice, and forgets at once with motion off", async () => {
+    const { page, sheets } = await openSettings();
+    setMotion("on");
+    click(buttonText(page, "Money and budget"));
+    click(buttonText(page, "Forget my choices"));
+    expect(sheets().map((s) => s.classList.contains("tearing"))).toEqual([true, false]);
+    ended(sheets()[0]);
+    await settle();
+    expect(pulse.prefs.home).toBeNull();
+
+    setMotion("off");
+    const select = page.querySelector<HTMLSelectElement>("select#home")!;
+    select.value = ESCH;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    flushSync();
+    click(buttonText(page, "Forget my choices"));
+    expect(sheets().some((s) => s.classList.contains("tearing"))).toBe(false);
+    await settle();
+    expect(pulse.prefs.home).toBeNull();
+    setMotion(null);
+  });
+
+  it("forgets even when the end of the tear never comes", async () => {
+    const { page, sheets } = await openSettings();
+    setMotion("on");
+    vi.useFakeTimers({ toFake: ["setTimeout"] });
+    click(buttonText(page, "Forget my choices"));
+    expect(sheets()[0].classList.contains("tearing")).toBe(true);
+    vi.advanceTimersByTime(800);
+    vi.useRealTimers();
+    await settle();
+    expect(pulse.prefs.home).toBeNull();
+    expect(sheets()[0].classList.contains("tearing")).toBe(false);
+    setMotion(null);
   });
 });

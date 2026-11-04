@@ -390,6 +390,8 @@ describe("This week (Pulse view)", () => {
     expect(target.querySelector('[aria-labelledby="g-concerned"] a.entry')?.textContent).toContain("Updated on 30 September 2026");
 
     const again = showSettings();
+    // With motion off the choices go at once (the tear itself is in settings.test.ts).
+    document.documentElement.dataset.motion = "off";
     click(buttonText(again.target, "Forget my choices"));
     expect(again.target.textContent).toContain("Your choices on this device were forgotten.");
     // The welcome steps are not shown again: the resident chose to forget, not to start over.

@@ -301,7 +301,7 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
  * Paste: anything new is pasted on and settles with a slight overshoot (700 ms). Press: a button
  * goes flat onto its backing (120 ms). Peel: the old screen peels off from its top left corner
  * while the next one was already underneath (view transition, see lib/look.ts). Tear: a dismissed
- * sheet is torn off sideways (nothing in the app is dismissed yet, so it is not used here).
+ * sheet is torn off sideways, quick and final (500 ms, see lib/tear.ts).
  * Stamp (a paste, harder): today's date lands on its calendar tile after the sheet.
  * Flap: a number that appears flips like a split-flap board. March: waiting is marching ants along
  * the cut line.
@@ -316,7 +316,7 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 
 @keyframes back-in { from { transform: translate(0, 0) rotate(0); opacity: 0; } to { opacity: 1; } }
 @keyframes tack-land { 0% { transform: translateX(-50%) translateY(-14px) scale(1.8); opacity: 0; } 70% { transform: translateX(-50%) scale(0.9); opacity: 1; } 100% { transform: translateX(-50%); opacity: 1; } }
-@keyframes tear { to { clip-path: inset(0 0 0 100%); transform: translateX(16px) rotate(2deg); opacity: 0; } }
+@keyframes tear { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(0 0 0 100%); transform: translateX(16px) rotate(2deg); opacity: 0; } }
 @keyframes ticker { to { transform: translateX(-100%); } }
 @keyframes blink { 50% { opacity: 0.25; } }
 @keyframes grow { from { transform: scaleX(0); } }
@@ -343,8 +343,9 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
   :root[data-motion="on"] :is(.file, .entry) { transition: transform 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.2), box-shadow 0.16s linear; }
   :root[data-motion="on"] :is(.file, .entry):hover { transform: translate(-3px, -3px) rotate(-0.4deg); }
 }
-/* What is torn off goes sideways, quick and final. */
-:root[data-motion="on"] .tearing { animation: tear 0.5s cubic-bezier(0.6, 0, 0.9, 0.4) forwards; pointer-events: none; }
+/* What is torn off goes sideways, quick and final. The class is doubled to outweigh the paste rule
+   above, whose :is() counts as `.chat li`. */
+:root[data-motion="on"] .tearing.tearing { animation: tear 0.5s cubic-bezier(0.6, 0, 0.9, 0.4) forwards; pointer-events: none; }
 
 :root[data-motion="on"] :is(.btn, .seg, .chip, .cite, .option) { transition: transform 0.12s linear, box-shadow 0.12s linear, background-color 0.12s linear, color 0.12s linear; }
 

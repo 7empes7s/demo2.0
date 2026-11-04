@@ -234,6 +234,8 @@ const click = (el: Element | null | undefined) => {
   (el as HTMLButtonElement).click();
   flushSync();
 };
+const ended = (el: Element) => el.dispatchEvent(Object.assign(new Event("animationend"), { animationName: "tear" }));
+const motion = (on: boolean) => (document.documentElement.dataset.motion = on ? "on" : "off");
 
 describe("Procedures page", () => {
   it("lists procedures by status with their own stage track, and opens the detail with updates, answers, linked ideas", async () => {
@@ -385,6 +387,66 @@ describe("Ideas on the desk", () => {
     await settle();
     expect(sheet.textContent).toContain("That code is not valid or was already used.");
     expect(anon.calls.map((c) => c.what)).toEqual(["enrol"]);
+  });
+});
+
+describe("Tearing off what is dismissed", () => {
+  afterEach(() => void delete document.documentElement.dataset.motion);
+
+  it("tears off a withdrawn support, then shows the button unpressed and keeps it in focus", async () => {
+    motion(true);
+    const desk = new FakeDesk(true);
+    const target = await show(DeskIdeas, { client: desk });
+    const button = () => target.querySelectorAll("[data-state=list] > li")[1].querySelector<HTMLElement>("[data-action=support]")!;
+    click(button());
+    await settle();
+    // Supporting is pasted on, never torn.
+    expect(button().classList.contains("tearing")).toBe(false);
+    expect(button().getAttribute("aria-pressed")).toBe("true");
+    click(button());
+    await settle();
+    expect(desk.calls.at(-1)).toEqual({ what: "support", args: [IDEA2_ID, false] });
+    expect(button().classList.contains("tearing")).toBe(true);
+    expect(button().getAttribute("aria-pressed")).toBe("true");
+    ended(button());
+    await settle();
+    expect(button().classList.contains("tearing")).toBe(false);
+    expect(button().getAttribute("aria-pressed")).toBe("false");
+    expect(button().textContent?.trim()).toBe("Support");
+    expect(document.activeElement).toBe(button());
+
+    // With motion off the support goes at once.
+    motion(false);
+    click(button());
+    await settle();
+    click(button());
+    await settle();
+    expect(button().classList.contains("tearing")).toBe(false);
+    expect(button().getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("tears off the feedback's subject, drops it, and moves on to the message box", async () => {
+    motion(true);
+    let cleared = 0;
+    const target = await show(Feedback, { client: new FakeDesk(), about: { about: { kind: "procedure", id: PROC_ID }, title: "Resurfacing" }, onclearabout: () => void cleared++ });
+    const about = target.querySelector("[data-state=about]")!;
+    click([...about.querySelectorAll("button")].find((b) => b.textContent?.includes("Not about this")));
+    expect(about.classList.contains("tearing")).toBe(true);
+    expect(cleared).toBe(0);
+    ended(about);
+    await settle();
+    expect(cleared).toBe(1);
+    expect(document.activeElement).toBe(target.querySelector("[data-state=form] textarea"));
+    unmount(app!);
+    app = null;
+
+    motion(false);
+    const again = await show(Feedback, { client: new FakeDesk(), about: { about: { kind: "procedure", id: PROC_ID }, title: "Resurfacing" }, onclearabout: () => void cleared++ });
+    const about2 = again.querySelector("[data-state=about]")!;
+    click([...about2.querySelectorAll("button")].find((b) => b.textContent?.includes("Not about this")));
+    expect(about2.classList.contains("tearing")).toBe(false);
+    await settle();
+    expect(cleared).toBe(2);
   });
 });
 
