@@ -28,10 +28,10 @@ browser (portals, /portal/) ─┼──> civic-companion :8787 ──/api/desk/
 | `ideas`, `supports` | one idea per resident per hour; one support per (idea, resident), never the proposer's; status `open | taken_up | answered | declined | merged`. |
 | `feedback` | `code` (lookup code, 10 chars from an unambiguous alphabet), optional `resident_id`, `about_kind`/`about_id`, `category`, `status`, `summary`, `answer`, `answer_public`. |
 | `rounds` | localized `question`/`detail`, `options` JSON (frozen at open), `status draft | open | closed | published`, `closes_at`, `result` JSON `{counts, ballots_sha256, voters}` set at close. |
-| `letter_requests`, `letters_sent` | a request holds name, street, extra line, postcode, a keyed hash of them (`person_key`) and its time, only while it waits; `letters_sent` holds `person_key` alone (`WITHOUT ROWID`: no date, no insertion order). |
+| `letter_requests`, `letters_sent`, `letter_status` | a request holds name, street, extra line, postcode, a keyed hash of them (`person_key`), its time and the keyed hash of its request code (`status_key`), only while it waits; `letters_sent` holds `person_key` alone (`WITHOUT ROWID`: no date, no insertion order); `letter_status` holds `status_key`, `status` (`waiting`, `sent`, `declined`), the decline `reason` and the Monday it `expires` (`WITHOUT ROWID`; no name, street, postcode or time of asking). |
 | `staff`, `staff_sessions`, `enrol_codes`, `residents`, `settings`, `ai_calls` | scrypt password hashes; code and token hashes only; `ai_calls` holds purpose, model, prompt hash, sizes, timing, outcome, never text. |
 
-Event kinds: `procedure.created|updated|update_posted|verdict`, `idea.posted|supported|unsupported|decided`, `feedback.filed|updated|answered`, `round.created|updated|opened|ballot|closed|published`, `staff.created|updated|login|logout`, `enrol.batch|resident|letter_requested|letters_printed|letter_declined`, `settings.updated`, `ai.call`, `seed.loaded`.
+Event kinds: `procedure.created|updated|update_posted|verdict`, `idea.posted|supported|unsupported|decided`, `feedback.filed|updated|answered`, `round.created|updated|opened|ballot|closed|published`, `staff.created|updated|login|logout`, `enrol.batch|resident|letter_requested|letters_printed|letter_declined|letter_status_expired`, `settings.changed`, `ai.call`, `seed.loaded`.
 
 ## 3. APIs
 
@@ -71,20 +71,27 @@ Picked (the default, of three): **a self-service request in the citizen app, ans
 ```
 citizen app: sign-in sheet ── "No code yet? Get one by post" ── name, street, flat/floor, postcode
       │ POST /api/desk/enrol-requests (no token)
+      │   postcode outside commune.postcodes ─> 400 {code: "outside_commune"}, nothing kept
+      │   else ─> {request_code}; the device keeps it next to the date
       ▼
-Desk: letter_requests (waits) ──admin: check against the residents' register──┐
-      │                                                                       │
-      ├─ decline: row deleted, event enrol.letter_declined                    │
-      └─ print: one code per request in batch "by post YYYY-MM",               │
-         rows deleted, person_key kept in letters_sent, event enrol.letters_printed
+Desk: letter_requests (waits) + letter_status "waiting" ──admin: check against the residents' register──┐
+      │                                                                                                 │
+      ├─ decline (reason): row deleted, status "declined" + reason, event enrol.letter_declined {reason}│
+      └─ print: one code per request in batch "by post YYYY-MM", rows deleted,                          │
+         person_key kept in letters_sent, status "sent", event enrol.letters_printed
       ▼
 portal: A4 letter, address in the left window, code once, six languages ──> post ──> resident types the code
+
+citizen app, next visit: sign-in sheet ── POST /api/desk/enrol-requests/status {code} ─> waiting | sent | declined + reason
 ```
 
 | Property | How |
 |---|---|
 | Desk never holds a name next to a code | Codes are hashes; the request row is deleted in the same transaction that makes the codes; the printed letters are returned once, shuffled, and never stored. |
-| The log never names who asked | `enrol.letter_requested` (actor `anonymous`, empty payload), `enrol.letters_printed` (`{batch, count, requests: [ids]}`), `enrol.letter_declined` (empty payload). Tested: no name, street or postcode in any table or event after printing. |
+| The log never names who asked | `enrol.letter_requested` (actor `anonymous`, empty payload), `enrol.letters_printed` (`{batch, count, requests: [ids]}`), `enrol.letter_declined` (`{reason}`), `enrol.letter_status_expired` (`{count}`). Tested: no name, street or postcode in any table or event after printing and after declining. |
+| Only the commune's postcodes | `commune.postcodes`, a list of ranges (`4001-4398`) or single codes an admin sets on the portal's Settings page. A request with another postcode is refused (`400`, code `outside_commune`) and nothing of it is kept; the citizen form says the service is for the commune's residents and to ask their own commune. A request that came in before the ranges changed is flagged `outside` on the portal and Desk refuses to print it (`409`): the letter would print the commune's name under another town's postcode. Empty list: no check. The ranges are not hard-coded: the admin copies them from Post Luxembourg's list (`ops/operator-queue.md`). |
+| The resident learns a decline without Desk reaching them | A new request returns a random request code (18 bytes, base64url) that only the asking device keeps, next to the date. Desk keeps `HMAC(letters.key, code)` in `letter_status` with the outcome: `waiting`, then `sent` or `declined` with one of four reasons the admin picks (`not_in_register`, `outside_commune`, `asked_twice`, `address_incomplete`). On its next visit the sign-in sheet sends the code alone (`POST /enrol-requests/status`, ten per client per minute) and shows "Your request was declined: …" or "The commune posted your letter". A wrong, malformed or expired code gets the same `404`. Asking again for a waiting name and address returns no new code. The code is not a sign-in and opens nothing else. |
+| Status rows expire | 60 days after their last change, rounded up to the next Monday (a fixed period of the pilot, not a Charter rule), a status row is deleted; the log records how many went. A request still waiting after that gets its row back when it is printed or declined. |
 | Asking twice is visible, not blocked | The same normalised name, street and postcode while waiting answers `already: true`; after a letter went, `letters_sent` flags `sent_before` and the portal leaves it unticked. The admin decides (a lost letter is a real case). |
 | Abuse | Five requests per client per minute on top of the write limit; at most 5000 waiting (503 after). The real check is the commune's residents' register, done by a person. |
 | Backups | A nightly copy of the database (`ops/deploy/civic-backup.service`) holds whatever waits at that moment, names and addresses included, and the `letters.key` secret. Copies are mode 600, owned by `civic`, in `/var/backups/civic/YYYY-MM-DD/` on the server, never in Git, and are **kept 7 days**. So a request printed or declined today is gone from the live database at once but **can live in a backup for up to 7 more days**, until that night's copy expires. Restoring a backup brings back only requests that were still waiting when it was taken. |
@@ -95,6 +102,8 @@ What it does not do: the admin who prints sees the name next to the code, as at 
 Later path, not built: **Door with a real identity provider.** The letter code becomes one way into Door, LuxTrust and the Luxembourg eID (through the EU Digital Identity Wallet, OpenID4VP) the other (`docs/architecture/02-protocols.md` section 1). The resident proves residence once; Door computes the uniqueness key from the national identifier and issues a blind-signed credential that names no one, so the commune can no longer link a resident to their votes even with the letter in hand. Needs: a relying-party agreement with LuxTrust or the state's eID service, Door's HTTP issuance wired to Desk (`POST /enrol` accepting a Door presentation instead of a code), and the external audit Door's README requires before binding use.
 
 Accepted when (this phase): `tools/check.sh` green; Desk tests show request, repeat, print, decline, the per-client limit, and no name, street or postcode anywhere in the database or log after printing; citizen tests show the form, the postcode error, the date-only trace on the device; portal tests show the list, the flags, printing with the window address and declining; one printed A4 page per letter.
+
+Accepted when (postcodes and decline notice, 2026-11-04, issue #81): `tools/check.sh` green; Desk tests show an out-of-range postcode refused with `outside_commune`, an empty list accepting any, printing an out-of-range request refused, the status row going waiting, sent, declined and expired, the status lookup answering only the right code and the same `404` for any other, the per-client limits, and no name, street or postcode in any table or event after printing and after declining; citizen tests show the outside-commune sentence and every decline reason in five languages, the sent notice, and the status check sending the request code alone (no token, place, topic or answer), with the Pulse trace unchanged; portal tests show editing the ranges, declining with a reason, and an out-of-range request that cannot be ticked or printed.
 
 ## 8. Not in scope
 

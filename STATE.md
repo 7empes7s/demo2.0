@@ -8,6 +8,12 @@ Handoff file for long-running work. Newest first.
 - Evidence: desk tests (backup under a concurrent writer process, tampered log, retention, modes, CLI exit codes) and `tools/tests/test_deploy_units.py` (unit lint plus `systemd-analyze verify`); `tools/check.sh` green.
 - Not live: the operator queue has the install and first drill (agents cannot install on Mulinux).
 
+## 2026-11-04: Code by post checks the postcode and tells residents about a decline (issue #81)
+
+- Ask (Mimoun, issue #81, from the 2026-10-09 "Not done"): check the postcode is in the commune, and tell a resident when their request is declined.
+- Done: `commune.postcodes` (ranges, Settings page in the portal, fr and en); Desk refuses another postcode with `outside_commune` and the citizen form says, in five languages, to ask their own commune; a waiting request outside the ranges cannot be printed. A new request returns a random request code kept on the device next to the date; Desk keeps only its keyed hash in `letter_status` (waiting, sent, declined + reason; no name, address or time of asking), deleted 60 days after its last change. The admin's decline asks for one of four reasons; the sign-in sheet shows "Your request was declined: …" or "The commune posted your letter" on the next visit. Spec: `docs/product/desk.md` section 7.
+- Open: Esch's ranges are not set (no citable Post Luxembourg list from a cloud session): `ops/operator-queue.md`, 2026-11-04 entry. Until then every postcode is accepted, as before.
+
 ## 2026-11-04: Daily public fingerprint of the Desk log (from #67, issue #74)
 
 - Ask (issue #74, from Marouane's 2026-10-09 request in #67): land #67 through office QA. Master had none of it; #67 conflicted with the code-by-post and Affichage work and never ran CI. Brought onto current main as one change; #67 is closed as superseded.

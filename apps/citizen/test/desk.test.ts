@@ -7,8 +7,8 @@ import DeskRecord from "../src/components/DeskRecord.svelte";
 import Feedback from "../src/components/Feedback.svelte";
 import Procedures from "../src/components/Procedures.svelte";
 import Votes from "../src/components/Votes.svelte";
-import { currentStage, localizedText, RemoteDesk, shares, type DeskClient, type Fingerprints, type FeedbackLookup, type Idea, type Procedure, type ProcedureDetail, type Round, type RoundDetail } from "../src/lib/desk.ts";
-import { CompanionFailure } from "../src/lib/errors.ts";
+import { currentStage, localizedText, RemoteDesk, shares, type DeskClient, type Fingerprints, type LetterStatus, type FeedbackLookup, type Idea, type Procedure, type ProcedureDetail, type Round, type RoundDetail } from "../src/lib/desk.ts";
+import { CompanionFailure, DeskRefusal } from "../src/lib/errors.ts";
 import { prefs } from "../src/lib/prefs.ts";
 import { setLang } from "../src/lib/ui.svelte.ts";
 
@@ -151,10 +151,16 @@ class FakeDesk implements DeskClient {
   signOut() {
     this.signed = false;
   }
+  status: LetterStatus | null = { status: "waiting" };
   async requestLetter(input: { name: string; street: string; extra: string; postcode: string }) {
     this.note("requestLetter", input);
     if (!/^(L-?)?\d{4}$/i.test(input.postcode)) throw new Error("a postcode has four digits");
-    return { already: false };
+    if (/^(L-?)?9\d{3}$/i.test(input.postcode)) throw new DeskRefusal("this postcode is not in the commune", "outside_commune");
+    return { already: false, code: "Rq7mK2pX9vB4nT6wY8cD3fGh" };
+  }
+  async letterStatus(code: string) {
+    this.note("letterStatus", code);
+    return this.status;
   }
   async procedures() {
     return [BUDGET, RUE];
@@ -542,10 +548,103 @@ describe("Votes page", () => {
     expect(desk.calls.at(-1)).toEqual({ what: "requestLetter", args: [{ name: "Maria Lopes", street: "12 rue de l'Alzette", extra: "2e étage", postcode: "L-4011" }] });
     expect(target.querySelector("[data-state=letter] [role=status]")?.textContent).toContain("The commune will post your letter.");
     expect(sheet.querySelector("[data-state=letter-asked]")?.textContent).toMatch(/^You asked for a letter on \d{1,2} \w+ \d{4}\. When it arrives, type its code here\.$/);
-    // The device keeps the date only, never the name or the address.
+    // The device keeps the date and the random request code only, never the name or the address.
     const stored = Object.keys(localStorage).map((k) => localStorage.getItem(k)).join("\n");
     expect(stored).not.toMatch(/Maria|Alzette|4011/);
+    expect(JSON.parse(localStorage.getItem("d2.desk.letter")!)).toEqual({ at: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/), code: "Rq7mK2pX9vB4nT6wY8cD3fGh" });
     expect(desk.signed).toBe(false);
+  });
+
+  it("tells a resident outside the commune, in their language, to ask their own commune", async () => {
+    for (const [lang, text] of [
+      ["en", "This service is for residents of this commune only"],
+      ["fr", "Ce service est réservé aux résidents de la commune"],
+      ["de", "Dieser Dienst ist nur für Einwohner dieser Gemeinde"],
+      ["lb", "Dëse Service ass nëmme fir d'Awunner vun dëser Gemeng"],
+      ["pt", "Este serviço é só para residentes desta comuna"],
+    ] as const) {
+      const desk = new FakeDesk();
+      const target = await show(Votes, { client: desk }, lang);
+      click(target.querySelector("[data-option='1']"));
+      click(target.querySelector("[data-state=signin] button.link"));
+      const letter = target.querySelector("[data-state=letter]")!;
+      const fields = [...letter.querySelectorAll("input")];
+      ["Ana Silva", "1 Grand-Rue", "", "L-9001"].forEach((v, i) => {
+        fields[i].value = v;
+        fields[i].dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      letter.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      await settle();
+      expect(letter.querySelector("[role=alert]")?.textContent, lang).toContain(text);
+      // Nothing was kept: no request, so nothing to look up later.
+      expect(prefs.letterAsked()).toBeNull();
+      unmount(app!);
+      app = null;
+      document.body.innerHTML = "";
+    }
+  });
+
+  it("shows on the next visit that the request was declined, and why, after asking the desk with the request code alone", async () => {
+    prefs.setLetterAsked({ at: "2026-10-01T09:00:00.000Z", code: "Rq7mK2pX9vB4nT6wY8cD3fGh" });
+    const desk = new FakeDesk();
+    desk.status = { status: "declined", reason: "not_in_register" };
+    let target = await show(Votes, { client: desk });
+    click(target.querySelector("[data-option='1']"));
+    await settle();
+    expect(desk.calls.filter((c) => c.what === "letterStatus")).toEqual([{ what: "letterStatus", args: ["Rq7mK2pX9vB4nT6wY8cD3fGh"] }]);
+    const sheet = target.querySelector("[data-state=signin]")!;
+    expect(sheet.querySelector("[data-state=letter-declined]")?.textContent).toBe(
+      "Your request was declined: the name and address were not found in the commune's list of residents. If you have just moved here, register at the commune first, then ask again.",
+    );
+    expect(sheet.querySelector("[data-state=letter-asked]")).toBeNull();
+    unmount(app!);
+    document.body.innerHTML = "";
+
+    // Every reason reads in every language.
+    for (const lang of ["fr", "de", "lb", "pt"] as const) {
+      for (const reason of ["not_in_register", "outside_commune", "asked_twice", "address_incomplete"] as const) {
+        desk.status = { status: "declined", reason };
+        target = await show(Votes, { client: desk }, lang);
+        click(target.querySelector("[data-option='1']"));
+        await settle();
+        const line = target.querySelector("[data-state=letter-declined]")?.textContent ?? "";
+        expect(line, `${lang} ${reason}`).toMatch(/^(Votre demande a été refusée|Ihre Anfrage wurde abgelehnt|Är Ufro gouf ofgeleent|O seu pedido foi recusado)/);
+        expect(line).not.toMatch(/\{|letter_reason/);
+        unmount(app!);
+        document.body.innerHTML = "";
+      }
+    }
+    app = null;
+  });
+
+  it("says a posted letter is on its way, and falls back to the date when the desk has no answer", async () => {
+    prefs.setLetterAsked({ at: "2026-10-01T09:00:00.000Z", code: "Rq7mK2pX9vB4nT6wY8cD3fGh" });
+    const desk = new FakeDesk();
+    desk.status = { status: "sent" };
+    let target = await show(Votes, { client: desk });
+    click(target.querySelector("[data-option='1']"));
+    await settle();
+    expect(target.querySelector("[data-state=letter-sent]")?.textContent).toBe("The commune posted your letter. When it arrives, type its code here.");
+    unmount(app!);
+    document.body.innerHTML = "";
+
+    // Expired on the desk (or never known): the date of the request, as before.
+    desk.status = null;
+    target = await show(Votes, { client: desk });
+    click(target.querySelector("[data-option='1']"));
+    await settle();
+    expect(target.querySelector("[data-state=letter-asked]")?.textContent).toBe("You asked for a letter on 1 October 2026. When it arrives, type its code here.");
+    unmount(app!);
+    document.body.innerHTML = "";
+
+    // A device that asked before request codes keeps only a date, and never calls the desk about it.
+    localStorage.setItem("d2.desk.letter", "2026-09-20T09:00:00.000Z");
+    const before = desk.calls.length;
+    target = await show(Votes, { client: desk });
+    click(target.querySelector("[data-option='1']"));
+    await settle();
+    expect(target.querySelector("[data-state=letter-asked]")?.textContent).toContain("20 September 2026");
+    expect(desk.calls.slice(before).some((c) => c.what === "letterStatus")).toBe(false);
   });
 
   it("asks for the code before a ballot, then sends the option, and lets a signed-in resident change it", async () => {
@@ -714,12 +813,42 @@ describe("RemoteDesk", () => {
     vi.stubGlobal("fetch", asked);
     const desk = new RemoteDesk();
     const input = { name: "Maria Lopes", street: "12 rue de l'Alzette", extra: "", postcode: "L-4011" };
-    expect(await desk.requestLetter(input)).toEqual({ already: true });
+    expect(await desk.requestLetter(input)).toEqual({ already: true, code: null });
     expect(asked).toHaveBeenCalledWith("/api/desk/enrol-requests", expect.objectContaining({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input) }));
     vi.stubGlobal("fetch", answer(400, { error: "a postcode has four digits, such as L-4002" }));
     await expect(desk.requestLetter({ ...input, postcode: "x" })).rejects.toThrow("four digits");
     vi.stubGlobal("fetch", answer(503, { error: "too many requests are waiting" }));
     await expect(desk.requestLetter(input)).rejects.toMatchObject({ kind: "unavailable" });
+    vi.stubGlobal("fetch", answer(201, { received: true, already: false, request_code: "Rq7mK2pX9vB4nT6wY8cD3fGh" }));
+    expect(await desk.requestLetter(input)).toEqual({ already: false, code: "Rq7mK2pX9vB4nT6wY8cD3fGh" });
+    vi.stubGlobal("fetch", answer(400, { error: "this postcode is not in the commune", code: "outside_commune" }));
+    await expect(desk.requestLetter({ ...input, postcode: "9001" })).rejects.toMatchObject({ code: "outside_commune" });
+  });
+
+  it("checks a request's outcome with the request code alone: no token, no place, no topic, no answer", async () => {
+    // A device with a sign-in, a place, topics and answers on it.
+    prefs.setDeskToken("tok-123");
+    localStorage.setItem("d2.pulse.v1", JSON.stringify({ home: "lu-commune-esch-sur-alzette", groups: ["money"] }));
+    localStorage.setItem("d2.arena.v1", JSON.stringify({ "lu.esch.42063": { attempts: 1, best: 3, total: 3, understood: true } }));
+    localStorage.setItem("d2.stance.lu.esch.42063", "for");
+    const fetchMock = answer(200, { status: "declined", reason: "outside_commune" });
+    vi.stubGlobal("fetch", fetchMock);
+    const desk = new RemoteDesk();
+    expect(await desk.letterStatus("Rq7mK2pX9vB4nT6wY8cD3fGh")).toEqual({ status: "declined", reason: "outside_commune" });
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledWith("/api/desk/enrol-requests/status", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: "Rq7mK2pX9vB4nT6wY8cD3fGh" }) });
+    const sent = JSON.stringify((fetchMock.mock.calls as unknown[][])[0]);
+    for (const secret of ["esch", "money", "42063", "for\\\"", "tok-123", "d2."]) expect(sent).not.toContain(secret);
+    vi.stubGlobal("fetch", answer(200, { status: "sent" }));
+    expect(await desk.letterStatus("Rq7mK2pX9vB4nT6wY8cD3fGh")).toEqual({ status: "sent" });
+    // Gone or never known: nothing to show. An odd answer is not shown either.
+    vi.stubGlobal("fetch", answer(404, { error: "no request with that code" }));
+    expect(await desk.letterStatus("Rq7mK2pX9vB4nT6wY8cD3fGh")).toBeNull();
+    vi.stubGlobal("fetch", answer(200, { status: "declined", reason: "because" }));
+    await expect(desk.letterStatus("Rq7mK2pX9vB4nT6wY8cD3fGh")).rejects.toMatchObject({ kind: "unavailable" });
+    // The token was not dropped: the status check never touched it.
+    expect(prefs.deskToken()).toBe("tok-123");
+    localStorage.clear();
   });
 
   it("maps 429 to busy, 401 and 403 to signin (dropping the token), 404 to not found, 5xx and outages and bad shapes to unavailable", async () => {
