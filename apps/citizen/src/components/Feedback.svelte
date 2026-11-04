@@ -2,6 +2,7 @@
   import { CATEGORIES, type About, type Category, type DeskClient, type FeedbackLookup } from "../lib/desk.ts";
   import { CompanionFailure } from "../lib/errors.ts";
   import type { Key } from "../lib/i18n.ts";
+  import { tear } from "../lib/tear.ts";
   import { date, t, ui } from "../lib/ui.svelte.ts";
 
   /**
@@ -20,6 +21,17 @@
   let found = $state<FeedbackLookup | null>(null);
   let lookFailure = $state<Key | null>(null);
   const uid = $props.id();
+  let aboutNote = $state<HTMLElement>();
+  let clearing = false;
+
+  /** The subject is torn off the form, then dropped; the keyboard goes on to the message box. */
+  async function clearAbout() {
+    if (clearing || !onclearabout) return;
+    clearing = true;
+    await tear(aboutNote, () => onclearabout?.());
+    clearing = false;
+    document.getElementById(`${uid}-text`)?.focus();
+  }
 
   function failureKey(e: unknown): Key {
     if (e instanceof CompanionFailure && e.kind === "busy") return "ideas_busy";
@@ -77,10 +89,10 @@
     <form class="card form" onsubmit={send} aria-labelledby="{uid}-h" data-state="form">
       <h3 id="{uid}-h" class="serif">{t("feedback_open")}</h3>
       {#if about}
-        <p class="about" data-state="about">
+        <p class="about" data-state="about" bind:this={aboutNote}>
           <span class="label">{t("fb_about")}</span>
           <span class="what">{about.title}</span>
-          {#if onclearabout}<button class="link" type="button" onclick={onclearabout}>{t("fb_about_remove")}</button>{/if}
+          {#if onclearabout}<button class="link" type="button" onclick={clearAbout}>{t("fb_about_remove")}</button>{/if}
         </p>
       {/if}
       <label class="label" for="{uid}-text">{t("fb_text")}</label>

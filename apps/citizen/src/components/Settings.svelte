@@ -1,10 +1,12 @@
 <script lang="ts">
   import { LANGS, type DocketItem, type Lang } from "@democracy2/companion";
   import { homeChoices, placeName, topicList } from "@democracy2/pulse";
+  import { tick } from "svelte";
 
   import { LANG_LABELS } from "../lib/i18n.ts";
   import { CHARTER, pulse, resetPulse, setHome, toggleGroup } from "../lib/pulse.svelte.ts";
   import { motion, setMotion, type Motion } from "../lib/motion.svelte.ts";
+  import { tear } from "../lib/tear.ts";
   import { setTheme, theme, type Theme } from "../lib/theme.svelte.ts";
   import { GROUP_LABEL, groupsIn } from "../lib/topics.ts";
   import { setLang, t, ui } from "../lib/ui.svelte.ts";
@@ -24,10 +26,28 @@
     { value: "off", key: "motion_off" },
   ];
   let forgotten = $state(false);
+  let forgetting = $state(false);
+  let homeCard = $state<HTMLElement>();
+  let topicsCard = $state<HTMLElement>();
+  let forgotNote = $state<HTMLElement>();
 
+  /** Each sheet that holds a choice is torn off, then the choices are cleared and the sheets come back blank. */
   function forget() {
-    resetPulse();
-    forgotten = true;
+    if (forgetting) return;
+    const sheets = [pulse.prefs.home ? homeCard : null, pulse.prefs.groups.length ? topicsCard : null].filter((el) => el != null);
+    let left = sheets.length;
+    const cleared = async () => {
+      resetPulse();
+      forgotten = true;
+      forgetting = false;
+      // The button is now disabled: keyboard users land on the note that says what happened.
+      await tick();
+      forgotNote?.focus();
+    };
+    forgetting = true;
+    if (!left) void cleared();
+    // With motion off each tear is done at once, so the choices are cleared right away.
+    for (const el of sheets) void tear(el, () => { if (--left === 0) void cleared(); });
   }
 </script>
 
@@ -60,7 +80,7 @@
     <p class="muted hint">{t("motion_hint")}</p>
   </section>
 
-  <section class="card" aria-labelledby="s-home">
+  <section class="card" aria-labelledby="s-home" bind:this={homeCard}>
     <h3 class="label" id="s-home"><label for="home">{t("week_home_label")}</label></h3>
     <select id="home" value={pulse.prefs.home ?? ""} onchange={(e) => setHome((e.currentTarget as HTMLSelectElement).value || null)}>
       <option value="">{t("week_home_pick")}</option>
@@ -76,7 +96,7 @@
     <p class="muted hint">{t("week_home_hint")}</p>
   </section>
 
-  <section class="card" aria-labelledby="s-topics">
+  <section class="card" aria-labelledby="s-topics" bind:this={topicsCard}>
     <h3 class="label" id="s-topics">{t("week_topics_label")}</h3>
     <p class="muted hint">{t("welcome_topics_hint")}</p>
     <div class="topics" role="group" aria-labelledby="s-topics">
@@ -91,8 +111,8 @@
   <p class="private" data-testid="week-private"><span aria-hidden="true">🔒</span> {t("week_private")}</p>
 
   <div class="forget">
-    <button class="btn" onclick={forget} disabled={!pulse.prefs.home && !pulse.prefs.groups.length}>{t("week_forget")}</button>
-    {#if forgotten}<p class="muted small" role="status">{t("settings_forgot")}</p>{/if}
+    <button class="btn" onclick={forget} disabled={forgetting || (!pulse.prefs.home && !pulse.prefs.groups.length)}>{t("week_forget")}</button>
+    {#if forgotten}<p class="muted small" role="status" tabindex="-1" bind:this={forgotNote}>{t("settings_forgot")}</p>{/if}
   </div>
 </div>
 

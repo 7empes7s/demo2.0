@@ -3,13 +3,14 @@
    * Enrolment codes: residents' requests for a code by post (print addressed letters or decline),
    * a new batch shown once with copy and download, and every batch with issued and used counts.
    */
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
 
   import Letters from "./Letters.svelte";
   import Notice from "./Notice.svelte";
   import { get, post } from "../lib/api.ts";
   import { commune } from "../lib/commune.svelte.ts";
   import { LETTER_LANGS, siteAddress } from "../lib/letters.ts";
+  import { tear } from "../lib/tear.ts";
 
   // The shell hands every section the route's argument; this one has no sub-route.
   let { arg: _arg = null }: { arg?: string | null } = $props();
@@ -33,6 +34,10 @@
   let declining = $state<string | null>(null);
   let reason = $state<DeclineReason>("not_in_register");
   let reasonField = $state<HTMLSelectElement | null>(null);
+  let heading = $state<HTMLElement>();
+  let freshSheet = $state<HTMLElement>();
+  let requestsHeading = $state<HTMLElement>();
+  let requestsSection = $state<HTMLElement>();
 
   async function load() {
     listError = null;
@@ -97,15 +102,34 @@
     if (busy) return;
     busy = true;
     requestsError = null;
+    let declined: number | null = null;
     try {
       await post(`/enrol-requests/${encodeURIComponent(r.id)}/decline`, { reason });
       declining = null;
+      // The declined request is torn off its list, then the list comes back from the desk.
+      const at = requests?.findIndex((q) => q.id === r.id) ?? -1;
+      await tear(rowOf(r.id), () => (requests = (requests ?? []).filter((q) => q.id !== r.id)));
       await loadRequests();
+      declined = at;
     } catch (err) {
       requestsError = failure(err);
     } finally {
       busy = false;
     }
+    if (declined === null) return;
+    await tick();
+    // The keyboard goes on to the next request's Decline, or to the list's heading when none is left.
+    const declines = requestsSection?.querySelectorAll<HTMLElement>("[data-request] [data-action=decline]") ?? [];
+    (declines[Math.min(Math.max(declined, 0), declines.length - 1)] ?? requestsHeading)?.focus();
+  }
+
+  const rowOf = (id: string) => [...(requestsSection?.querySelectorAll<HTMLElement>("[data-request]") ?? [])].find((row) => row.dataset.request === id);
+
+  /** "Done": the codes shown once are torn off the page, and the keyboard goes back to its heading. */
+  async function done() {
+    await tear(freshSheet, () => (fresh = null));
+    await tick();
+    heading?.focus();
   }
 
   async function create(e: SubmitEvent) {
@@ -156,16 +180,16 @@
 </script>
 
 <div class="page">
-  <h1 class="serif">{t("codes_title")}</h1>
+  <h1 class="serif" tabindex="-1" bind:this={heading}>{t("codes_title")}</h1>
 
   {#if fresh}
-    <section class="card stack fresh">
+    <section class="card stack fresh" bind:this={freshSheet}>
       <h2 class="serif">{fresh.batch}</h2>
       {#if fresh.to}
         <p class="notice error" data-state="posted">{t("letters_ready", { count: fresh.codes.length })}</p>
         <div class="actions">
           <button class="btn primary" onclick={print}>{t("codes_print")}</button>
-          <button class="btn" onclick={() => (fresh = null)}>{t("codes_done")}</button>
+          <button class="btn" onclick={done}>{t("codes_done")}</button>
         </div>
         <p class="muted hint">{t("letters_window")}</p>
       {:else}
@@ -174,7 +198,7 @@
           <button class="btn primary" onclick={copy}>{copied ? t("codes_copied") : t("codes_copy")}</button>
           <button class="btn" onclick={download}>{t("codes_download")}</button>
           <button class="btn" onclick={print}>{t("codes_print")}</button>
-          <button class="btn" onclick={() => (fresh = null)}>{t("codes_done")}</button>
+          <button class="btn" onclick={done}>{t("codes_done")}</button>
         </div>
         <p class="muted hint">{t("codes_print_hint", { langs: LETTER_LANGS.map((l) => t(`lang_${l}`)).join(", ") })}</p>
       {/if}
@@ -185,8 +209,8 @@
     </section>
   {/if}
 
-  <section class="card stack" data-state="requests">
-    <h2 class="serif">{t("letters_title")}</h2>
+  <section class="card stack" data-state="requests" bind:this={requestsSection}>
+    <h2 class="serif" tabindex="-1" bind:this={requestsHeading}>{t("letters_title")}</h2>
     <p class="muted hint">{t("letters_intro")}</p>
     <Notice text={requestsError} kind="error" />
     {#if requests === null}
@@ -211,7 +235,7 @@
                   {#if r.outside}<span class="flag" data-state="outside">{t("letters_outside")}</span>{/if}
                 </td>
                 <td>{date(r.created_at)}</td>
-                <td><button class="btn small" onclick={() => startDecline(r)} disabled={busy} aria-expanded={declining === r.id}>{t("letters_decline")}</button></td>
+                <td><button class="btn small" onclick={() => startDecline(r)} disabled={busy} aria-expanded={declining === r.id} data-action="decline">{t("letters_decline")}</button></td>
               </tr>
             {/each}
           </tbody>

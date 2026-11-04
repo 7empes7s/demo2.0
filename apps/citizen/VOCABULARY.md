@@ -18,6 +18,8 @@ Use one word per role, and use it everywhere: in the UI, the docs and the prompt
 | idea | proposal, petition, suggestion | What a resident posts on the Ideas page (Agora). "Proposal" is kept for the drafted plan an idea may become later. |
 | support (an idea), supporter | upvote, like, vote, sign | Supporting an idea puts it higher on the list. It is not a vote. |
 | reach (national, regional, local, small) | tier, scope, priority, importance | How many people an idea affects, from the Charter's population rule. It says nothing about whether the idea is good. |
+| reach contested | disputed, challenged, flagged, under review, appeal | Shown beside the reach of an idea while residents ask for it to be filed under a smaller area. A panel drawn by lot decides; until then the idea keeps its reach and its place. It says nothing about who is right. |
+| first filed for (a place) | moved, demoted, downgraded, reclassified | When a panel decided an idea belongs to a smaller area: where it was first filed and where it is now, in place names. |
 | questions (on what the text says) | quiz, test, exam, game | The Arena section on each file. It checks what the text says, never what the resident thinks. |
 | matches the text, the text says something else | correct, right, wrong, failed | An answer is judged only against the quoted passage. |
 | understood (a file) | passed, certified, badge, score | Shown when every answer matched the text once. Kept on the device only. |
@@ -28,7 +30,7 @@ Use one word per role, and use it everywhere: in the UI, the docs and the prompt
 | settings | profile, account, preferences, options | The page with language, appearance, where you live and the topics followed. Nothing on it is an account: it all stays on the device. |
 | More (the tab) | menu, hamburger, other, extras | The tab and page that list every section not in the bottom bar, each with one line on what it is for. |
 | welcome steps | onboarding, wizard, tutorial, tour | The three questions a first visit asks. Each can be skipped. |
-| panel, drawn by lot | jury, lottery, sortition, judge | The future Lottery panels. Shown only as "not started yet". |
+| panel, drawn by lot | jury, lottery, sortition, judge | The Lottery panels. Shown as "not started yet" on This week; named in the reach contested line on Ideas. |
 | secure sign-in | Door, login, account, credential | What posting and supporting wait for. Name no product or protocol. |
 | procedure | case, ticket, project (as the generic word), workflow | What the commune is doing and follows to the end on its desk: a decision, a project, a consultation, a budget or a request. Its own stages, dated. |
 | update (on a procedure) | news, post, comment, log entry | A dated line the commune adds to a procedure; it may change the status. |
@@ -38,5 +40,7 @@ Use one word per role, and use it everywhere: in the UI, the docs and the prompt
 | ask for a code by post, letter | sign up, register, registration, create an account | A resident without an enrolment code gives a name and an address; the commune checks them and posts a letter with the code. |
 | request (for a letter), declined, posted | application, rejected, denied, refused, approved | What happened to a request for a code by post, shown on the sign-in sheet with the reason. The request's own code stays on the device and is never shown. |
 | vote on a question, ballot, option | poll, referendum, election, survey | A Desk vote is a consultation the commune opens: one ballot per resident, changeable while open, counts per option shown only once the result is published. |
+| the record (of the desk), entry | log, ledger, blockchain, chain, database | Everything done on the commune's desk, in order, that can only grow. |
+| daily fingerprint | hash, checksum, checkpoint, root, Merkle | What the desk publishes once a day so anyone can tell nothing was changed afterwards. The technical words stay under "Technical details". |
 
 Never in the UI: recommend, should vote, best option, correct answer, wrong answer, streak, leaderboard, raw ids (`lu.chd.8739`, idea ids, jurisdiction ids, week ids), pseudonyms (`nym-…`, never shown at all), model names, except in the small provenance line.

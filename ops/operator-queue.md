@@ -19,6 +19,12 @@ History: from 2026-10-05 to 2026-10-07 this queue lived in the keel repo (`ops/o
 - Steps (an admin on the portal, no server work): open Post Luxembourg's postcode search (or its downloadable list of streets and postcodes) for the locality Esch-sur-Alzette; enter the postcodes as ranges or single codes, one per line, in **Settings, Postcodes of the commune**; save.
 - Done when: `GET /api/desk/settings` (as admin) lists the ranges, the event log shows a `settings.changed` entry with `commune.postcodes`, and a request for a code by post with a postcode outside them is refused in the citizen app with "This service is for residents of this commune only".
 
+### 2026-11-04: turn on the Desk log's daily public fingerprint
+
+- Why: the daily public fingerprint of the Desk log (issue #74, which superseded PR #67) is off until the log has a name.
+- Steps: once that PR is deployed, add `DESK_LOG_NAME=cracia.techinsiderbytes.com/desk` to `/etc/civic/desk.env`, restart `civic-desk`, and copy `/var/lib/civic-desk/log.key` to wherever `desk.db` is backed up (there is no backup job yet, see Done). Post the `key` value from `/fingerprints` on the PR so it can be pinned in the repo.
+- Done when: the start-up log reads `daily fingerprint on, key cracia.techinsiderbytes.com/desk+...` and `fingerprint <today>: N entries`; `curl -s https://cracia.techinsiderbytes.com/api/desk/fingerprints` shows `"enabled":true` with today's day; within an hour that day's `ots` is not null (the calendars are reachable); and `node --experimental-strip-types /opt/civic/current/modules/desk/src/check-log.ts --url https://cracia.techinsiderbytes.com/api/desk --vkey '<key>'` exits 0.
+
 ### 2026-10-07: reinstall the Companion unit for translations
 
 - Why: the translations PR added `StateDirectory=civic-companion` to `ops/deploy/civic-companion.service` (see STATE.md, "Files in the resident's language").

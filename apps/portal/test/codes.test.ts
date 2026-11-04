@@ -8,6 +8,10 @@ import { LETTER_LANGS, LETTERS, letterText, siteAddress } from "../src/lib/lette
 import { setLang } from "../src/lib/ui.svelte.ts";
 import { button, cleanup, click, fakeDesk, show, signedInAs, signedOut, type } from "./helpers.ts";
 
+/** The device's motion setting: tear runs only when it does not ask for reduced motion. */
+const motion = (on: boolean) => vi.stubGlobal("matchMedia", (q: string) => ({ matches: on === q.includes("no-preference") }));
+const ended = (el: Element) => el.dispatchEvent(Object.assign(new Event("animationend"), { animationName: "tear" }));
+
 const THREE = ["ab12-cd34-ef56", "gh78-ij90-kl12", "mn34-op56-qr78"];
 
 beforeEach(() => {
@@ -140,6 +144,8 @@ describe("codes asked for by post", () => {
     click(button(root, "Done, I have them"));
     expect(document.querySelector(".letters")).toBeNull();
     expect(document.body.textContent).not.toContain("Maria Lopes");
+    // "Done" hands the keyboard back to the page's heading.
+    await vi.waitFor(() => expect(document.activeElement).toBe(root.querySelector("h1")));
 
     await vi.waitFor(() => expect(root.querySelectorAll("[data-request]")).toHaveLength(1));
     // Declining asks for the reason the resident will see; a letter that already went suggests "asked twice".
@@ -231,6 +237,97 @@ describe("the commune's postcodes", () => {
     (root.querySelector("form") as HTMLFormElement).requestSubmit();
     await vi.waitFor(() => expect(root.textContent).toContain("Paramètres enregistrés."));
     expect((calls.filter((c) => c.method === "PATCH").at(-1)?.body as { postcodes: string[] }).postcodes).toEqual([]);
+  });
+});
+
+describe("tearing off what is dismissed", () => {
+  const REQUESTS = [
+    { id: "r1", name: "Maria Lopes", street: "12 rue de l'Alzette", extra: "", postcode: "4011", created_at: "2026-10-08T09:00:00.000Z", sent_before: false, duplicate: false },
+    { id: "r2", name: "Jean Weber", street: "3 boulevard Kennedy", extra: "", postcode: "4170", created_at: "2026-10-08T10:00:00.000Z", sent_before: false, duplicate: false },
+  ];
+
+  async function withBatch() {
+    fakeDesk({
+      "GET /api/desk/enrol-codes": () => ({ body: { batches: [] } }),
+      "GET /api/desk/enrol-requests": () => ({ body: { requests: [] } }),
+      "POST /api/desk/enrol-codes": () => ({ status: 201, body: { codes: THREE } }),
+    });
+    signedInAs("admin");
+    const root = show(Codes, {});
+    await vi.waitFor(() => expect(root.textContent).toContain("No batch yet."));
+    (root.querySelector("form") as HTMLFormElement).requestSubmit();
+    await vi.waitFor(() => expect(root.querySelector(".fresh")).toBeTruthy());
+    return root;
+  }
+
+  it("tears the codes off on Done with motion on, then drops them and puts the keyboard on the page heading", async () => {
+    motion(true);
+    const root = await withBatch();
+    const sheet = root.querySelector(".fresh")!;
+    click(button(root, "Done, I have them"));
+    expect(sheet.classList.contains("tearing")).toBe(true);
+    expect(root.querySelector("textarea.codes")).toBeTruthy();
+    ended(sheet);
+    await vi.waitFor(() => expect(root.querySelector(".fresh")).toBeNull());
+    expect(document.querySelector(".letters")).toBeNull();
+    await vi.waitFor(() => expect(document.activeElement).toBe(root.querySelector("h1")));
+  });
+
+  it("drops the codes at once with reduced motion, and even when the end of the tear never comes", async () => {
+    motion(false);
+    let root = await withBatch();
+    click(button(root, "Done, I have them"));
+    expect(root.querySelector(".fresh")).toBeNull();
+    cleanup();
+
+    motion(true);
+    root = await withBatch();
+    vi.useFakeTimers();
+    try {
+      click(button(root, "Done, I have them"));
+      expect(root.querySelector(".fresh.tearing")).toBeTruthy();
+      vi.advanceTimersByTime(800);
+    } finally {
+      vi.useRealTimers();
+    }
+    await vi.waitFor(() => expect(root.querySelector(".fresh")).toBeNull());
+  });
+
+  it("tears a declined request off its list, then the keyboard moves on to the next one's Decline", async () => {
+    motion(true);
+    let waiting = REQUESTS;
+    fakeDesk({
+      "GET /api/desk/enrol-codes": () => ({ body: { batches: [] } }),
+      "GET /api/desk/enrol-requests": () => ({ body: { requests: waiting } }),
+      "POST /api/desk/enrol-requests/r1/decline": () => {
+        waiting = waiting.filter((r) => r.id !== "r1");
+        return { body: { ok: true } };
+      },
+      "POST /api/desk/enrol-requests/r2/decline": () => {
+        waiting = [];
+        return { body: { ok: true } };
+      },
+    });
+    signedInAs("admin");
+    const root = show(Codes, {});
+    await vi.waitFor(() => expect(root.querySelectorAll("[data-request]")).toHaveLength(2));
+    const row = root.querySelector("[data-request=r1]")!;
+    click(row.querySelector("button"));
+    click(button(root.querySelector("[data-state=declining]")!, "Decline"));
+    await vi.waitFor(() => expect(row.classList.contains("tearing")).toBe(true));
+    expect(root.querySelectorAll("[data-request]")).toHaveLength(2);
+    ended(row);
+    await vi.waitFor(() => expect(root.querySelectorAll("[data-request]")).toHaveLength(1));
+    const next = root.querySelector("[data-request=r2] button");
+    await vi.waitFor(() => expect(document.activeElement).toBe(next));
+
+    // The last one, with reduced motion: gone at once, and the keyboard goes to the list's heading.
+    motion(false);
+    click(next);
+    click(button(root.querySelector("[data-state=declining]")!, "Decline"));
+    await vi.waitFor(() => expect(root.textContent).toContain("No request is waiting."));
+    expect(root.querySelector(".tearing")).toBeNull();
+    await vi.waitFor(() => expect(document.activeElement).toBe(root.querySelector("[data-state=requests] h2")));
   });
 });
 
