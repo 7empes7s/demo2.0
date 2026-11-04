@@ -40,6 +40,9 @@ Use one word per role, and use it everywhere: in the UI, the docs and the prompt
 | ask for a code by post, letter | sign up, register, registration, create an account | A resident without an enrolment code gives a name and an address; the commune checks them and posts a letter with the code. |
 | request (for a letter), declined, posted | application, rejected, denied, refused, approved | What happened to a request for a code by post, shown on the sign-in sheet with the reason. The request's own code stays on the device and is never shown. |
 | vote on a question, ballot, option | poll, referendum, election, survey | A Desk vote is a consultation the commune opens: one ballot per resident, changeable while open, counts per option shown only once the result is published. |
+| argument, reason (on a file) | comment, post, opinion, debate, take | What residents and council groups said on a file, for or against, each with a link to where it was said (Commons). A council group's recorded side is a **council vote**, shown apart: it says who took a side, never why. |
+| rated strong, rated weak | like, upvote, agree, helpful | How an argument will be rated once secure sign-in opens. "Rated strong by both sides" only when the ranker says so. |
+| ranked by bridging | top, best, popular, trending | The order Commons gives once arguments are rated: those that people on both sides rate strong come first. Until then, "shown in the order they were collected". |
 | the record (of the desk), entry | log, ledger, blockchain, chain, database | Everything done on the commune's desk, in order, that can only grow. |
 | daily fingerprint | hash, checksum, checkpoint, root, Merkle | What the desk publishes once a day so anyone can tell nothing was changed afterwards. The technical words stay under "Technical details". |
 

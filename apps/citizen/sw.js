@@ -6,12 +6,16 @@
 //     Only the app page itself (/ or /index.html, as HTML) is ever saved as the offline app.
 //   - The Docket snapshot and its translations: network first, the last copy when offline or on
 //     5xx, so the list still works.
+//   - A file's arguments are saved by the page itself (src/lib/client.ts) in ARGUMENTS_CACHE. This
+//     worker never writes it, but must not delete it: like the snapshot, it outlives app updates.
 //   - /api/* and anything not from this origin: never touched, never cached.
 const VERSION = "__VERSION__";
 const SHELL = __SHELL__;
 const SHELL_CACHE = `citizen-shell-${VERSION}`;
 // The snapshot outlives app updates: a new version must not throw away the only offline copy.
 const DATA_CACHE = "citizen-data-1";
+// Written by the page (same name as ARGUMENTS_CACHE in src/lib/client.ts); kept across updates too.
+const ARGUMENTS_CACHE = "citizen-arguments-1";
 const SNAPSHOT = "data/snapshot.json";
 const TRANSLATIONS = "data/translations.json";
 // How long to wait for the network before using a saved copy (only when one exists).
@@ -34,7 +38,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("citizen-") && k !== SHELL_CACHE && k !== DATA_CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("citizen-") && k !== SHELL_CACHE && k !== DATA_CACHE && k !== ARGUMENTS_CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });

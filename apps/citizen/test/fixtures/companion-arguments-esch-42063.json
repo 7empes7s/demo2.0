@@ -1,0 +1,54 @@
+{
+  "file_id": "lu.esch.42063",
+  "ranker": null,
+  "arguments": [
+    {
+      "id": "esch-75f79506e757c3c3",
+      "stance_option_id": "no",
+      "kind": "position",
+      "text": "ADR: 1 councillor voted against at the Esch-sur-Alzette municipal council on 2026-10-02.",
+      "attribution": "ADR group, Esch-sur-Alzette municipal council",
+      "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+    },
+    {
+      "id": "esch-31df08d4bce367b6",
+      "stance_option_id": "yes",
+      "kind": "position",
+      "text": "CSV: 6 councillors voted in favour at the Esch-sur-Alzette municipal council on 2026-10-02.",
+      "attribution": "CSV group, Esch-sur-Alzette municipal council",
+      "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+    },
+    {
+      "id": "esch-5952a064a29ac7a8",
+      "stance_option_id": "yes",
+      "kind": "position",
+      "text": "DP: 2 councillors voted in favour at the Esch-sur-Alzette municipal council on 2026-10-02.",
+      "attribution": "DP group, Esch-sur-Alzette municipal council",
+      "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+    },
+    {
+      "id": "esch-2c6dc9829980e137",
+      "stance_option_id": "no",
+      "kind": "position",
+      "text": "LSAP: 6 councillors voted against at the Esch-sur-Alzette municipal council on 2026-10-02.",
+      "attribution": "LSAP group, Esch-sur-Alzette municipal council",
+      "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+    },
+    {
+      "id": "esch-f24ae56ed10ebc02",
+      "stance_option_id": "no",
+      "kind": "position",
+      "text": "déi Lénk: 1 councillor voted against at the Esch-sur-Alzette municipal council on 2026-10-02.",
+      "attribution": "déi Lénk group, Esch-sur-Alzette municipal council",
+      "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+    },
+    {
+      "id": "esch-b3cdcf4e6e5a2717",
+      "stance_option_id": "yes",
+      "kind": "position",
+      "text": "déi gréng: 3 councillors voted in favour at the Esch-sur-Alzette municipal council on 2026-10-02.",
+      "attribution": "déi gréng group, Esch-sur-Alzette municipal council",
+      "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+    }
+  ]
+}

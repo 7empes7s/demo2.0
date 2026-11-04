@@ -17,6 +17,8 @@ import {
   type DocketItem,
   type Explanation,
   type FactCheckResult,
+  type FileArguments,
+  fileArgumentsProblems,
   type IdeasPage,
   type Lang,
   type Position,
@@ -191,5 +193,82 @@ export class RemoteIdeas implements IdeasReader {
     // Checked again here: an idea is shown only when it matches the schema and carries no pseudonym.
     if (ideasPageProblems(body, IDEAS_PAGE).length) throw new CompanionFailure("unavailable");
     return body as IdeasPage;
+  }
+}
+
+/** Why a file's arguments could not be shown: not on this server, failing, too many requests, or offline with no saved copy. */
+export type ArgumentsFailureKind = "off" | "unavailable" | "busy" | "offline";
+export class ArgumentsFailure extends Error {
+  readonly kind: ArgumentsFailureKind;
+  constructor(kind: ArgumentsFailureKind) {
+    super(kind);
+    this.kind = kind;
+  }
+}
+
+/** A file's arguments, and when they were saved on this device if they come from the saved copy. */
+export interface ArgumentsRead {
+  list: FileArguments;
+  /** null when the list just came from the network. */
+  savedAt: string | null;
+}
+
+/** Reads what residents and council groups argued on a file (Commons, read only). */
+export interface ArgumentsReader {
+  forFile(fileId: string): Promise<ArgumentsRead>;
+}
+
+/** The browser cache that keeps the last list of each file opened, for reading offline. */
+export const ARGUMENTS_CACHE = "citizen-arguments-1";
+const SAVED_AT = "x-saved-at";
+
+async function savedCopy(url: string): Promise<Response | undefined> {
+  try {
+    return await (await caches.open(ARGUMENTS_CACHE)).match(url);
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Calls the Companion server's GET /api/files/{id}/arguments. The request is the same whatever
+ * the resident chose (no stance, no language): the tabs filter in the page. Each list that
+ * passes the check is saved on this device, so a file opened before can show it offline.
+ */
+export class RemoteArguments implements ArgumentsReader {
+  private readonly base: string;
+  private readonly now: () => Date;
+  constructor(base = "", now = () => new Date()) {
+    this.base = base;
+    this.now = now;
+  }
+
+  async forFile(fileId: string): Promise<ArgumentsRead> {
+    const url = `${this.base}/api/files/${encodeURIComponent(fileId)}/arguments`;
+    let res: Response;
+    try {
+      res = await fetch(url);
+    } catch {
+      // No network: the copy saved the last time this file was opened, if there is one.
+      const saved = await savedCopy(url);
+      const list = saved ? ((await saved.json().catch(() => null)) as unknown) : null;
+      if (saved && list && fileArgumentsProblems(list, fileId).length === 0) {
+        return { list: list as FileArguments, savedAt: saved.headers.get(SAVED_AT) };
+      }
+      throw new ArgumentsFailure(typeof navigator !== "undefined" && navigator.onLine === false ? "offline" : "unavailable");
+    }
+    if (res.status === 429) throw new ArgumentsFailure("busy");
+    if (res.status === 503) throw new ArgumentsFailure("off");
+    if (!res.ok) throw new ArgumentsFailure("unavailable");
+    const body = (await res.json().catch(() => null)) as unknown;
+    // Checked again here: an argument is shown only when it matches the schema and carries no pseudonym.
+    if (fileArgumentsProblems(body, fileId).length) throw new ArgumentsFailure("unavailable");
+    try {
+      const cache = await caches.open(ARGUMENTS_CACHE);
+      await cache.put(url, new Response(JSON.stringify(body), { headers: { "content-type": "application/json", [SAVED_AT]: this.now().toISOString() } }));
+    } catch {
+      // No Cache API (an old browser, a private window): the list still shows, it is just not kept.
+    }
+    return { list: body as FileArguments, savedAt: null };
   }
 }

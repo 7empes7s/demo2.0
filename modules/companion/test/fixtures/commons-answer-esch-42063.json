@@ -1,0 +1,91 @@
+{
+    "matter_id": "lu.esch.42063",
+    "stance": null,
+    "ranker": null,
+    "arguments": [
+        {
+            "id": "esch-75f79506e757c3c3",
+            "matter_id": "lu.esch.42063",
+            "stance_option_id": "no",
+            "text": "ADR: 1 councillor voted against at the Esch-sur-Alzette municipal council on 2026-10-02.",
+            "source_refs": [
+                "lu.esch.42063"
+            ],
+            "author_nym": "source:esch.lu-council",
+            "cluster_id": null,
+            "kind": "position",
+            "attribution": "ADR group, Esch-sur-Alzette municipal council",
+            "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+        },
+        {
+            "id": "esch-31df08d4bce367b6",
+            "matter_id": "lu.esch.42063",
+            "stance_option_id": "yes",
+            "text": "CSV: 6 councillors voted in favour at the Esch-sur-Alzette municipal council on 2026-10-02.",
+            "source_refs": [
+                "lu.esch.42063"
+            ],
+            "author_nym": "source:esch.lu-council",
+            "cluster_id": null,
+            "kind": "position",
+            "attribution": "CSV group, Esch-sur-Alzette municipal council",
+            "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+        },
+        {
+            "id": "esch-5952a064a29ac7a8",
+            "matter_id": "lu.esch.42063",
+            "stance_option_id": "yes",
+            "text": "DP: 2 councillors voted in favour at the Esch-sur-Alzette municipal council on 2026-10-02.",
+            "source_refs": [
+                "lu.esch.42063"
+            ],
+            "author_nym": "source:esch.lu-council",
+            "cluster_id": null,
+            "kind": "position",
+            "attribution": "DP group, Esch-sur-Alzette municipal council",
+            "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+        },
+        {
+            "id": "esch-2c6dc9829980e137",
+            "matter_id": "lu.esch.42063",
+            "stance_option_id": "no",
+            "text": "LSAP: 6 councillors voted against at the Esch-sur-Alzette municipal council on 2026-10-02.",
+            "source_refs": [
+                "lu.esch.42063"
+            ],
+            "author_nym": "source:esch.lu-council",
+            "cluster_id": null,
+            "kind": "position",
+            "attribution": "LSAP group, Esch-sur-Alzette municipal council",
+            "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+        },
+        {
+            "id": "esch-f24ae56ed10ebc02",
+            "matter_id": "lu.esch.42063",
+            "stance_option_id": "no",
+            "text": "d\u00e9i L\u00e9nk: 1 councillor voted against at the Esch-sur-Alzette municipal council on 2026-10-02.",
+            "source_refs": [
+                "lu.esch.42063"
+            ],
+            "author_nym": "source:esch.lu-council",
+            "cluster_id": null,
+            "kind": "position",
+            "attribution": "d\u00e9i L\u00e9nk group, Esch-sur-Alzette municipal council",
+            "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+        },
+        {
+            "id": "esch-b3cdcf4e6e5a2717",
+            "matter_id": "lu.esch.42063",
+            "stance_option_id": "yes",
+            "text": "d\u00e9i gr\u00e9ng: 3 councillors voted in favour at the Esch-sur-Alzette municipal council on 2026-10-02.",
+            "source_refs": [
+                "lu.esch.42063"
+            ],
+            "author_nym": "source:esch.lu-council",
+            "cluster_id": null,
+            "kind": "position",
+            "attribution": "d\u00e9i gr\u00e9ng group, Esch-sur-Alzette municipal council",
+            "source_url": "https://administration.esch.lu/sessions_conseil/conseil-communal-du-02-octobre-2026/"
+        }
+    ]
+}
