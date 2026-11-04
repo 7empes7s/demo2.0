@@ -1,0 +1,12 @@
+{
+  "apps/citizen/test/arena.test.ts:@typescript-eslint/no-floating-promises": 1,
+  "apps/citizen/test/arguments.test.ts:@typescript-eslint/no-floating-promises": 5,
+  "apps/citizen/test/desk.test.ts:@typescript-eslint/no-floating-promises": 10,
+  "apps/citizen/test/factcheck.test.ts:@typescript-eslint/no-floating-promises": 3,
+  "apps/citizen/test/facts.test.ts:@typescript-eslint/no-floating-promises": 1,
+  "apps/citizen/test/ideas.test.ts:@typescript-eslint/no-floating-promises": 4,
+  "apps/citizen/test/pulse.test.ts:@typescript-eslint/no-floating-promises": 6,
+  "apps/citizen/test/settings.test.ts:@typescript-eslint/no-floating-promises": 2,
+  "apps/citizen/test/translations.test.ts:@typescript-eslint/no-floating-promises": 2,
+  "apps/portal/test/helpers.ts:@typescript-eslint/no-floating-promises": 1
+}
