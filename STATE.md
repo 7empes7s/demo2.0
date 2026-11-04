@@ -2,6 +2,12 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-11-04: Nightly backup of the Desk and Agora databases (issue #82)
+
+- Done: `modules/desk/src/backup.ts` copies both databases with SQLite's online backup (one read transaction, never blocks Desk's WAL writes), checks each copy read only (`PRAGMA integrity_check`, Desk's chain replay through the new shared `verifyChain`), and only then publishes `/var/backups/civic/YYYY-MM-DD/`. A failed check exits 1 and touches nothing; 7 days kept, the newest never removed; files 600, folders 700. Units `ops/deploy/civic-backup.service` + `.timer` (03:15 Luxembourg, `Persistent=true`). Restore drill in `ops/deploy/README.md`; desk.md section 7 says a deleted letter request can live in a backup for up to 7 days. `*.db` is now git-ignored.
+- Evidence: desk tests (backup under a concurrent writer process, tampered log, retention, modes, CLI exit codes) and `tools/tests/test_deploy_units.py` (unit lint plus `systemd-analyze verify`); `tools/check.sh` green.
+- Not live: the operator queue has the install and first drill (agents cannot install on Mulinux).
+
 ## 2026-11-04: "Reach contested" in the citizen app (issue #79)
 
 - Done: Ideas shows "Reach contested" beside the reach tag while `contested` is true, with a one-line explanation, and names where a narrowed idea was first filed (`filed_jurisdiction_id` != `jurisdiction_id`) in Charter place names. Companion `Idea` type has both fields. Five languages; VOCABULARY rows added.

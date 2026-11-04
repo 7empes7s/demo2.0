@@ -1,0 +1,30 @@
+[Unit]
+Description=Back up the Desk and Agora databases and check the copies (integrity and Desk's log chain)
+# A failed run (a copy that fails its check, a missing database) exits 1: the unit shows as
+# failed in `systemctl --failed`, and the previous good backup stays.
+
+[Service]
+Type=oneshot
+User=civic
+Group=civic
+WorkingDirectory=/opt/civic/current
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+# Copies hold waiting letter requests (names, addresses) and the letters.key secret: nothing
+# this unit creates is readable by anyone but civic.
+UMask=0077
+# /var/backups is root's; create the civic folder before the sandboxed step (the + runs as root).
+ExecStartPre=+/usr/bin/install -d -m 0700 -o civic -g civic /var/backups/civic
+# Online SQLite backup (never a plain cp), one folder per day, kept 7 days (docs/product/desk.md).
+ExecStart=/usr/bin/env node --experimental-strip-types --no-warnings=ExperimentalWarning modules/desk/src/backup.ts --out /var/backups/civic --keep-days 7 --desk /var/lib/civic-desk/desk.db --agora /var/lib/civic-agora/agora.db
+# Low priority: the copy is one read transaction, which never blocks Desk's writes in WAL mode.
+Nice=10
+IOSchedulingClass=idle
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+ReadOnlyPaths=/opt/civic
+# The backup folder, and the two state folders: the databases are opened read only, but a
+# reader of a WAL database still writes its shared-memory index (desk.db-shm).
+ReadWritePaths=/var/backups/civic /var/lib/civic-desk /var/lib/civic-agora
+MemoryMax=256M

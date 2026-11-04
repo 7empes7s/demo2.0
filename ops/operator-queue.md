@@ -13,6 +13,16 @@ History: from 2026-10-05 to 2026-10-07 this queue lived in the keel repo (`ops/o
 
 ## Open
 
+### 2026-11-04: install the nightly backup and run the first restore drill
+
+- Why: nothing backed up `/var/lib/civic-desk/desk.db` (the hash-chained log, ballots, staff accounts) or `/var/lib/civic-agora/agora.db` (issue #82).
+- Waits on: the release with `modules/desk/src/backup.ts` being live (any deploy after the PR merges).
+- Steps (details in `ops/deploy/README.md`, "Backups and the restore drill"):
+  1. Copy `civic-backup.service` and `civic-backup.timer` from the live release to `/etc/systemd/system/`, and add the drop-in `civic-backup.service.d/node22.conf` (same content as `civic-desk.service.d/node22.conf`).
+  2. `systemctl daemon-reload && systemctl enable --now civic-backup.timer && systemctl start civic-backup.service`.
+  3. Run the restore drill once, at a quiet hour.
+- Done when: `systemctl list-timers civic-backup.timer` shows the next run; `journalctl -u civic-backup -n 5` shows `desk: ... integrity ok, chain ok, N entries` and `agora: ... integrity ok`; `ls -l /var/backups/civic/<today>` shows three files, mode `-rw-------`, owner `civic`; after the drill, the `--check` of the restored `desk.db` shows `"ok":true` with the manifest's head, and `/healthz` shows `"desk":true,"agora":true`. Post that output on #82.
+
 ### 2026-10-07: reinstall the Companion unit for translations
 
 - Why: the translations PR added `StateDirectory=civic-companion` to `ops/deploy/civic-companion.service` (see STATE.md, "Files in the resident's language").

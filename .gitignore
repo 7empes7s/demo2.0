@@ -11,4 +11,10 @@ target/
 .env*
 !.env.example
 .claude/worktrees/
+# Databases and their backups hold personal data and secrets; never commit one.
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
 dist-single/
