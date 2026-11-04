@@ -128,6 +128,11 @@ describe("idea schema check", () => {
       { ...IDEA, extra: 1 },
       { ...IDEA, proposer_nym: undefined },
       { ...IDEA, upvote_count: undefined },
+      { ...IDEA, contested: "true" },
+      { ...IDEA, contested: 1 },
+      { ...IDEA, contested: null },
+      { ...IDEA, filed_jurisdiction_id: "" },
+      { ...IDEA, filed_jurisdiction_id: 7 },
     ];
     for (const value of bad) expect(ideaProblems(JSON.parse(JSON.stringify(value) ?? "null")), JSON.stringify(value)).not.toEqual([]);
   });
@@ -161,6 +166,19 @@ describe("readQueue", () => {
     expect(page).toEqual({ charter_version: "0.1.0", ideas: [PUBLIC_IDEA, PUBLIC_HIDDEN] });
     expect(JSON.stringify(page)).not.toContain("nym-");
     expect(agora.seen).toEqual([{ method: "GET", path: "/queue?jurisdiction=lu&jurisdiction=lu-commune-esch-sur-alzette&limit=10" }]);
+  });
+
+  it("passes a challenged or narrowed idea's contested and filed_jurisdiction_id through", async () => {
+    const contested = { ...IDEA, filed_jurisdiction_id: "lu", contested: true };
+    const narrowed = { ...HIDDEN, filed_jurisdiction_id: "lu-canton-esch-sur-alzette", contested: false };
+    expect(ideaProblems(contested)).toEqual([]);
+    expect(ideaProblems(narrowed)).toEqual([]);
+    const agora = await fakeAgora((_, res) => json(res, 200, { ...QUEUE, ideas: [contested, narrowed] }));
+    const page = await readQueue(agora.url, { limit: 10 });
+    expect(page.ideas[0]).toMatchObject({ contested: true, filed_jurisdiction_id: "lu", jurisdiction_id: "lu" });
+    expect(page.ideas[1]).toMatchObject({ contested: false, filed_jurisdiction_id: "lu-canton-esch-sur-alzette", jurisdiction_id: "lu-commune-esch-sur-alzette" });
+    expect(ideasPageProblems(page)).toEqual([]);
+    expect(ideasPageProblems({ ...page, ideas: [{ ...page.ideas[0], contested: "yes" }] })).not.toEqual([]);
   });
 
   it("times out on a body that stalls after the headers", async () => {

@@ -2,6 +2,11 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-11-04: "Reach contested" in the citizen app (issue #79)
+
+- Done: Ideas shows "Reach contested" beside the reach tag while `contested` is true, with a one-line explanation, and names where a narrowed idea was first filed (`filed_jurisdiction_id` != `jurisdiction_id`) in Charter place names. Companion `Idea` type has both fields. Five languages; VOCABULARY rows added.
+- Not live: Agora runs `--read-only`, so no challenge can open and the mark stays off in production. Proven with fixtures only. The explanation says "within the time the Charter sets" rather than "7 days", because `scope_challenge.decision_days` is a placeholder and is not in the app's build-time Charter data.
+
 ## 2026-11-04: Old PRs #62, #64 and #73 landed or closed (issue #75)
 
 - Ask (Mimoun, issue #75): every open PR lands through office QA or is closed.
