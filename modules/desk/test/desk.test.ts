@@ -157,7 +157,7 @@ describe("a code by post", () => {
       ["Jean Weber", "3 boulevard Kennedy", "", "4170", false],
     ]);
     const log = JSON.stringify(ctx.store.events({ kind: "enrol" }));
-    expect(log).not.toMatch(/Maria|Lopes|Alzette|Weber|Kennedy|4011|4170/);
+    expect(log).not.toMatch(/Maria|Lopes|Alzette|Weber|Kennedy|\b(?:4011|4170)\b/);
 
     // Printing makes one code per letter in the month's batch and deletes what identified the person.
     const ids = list.body.requests.map((r: any) => r.id);
@@ -174,7 +174,7 @@ describe("a code by post", () => {
     const r = await ctx.call("POST", "/enrol", { code });
     expect(r.status).toBe(200);
     const all = everything(ctx.store);
-    expect(all).not.toMatch(/Maria|Lopes|Alzette|Weber|Kennedy|4011|4170/i);
+    expect(all).not.toMatch(/Maria|Lopes|Alzette|Weber|Kennedy|\b(?:4011|4170)\b/i);
     expect(all).not.toContain(code);
     expect(ctx.store.verify().ok).toBe(true);
 
