@@ -26,4 +26,8 @@ if [ -f Cargo.toml ]; then
   cargo clippy --workspace --all-targets -- -D warnings
   cargo test --workspace
 fi
+
+echo "== code health (fails only on findings not in tools/baselines; see docs/code-health.md)"
+uv run --quiet python tools/health.py check
+
 echo "check.sh: all green"

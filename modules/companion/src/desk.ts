@@ -8,7 +8,7 @@
 
 import type { IncomingMessage } from "node:http";
 
-import { MAX_SMALL_BYTES, readJson, UPSTREAM } from "./upstream.ts";
+import { readJson, UPSTREAM } from "./upstream.ts";
 
 export const DESK_METHODS = new Set(["GET", "POST", "PATCH", "DELETE"]);
 /** Largest body forwarded to Desk (Desk itself refuses more). */
@@ -58,14 +58,4 @@ export async function forwardToDesk(
     throw new DeskUnavailable(`answer could not be read: ${e instanceof Error ? e.message : e}`);
   }
   return { status: res.status, body: parsed };
-}
-
-/** Whether the service answers; for /healthz. */
-export async function deskUp(base: string): Promise<boolean> {
-  try {
-    const res = await fetch(`${base.replace(/\/+$/, "")}/healthz`, { ...UPSTREAM, signal: AbortSignal.timeout(1_000) });
-    return res.ok && ((await readJson(res, MAX_SMALL_BYTES)) as { ok?: unknown })?.ok === true;
-  } catch {
-    return false;
-  }
 }

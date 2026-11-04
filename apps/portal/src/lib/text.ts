@@ -70,9 +70,3 @@ export function fromLocalInput(value: string): string | null {
 export function short(hash: string | null | undefined, n = 10): string {
   return (hash ?? "").slice(0, n);
 }
-
-/** "staff:abc" -> ("staff", "abc"); "anonymous" -> ("anonymous", ""). */
-export function splitRef(ref: string): { kind: string; id: string } {
-  const i = ref.indexOf(":");
-  return i < 0 ? { kind: ref, id: "" } : { kind: ref.slice(0, i), id: ref.slice(i + 1) };
-}
