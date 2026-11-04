@@ -13,7 +13,7 @@
 
   // The shell hands every section the route's argument; this one has no sub-route.
   let { arg: _arg = null }: { arg?: string | null } = $props();
-  import { type EnrolBatch, type LetterRequest, type PostedLetter } from "../lib/types.ts";
+  import { DECLINE_REASONS, type DeclineReason, type EnrolBatch, type LetterRequest, type PostedLetter } from "../lib/types.ts";
   import { date, failure, t } from "../lib/ui.svelte.ts";
 
   let batches = $state<EnrolBatch[] | null>(null);
@@ -29,6 +29,9 @@
   /** Requests ticked for printing; every new one starts ticked unless it needs a second look. */
   let picked = $state<Set<string>>(new Set());
   let copied = $state(false);
+  /** The request being declined, and the reason the admin picked for it. */
+  let declining = $state<string | null>(null);
+  let reason = $state<DeclineReason>("not_in_register");
 
   async function load() {
     listError = null;
@@ -43,7 +46,7 @@
     requestsError = null;
     try {
       requests = (await get<{ requests: LetterRequest[] }>("/enrol-requests")).requests;
-      picked = new Set(requests.filter((r) => !r.sent_before && !r.duplicate).map((r) => r.id));
+      picked = new Set(requests.filter((r) => !r.sent_before && !r.duplicate && !r.outside).map((r) => r.id));
     } catch (e) {
       requestsError = failure(e);
       requests = [];
@@ -81,12 +84,19 @@
     }
   }
 
+  /** Opens the reason picker, with the likeliest reason chosen. */
+  function startDecline(r: LetterRequest) {
+    declining = r.id;
+    reason = r.outside ? "outside_commune" : r.sent_before || r.duplicate ? "asked_twice" : "not_in_register";
+  }
+
   async function decline(r: LetterRequest) {
-    if (busy || !confirm(t("letters_decline_confirm"))) return;
+    if (busy) return;
     busy = true;
     requestsError = null;
     try {
-      await post(`/enrol-requests/${encodeURIComponent(r.id)}/decline`);
+      await post(`/enrol-requests/${encodeURIComponent(r.id)}/decline`, { reason });
+      declining = null;
       await loadRequests();
     } catch (err) {
       requestsError = failure(err);
@@ -187,15 +197,34 @@
           <tbody>
             {#each requests as r (r.id)}
               <tr data-request={r.id}>
-                <td><input type="checkbox" aria-label={`${t("letters_pick")}: ${r.name}`} checked={picked.has(r.id)} onchange={(e) => toggle(r.id, (e.currentTarget as HTMLInputElement).checked)} /></td>
+                <td><input type="checkbox" aria-label={`${t("letters_pick")}: ${r.name}`} checked={picked.has(r.id)} disabled={r.outside} onchange={(e) => toggle(r.id, (e.currentTarget as HTMLInputElement).checked)} /></td>
                 <td class="wrap">
                   {r.name}
                   {#if r.sent_before}<span class="flag">{t("letters_sent_before")}</span>{/if}
                   {#if r.duplicate}<span class="flag">{t("letters_duplicate")}</span>{/if}
                 </td>
-                <td class="wrap">{[r.street, r.extra, `L-${r.postcode}`].filter(Boolean).join(", ")}</td>
+                <td class="wrap">
+                  {[r.street, r.extra, `L-${r.postcode}`].filter(Boolean).join(", ")}
+                  {#if r.outside}<span class="flag" data-state="outside">{t("letters_outside")}</span>{/if}
+                </td>
                 <td>{date(r.created_at)}</td>
-                <td><button class="btn small" onclick={() => decline(r)} disabled={busy}>{t("letters_decline")}</button></td>
+                <td>
+                  {#if declining === r.id}
+                    <div class="decline" data-state="declining">
+                      <label class="label" for="reason-{r.id}">{t("letters_decline_reason")}</label>
+                      <select id="reason-{r.id}" bind:value={reason}>
+                        {#each DECLINE_REASONS as x (x)}<option value={x}>{t(`letters_reason_${x}`)}</option>{/each}
+                      </select>
+                      <p class="muted hint">{t("letters_decline_hint")}</p>
+                      <div class="actions">
+                        <button class="btn small primary" onclick={() => decline(r)} disabled={busy}>{t("letters_decline_go")}</button>
+                        <button class="btn small" onclick={() => (declining = null)} disabled={busy}>{t("letters_decline_keep")}</button>
+                      </div>
+                    </div>
+                  {:else}
+                    <button class="btn small" onclick={() => startDecline(r)} disabled={busy}>{t("letters_decline")}</button>
+                  {/if}
+                </td>
               </tr>
             {/each}
           </tbody>
@@ -248,4 +277,6 @@
   .codes { font-size: 0.9rem; }
   .hint { margin: 0; font-size: 0.86rem; }
   .flag { display: block; font-size: 0.82rem; font-weight: 700; color: var(--red); }
+  .decline { display: grid; gap: 6px; min-width: 14rem; }
+  .decline .actions { gap: 6px; }
 </style>

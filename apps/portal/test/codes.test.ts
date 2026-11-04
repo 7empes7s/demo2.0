@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import Codes from "../src/components/Codes.svelte";
+import Settings from "../src/components/Settings.svelte";
 import { commune } from "../src/lib/commune.svelte.ts";
 import { LETTER_LANGS, LETTERS, letterText, siteAddress } from "../src/lib/letters.ts";
 import { setLang } from "../src/lib/ui.svelte.ts";
@@ -95,8 +96,8 @@ describe("enrolment codes", () => {
 
 describe("codes asked for by post", () => {
   const REQUESTS = [
-    { id: "r1", name: "Maria Lopes", street: "12 rue de l'Alzette", extra: "2e étage", postcode: "4011", created_at: "2026-10-08T09:00:00.000Z", sent_before: false, duplicate: false },
-    { id: "r2", name: "Jean Weber", street: "3 boulevard Kennedy", extra: "", postcode: "4170", created_at: "2026-10-08T10:00:00.000Z", sent_before: true, duplicate: false },
+    { id: "r1", name: "Maria Lopes", street: "12 rue de l'Alzette", extra: "2e étage", postcode: "4011", created_at: "2026-10-08T09:00:00.000Z", sent_before: false, duplicate: false, outside: false },
+    { id: "r2", name: "Jean Weber", street: "3 boulevard Kennedy", extra: "", postcode: "4170", created_at: "2026-10-08T10:00:00.000Z", sent_before: true, duplicate: false, outside: false },
   ];
 
   it("lists waiting requests, prints addressed letters for the ticked ones, and declines another", async () => {
@@ -141,10 +142,93 @@ describe("codes asked for by post", () => {
     expect(document.body.textContent).not.toContain("Maria Lopes");
 
     await vi.waitFor(() => expect(root.querySelectorAll("[data-request]")).toHaveLength(1));
-    vi.stubGlobal("confirm", () => true);
+    // Declining asks for the reason the resident will see; a letter that already went suggests "asked twice".
     click(button(root, "Decline"));
+    const picker = root.querySelector("[data-state=declining]")!;
+    const select = picker.querySelector("select") as HTMLSelectElement;
+    expect([...select.options].map((o) => o.textContent)).toEqual(["Not in the residents' register", "Address outside the commune", "Asked twice, or a letter already went", "Address incomplete"]);
+    expect(select.value).toBe("asked_twice");
+    expect(picker.textContent).toContain("The resident's device shows the reason on its next visit.");
+    // Keeping it closes the picker and sends nothing.
+    click(button(picker, "Keep it"));
+    expect(root.querySelector("[data-state=declining]")).toBeNull();
+    expect(calls.some((c) => c.path.endsWith("/decline"))).toBe(false);
+    click(button(root, "Decline"));
+    const again = root.querySelector("[data-state=declining] select") as HTMLSelectElement;
+    again.value = "not_in_register";
+    again.dispatchEvent(new Event("change", { bubbles: true }));
+    click(button(root.querySelector("[data-state=declining]")!, "Decline"));
     await vi.waitFor(() => expect(root.textContent).toContain("No request is waiting."));
-    expect(calls.some((c) => c.method === "POST" && c.path === "/api/desk/enrol-requests/r2/decline")).toBe(true);
+    expect(calls.find((c) => c.method === "POST" && c.path === "/api/desk/enrol-requests/r2/decline")?.body).toEqual({ reason: "not_in_register" });
+  });
+
+  it("never lets a request outside the commune's postcodes be printed, and suggests declining it as such", async () => {
+    const outside = { id: "r3", name: "Ana Silva", street: "1 Grand-Rue", extra: "", postcode: "9001", created_at: "2026-10-08T11:00:00.000Z", sent_before: false, duplicate: false, outside: true };
+    const { calls } = fakeDesk({
+      "GET /api/desk/enrol-codes": () => ({ body: { batches: [] } }),
+      "GET /api/desk/enrol-requests": () => ({ body: { requests: [REQUESTS[0], outside] } }),
+      "POST /api/desk/enrol-requests/print": () => ({ body: { letters: [] } }),
+    });
+    signedInAs("admin");
+    const root = show(Codes, {});
+    await vi.waitFor(() => expect(root.querySelectorAll("[data-request]")).toHaveLength(2));
+    const row = root.querySelector("[data-request=r3]")!;
+    expect(row.querySelector("[data-state=outside]")?.textContent).toBe("Postcode outside the commune: no letter can be printed. Decline it.");
+    const box = row.querySelector("input[type=checkbox]") as HTMLInputElement;
+    expect(box.checked).toBe(false);
+    expect(box.disabled).toBe(true);
+    click(box);
+    expect(button(root, "Print letters (1)")).toBeTruthy();
+    click(button(root, "Print letters (1)"));
+    await vi.waitFor(() => expect(calls.some((c) => c.path === "/api/desk/enrol-requests/print")).toBe(true));
+    expect(calls.find((c) => c.path === "/api/desk/enrol-requests/print")?.body).toEqual({ ids: ["r1"] });
+    await vi.waitFor(() => expect(button(root, "Print letters (1)")).toBeTruthy());
+    click(button(root.querySelector("[data-request=r3]")!, "Decline"));
+    expect((root.querySelector("[data-state=declining] select") as HTMLSelectElement).value).toBe("outside_commune");
+  });
+});
+
+describe("the commune's postcodes", () => {
+  const SETTINGS = { commune: "Esch-sur-Alzette", languages: ["fr", "en"], intro: {}, postcodes: ["4001-4398"], ai: { configured: false, model: null, base_url: "", key_set: false, from_env: false } };
+
+  it("shows the ranges one per line and saves the edited list", async () => {
+    const { calls } = fakeDesk({
+      "GET /api/desk/settings": () => ({ body: SETTINGS }),
+      "PATCH /api/desk/settings": (init) => ({ body: { ...SETTINGS, postcodes: JSON.parse(String(init?.body)).postcodes } }),
+    });
+    signedInAs("admin");
+    const root = show(Settings, {});
+    await vi.waitFor(() => expect(root.querySelector("#s-postcodes")).toBeTruthy());
+    const field = root.querySelector("#s-postcodes") as HTMLTextAreaElement;
+    expect(field.value).toBe("4001-4398");
+    expect(root.querySelector('label[for="s-postcodes"]')?.textContent).toBe("Postcodes of the commune");
+    expect(root.textContent).toContain("Leave empty to accept every postcode.");
+    type(field, "4001-4398\n  4410  \n\n4500-4510");
+    (root.querySelector("form") as HTMLFormElement).requestSubmit();
+    await vi.waitFor(() => expect(root.textContent).toContain("Settings saved."));
+    expect((calls.find((c) => c.method === "PATCH")?.body as { postcodes: string[] }).postcodes).toEqual(["4001-4398", "4410", "4500-4510"]);
+    expect((root.querySelector("#s-postcodes") as HTMLTextAreaElement).value).toBe("4001-4398\n4410\n4500-4510");
+  });
+
+  it("clears the check with an empty list, and shows the desk's refusal of a bad range", async () => {
+    let refuse = true;
+    const { calls } = fakeDesk({
+      "GET /api/desk/settings": () => ({ body: SETTINGS }),
+      "PATCH /api/desk/settings": () => (refuse ? { status: 400, body: { error: "the range 4398-4001 ends before it starts" } } : { body: { ...SETTINGS, postcodes: [] } }),
+    });
+    signedInAs("admin");
+    setLang("fr");
+    const root = show(Settings, {});
+    await vi.waitFor(() => expect(root.querySelector("#s-postcodes")).toBeTruthy());
+    expect(root.querySelector('label[for="s-postcodes"]')?.textContent).toBe("Codes postaux de la commune");
+    type(root.querySelector("#s-postcodes"), "4398-4001");
+    (root.querySelector("form") as HTMLFormElement).requestSubmit();
+    await vi.waitFor(() => expect(root.textContent).toContain("ends before it starts"));
+    refuse = false;
+    type(root.querySelector("#s-postcodes"), "");
+    (root.querySelector("form") as HTMLFormElement).requestSubmit();
+    await vi.waitFor(() => expect(root.textContent).toContain("Paramètres enregistrés."));
+    expect((calls.filter((c) => c.method === "PATCH").at(-1)?.body as { postcodes: string[] }).postcodes).toEqual([]);
   });
 });
 

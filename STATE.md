@@ -2,6 +2,12 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-11-04: Code by post checks the postcode and tells residents about a decline (issue #81)
+
+- Ask (Mimoun, issue #81, from the 2026-10-09 "Not done"): check the postcode is in the commune, and tell a resident when their request is declined.
+- Done: `commune.postcodes` (ranges, Settings page in the portal, fr and en); Desk refuses another postcode with `outside_commune` and the citizen form says, in five languages, to ask their own commune; a waiting request outside the ranges cannot be printed. A new request returns a random request code kept on the device next to the date; Desk keeps only its keyed hash in `letter_status` (waiting, sent, declined + reason; no name, address or time of asking), deleted 60 days after its last change. The admin's decline asks for one of four reasons; the sign-in sheet shows "Your request was declined: …" or "The commune posted your letter" on the next visit. Spec: `docs/product/desk.md` section 7.
+- Open: Esch's ranges are not set (no citable Post Luxembourg list from a cloud session): `ops/operator-queue.md`, 2026-11-04 entry. Until then every postcode is accepted, as before.
+
 ## 2026-11-04: Old PRs #62, #64 and #73 landed or closed (issue #75)
 
 - Ask (Mimoun, issue #75): every open PR lands through office QA or is closed.

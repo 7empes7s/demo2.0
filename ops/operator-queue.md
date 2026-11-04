@@ -13,6 +13,12 @@ History: from 2026-10-05 to 2026-10-07 this queue lived in the keel repo (`ops/o
 
 ## Open
 
+### 2026-11-04: set Esch-sur-Alzette's postcodes on the Desk portal (issue #81)
+
+- Why: Desk can now refuse a request for a code by post from outside the commune, but only once an admin sets the commune's postcodes. Until then every four-digit postcode is accepted (the old behaviour). The ranges are not hard-coded: they must come from Post Luxembourg's official list of postcodes for Esch-sur-Alzette, which this PR could not cite.
+- Steps (an admin on the portal, no server work): open Post Luxembourg's postcode search (or its downloadable list of streets and postcodes) for the locality Esch-sur-Alzette; enter the postcodes as ranges or single codes, one per line, in **Settings, Postcodes of the commune**; save.
+- Done when: `GET /api/desk/settings` (as admin) lists the ranges, the event log shows a `settings.changed` entry with `commune.postcodes`, and a request for a code by post with a postcode outside them is refused in the citizen app with "This service is for residents of this commune only".
+
 ### 2026-10-07: reinstall the Companion unit for translations
 
 - Why: the translations PR added `StateDirectory=civic-companion` to `ops/deploy/civic-companion.service` (see STATE.md, "Files in the resident's language").
