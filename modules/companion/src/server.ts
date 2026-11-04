@@ -13,7 +13,9 @@
  *   ANTHROPIC_API_KEY  the Anthropic path, kept for the bridge period
  *   COMPANION_MODEL    older name for the Anthropic model; LLM_MODEL wins
  *   SNAPSHOT           path to the Docket snapshot JSON (default data/lu-chd.json)
- *   COMMONS_URL        Commons API base URL (optional); the devil's advocate draws from it first
+ *   COMMONS_URL        Commons API base URL (optional); the devil's advocate draws from it first,
+ *                      and GET /api/files/{id}/arguments reads a file's arguments from it (read
+ *                      only: rating and posting arguments wait for secure sign-in)
  *   STATIC_DIR         built app to serve (optional)
  *   PORT               default 8787
  *   HOST               interface to listen on (default 127.0.0.1)
@@ -40,6 +42,7 @@ import { basename, extname, join, normalize, resolve, sep } from "node:path";
 import { type CommonsArgument, type CommonsClient, commonsSuffices, HttpCommons } from "./commons.ts";
 import { challenge, checkClaim, explain, extractArguments } from "./companion.ts";
 import { CheckerInvalid, CheckerUnavailable, gradeClaim, MAX_CLAIM } from "./factcheck.ts";
+import { CommonsInvalid, CommonsUnavailable, type FileArguments, readFileArguments } from "./file-arguments.ts";
 import { DESK_BODY, DeskUnavailable, forwardToDesk } from "./desk.ts";
 import { AgoraInvalid, AgoraUnavailable, DEFAULT_IDEAS, type IdeasPage, JURISDICTION, MAX_IDEAS, MAX_JURISDICTIONS, readQueue } from "./ideas.ts";
 import { MAX_SMALL_BYTES, readJson, UPSTREAM } from "./upstream.ts";
@@ -97,6 +100,14 @@ export interface ServerOptions {
   ideasCacheMs?: number;
   /** Ideas-list reads per client per minute (default 60). Their own bucket: they cost no model tokens. */
   ideasPerMinute?: number;
+  /** Base URL of the Commons service. Without it /api/files/{id}/arguments answers 503. */
+  commonsUrl?: string;
+  /** How long to wait for Commons' whole answer, in ms (default 3000). */
+  commonsTimeoutMs?: number;
+  /** How long one Commons answer is reused for the same file, in ms. Default 15 s. */
+  argumentsCacheMs?: number;
+  /** Argument-list reads per client per minute (default 60). Their own bucket. */
+  argumentsPerMinute?: number;
 }
 
 /** Largest /api/factcheck body: a claim of MAX_CLAIM characters plus an item id fits easily. */
@@ -175,6 +186,8 @@ export function createCompanionServer(opts: ServerOptions) {
   const factcheckLimit = opts.factcheckPerMinute ?? 20;
   const ideasHits = new Map<string, number[]>();
   const ideasLimit = opts.ideasPerMinute ?? 60;
+  const argumentsHits = new Map<string, number[]>();
+  const argumentsLimit = opts.argumentsPerMinute ?? 60;
   const staticRoot = opts.staticDir ? resolve(opts.staticDir) : undefined;
   const portalRoot = opts.portalDir ? resolve(opts.portalDir) : undefined;
   const trustProxy = opts.trustProxy ?? 0;
@@ -390,6 +403,43 @@ export function createCompanionServer(opts: ServerOptions) {
     }
   }
 
+  /**
+   * GET /api/files/{id}/arguments: what residents and council groups argued on one file, from
+   * Commons, read only. 200 {file_id, ranker, arguments} without pseudonyms; 404 for a file not in
+   * the snapshot; 503 when Commons is not configured; 502 when it is unreachable, failing or
+   * answers something that is not a valid list. The same request whatever the resident chose:
+   * the stance tabs filter in the browser.
+   */
+  const argumentsCache = new Map<string, { at: number; list: Promise<FileArguments> }>();
+  async function fileArguments(req: IncomingMessage, fileId: string, url: URL): Promise<FileArguments> {
+    if ([...url.searchParams.keys()].length) throw new HttpError(400, "this route takes no parameters");
+    if (!items.has(fileId)) throw new HttpError(404, "unknown file");
+    if (!opts.commonsUrl) throw new HttpError(503, "arguments are not configured on this server");
+    throttle(req, argumentsHits, argumentsLimit);
+    const now = Date.now();
+    for (const [k, v] of argumentsCache) if (now - v.at >= (opts.argumentsCacheMs ?? 15_000)) argumentsCache.delete(k);
+    let entry = argumentsCache.get(fileId);
+    if (!entry) {
+      // Bounded: at most 64 files are kept, the oldest goes first.
+      if (argumentsCache.size >= 64) argumentsCache.delete(argumentsCache.keys().next().value!);
+      const fresh = { at: now, list: readFileArguments(opts.commonsUrl, fileId, { timeoutMs: opts.commonsTimeoutMs }) };
+      argumentsCache.set(fileId, fresh);
+      fresh.list.catch(() => {
+        if (argumentsCache.get(fileId) === fresh) argumentsCache.delete(fileId);
+      });
+      entry = fresh;
+    }
+    try {
+      return await entry.list;
+    } catch (e) {
+      if (e instanceof CommonsUnavailable || e instanceof CommonsInvalid) {
+        console.error(`arguments: ${e.message}`);
+        throw new HttpError(502, e instanceof CommonsInvalid ? "the arguments gave an answer that could not be read" : "the arguments are unavailable");
+      }
+      throw e;
+    }
+  }
+
   async function api(path: string, body: Record<string, unknown>, req: IncomingMessage): Promise<unknown> {
     if (!opts.provider) throw new HttpError(503, "the Companion is not configured on this server");
     const provider = opts.provider;
@@ -503,6 +553,18 @@ export function createCompanionServer(opts: ServerOptions) {
         if (url.pathname !== "/api/ideas") throw new HttpError(404, "not found");
         return send(res, 200, await ideas(req, url));
       }
+      const filePath = /^\/api\/files\/([^/]+)\/arguments$/.exec(url.pathname);
+      if (filePath) {
+        // Read only. Rating and posting arguments stay off until secure sign-in (Door) exists.
+        if (req.method !== "GET") throw new HttpError(405, "rating and posting arguments is not open yet", { allow: "GET" });
+        let fileId: string;
+        try {
+          fileId = decodeURIComponent(filePath[1]);
+        } catch {
+          throw new HttpError(400, "bad file id");
+        }
+        return send(res, 200, await fileArguments(req, fileId, url));
+      }
       if (url.pathname.startsWith("/api/")) {
         if (req.method !== "POST") throw new HttpError(405, "use POST");
         if (url.pathname === "/api/factcheck") return send(res, 200, await factcheck(req));
@@ -531,7 +593,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const port = Number(process.env.PORT ?? 8787);
   const trustProxy = Number(process.env.TRUST_PROXY ?? 0) || 0;
   const host = process.env.HOST || "127.0.0.1";
-  const commons = process.env.COMMONS_URL ? new HttpCommons(process.env.COMMONS_URL) : null;
+  const commonsUrl = process.env.COMMONS_URL || undefined;
+  const commons = commonsUrl ? new HttpCommons(commonsUrl) : null;
   const provenanceUrl = process.env.PROVENANCE_URL || "http://127.0.0.1:8090";
   const agoraUrl = process.env.AGORA_URL || "http://127.0.0.1:8091";
   const deskUrl = process.env.DESK_URL || "http://127.0.0.1:8094";
@@ -539,7 +602,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const cachePath = process.env.TRANSLATIONS_CACHE || (stateDir ? join(stateDir, "translations.json") : null);
   const translator = new Translator(snapshot, { provider, cachePath, intervalMs: Number(process.env.TRANSLATE_INTERVAL_MS ?? 3000) || 0 });
   await translator.load();
-  createCompanionServer({ provider, snapshot, commons, staticDir: process.env.STATIC_DIR, portalDir: process.env.PORTAL_DIR, trustProxy, provenanceUrl, agoraUrl, deskUrl, translator }).listen(port, host, () =>
+  createCompanionServer({ provider, snapshot, commons, commonsUrl, staticDir: process.env.STATIC_DIR, portalDir: process.env.PORTAL_DIR, trustProxy, provenanceUrl, agoraUrl, deskUrl, translator }).listen(port, host, () =>
     console.log(`companion listening on ${host}:${port}`),
   );
   // In the background: the app shows the original French until a text's translation lands.

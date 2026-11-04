@@ -21,6 +21,8 @@ import { translations } from "../src/lib/translations.svelte.ts";
 import { setLang } from "../src/lib/ui.svelte.ts";
 // The recorded Docket snapshot (real chd.lu and esch.lu records).
 import recorded from "../../../modules/pulse/test/fixtures/docket-recorded.json" with { type: "json" };
+// What the Companion answers for the 2 Oct 2026 Esch council point (recorded from the Esch seed).
+import eschArguments from "./fixtures/companion-arguments-esch-42063.json" with { type: "json" };
 
 const SNAPSHOT = recorded as unknown as { items: DocketItem[] };
 /** What the server serves at data/translations.json: every title, in every language, for everyone. */
@@ -107,6 +109,9 @@ function wireNetwork(companion = false) {
       const explanation = { headline: "Stub explanation", sections: [], sources: [], verified_share: 1, provenance: {} };
       return new Response(JSON.stringify(explanation), { status: 200 });
     }
+    const args = /\/api\/files\/([^/]+)\/arguments$/.exec(url);
+    // Every file gets the same recorded list, under its own id: the tabs must then work without asking again.
+    if (args) return new Response(JSON.stringify({ ...eschArguments, file_id: decodeURIComponent(args[1]) }), { status: 200 });
     if (companion && url.endsWith("/api/factcheck")) return new Response(JSON.stringify({ result: "no_record" }), { status: 200 });
     return new Response("{}", { status: 404 });
   });
@@ -221,6 +226,9 @@ async function changeEverything(target: HTMLElement, companion: boolean) {
   // Open a file from the week and come back, as a resident would.
   click(target.querySelector("a.entry"));
   await settle();
+  // Read the arguments on each side: the tabs filter what was already fetched.
+  for (const side of ["against", "for", "both"]) click(target.querySelector(`[data-testid=arguments] [data-tab=${side}]`));
+  await settle();
   if (companion) {
     // Use the Companion on the opened file (the same file in every run).
     click(buttonText(target, "Explain it"));
@@ -264,7 +272,10 @@ async function traceFor(choices: Choices, companion = false) {
 
 describe("Pulse: the network never learns what a resident cares about", () => {
   it.each([
-    { companion: false, expected: ["serviceworker register /sw.js", "fetch GET data/snapshot.json", "fetch GET data/translations.json", "fetch GET healthz"] },
+    {
+      companion: false,
+      expected: ["serviceworker register /sw.js", "fetch GET data/snapshot.json", "fetch GET data/translations.json", "fetch GET healthz", "fetch GET /api/files/lu.chd.8752/arguments"],
+    },
     {
       companion: true,
       expected: [
@@ -272,6 +283,7 @@ describe("Pulse: the network never learns what a resident cares about", () => {
         "fetch GET data/snapshot.json",
         "fetch GET data/translations.json",
         "fetch GET healthz",
+        "fetch GET /api/files/lu.chd.8752/arguments",
         "fetch POST /api/explain",
         "fetch POST /api/factcheck",
       ],

@@ -37,5 +37,8 @@ Use one word per role, and use it everywhere: in the UI, the docs and the prompt
 | enrolment code | invite, password, token, account | The one-time code the commune hands a resident; it signs in on this device. Never a product name ("Enter the code the commune gave you"). |
 | ask for a code by post, letter | sign up, register, registration, create an account | A resident without an enrolment code gives a name and an address; the commune checks them and posts a letter with the code. |
 | vote on a question, ballot, option | poll, referendum, election, survey | A Desk vote is a consultation the commune opens: one ballot per resident, changeable while open, counts per option shown only once the result is published. |
+| argument, reason (on a file) | comment, post, opinion, debate, take | What residents and council groups said on a file, for or against, each with a link to where it was said (Commons). A council group's recorded side is a **council vote**, shown apart: it says who took a side, never why. |
+| rated strong, rated weak | like, upvote, agree, helpful | How an argument will be rated once secure sign-in opens. "Rated strong by both sides" only when the ranker says so. |
+| ranked by bridging | top, best, popular, trending | The order Commons gives once arguments are rated: those that people on both sides rate strong come first. Until then, "shown in the order they were collected". |
 
 Never in the UI: recommend, should vote, best option, correct answer, wrong answer, streak, leaderboard, raw ids (`lu.chd.8739`, idea ids, jurisdiction ids, week ids), pseudonyms (`nym-…`, never shown at all), model names, except in the small provenance line.
