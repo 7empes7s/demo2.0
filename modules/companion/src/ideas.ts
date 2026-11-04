@@ -20,7 +20,10 @@ export const TIERS: readonly ScopeTier[] = ["national", "regional", "local", "mi
 /** An idea as Agora serves it (spec/schemas/idea.schema.json). */
 export interface Idea {
   id: string;
+  /** Where the idea is filed now: where it was first filed, or the smaller area a panel decided on. */
   jurisdiction_id: string;
+  /** Where the proposer first filed it. Agora always sends it; optional for older answers. */
+  filed_jurisdiction_id?: string;
   topic_ids: string[];
   title: Partial<Record<string, string>>;
   text: Partial<Record<string, string>>;
@@ -30,6 +33,8 @@ export interface Idea {
   charter_version: string;
   /** null while the count is hidden (Charter agora.upvote_hidden_hours after created_at). */
   upvote_count: number | null;
+  /** True while residents challenge the idea's reach; it keeps its tier and place until a panel decides. */
+  contested?: boolean;
 }
 
 /** An idea as the Companion passes it to the app: never with the proposer's pseudonym. */
