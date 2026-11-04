@@ -6,7 +6,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import Ideas from "../src/components/Ideas.svelte";
 import { RemoteIdeas, type IdeasReader } from "../src/lib/client.ts";
 import { CompanionFailure } from "../src/lib/errors.ts";
-import { ageOf, pickText, supportKey } from "../src/lib/ideas.ts";
+import { indexPlaces } from "@democracy2/pulse";
+
+import { ageOf, filedNote, pickText, supportKey } from "../src/lib/ideas.ts";
+import { CHARTER } from "../src/lib/pulse.svelte.ts";
 import { setLang } from "../src/lib/ui.svelte.ts";
 
 const NOW = Date.parse("2026-10-06T12:00:00Z");
@@ -59,7 +62,7 @@ const settle = async () => {
   flushSync();
 };
 
-async function show(reader: IdeasReader, lang: "en" | "fr" | "lb" = "en") {
+async function show(reader: IdeasReader, lang: "en" | "fr" | "de" | "lb" | "pt" = "en") {
   setLang(lang);
   const target = document.createElement("div");
   document.body.append(target);
@@ -173,6 +176,75 @@ describe("Ideas view", () => {
   });
 });
 
+/** A national idea residents say belongs to a smaller area, and a commune idea a panel narrowed from its canton. */
+const CONTESTED: PublicIdea = { ...NATIONAL, filed_jurisdiction_id: "lu", contested: true };
+const NARROWED: PublicIdea = { ...LOCAL, filed_jurisdiction_id: "lu-canton-esch-sur-alzette", contested: false };
+const PLAIN: PublicIdea = { ...ONE, filed_jurisdiction_id: "lu", contested: false };
+const SCOPE_PAGE: IdeasPage = { charter_version: "0.2.0", ideas: [CONTESTED, PLAIN, NARROWED] };
+const visible = (card: Element) => [...card.childNodes].filter((n) => n.nodeName !== "DETAILS").map((n) => n.textContent).join(" ");
+
+describe("contested reach", () => {
+  it("marks a contested idea beside its reach, with a one-line explanation, and keeps the reach shown", async () => {
+    const { target } = await show(new FakeReader(async () => SCOPE_PAGE));
+    const [contested, plain, narrowed] = target.querySelectorAll("[data-state=list] > li");
+    expect(contested.querySelector(".reach")?.textContent).toBe("National reach");
+    const mark = contested.querySelector(".meta [data-contested]");
+    expect(mark?.textContent).toBe("Reach contested");
+    expect(mark?.previousElementSibling?.classList.contains("reach")).toBe(true);
+    expect(contested.querySelector(".why")?.textContent).toBe(
+      "Residents asked for this idea to be filed under a smaller area. A panel drawn by lot decides within the time the Charter sets. Until then the idea keeps its place.",
+    );
+    // Filed where it still is: no "first filed" line.
+    expect(contested.querySelector(".filed")).toBeNull();
+
+    for (const card of [plain, narrowed]) {
+      expect(card.querySelector("[data-contested]")).toBeNull();
+      expect(card.querySelector(".why")).toBeNull();
+      expect(card.textContent).not.toContain("contested");
+    }
+  });
+
+  it("names where a narrowed idea was first filed and where it is now, never by id", async () => {
+    const { target } = await show(new FakeReader(async () => SCOPE_PAGE));
+    const [contested, plain, narrowed] = target.querySelectorAll("[data-state=list] > li");
+    expect(narrowed.querySelector(".filed")?.textContent).toBe("First filed for Esch-sur-Alzette canton. Now filed for Esch-sur-Alzette.");
+    expect(narrowed.querySelector(".reach")?.textContent).toBe("Local reach");
+    expect(plain.querySelector(".filed, .scope-note")).toBeNull();
+    for (const card of [contested, plain, narrowed]) {
+      expect(visible(card)).not.toMatch(/\blu(-[a-z-]+)?\b/);
+      expect(visible(card)).not.toContain("_id");
+    }
+    // The ids stay available under Technical details.
+    expect(narrowed.querySelector("details")?.textContent).toContain("filed_jurisdiction_idlu-canton-esch-sur-alzette");
+  });
+
+  it("speaks all five languages", async () => {
+    const want = {
+      lb: ["Reechwäit contestéiert", "Fir d'éischt agereecht fir"],
+      fr: ["Portée contestée", "Déposée d'abord pour : Canton d'Esch-sur-Alzette. Désormais pour : Esch-sur-Alzette."],
+      de: ["Reichweite angefochten", "Zuerst eingereicht für"],
+      en: ["Reach contested", "First filed for"],
+      pt: ["Alcance contestado", "Apresentada primeiro para"],
+    } as const;
+    for (const [lang, [mark, filed]] of Object.entries(want) as [keyof typeof want, readonly [string, string]][]) {
+      const { target } = await show(new FakeReader(async () => SCOPE_PAGE), lang);
+      const [contested, , narrowed] = target.querySelectorAll("[data-state=list] > li");
+      expect(contested.querySelector("[data-contested]")?.textContent, lang).toBe(mark);
+      expect(contested.querySelector(".why")?.textContent?.length, lang).toBeGreaterThan(40);
+      expect(narrowed.querySelector(".filed")?.textContent, lang).toContain(filed);
+      expect(visible(narrowed), lang).not.toContain("lu-");
+      unmount(app!);
+      app = null;
+      document.body.innerHTML = "";
+    }
+  });
+
+  it("shows nothing new for ideas from an older Agora without the fields", async () => {
+    const { target } = await show(new FakeReader(async () => PAGE));
+    expect(target.querySelector("[data-contested], .scope-note")).toBeNull();
+  });
+});
+
 describe("idea wording", () => {
   it("picks the reader's language, then a fallback", () => {
     expect(pickText({ en: "a", fr: "b" }, "pt")).toEqual({ lang: "fr", text: "b" });
@@ -186,6 +258,18 @@ describe("idea wording", () => {
     expect(ageOf("2026-10-05T11:00:00Z", NOW)).toEqual({ key: "age_yesterday" });
     expect(ageOf("2026-09-06T12:00:00Z", NOW)).toEqual({ key: "age_days", n: 30 });
     expect(ageOf("2026-01-01T12:00:00Z", NOW)).toEqual({ key: "age_on" });
+  });
+
+  it("words where a narrowed idea was filed, and never shows an id Charter does not name", () => {
+    const places = indexPlaces(CHARTER.places);
+    expect(filedNote({ jurisdiction_id: "lu" }, places, "en")).toBeNull();
+    expect(filedNote({ jurisdiction_id: "lu", filed_jurisdiction_id: "lu" }, places, "en")).toBeNull();
+    expect(filedNote({ jurisdiction_id: "lu-commune-esch-sur-alzette", filed_jurisdiction_id: "lu" }, places, "lb")).toEqual({
+      key: "reach_filed",
+      vars: { first: "Lëtzebuerg", now: "Esch-Uelzecht" },
+    });
+    expect(filedNote({ jurisdiction_id: "lu-commune-nowhere", filed_jurisdiction_id: "lu" }, places, "en")).toEqual({ key: "reach_filed_wider" });
+    expect(filedNote({ jurisdiction_id: "lu", filed_jurisdiction_id: "lu-unknown" }, places, "en")).toEqual({ key: "reach_filed_wider" });
   });
 
   it("uses the singular for one supporter (and zero in French)", () => {
@@ -216,6 +300,7 @@ describe("RemoteIdeas", () => {
       [200, { ideas: [] }],
       [200, { ...PAGE, ideas: [{ ...NATIONAL, scope_tier: "galactic" }] }],
       [200, { ...PAGE, ideas: [{ ...NATIONAL, proposer_nym: "nym-x" }] }],
+      [200, { ...PAGE, ideas: [{ ...NATIONAL, contested: "true" }] }],
     ];
     for (const [status, body] of bad) {
       vi.stubGlobal("fetch", answer(status, body));

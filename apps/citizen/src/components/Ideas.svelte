@@ -1,11 +1,13 @@
 <script lang="ts">
   import type { IdeasPage } from "@democracy2/companion";
+  import { indexPlaces } from "@democracy2/pulse";
   import { onMount } from "svelte";
 
   import type { IdeasReader } from "../lib/client.ts";
   import { CompanionFailure } from "../lib/errors.ts";
   import { LOCALES, type Key } from "../lib/i18n.ts";
-  import { ageOf, pickText, supportKey } from "../lib/ideas.ts";
+  import { ageOf, filedNote, pickText, supportKey } from "../lib/ideas.ts";
+  import { CHARTER } from "../lib/pulse.svelte.ts";
   import { date, t, ui } from "../lib/ui.svelte.ts";
 
   /** Read only: the list of ideas residents posted on Agora. Nothing here posts or supports. */
@@ -15,6 +17,7 @@
   let busy = $state(true);
   let failure = $state<Key | null>(null);
   const uid = $props.id();
+  const places = indexPlaces(CHARTER.places);
 
   async function load() {
     busy = true;
@@ -39,6 +42,7 @@
       title: pickText(idea.title, ui.lang),
       text: pickText(idea.text, ui.lang),
       age: ageOf(idea.created_at, now()),
+      filed: filedNote(idea, places, ui.lang),
     })),
   );
   const count = (n: number) => n.toLocaleString(LOCALES[ui.lang]);
@@ -70,12 +74,19 @@
 
   {#if !busy && !failure && ideas.length}
     <ol class="list" data-state="list">
-      {#each ideas as { idea, title, text, age } (idea.id)}
+      {#each ideas as { idea, title, text, age, filed } (idea.id)}
         <li class="card idea yours" data-tier={idea.scope_tier} aria-labelledby="{uid}-{idea.id}">
           <div class="meta">
             <span class="reach {idea.scope_tier}">{t(`reach_${idea.scope_tier}`)}</span>
+            {#if idea.contested === true}<span class="contested" data-contested>{t("reach_contested")}</span>{/if}
             <span class="muted">{t(age.key, { n: age.n ?? 0, date: date(idea.created_at) })}</span>
           </div>
+          {#if idea.contested === true || filed}
+            <div class="scope-note small">
+              {#if idea.contested === true}<p class="why">{t("reach_contested_why")}</p>{/if}
+              {#if filed}<p class="filed">{t(filed.key, filed.vars)}</p>{/if}
+            </div>
+          {/if}
           {#if title}<h3 id="{uid}-{idea.id}" class="serif" lang={title.lang}>{title.text}</h3>{/if}
           {#if text}<p class="text" lang={text.lang}>{text.text}</p>{/if}
           <p class="support" data-support={idea.upvote_count === null ? "hidden" : idea.upvote_count}>
@@ -91,6 +102,7 @@
               <dt>charter_version</dt><dd class="mono">{idea.charter_version}</dd>
               <dt>id</dt><dd class="mono">{idea.id}</dd>
               <dt>jurisdiction_id</dt><dd class="mono">{idea.jurisdiction_id}</dd>
+              {#if idea.filed_jurisdiction_id && idea.filed_jurisdiction_id !== idea.jurisdiction_id}<dt>filed_jurisdiction_id</dt><dd class="mono">{idea.filed_jurisdiction_id}</dd>{/if}
               {#if idea.topic_ids.length}<dt>topic_ids</dt><dd class="mono">{idea.topic_ids.join(", ")}</dd>{/if}
               <dt>created_at</dt><dd class="mono">{idea.created_at}</dd>
             </dl>
@@ -153,6 +165,17 @@
   }
   .reach.national { background: var(--accent); color: var(--accent-ink); border-color: var(--accent-line); }
   .reach.regional { background: var(--surface-2); }
+  /* Neutral on purpose: a dashed outline, no warning colour, so the mark takes no side. */
+  .contested {
+    font: 700 0.72rem/1.5 var(--serif);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0 6px;
+    border: 2px dashed var(--line);
+    white-space: nowrap;
+  }
+  .scope-note { display: grid; gap: 2px; max-width: 68ch; color: var(--muted); }
+  .scope-note p { margin: 0; }
   .idea h3 { font-size: 1.45rem; line-height: 1.2; overflow-wrap: anywhere; }
   .text { margin: 0; max-width: 68ch; white-space: pre-line; overflow-wrap: anywhere; }
   .support { margin: 0; font-weight: 600; font-size: 0.92rem; }
