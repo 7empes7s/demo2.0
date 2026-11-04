@@ -81,6 +81,52 @@ describe("keys and notes", () => {
   });
 });
 
+/**
+ * A three-entry log with a fixed clock. Its event hashes and fingerprint root were computed by
+ * hand outside this code (Python hashlib, from db.ts's eventHash and RFC 9162):
+ *   event hash = sha256 hex of "seq\nat\nkind\nactor\nsubject\npayload\nprev_hash"
+ *   leaf L_i   = sha256(0x00 || "d2.desk.event/1\n" || event hash || "\n")
+ *   root       = sha256(0x01 || sha256(0x01 || L_1 || L_2) || L_3)
+ */
+const FIXTURE: [string, string, string, Record<string, unknown>][] = [
+  ["idea.posted", "resident", "idea-1", { n: 1 }],
+  ["idea.supported", "resident", "idea-1", { on: true }],
+  ["feedback.filed", "resident", "fb-1", { lang: "fr" }],
+];
+const FIXTURE_HASHES = [
+  "8fbcd1efbc8746b6589237bad5927215ab2b9cb381a04f2be07917435439eb61",
+  "a77a737dbbc725e4a35aaf005d05a899f125151c24269841800ca3d3fb01085b",
+  "b63430e0a42fe8f2981167e2107d788bee3fa78ac12499280e222edc3fb16e36",
+];
+const FIXTURE_ROOT = "NzSHJnz0YbqjwJ822ZKZ9bp9knpmVsaIChMH88aiaQk=";
+/** The same log with entry 2's payload `{"on":false}`, computed the same way. */
+const FIXTURE_ROOT_CHANGED = "ExroknBbdlBCqS43PQdTHvWR9wZzBasthgf3ujs8I2M=";
+
+function fixtureLog(change?: { at: number; payload: Record<string, unknown> }) {
+  const store = new Store(":memory:", clock("2026-10-07T10:00:00Z"));
+  FIXTURE.forEach(([kind, actor, subject, payload], i) => store.append(kind, actor, subject, change?.at === i ? change.payload : payload, () => null));
+  return store;
+}
+
+describe("fingerprint of a fixture log", () => {
+  it("matches the hand-computed value", () => {
+    const store = fixtureLog();
+    expect((store.db.prepare("SELECT hash FROM events ORDER BY seq").all() as { hash: string }[]).map((r) => r.hash)).toEqual(FIXTURE_HASHES);
+    const fp = new Fingerprints(store, generateSigner("example.org/desk"), { calendars: [] });
+    const row = fp.signDue()!;
+    expect(row.size).toBe(3);
+    expect(row.root).toBe(FIXTURE_ROOT);
+    expect(openCheckpoint(row.note, fp.signer).root.toString("base64")).toBe(FIXTURE_ROOT);
+  });
+
+  it("gives a different fingerprint when one event changes", () => {
+    const fp = new Fingerprints(fixtureLog({ at: 1, payload: { on: false } }), generateSigner("example.org/desk"), { calendars: [] });
+    const row = fp.signDue()!;
+    expect(row.root).not.toBe(FIXTURE_ROOT);
+    expect(row.root).toBe(FIXTURE_ROOT_CHANGED);
+  });
+});
+
 describe("daily fingerprints", () => {
   it("signs once per day over the event hashes and matches the chain", () => {
     const now = clock();
@@ -256,6 +302,26 @@ describe("public routes and the outside check", () => {
     expect(result.lines.at(-1)).toMatch(/2026-10-08: the log of 2026-10-07 is not contained unchanged/);
     // The auditor's replay sees it too.
     expect(fpForged.audit()).toEqual({ checked: 2, ok: false, mismatch_day: "2026-10-07" });
+  });
+
+  it("publishes exactly the checkpoint fields, and keeps the auditor's replay behind a session", async () => {
+    const store = fixtureLog();
+    const fp = new Fingerprints(store, generateSigner("example.org/desk"), { calendars: [] });
+    fp.signDue();
+    const get = await serve(store, fp);
+    const list = (await get("/fingerprints")).body;
+    expect(Object.keys(list).sort()).toEqual(["days", "enabled", "key", "leaf_format", "origin", "size_now"]);
+    expect(Object.keys(list.days[0]).sort()).toEqual(["day", "note", "note_sha256", "ots", "ots_calendar", "root", "signed_at", "size"]);
+    expect(list.days[0].root).toBe(FIXTURE_ROOT);
+    const text = JSON.stringify(list);
+    for (const h of FIXTURE_HASHES) expect(text).not.toContain(h);
+    for (const [kind, , subject] of FIXTURE) {
+      expect(text).not.toContain(kind);
+      expect(text).not.toContain(subject);
+    }
+    expect(Object.keys((await get("/fingerprints/consistency?from=1&to=3")).body).sort()).toEqual(["from", "proof", "to"]);
+    // The replay of published roots is in the auditor's /audit/verify, which still needs a session.
+    expect((await get("/audit/verify")).status).toBe(401);
   });
 
   it("says when the fingerprint is not set up", async () => {
