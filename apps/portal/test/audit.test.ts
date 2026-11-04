@@ -46,6 +46,17 @@ describe("audit", () => {
     await vi.waitFor(() => expect(root.querySelector(".notice.error")?.textContent).toContain("The chain is broken at entry 7."));
   });
 
+  it("says whether the published daily fingerprints still match the log", async () => {
+    fakeDesk({
+      "GET /api/desk/audit/events": { body: { events: [] } },
+      "GET /api/desk/audit/verify": { body: { ok: true, entries: 80, head: "ab".repeat(32), broken_at: null, fingerprints: { checked: 3, ok: false, mismatch_day: "2026-10-07" } } },
+    });
+    signedInAs("auditor");
+    const root = show(AuditLog, {});
+    click(button(root, "Verify the chain"));
+    await vi.waitFor(() => expect(root.querySelector("[data-testid=prints]")?.textContent).toContain("The published fingerprint of 2026-10-07 no longer matches the log."));
+  });
+
   it("flags a mismatch between the recount and the published tally", async () => {
     const round = { id: "r1", question: { en: "Close the street on Sundays?" }, detail: {}, options: [{ en: "Yes" }, { en: "No" }], status: "published", about_kind: "none", about_id: null, opens_at: null, closes_at: null, result: null, created_at: "", updated_at: "" };
     fakeDesk({

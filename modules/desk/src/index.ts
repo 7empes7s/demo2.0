@@ -4,3 +4,4 @@ export * from "./db.ts";
 export * from "./desk.ts";
 export * from "./seed.ts";
 export { createDeskServer, bootstrap } from "./server.ts";
+export * from "./fingerprint.ts";

@@ -2,6 +2,15 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-11-04: Daily public fingerprint of the Desk log (from #67, issue #74)
+
+- Ask (issue #74, from Marouane's 2026-10-09 request in #67): land #67 through office QA. Master had none of it; #67 conflicted with the code-by-post and Affichage work and never ran CI. Brought onto current main as one change; #67 is closed as superseded.
+- Done: `modules/desk/src/fingerprint.ts` signs one checkpoint per UTC day in Record's format (RFC 9162 tree over the events' chain hashes, C2SP signed note, Ed25519), keeps them in an append-only `fingerprints` table (triggers; the timestamp receipt is set once), sends each to an OpenTimestamps calendar, and serves `GET /fingerprints` and `GET /fingerprints/consistency` to anyone (hashes only). The events and ballots tables and their triggers are unchanged. `src/check-log.ts` is the outside check. `GET /audit/verify` (staff only, 401 without a session) replays the published roots against the log; the audit portal shows it. Citizen app: "Checking the record" in More (`DeskRecord.svelte`), five languages. On with `DESK_LOG_NAME`; key made on first start next to the database (mode 600).
+- Added on top of #67: a fixture log whose event hashes and root were computed by hand in Python, a one-event change giving a different root, a test of the exact public fields (no event hash, kind or subject), and 401 for `/audit/verify`.
+- Evidence: desk 32 tests, citizen 127, portal 31, typechecks clean, ruff and boundaries ok. Live: Desk on a scratch DB with two earlier days plus today behind the Companion; `check-log.ts` exit 0; `/api/desk/audit/verify` 401. Screens at 375, 390 and 1440 px, day and night, in en, fr, de, lb, pt: no horizontal scroll, no missing string.
+- Mulinux (operator, open in `ops/operator-queue.md`): set `DESK_LOG_NAME`, restart, back up the key, post the public key so it can be pinned here.
+- Not done: the public key is not pinned in the repo yet; Desk does not upgrade receipts to the Bitcoin path (`ots upgrade` does it for anyone); no witness co-signing.
+
 ## 2026-11-04: "Reach contested" in the citizen app (issue #79)
 
 - Done: Ideas shows "Reach contested" beside the reach tag while `contested` is true, with a one-line explanation, and names where a narrowed idea was first filed (`filed_jurisdiction_id` != `jurisdiction_id`) in Charter place names. Companion `Idea` type has both fields. Five languages; VOCABULARY rows added.
