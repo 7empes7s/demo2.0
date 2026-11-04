@@ -23,7 +23,7 @@ afterEach(() => {
 async function start(opts: { seed?: boolean; ai?: Ai; now?: () => string } = {}) {
   const store = new Store(":memory:", opts.now ?? clock());
   if (opts.seed) loadSeed(store, seedFile as Seed);
-  const server = createDeskServer({ store, ai: opts.ai, trustProxy: 0, writesPerMinute: 1000, readsPerMinute: 10_000, letterRequestsPerMinute: 1000 });
+  const server = createDeskServer({ store, ai: opts.ai, trustProxy: 0, writesPerMinute: 1000, readsPerMinute: 10_000, letterRequestsPerMinute: 1000, letterStatusPerMinute: 1000 });
   await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
   servers.push(server);
   const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
@@ -139,7 +139,7 @@ describe("a code by post", () => {
   it("takes a request from anyone, prints it once for an admin, then forgets the name and address", async () => {
     const ctx = await start();
     const asked = await ctx.call("POST", "/enrol-requests", { name: "Maria  Lopes", street: "12, rue de l'Alzette", extra: "2e étage", postcode: "L-4011" });
-    expect(asked).toEqual({ status: 201, body: { received: true, already: false } });
+    expect(asked).toEqual({ status: 201, body: { received: true, already: false, request_code: expect.stringMatching(/^[A-Za-z0-9_-]{24}$/) } });
     // The same person typed differently is the same request.
     expect((await ctx.call("POST", "/enrol-requests", { name: "maria lopes", street: "12 Rue de l’Alzette", postcode: "4011" })).body).toEqual({ received: true, already: true });
     await ctx.call("POST", "/enrol-requests", { name: "Jean Weber", street: "3 boulevard Kennedy", postcode: "4170" });
@@ -183,11 +183,111 @@ describe("a code by post", () => {
     const again = (await ctx.call("GET", "/enrol-requests", undefined, ctx.adminAuth)).body.requests;
     expect(again).toHaveLength(1);
     expect(again[0].sent_before).toBe(true);
-    expect((await ctx.call("POST", `/enrol-requests/${again[0].id}/decline`, {}, op)).status).toBe(403);
-    expect((await ctx.call("POST", `/enrol-requests/${again[0].id}/decline`, {}, ctx.adminAuth)).status).toBe(200);
+    expect((await ctx.call("POST", `/enrol-requests/${again[0].id}/decline`, { reason: "asked_twice" }, op)).status).toBe(403);
+    expect((await ctx.call("POST", `/enrol-requests/${again[0].id}/decline`, { reason: "asked_twice" })).status).toBe(401);
+    expect((await ctx.call("POST", `/enrol-requests/${again[0].id}/decline`, {}, ctx.adminAuth)).status).toBe(400);
+    expect((await ctx.call("POST", `/enrol-requests/${again[0].id}/decline`, { reason: "because" }, ctx.adminAuth)).status).toBe(400);
+    expect((await ctx.call("POST", `/enrol-requests/${again[0].id}/decline`, { reason: "asked_twice" }, ctx.adminAuth)).status).toBe(200);
     expect((await ctx.call("GET", "/enrol-requests", undefined, ctx.adminAuth)).body.requests).toEqual([]);
     expect(ctx.store.events({ kind: "enrol.letter" }).map((e) => e.kind)).toEqual(["enrol.letter_requested", "enrol.letter_requested", "enrol.letters_printed", "enrol.letter_requested", "enrol.letter_declined"]);
+    expect(JSON.parse(ctx.store.events({ kind: "enrol.letter" }).find((e) => e.kind === "enrol.letter_declined")!.payload)).toEqual({ reason: "asked_twice" });
     expect((await ctx.call("GET", "/audit/summary", undefined, ctx.adminAuth)).body.counts.letters_waiting).toBe(0);
+    // After declining too, nothing on the box names anyone, and the status rows hold no date of asking.
+    const after = everything(ctx.store);
+    expect(after).not.toMatch(/Maria|Lopes|Alzette|Weber|Kennedy|4011|4170/i);
+    expect(after).not.toContain(asked.body.request_code);
+    const status = ctx.store.db.prepare("SELECT * FROM letter_status").all() as Record<string, unknown>[];
+    expect(status).toHaveLength(3);
+    for (const row of status) {
+      expect(Object.keys(row).sort()).toEqual(["expires", "reason", "status", "status_key"]);
+      expect(row.expires).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(new Date(`${row.expires}T00:00:00Z`).getUTCDay()).toBe(1);
+    }
+    expect(ctx.store.verify().ok).toBe(true);
+  });
+
+  it("refuses a postcode outside the commune's ranges, and accepts any when none is set", async () => {
+    const ctx = await start();
+    const ask = (postcode: string, name = "Ana Silva") => ctx.call("POST", "/enrol-requests", { name, street: "5 rue du Brill", postcode });
+    // No ranges: today's behaviour, any four digits.
+    expect((await ctx.call("GET", "/settings", undefined, ctx.adminAuth)).body.postcodes).toEqual([]);
+    expect((await ask("1111", "Before Ranges")).status).toBe(201);
+
+    // Only an admin sets them; bad ranges are refused whole.
+    const op = await staffAuth(ctx, "operator");
+    expect((await ctx.call("PATCH", "/settings", { postcodes: ["4001-4398"] })).status).toBe(401);
+    expect((await ctx.call("PATCH", "/settings", { postcodes: ["4001-4398"] }, op)).status).toBe(403);
+    expect((await ctx.call("PATCH", "/settings", { postcodes: ["4398-4001"] }, ctx.adminAuth)).status).toBe(400);
+    expect((await ctx.call("PATCH", "/settings", { postcodes: ["40a1"] }, ctx.adminAuth)).status).toBe(400);
+    expect((await ctx.call("PATCH", "/settings", { postcodes: 4001 }, ctx.adminAuth)).status).toBe(400);
+    const set = await ctx.call("PATCH", "/settings", { postcodes: ["L-4001 - L-4398", "4410, 4410-4410"] }, ctx.adminAuth);
+    expect(set.status).toBe(200);
+    expect(set.body.postcodes).toEqual(["4001-4398", "4410", "4410"]);
+    expect(ctx.store.events({ kind: "settings" }).at(-1)!.payload).toContain("4001-4398");
+
+    const out = await ask("L-4999");
+    expect(out).toEqual({ status: 400, body: { error: expect.stringContaining("not in the commune"), code: "outside_commune" } });
+    expect((await ask("4001")).status).toBe(201);
+    expect((await ask("4398", "Other Person")).status).toBe(201);
+    expect((await ask("4410", "Third Person")).status).toBe(201);
+    expect((await ask("4399", "Fourth Person")).body.code).toBe("outside_commune");
+    // Nothing of a refused request is kept, not even in the log.
+    expect(everything(ctx.store)).not.toMatch(/4999|4399|Fourth/);
+
+    // A request that came in before the ranges is flagged and cannot be printed: the letter would name the wrong town.
+    const list = (await ctx.call("GET", "/enrol-requests", undefined, ctx.adminAuth)).body.requests as { id: string; postcode: string; outside: boolean }[];
+    expect(list.map((r) => [r.postcode, r.outside])).toEqual([["1111", true], ["4001", false], ["4398", false], ["4410", false]]);
+    const printed = await ctx.call("POST", "/enrol-requests/print", { ids: list.map((r) => r.id) }, ctx.adminAuth);
+    expect(printed).toEqual({ status: 409, body: { error: expect.any(String), code: "outside_commune" } });
+    expect((await ctx.call("GET", "/enrol-requests", undefined, ctx.adminAuth)).body.requests).toHaveLength(4);
+    expect((await ctx.call("POST", `/enrol-requests/${list[0].id}/decline`, { reason: "outside_commune" }, ctx.adminAuth)).status).toBe(200);
+    expect((await ctx.call("POST", "/enrol-requests/print", { ids: list.slice(1).map((r) => r.id) }, ctx.adminAuth)).body.letters).toHaveLength(3);
+
+    // Clearing the list turns the check off again.
+    expect((await ctx.call("PATCH", "/settings", { postcodes: [] }, ctx.adminAuth)).body.postcodes).toEqual([]);
+    expect((await ask("9999", "Far Away")).status).toBe(201);
+  });
+
+  it("tells the asking device its request's outcome, and nothing for any other code", async () => {
+    let now = Date.parse("2026-10-06T12:00:00Z");
+    const ctx = await start({ now: () => new Date((now += 1000)).toISOString() });
+    const status = (code: unknown) => ctx.call("POST", "/enrol-requests/status", { code });
+    const ask = async (name: string) => (await ctx.call("POST", "/enrol-requests", { name, street: "1 rue de l'Église", postcode: "4002" })).body.request_code as string;
+    const a = await ask("Ana Silva");
+    const b = await ask("Bruno Costa");
+    const c = await ask("Carla Dias");
+    expect(new Set([a, b, c]).size).toBe(3);
+    // Asking twice gives no second code: the first device keeps its own.
+    expect((await ctx.call("POST", "/enrol-requests", { name: "ana silva", street: "1 rue de l'Eglise", postcode: "4002" })).body).toEqual({ received: true, already: true });
+
+    expect(await status(a)).toEqual({ status: 200, body: { status: "waiting" } });
+    // A wrong, malformed or missing code learns nothing, and always the same answer.
+    const nothing = { status: 404, body: { error: "no request with that code" } };
+    for (const wrong of [a.slice(0, -1) + (a.endsWith("A") ? "B" : "A"), "x".repeat(24), "short", "", null, 42, { a }]) expect(await status(wrong)).toEqual(nothing);
+    // The code is not a sign-in: it opens nothing else.
+    expect((await ctx.call("GET", "/me", undefined, `Resident ${a}`)).status).toBe(401);
+
+    const list = (await ctx.call("GET", "/enrol-requests", undefined, ctx.adminAuth)).body.requests as { id: string; name: string }[];
+    const idOf = (name: string) => list.find((r) => r.name === name)!.id;
+    await ctx.call("POST", "/enrol-requests/print", { ids: [idOf("Ana Silva")] }, ctx.adminAuth);
+    await ctx.call("POST", `/enrol-requests/${idOf("Bruno Costa")}/decline`, { reason: "not_in_register" }, ctx.adminAuth);
+    expect((await status(a)).body).toEqual({ status: "sent" });
+    expect((await status(b)).body).toEqual({ status: "declined", reason: "not_in_register" });
+    expect((await status(c)).body).toEqual({ status: "waiting" });
+
+    // 60 days after the last change, rounded up to a Monday, the rows go; the log says how many, not which.
+    now = Date.parse("2026-12-05T12:00:00Z");
+    expect((await status(a)).status).toBe(200);
+    now = Date.parse("2026-12-07T00:00:00Z");
+    expect(await status(a)).toEqual(nothing);
+    expect(await status(b)).toEqual(nothing);
+    expect(ctx.store.db.prepare("SELECT COUNT(*) AS n FROM letter_status").get()).toEqual({ n: 0 });
+    expect(ctx.store.events({ kind: "enrol.letter" }).filter((e) => e.kind === "enrol.letter_status_expired").map((e) => JSON.parse(e.payload))).toEqual([{ count: 3 }]);
+    // Carla's request still waits; when it is decided its status row comes back for her device.
+    const later = `Staff ${(await ctx.call("POST", "/staff/login", { login: "admin", password: "admin-password-1" })).body.token}`;
+    expect((await ctx.call("POST", `/enrol-requests/${idOf("Carla Dias")}/decline`, { reason: "address_incomplete" }, later)).body).toEqual({ ok: true });
+    expect((await status(c)).body).toEqual({ status: "declined", reason: "address_incomplete" });
+    expect(ctx.store.verify().ok).toBe(true);
   });
 
   it("limits requests per client", async () => {
@@ -202,6 +302,13 @@ describe("a code by post", () => {
       statuses.push(res.status);
     }
     expect(statuses).toEqual([201, 201, 201, 201, 201, 429]);
+    // Status checks have their own limit: ten per client and minute.
+    const checks: number[] = [];
+    for (let i = 0; i < 11; i++) {
+      const res = await fetch(`${base}/enrol-requests/status`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: "y".repeat(24) }) });
+      checks.push(res.status);
+    }
+    expect(checks).toEqual([...Array(10).fill(404), 429]);
   });
 });
 

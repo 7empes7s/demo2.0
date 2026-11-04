@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
 
   import type { DeskClient } from "../lib/desk.ts";
-  import { CompanionFailure } from "../lib/errors.ts";
+  import { CompanionFailure, DeskRefusal } from "../lib/errors.ts";
   import type { Key } from "../lib/i18n.ts";
   import { prefs } from "../lib/prefs.ts";
   import { t } from "../lib/ui.svelte.ts";
@@ -10,7 +10,8 @@
   /**
    * Asking the commune for a code by post: a name and an address, four plain fields. The commune
    * checks them against its residents' register and posts a letter. This device keeps only the date
-   * of the request, so the sign-in sheet can say a letter is on its way.
+   * of the request and the random request code the desk gave back, so the sign-in sheet can say a
+   * letter is on its way, or that the request was declined and why.
    */
   let { client, onasked, onclose }: { client: DeskClient; onasked: () => void; onclose: () => void } = $props();
 
@@ -33,12 +34,15 @@
     failure = null;
     try {
       const out = await client.requestLetter({ name: name.trim(), street: street.trim(), extra: extra.trim(), postcode: postcode.trim() });
-      prefs.setLetterAsked(new Date().toISOString());
+      // Asked twice: no new code, so the device keeps the one from the first request.
+      const before = prefs.letterAsked();
+      prefs.setLetterAsked(out.code ? { at: new Date().toISOString(), code: out.code } : before ?? { at: new Date().toISOString(), code: null });
       done = out.already ? "letter_already" : "letter_done";
       name = street = extra = postcode = "";
       onasked();
     } catch (err) {
-      if (err instanceof CompanionFailure && err.kind === "busy") failure = "ideas_busy";
+      if (err instanceof DeskRefusal && err.code === "outside_commune") failure = "letter_outside";
+      else if (err instanceof CompanionFailure && err.kind === "busy") failure = "ideas_busy";
       else if (err instanceof CompanionFailure) failure = "desk_unavailable";
       else failure = "letter_bad";
     } finally {

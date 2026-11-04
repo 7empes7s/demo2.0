@@ -180,6 +180,8 @@ export interface PublicSettings {
 }
 
 export interface AdminSettings extends PublicSettings {
+  /** The commune's postcodes, as ranges such as "4001-4398" or single codes. Empty: no check. */
+  postcodes: string[];
   ai: { configured: boolean; model: string | null; base_url: string; key_set: boolean; from_env: boolean };
 }
 
@@ -206,7 +208,13 @@ export interface LetterRequest {
   created_at: string;
   sent_before: boolean;
   duplicate: boolean;
+  /** The postcode is outside the commune's ranges: the desk refuses to print it. */
+  outside: boolean;
 }
+
+/** Why a request is declined; the resident's device shows the matching sentence. */
+export const DECLINE_REASONS = ["not_in_register", "outside_commune", "asked_twice", "address_incomplete"] as const;
+export type DeclineReason = (typeof DECLINE_REASONS)[number];
 
 /** One printed letter: the address and the fresh code, shown once. */
 export interface PostedLetter {

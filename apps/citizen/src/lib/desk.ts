@@ -7,7 +7,7 @@
 
 import type { Lang } from "@democracy2/companion";
 
-import { CompanionFailure } from "./errors.ts";
+import { CompanionFailure, DeskRefusal } from "./errors.ts";
 import { prefs } from "./prefs.ts";
 
 export type Localized = Partial<Record<Lang, string>>;
@@ -137,6 +137,9 @@ export interface LetterRequest {
   postcode: string;
 }
 
+export const DECLINE_REASONS = ["not_in_register", "outside_commune", "asked_twice", "address_incomplete"] as const;
+export type DeclineReason = (typeof DECLINE_REASONS)[number];
+export type LetterStatus = { status: "waiting" | "sent" } | { status: "declined"; reason: DeclineReason };
 /** One day's signed fingerprint of the desk's record, as the desk publishes it. */
 export interface FingerprintDay {
   day: string;
@@ -158,8 +161,14 @@ export interface DeskClient {
   /** Whether a token is on this device. The desk may still refuse it; the sheet then asks for a code again. */
   signedIn(): boolean;
   enrol(code: string): Promise<void>;
-  /** Asks the commune to post a code. `already` when the same name and address are waiting already. */
-  requestLetter(input: LetterRequest): Promise<{ already: boolean }>;
+  /**
+   * Asks the commune to post a code. `already` when the same name and address are waiting already.
+   * `code` is the random request code to look the outcome up with (none when `already`).
+   * A postcode outside the commune throws a DeskRefusal with the code `outside_commune`.
+   */
+  requestLetter(input: LetterRequest): Promise<{ already: boolean; code: string | null }>;
+  /** The outcome of this device's request, sending the request code alone. Null when the desk has none (expired). */
+  letterStatus(code: string): Promise<LetterStatus | null>;
   signOut(): void;
   procedures(): Promise<Procedure[]>;
   procedure(id: string): Promise<ProcedureDetail>;
@@ -273,7 +282,20 @@ export class RemoteDesk implements DeskClient {
   async requestLetter(input: LetterRequest) {
     const body = await this.call("POST", "enrol-requests", { ...input }, false);
     if (!isObject(body) || body.received !== true) throw new CompanionFailure("unavailable");
-    return { already: body.already === true };
+    return { already: body.already === true, code: isText(body.request_code) && body.request_code ? body.request_code : null };
+  }
+
+  async letterStatus(code: string): Promise<LetterStatus | null> {
+    let body: unknown;
+    try {
+      body = await this.call("POST", "enrol-requests/status", { code }, false);
+    } catch (err) {
+      if (err instanceof CompanionFailure && err.kind === "not_found") return null;
+      throw err;
+    }
+    if (isObject(body) && (body.status === "waiting" || body.status === "sent")) return { status: body.status };
+    if (isObject(body) && body.status === "declined" && oneOf(body.reason, DECLINE_REASONS)) return { status: "declined", reason: body.reason };
+    throw new CompanionFailure("unavailable");
   }
 
   private async call(method: "GET" | "POST" | "DELETE", path: string, body?: Record<string, unknown>, auth = true): Promise<unknown> {
@@ -295,7 +317,7 @@ export class RemoteDesk implements DeskClient {
     if (res.status === 404) throw new CompanionFailure("not_found");
     if (res.status >= 500) throw new CompanionFailure("unavailable");
     const parsed = (await res.json().catch(() => null)) as unknown;
-    if (!res.ok) throw new Error(isObject(parsed) && isText(parsed.error) ? parsed.error : `desk: ${res.status}`);
+    if (!res.ok) throw new DeskRefusal(isObject(parsed) && isText(parsed.error) ? parsed.error : `desk: ${res.status}`, isObject(parsed) && isText(parsed.code) ? parsed.code : null);
     return parsed;
   }
 
