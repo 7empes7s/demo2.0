@@ -18,8 +18,14 @@
 
   const days = $derived(record ? [...record.days].reverse() : []);
   const latest = $derived(days[0] ?? null);
+  /**
+   * The key goes into a command residents paste into a shell, so only the verifier key's exact
+   * shape (`<name>+<8 hex>+<base64>`, no quote, space or shell character) is let in.
+   */
+  const KEY_SHAPE = /^[A-Za-z0-9._\/:-]+\+[0-9a-f]{8}\+[A-Za-z0-9+\/]+={0,2}$/;
+  const key = $derived(record?.key && KEY_SHAPE.test(record.key) ? record.key : null);
   const command = $derived(
-    `node --experimental-strip-types modules/desk/src/check-log.ts --url ${origin}/api/desk --vkey '${record?.key ?? ""}' --keep desk-record.json`,
+    `node --experimental-strip-types modules/desk/src/check-log.ts --url ${origin}/api/desk --vkey '${key ?? "<key>"}' --keep desk-record.json`,
   );
 
   /** The root, cut into groups of four so it can be read out and compared. */
