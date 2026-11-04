@@ -313,7 +313,8 @@ describe("Pulse: the network never learns what a resident cares about", () => {
     // No request carries a place, a topic or a file the resident cares about.
     const sent = JSON.stringify([esch.requests, city.requests, canton.requests]);
     for (const secret of [ESCH, CITY, "lu-canton", "Budget", "urbain", "Commission", "money", "housing", "42063", "d2.pulse"]) expect(sent).not.toContain(secret);
-  });
+    // Four full walks through the app take about 3 s alone and more when every workspace's tests run at once.
+  }, 20_000);
 });
 
 describe("This week (Pulse view)", () => {
