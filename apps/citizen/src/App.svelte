@@ -16,7 +16,7 @@
   import Votes from "./components/Votes.svelte";
   import Week from "./components/Week.svelte";
   import Welcome from "./components/Welcome.svelte";
-  import { LocalClient, RemoteClient, RemoteFactChecker, RemoteIdeas, type CompanionClient, type FactChecker, type IdeasReader } from "./lib/client.ts";
+  import { LocalClient, RemoteArguments, RemoteClient, RemoteFactChecker, RemoteIdeas, type ArgumentsReader, type CompanionClient, type FactChecker, type IdeasReader } from "./lib/client.ts";
   import { weekAt } from "@democracy2/pulse";
 
   import { loadSnapshot, luxembourgToday, placeOf, routeOf, sitesOf } from "./lib/data.ts";
@@ -37,6 +37,8 @@
   let checker = $state<FactChecker | null>(null);
   /** The ideas list (Agora, read only), on the served app only, like the claim checker. */
   let ideasReader = $state<IdeasReader | null>(null);
+  /** A file's arguments (Commons, read only), on the served app only, like the claim checker. */
+  let argumentsReader = $state<ArgumentsReader | null>(null);
   /** The commune's desk (procedures, ideas, feedback, votes), when the served app's healthz says it is up. */
   let desk = $state<DeskClient | null>(null);
   /** What a feedback message is about, when the form was opened from a procedure or an idea. */
@@ -174,6 +176,7 @@
       }
       checker = new RemoteFactChecker();
       ideasReader = new RemoteIdeas();
+      argumentsReader = new RemoteArguments();
       try {
         const health = (await (await fetch("healthz")).json()) as { companion?: boolean; desk?: boolean };
         client = health.companion ? new RemoteClient() : null;
@@ -248,6 +251,7 @@
             items={snapshot.items}
             {client}
             {checker}
+            {argumentsReader}
             {today}
             backLabel={t(backTo === FILES_ROUTE ? "back" : "week_open")}
             onback={() => open(backTo)}

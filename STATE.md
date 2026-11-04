@@ -8,6 +8,14 @@ Handoff file for long-running work. Newest first.
 - Evidence: desk tests (backup under a concurrent writer process, tampered log, retention, modes, CLI exit codes) and `tools/tests/test_deploy_units.py` (unit lint plus `systemd-analyze verify`); `tools/check.sh` green.
 - Not live: the operator queue has the install and first drill (agents cannot install on Mulinux).
 
+## 2026-11-04: Arguments on a file page (issue #78)
+
+- Ask (Mimoun, #78): the first community screen, design screen 02 ("An idea and its arguments"), on a file page, read only.
+- Done: Companion `GET /api/files/{id}/arguments` (`modules/companion/src/file-arguments.ts`) forwards to Commons, checks the answer against the argument and ranker-version schemas, drops pseudonyms; 503 not configured, 502 down or invalid. Citizen `components/Arguments.svelte` + `lib/arguments.ts` on `FileView`: For · Against · Both tabs with counts, reason sheets, council votes apart ("who took a side, never why"), resident ideas, ranking line, sign-in sheet instead of Strong/Weak/composer, empty, failure and offline states (last list per file kept in the browser cache).
+- Evidence: companion file-arguments 14 tests, citizen 137 (new `test/arguments.test.ts` on recorded Esch fixtures; Pulse trace opens the arguments and clicks every tab, same requests for every resident), typechecks clean, `tools/check.sh` green. Live check with `d2-commons serve` on the Esch seed behind the Companion: lu.esch.42063 at 375, 390 and 1440 px, day and night, no sideways scroll, nothing clipped, tabs work by keyboard.
+- Assumptions: Commons has no ranked answer yet, so the `ranking` list (per argument `status`, `strong_both_sides`) is a contract defined here and read already; Commons must add it when it ranks. Group names, councillor counts and the two known attributions are read from Commons' English lines and shown in the resident's language; an unknown attribution is shown as given (marked English).
+- Not done: rating, posting and moderation wait for Door; Commons does not rank yet; the participation-platform file is not in the Docket snapshot, so its 8 ideas are only seen in tests.
+
 ## 2026-11-04: Code by post checks the postcode and tells residents about a decline (issue #81)
 
 - Ask (Mimoun, issue #81, from the 2026-10-09 "Not done"): check the postcode is in the commune, and tell a resident when their request is declined.

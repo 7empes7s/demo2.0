@@ -1,11 +1,12 @@
 <script lang="ts">
   import type { DocketItem } from "@democracy2/companion";
 
-  import type { CompanionClient, FactChecker } from "../lib/client.ts";
+  import type { ArgumentsReader, CompanionClient, FactChecker } from "../lib/client.ts";
   import { historyOf, kindOf, lastMeeting, nextMeeting, safeUrl, stageOf, statusOf, titleOf, voteKey } from "../lib/data.ts";
   import { langOf, tx } from "../lib/translations.svelte.ts";
   import type { Key } from "../lib/i18n.ts";
   import { date, t, ui } from "../lib/ui.svelte.ts";
+  import Arguments from "./Arguments.svelte";
   import Challenge from "./Challenge.svelte";
   import ClaimCheck from "./ClaimCheck.svelte";
   import Explain from "./Explain.svelte";
@@ -20,6 +21,7 @@
     items = [item],
     client,
     checker = null,
+    argumentsReader = null,
     today,
     backLabel = t("back"),
     onback,
@@ -30,6 +32,8 @@
     client: CompanionClient | null | undefined;
     /** The claim checker (Provenance). Without it, the Companion checks claims itself (the shareable demo). */
     checker?: FactChecker | null;
+    /** What residents and council groups argued on the file (Commons), on the served app only. */
+    argumentsReader?: ArgumentsReader | null;
     today: string;
     /** Where the back button (phones) leads, in words: the full list unless opened from this week's list. */
     backLabel?: string;
@@ -229,6 +233,10 @@
         {/each}
       </ol>
     </details>
+  {/if}
+
+  {#if argumentsReader}
+    {#key item.id}<Arguments {item} reader={argumentsReader} />{/key}
   {/if}
 
   <p class="never">{t("never_recommend")}</p>

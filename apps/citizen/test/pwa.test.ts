@@ -157,6 +157,24 @@ describe("service worker", () => {
     expect(w.faults.installRequests.map((r) => r.cache)).toEqual(["reload", "reload", "reload"]);
   });
 
+  it("keeps the saved arguments and the snapshot on activate, and still drops an old shell", async () => {
+    const w = worker(template(shell));
+    w.stores.set("citizen-shell-old", new Map());
+    w.stores.set("citizen-data-1", new Map([["k", json("{}")]]));
+    w.stores.set("citizen-arguments-1", new Map([["k", json("[]")]]));
+    await w.lifecycle("install");
+    await w.lifecycle("activate");
+    expect([...w.stores.keys()].sort()).toEqual(["citizen-arguments-1", "citizen-data-1", "citizen-shell-test"]);
+    expect(w.stores.get("citizen-arguments-1")!.size).toBe(1);
+  });
+
+  it("keeps the same arguments cache name the page writes to", () => {
+    const fromWorker = /const ARGUMENTS_CACHE = "([^"]+)"/.exec(readFileSync(here("sw.js"), "utf8"))?.[1];
+    const fromPage = /export const ARGUMENTS_CACHE = "([^"]+)"/.exec(readFileSync(here("src/lib/client.ts"), "utf8"))?.[1];
+    expect(fromWorker).toBeTruthy();
+    expect(fromWorker).toBe(fromPage);
+  });
+
   it("serves the shell from cache and the snapshot from the network, then the saved copy offline", async () => {
     const w = worker(template(shell));
     await w.lifecycle("install");
