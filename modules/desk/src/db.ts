@@ -20,9 +20,11 @@ CREATE TABLE IF NOT EXISTS enrol_codes (code_hash TEXT PRIMARY KEY, batch TEXT N
 -- Letter requests live only while they wait (letters.ts); a sent letter leaves a keyed hash, no date, no row order.
 CREATE TABLE IF NOT EXISTS letter_requests (
   id TEXT PRIMARY KEY, name TEXT NOT NULL, street TEXT NOT NULL, extra TEXT NOT NULL, postcode TEXT NOT NULL,
-  person_key TEXT NOT NULL, created_at TEXT NOT NULL
+  person_key TEXT NOT NULL, created_at TEXT NOT NULL, status_key TEXT
 );
 CREATE TABLE IF NOT EXISTS letters_sent (person_key TEXT PRIMARY KEY) WITHOUT ROWID;
+-- What the asking device may learn: a keyed hash of its request code, the outcome, and the Monday it expires.
+CREATE TABLE IF NOT EXISTS letter_status (status_key TEXT PRIMARY KEY, status TEXT NOT NULL, reason TEXT, expires TEXT NOT NULL) WITHOUT ROWID;
 CREATE TABLE IF NOT EXISTS residents (id TEXT PRIMARY KEY, token_hash TEXT NOT NULL UNIQUE, code_hash TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS procedures (
   id TEXT PRIMARY KEY, kind TEXT NOT NULL, status TEXT NOT NULL, title TEXT NOT NULL, body TEXT NOT NULL,
@@ -121,6 +123,9 @@ export class Store {
     this.db = new DatabaseSync(path);
     this.db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
     this.db.exec(SCHEMA);
+    // Stores made before request codes: add the column the request row keeps until printing or declining.
+    const cols = this.db.prepare("PRAGMA table_info(letter_requests)").all() as { name: string }[];
+    if (!cols.some((c) => c.name === "status_key")) this.db.exec("ALTER TABLE letter_requests ADD COLUMN status_key TEXT");
     this.now = now;
   }
 

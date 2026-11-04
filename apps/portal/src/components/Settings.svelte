@@ -22,6 +22,7 @@
   let commune = $state("");
   let languages = $state<Lang[]>([]);
   let intro = $state<Localized>({});
+  let postcodes = $state("");
   let baseUrl = $state("");
   let model = $state("");
   let key = $state("");
@@ -33,6 +34,7 @@
     commune = s.commune;
     languages = [...s.languages];
     intro = { ...s.intro };
+    postcodes = (s.postcodes ?? []).join("\n");
     baseUrl = s.ai.base_url ?? "";
     model = s.ai.model ?? "";
     key = "";
@@ -63,7 +65,7 @@
       const ai: Record<string, unknown> = { base_url: baseUrl.trim(), model: model.trim() };
       if (timeoutTouched) ai.timeout_ms = Number(timeout);
       if (key) ai.api_key = key;
-      const out = await patch<AdminSettings>("/settings", { commune: commune.trim(), languages, intro: compact(intro), ai });
+      const out = await patch<AdminSettings>("/settings", { commune: commune.trim(), languages, intro: compact(intro), postcodes: postcodes.split("\n").map((l) => l.trim()).filter(Boolean), ai });
       fill(out);
       applyCommune(out);
       done = t("settings_saved");
@@ -109,6 +111,11 @@
             {/each}
           </div>
         </fieldset>
+        <div class="field">
+          <label class="label" for="s-postcodes">{t("settings_postcodes")}</label>
+          <textarea id="s-postcodes" class="mono" rows="4" placeholder="4001-4398" bind:value={postcodes}></textarea>
+          <p class="hint">{t("settings_postcodes_hint")}</p>
+        </div>
         <LangFields id="s-intro" label={t("settings_intro")} langs={languages.length ? languages : [...LANGS]} multiline maxlength={600} bind:value={intro} />
       </section>
 

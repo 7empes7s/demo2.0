@@ -38,6 +38,7 @@ Use one word per role, and use it everywhere: in the UI, the docs and the prompt
 | lookup code | reference, ticket number, id | The code the desk gives for a feedback message; the only way to find it again. Shown big, in mono, once. |
 | enrolment code | invite, password, token, account | The one-time code the commune hands a resident; it signs in on this device. Never a product name ("Enter the code the commune gave you"). |
 | ask for a code by post, letter | sign up, register, registration, create an account | A resident without an enrolment code gives a name and an address; the commune checks them and posts a letter with the code. |
+| request (for a letter), declined, posted | application, rejected, denied, refused, approved | What happened to a request for a code by post, shown on the sign-in sheet with the reason. The request's own code stays on the device and is never shown. |
 | vote on a question, ballot, option | poll, referendum, election, survey | A Desk vote is a consultation the commune opens: one ballot per resident, changeable while open, counts per option shown only once the result is published. |
 | the record (of the desk), entry | log, ledger, blockchain, chain, database | Everything done on the commune's desk, in order, that can only grow. |
 | daily fingerprint | hash, checksum, checkpoint, root, Merkle | What the desk publishes once a day so anyone can tell nothing was changed afterwards. The technical words stay under "Technical details". |
