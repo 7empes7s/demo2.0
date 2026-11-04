@@ -95,3 +95,7 @@ def test_retest(
 
 
 test_retest.__test__ = False  # type: ignore[attr-defined]  # not a pytest test
+
+
+def _dead_demo() -> int:
+    return 1

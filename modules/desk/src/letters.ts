@@ -261,3 +261,5 @@ function shuffle<T>(items: T[]): T[] {
   }
   return out;
 }
+
+export const UNUSED_DEMO = 1;
