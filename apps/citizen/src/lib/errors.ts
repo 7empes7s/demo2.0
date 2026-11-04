@@ -13,6 +13,15 @@ export class CompanionFailure extends Error {
   }
 }
 
+/** The desk said no with a plain code next to its sentence, such as `outside_commune`. */
+export class DeskRefusal extends Error {
+  readonly code: string | null;
+  constructor(message: string, code: string | null = null) {
+    super(message);
+    this.code = code;
+  }
+}
+
 export function errorKey(error: unknown): Key {
   if (error instanceof CompanionFailure) {
     if (error.kind === "unavailable") return "error_unavailable";
