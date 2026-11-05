@@ -2,7 +2,7 @@
 
 ## This repo
 
-- **What it is:** Democracy2.0, a set of standalone modules for verifiable, accountable direct democracy (architecture: `docs/architecture/`).
+- **What it is:** Democracy2.0, a set of standalone modules for verifiable, accountable direct democracy (target design: `docs/architecture/`; what is built on main: `docs/ARCHITECTURE.md`).
 - **Layout:** `spec/` shared schemas, `charter/` rules-as-data, `modules/<name>/` one future repo each (own LICENSE, README, CHANGELOG), `apps/` clients. A module imports only from `spec` and `charter`; `tools/boundaries.py` enforces it.
 - **Stack:** Python (uv workspace, ruff, pytest) for AI and ingestion; TypeScript on Node 22 (npm workspaces) for services and the SvelteKit app; Rust (Cargo workspace, toolchain pinned in `rust-toolchain.toml`) for the crypto core, starting with `modules/door`.
 - **Handoff:** long-running work keeps `STATE.md` current.
@@ -10,6 +10,20 @@
 - **Check before pushing:** `tools/check.sh`. CI runs the same script.
 - **Merging:** open a PR and add the `automerge` label. The merge gate merges it once CI is green, no review asks for changes, every review thread is resolved and, when `REQUIRE_REVIEW` is on, someone other than the author has reviewed it. Never call the merge API yourself.
 - **Deploying:** `ops/deploy/` (one systemd service behind Caddy, brain's pull-based deployer with rollback). Not installed on Mulinux yet.
+
+## Skills
+
+Project skills in `.claude/skills/` hold the exact paths, rules and commands for recurring changes. Load the matching one before you start, and `d2-pr-checklist` before every PR.
+
+| Skill | Use it for |
+|---|---|
+| `d2-citizen-ui` | A citizen app screen or string (five languages, VOCABULARY.md, Affichage tokens, neutrality, privacy trace, preview recipe) |
+| `d2-portal-ui` | A staff portal screen (fr/en, Desk roles, 401/403) |
+| `d2-desk-change` | Desk tables, routes or events (append-only hash-chained log, migrations, backups) |
+| `d2-python-module` | A uv Python module |
+| `d2-rust-crypto` | Door, Booth or any crypto format, vectors and verifiers |
+| `d2-charter-rule` | A Charter rule (version bump, provenance) |
+| `d2-pr-checklist` | Self-review, `tools/check.sh`, `Closes #N`, STATE.md and translation conflicts |
 
 <!-- brain:start -->
 ## Shared rules
