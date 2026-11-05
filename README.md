@@ -2,7 +2,7 @@
 
 Tools for direct, verifiable, accountable democracy, built as standalone modules that each work on their own.
 
-- Architecture: [`docs/architecture/`](docs/architecture/)
+- Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (what is built) and [`docs/architecture/`](docs/architecture/) (the target design)
 - Set up: `tools/dev-setup.sh`
 - Check (what CI runs): `tools/check.sh`
 
