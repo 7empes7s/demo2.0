@@ -2,6 +2,12 @@
 
 Handoff file for long-running work. Newest first.
 
+## 2026-11-05: Architecture map and project skills (issue #88)
+
+- Done: `docs/ARCHITECTURE.md` (what is built on main: modules, apps, request path, stores, crypto and verifiers, Charter, check, deploy), linked from CLAUDE.md and README. Seven skills in `.claude/skills/`: `d2-citizen-ui`, `d2-portal-ui`, `d2-desk-change`, `d2-python-module`, `d2-rust-crypto`, `d2-charter-rule`, `d2-pr-checklist`; CLAUDE.md "Skills" section. No product code changed.
+- Evidence: every path in the new files checked to exist (script in the PR); the preview recipe in `d2-citizen-ui` run (citizen at `/`, portal at `/portal/`, `/api/desk/staff/me` 401, admin sign-in); `tools/check.sh` green.
+- Not done: `apps/README.md` still names a `console/` app that does not exist; left alone (one issue per PR).
+
 ## 2026-11-04: Nightly backup of the Desk and Agora databases (issue #82)
 
 - Done: `modules/desk/src/backup.ts` copies both databases with SQLite's online backup (one read transaction, never blocks Desk's WAL writes), checks each copy read only (`PRAGMA integrity_check`, Desk's chain replay through the new shared `verifyChain`), and only then publishes `/var/backups/civic/YYYY-MM-DD/`. A failed check exits 1 and touches nothing; 7 days kept, the newest never removed; files 600, folders 700. Units `ops/deploy/civic-backup.service` + `.timer` (03:15 Luxembourg, `Persistent=true`). Restore drill in `ops/deploy/README.md`; desk.md section 7 says a deleted letter request can live in a backup for up to 7 days. `*.db` is now git-ignored.
